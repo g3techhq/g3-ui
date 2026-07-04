@@ -2,7 +2,7 @@
 
 Mobile-first Dioxus components inspired by Ionic.
 
-`g3-ui` provides app-shell, card, button, field, select, sheet, modal, segment, toggle, spinner, and floating-action-button components. The Rust crate name is `g3_ui`.
+`g3-ui` provides app-shell, navbar, card, button, field, select, sheet, modal, segment, toggle, spinner, and floating-action-button components. The Rust crate name is `g3_ui`.
 
 ## Install
 
@@ -28,18 +28,21 @@ The local checkout includes `.cargo/config.toml` to patch `dx-route-transitions`
 
 ```rust,ignore
 use dioxus::prelude::*;
-use g3_ui::{G3AppWrapper, G3Body, G3Button, G3Card, G3Header, Theme};
+use g3_ui::{G3AppWrapper, G3Body, G3Button, G3Card, G3Header, G3Navbar, Theme};
 
 #[component]
 fn App() -> Element {
     rsx! {
         G3AppWrapper { theme: Theme::default_light(),
-            G3Header { title: "Games" }
-            G3Body {
-                G3Card { title: "Pending game",
-                    "Invite players and choose a format."
+            G3Navbar {
+                G3Header { title: "Games" }
+                G3Body {
+                    G3Card { title: "Pending game",
+                        "Invite players and choose a format."
+                    }
+                    G3Button { onclick: |_| {}, "Create game" }
                 }
-                G3Button { onclick: |_| {}, "Create game" }
+                nav { "Bottom nav or tab items" }
             }
         }
     }
@@ -54,7 +57,7 @@ use g3_ui::prelude::*;
 
 ## Route Transition Integration
 
-With the `transitions` feature enabled, `G3AppWrapper` loads the `dx-route-transitions` stylesheet provider and marks the shell with the cover snapshot class. `G3Body` marks its scrollable content with the segment snapshot class for push transitions.
+With the `transitions` feature enabled, `G3AppWrapper` loads the `dx-route-transitions` stylesheet provider and marks the shell with the cover snapshot class. `G3Navbar` marks persistent tab/navigation layouts with the base snapshot class. `G3Body` marks its scrollable content with the segment snapshot class for push transitions.
 
 Without the feature, `g3-ui` does not depend on `dx-route-transitions` and does not emit route-transition marker classes.
 

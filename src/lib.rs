@@ -22,16 +22,17 @@ pub use components::{
 
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
-    FabVertical, RightSlot, Select, SelectOption, Separator, Setting, SettingAction, SettingLink,
-    SettingsGroup, Sheet, SheetButton, SheetPlacement,
+    FabVertical, Navbar, RightSlot, Select, SelectOption, Separator, Setting, SettingAction,
+    SettingLink, SettingsGroup, Sheet, SheetButton, SheetPlacement,
 };
 
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
-    FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Select as G3Select,
-    Separator as G3Separator, Setting as G3Setting, SettingAction as G3SettingAction,
-    SettingLink as G3SettingLink, SettingsGroup as G3SettingsGroup, Sheet as G3Sheet,
-    SheetButton as G3SheetButton, SheetPlacement as G3SheetPlacement,
+    FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
+    Select as G3Select, Separator as G3Separator, Setting as G3Setting,
+    SettingAction as G3SettingAction, SettingLink as G3SettingLink,
+    SettingsGroup as G3SettingsGroup, Sheet as G3Sheet, SheetButton as G3SheetButton,
+    SheetPlacement as G3SheetPlacement,
 };
 
 pub use components::{AppWrapper, Body, Header};
@@ -159,9 +160,11 @@ mod tests {
     fn LayoutSmokeApp() -> Element {
         rsx! {
             G3AppWrapper {
-                G3Header { title: "Header" }
-                G3Body {
-                    Spinner { center: true }
+                G3Navbar {
+                    G3Header { title: "Header" }
+                    G3Body {
+                        Spinner { center: true }
+                    }
                 }
             }
         }
@@ -198,6 +201,11 @@ mod tests {
             !component_descriptors()
                 .iter()
                 .any(|descriptor| descriptor.g3_name == "G3SettingsCard")
+        );
+        assert!(
+            component_descriptors()
+                .iter()
+                .any(|descriptor| descriptor.g3_name == "G3Navbar")
         );
     }
 
@@ -344,6 +352,32 @@ mod tests {
         assert!(!public_source.contains("G3SettingsCard"));
     }
 
+    #[test]
+    fn navbar_is_public_layout_component_and_owns_transition_base_marker() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let lib_source = std::fs::read_to_string(crate_root.join("src/lib.rs")).unwrap();
+        let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
+        let public_source = lib_source
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let navbar_source = std::fs::read_to_string(crate_root.join("src/components/navbar.rs"))
+            .unwrap_or_default();
+
+        assert!(crate_root.join("src/components/navbar.rs").exists());
+        assert!(crate_root.join("src/components/navbar_styles.rs").exists());
+        assert!(components_mod.contains("mod navbar;"));
+        assert!(components_mod.contains("pub(crate) mod navbar_styles;"));
+        assert!(components_mod.contains("pub use navbar::*;"));
+        assert!(public_source.contains("Navbar"));
+        assert!(public_source.contains("G3Navbar"));
+        assert!(prelude_source.contains("Navbar"));
+        assert!(prelude_source.contains("G3Navbar"));
+        assert!(navbar_source.contains("#[cfg(feature = \"transitions\")]"));
+        assert!(navbar_source.contains("ROUTE_TRANSITION_BASE_CLASS"));
+    }
     #[test]
     fn transitions_feature_is_optional_and_drives_shell_and_body_markers() {
         let cargo = include_str!("../Cargo.toml");

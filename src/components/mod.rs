@@ -20,6 +20,8 @@ mod line;
 mod line_styles;
 mod modal;
 mod modal_styles;
+mod navbar;
+pub(crate) mod navbar_styles;
 mod segment;
 mod segment_styles;
 mod select;
@@ -46,6 +48,7 @@ pub use header::*;
 pub use info_button::*;
 pub use line::*;
 pub use modal::*;
+pub use navbar::*;
 pub use segment::*;
 pub use select::*;
 pub use settings_group::*;
@@ -70,6 +73,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         select::DESCRIPTOR,
         confirm_modal::DESCRIPTOR,
         settings_group::DESCRIPTOR,
+        navbar::DESCRIPTOR,
         header::DESCRIPTOR,
         body::DESCRIPTOR,
         fab::DESCRIPTOR,
@@ -93,6 +97,7 @@ pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
         select::PLAYGROUND,
         confirm_modal::PLAYGROUND,
         settings_group::PLAYGROUND,
+        navbar::PLAYGROUND,
         header::PLAYGROUND,
         body::PLAYGROUND,
         fab::PLAYGROUND,

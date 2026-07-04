@@ -19,12 +19,12 @@ pub use crate::{
 // Component aliases
 pub use crate::components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide,
-    FabVertical, RightSlot, Select, SelectOption, Separator, Setting, SettingAction, SettingLink,
-    SettingsGroup, Sheet, SheetButton, SheetPlacement,
+    FabVertical, Navbar, RightSlot, Select, SelectOption, Separator, Setting, SettingAction,
+    SettingLink, SettingsGroup, Sheet, SheetButton, SheetPlacement,
 };
 pub use crate::{
-    G3Card, G3ConfirmModal, G3Fab, G3FabButton, G3FabContainer, G3FabList, G3Modal, G3Select,
-    G3Separator, G3Setting, G3SettingAction, G3SettingLink, G3SettingsGroup, G3Sheet,
+    G3Card, G3ConfirmModal, G3Fab, G3FabButton, G3FabContainer, G3FabList, G3Modal, G3Navbar,
+    G3Select, G3Separator, G3Setting, G3SettingAction, G3SettingLink, G3SettingsGroup, G3Sheet,
     G3SheetButton, G3SheetPlacement,
 };
 
