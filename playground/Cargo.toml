@@ -1,0 +1,31 @@
+[package]
+name = "g3-ui-playground"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+dioxus = { version = "0.7.9", features = ["web"] }
+dioxus-code = { version = "0.1", features = ["runtime"] }
+g3-ui = { path = "..", features = ["playground"] }
+manganis = "0.7.9"
+
+[features]
+default = ["web"]
+web = ["dioxus/web"]
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[target.wasm32-unknown-unknown.dependencies.getrandom_v03]
+package = "getrandom"
+version = "0.3.3"
+features = ["wasm_js"]
+
+[target.wasm32-unknown-unknown.dependencies.getrandom_v02]
+package = "getrandom"
+version = "0.2"
+features = ["js"]

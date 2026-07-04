@@ -1,0 +1,1407 @@
+/* ======================================================
+ * g3_ui Theme CSS - Full Ionic Parity
+ * ====================================================== */
+
+/* -- Animatable custom properties -- */
+
+@font-face {
+    font-family: "G3 Provider Roboto";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2")
+        format("woff2");
+}
+
+@property --btn-g1 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: transparent;
+}
+@property --btn-g2 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: transparent;
+}
+@property --btn-g3 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: transparent;
+}
+
+@property --segment-indicator-left {
+    syntax: '<length>';
+    inherits: true;
+    initial-value: 0px;
+}
+@property --segment-indicator-width {
+    syntax: '<length>';
+    inherits: true;
+    initial-value: 0px;
+}
+
+/* -- Theme variables -- */
+
+:root {
+    --color-focused: #007aff;
+    --color-label-primary: #000000;
+    --color-label-secondary: #8f8f8f;
+    --color-card-border: #c7c7c7;
+    --color-bg: #f8f8f8;
+    --color-bg-secondary: #efeff4;
+    --color-card: #ffffff;
+    --color-card-inset: #fafafa;
+    --color-surface: #ffffff;
+    --color-control: #ffffff;
+    --color-text: #000000;
+    --color-text-secondary: #6b6b6b;
+    --color-shadow: rgba(0, 0, 0, 0.1);
+    --color-success: #37c964;
+    --color-warning: #ff9f0a;
+    --color-danger: #ff3b30;
+
+    --transition-normal: 0.25s;
+    --transition-fast: 0.15s;
+    --transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
+    --transition-md: ease-out;
+}
+
+[data-g3-mode="ios"] {
+    --color-bg: #f2f2f7;
+    --color-bg-secondary: #f2f2f7;
+    --color-card-border: rgba(60, 60, 67, 0.18);
+    --color-card: #ffffff;
+    --color-card-inset: rgba(118, 118, 128, 0.08);
+    --color-surface: #ffffff;
+    --color-control: rgba(118, 118, 128, 0.12);
+    --color-shadow: rgba(60, 60, 67, 0.12);
+    color-scheme: light;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+[data-g3-mode="md"] {
+    --color-bg: #f5f5f5;
+    --color-bg-secondary: #eeeeee;
+    --color-card: #ffffff;
+    --color-card-inset: #fafafa;
+    --color-surface: #ffffff;
+    --color-control: #ffffff;
+}
+
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+/* -- Button -- */
+
+.g3-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: all var(--transition-normal) var(--transition-md),
+                --btn-g1 var(--transition-normal) var(--transition-md),
+                --btn-g2 var(--transition-normal) var(--transition-md),
+                --btn-g3 var(--transition-normal) var(--transition-md);
+}
+
+.g3-btn-content {
+    margin: 0.125rem 0.5rem;
+}
+
+.g3-btn-content-start {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.g3-btn-start {
+    position: absolute;
+    left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.g3-btn-end-spacer {
+    display: none;
+}
+
+.g3-btn-label {
+    min-width: 0;
+    text-align: center;
+}
+
+/* iOS button */
+.g3-btn-ios {
+    min-height: 44px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    box-shadow: none;
+}
+.g3-btn-ios:hover {
+    filter: brightness(0.98);
+}
+.g3-btn-ios:active {
+    opacity: 0.72;
+    transform: scale(0.985);
+    transition: var(--transition-fast) var(--transition-ios);
+}
+
+/* Android button - no shadow, flat Material Design */
+.g3-btn-md {
+    border-radius: 0.25rem;
+    font-weight: 400;
+    font-size: 1rem;
+}
+.g3-btn-md:active {
+    transform: scale(0.98);
+    transition: var(--transition-fast) var(--transition-md);
+}
+
+/* -- Button Variants -- */
+
+.g3-btn-solid {
+    background: var(--color-focused);
+    color: white;
+}
+
+.g3-btn-outline {
+    background: transparent;
+    color: var(--color-focused);
+    border: 2px solid var(--color-focused);
+    padding: 0;
+}
+
+.g3-btn-clear {
+    background: transparent;
+    color: var(--color-focused);
+    padding: 0;
+}
+
+.g3-btn-ios.g3-btn-clear,
+.g3-btn-ios.g3-btn-outline {
+    font-weight: 600;
+}
+
+.g3-btn-ios.g3-btn-outline {
+    border-width: 1px;
+}
+
+.g3-btn-neutral {
+    background: white;
+    color: #1f1f1f;
+    border: 1px solid #747775;
+}
+
+/* -- Button Sizes -- */
+
+.g3-btn-sm {
+    font-size: 0.75rem;
+    padding: 0;
+    border-radius: 0.5rem;
+}
+
+.g3-btn-md-size {
+    font-size: 1rem;
+    padding: 0;
+}
+
+.g3-btn-lg {
+    font-size: 1.125rem;
+    padding: 0;
+}
+
+.g3-btn-ios.g3-btn-sm {
+    min-height: 32px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+.g3-btn-ios.g3-btn-md-size {
+    min-height: 44px;
+}
+.g3-btn-ios.g3-btn-lg {
+    min-height: 52px;
+    border-radius: 14px;
+}
+.g3-btn-md.g3-btn-sm {
+    min-height: 36px;
+    font-size: 0.875rem;
+}
+.g3-btn-md.g3-btn-md-size {
+    min-height: 36px;
+}
+.g3-btn-md.g3-btn-lg {
+    min-height: 48px;
+}
+.g3-btn.g3-btn-neutral {
+    font-family: "G3 Provider Roboto", Roboto, Arial, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    box-shadow: none;
+}
+
+.g3-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: grayscale(0.65);
+    box-shadow: none;
+}
+
+.g3-btn:disabled:hover,
+.g3-btn:disabled:active {
+    transform: none;
+    box-shadow: none;
+}
+
+.g3-btn-solid:disabled {
+    background: var(--color-card-border);
+    color: var(--color-text-secondary);
+}
+
+.g3-btn-outline:disabled,
+.g3-btn-clear:disabled {
+    color: var(--color-label-secondary);
+    border-color: var(--color-card-border);
+}
+
+.g3-btn-neutral:disabled {
+    background: #f1f3f4;
+    color: #8a8d91;
+    border-color: #dadce0;
+}
+
+/* Info button */
+.info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: 9999px;
+    background: transparent;
+    color: var(--color-focused);
+    cursor: pointer;
+}
+.info-btn-ios {
+    background: color-mix(in srgb, var(--color-focused) 8%, transparent);
+}
+.info-btn-md {
+    border-radius: 0.25rem;
+}
+
+/* Line */
+.g3-line {
+    display: block;
+    flex-shrink: 0;
+    border: none;
+    background: var(--color-card-border);
+}
+.g3-line-h {
+    width: 100%;
+    height: 1px;
+    min-height: 1px;
+}
+.g3-line-v {
+    width: 1px;
+    min-height: 1rem;
+}
+
+/* -- Segment / Tab Bar -- */
+
+/* iOS segment - pill-shaped active tab with a sliding checked indicator */
+.g3-segment-ios {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    background: var(
+        --ion-toolbar-segment-background,
+        var(--g3-segment-ios-background, rgba(60, 60, 67, 0.065))
+    );
+    border-radius: 9px;
+    padding: 2px;
+    overflow: hidden;
+    contain: paint;
+}
+.g3-segment-ios::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / var(--g3-segment-count, 3));
+    border-radius: 7px;
+    background: var(--ion-toolbar-segment-background-checked, var(--color-card));
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
+    transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
+    transition: transform var(--transition-normal) var(--transition-ios), width var(--transition-normal) var(--transition-ios);
+    will-change: transform, width;
+}
+.g3-segment-btn-ios {
+    border: 0;
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+    min-width: 70px;
+    min-height: 28px;
+    padding: 0 13px;
+    margin: 2px;
+    border-radius: 7px;
+    font-weight: 450;
+    font-size: 13px;
+    line-height: 28px;
+    color: var(--color-label-secondary);
+    transition: color 100ms linear, opacity 100ms linear;
+}
+.g3-segment-btn-ios + .g3-segment-btn-ios {
+    border-left: 1px solid color-mix(in srgb, var(--color-label-secondary) 22%, transparent);
+}
+.g3-segment-btn-ios[data-state="on"] {
+    border-left-color: transparent;
+    color: var(--color-label-primary);
+}
+.g3-segment-btn-ios[data-state="on"] + .g3-segment-btn-ios,
+.g3-segment-btn-ios:has(+ .g3-segment-btn-ios[data-state="on"]) {
+    border-left-color: transparent;
+}
+.g3-segment-btn-ios[data-disabled="true"] {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+.g3-segment-btn-ios:focus,
+.g3-segment-btn-md:focus {
+    outline: none;
+}
+.g3-segment-btn-ios:focus-visible,
+.g3-segment-btn-md:focus-visible {
+    outline: 2px solid var(--color-focused);
+    outline-offset: 2px;
+}
+
+/* Android segment - material tabs with a sliding bottom indicator */
+.g3-segment-md {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    border-bottom: 1px solid var(--color-card-border);
+    contain: paint;
+}
+.g3-segment-md::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: calc(100% / var(--g3-segment-count, 3));
+    height: 2px;
+    background: var(--color-focused);
+    transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
+    transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1), width 320ms cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, width;
+}
+.g3-segment-btn-md {
+    border: 0;
+    background: transparent;
+    appearance: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+    min-width: 90px;
+    min-height: 48px;
+    padding: 0 16px;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 40px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-label-secondary);
+    transition: color 0.15s linear 0s, opacity 0.15s linear 0s;
+}
+.g3-segment-btn-md[data-state="on"] {
+    color: var(--color-focused);
+}
+.g3-segment-btn-md[data-disabled="true"] {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+.g3-segment-standalone {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0.75rem;
+}
+.g3-segment-standalone .g3-segment-btn-md,
+.g3-segment-standalone .g3-segment-btn-ios {
+    min-width: 0;
+    padding-inline: 8px;
+}
+.g3-segment-toolbar {
+    margin-inline: auto;
+}
+.g3-segment-toolbar.g3-segment-ios {
+    width: auto;
+    max-width: calc(100% - 0.5rem);
+}
+.g3-segment-toolbar.g3-segment-ios .g3-segment-btn-ios {
+    min-height: 28px;
+    margin: 0;
+    line-height: 28px;
+}
+.g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios {
+    margin: 2px;
+}
+.g3-segment-toolbar.g3-segment-md {
+    width: 100%;
+    border-bottom: 0;
+}
+.g3-segment-route-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 1;
+    min-width: 0;
+}
+
+.g3-switch {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    border: 0;
+    padding: 0;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+.g3-switch-thumb {
+    pointer-events: none;
+}
+.g3-switch:focus-visible {
+    outline: 2px solid var(--color-focused);
+    outline-offset: 3px;
+}
+.g3-switch-ios {
+    width: 51px;
+    height: 31px;
+    border-radius: 15.5px;
+    background: #e9e9eb;
+    border: 1px solid rgba(60, 60, 67, 0.08);
+    position: relative;
+    transition: background var(--transition-normal) var(--transition-ios);
+}
+.g3-switch-ios.checked {
+    background: var(--color-focused);
+}
+.g3-switch-thumb-ios {
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: var(--color-card);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.12);
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left var(--transition-normal) var(--transition-ios);
+}
+.g3-switch-ios.checked .g3-switch-thumb-ios {
+    left: 22px;
+}
+
+/* Android switch */
+.g3-switch-md {
+    width: 52px;
+    height: 32px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--color-text) 32%, transparent);
+    position: relative;
+    transition: background var(--transition-normal) var(--transition-md);
+}
+.g3-switch-md.checked {
+    background: var(--color-focused);
+}
+.g3-switch-thumb-md {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-card);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.22);
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    transition: left var(--transition-normal) var(--transition-md), background var(--transition-normal) var(--transition-md);
+}
+.g3-switch-md.checked .g3-switch-thumb-md {
+    left: 24px;
+}
+.g3-switch-sm.g3-switch-ios {
+    width: 42px;
+    height: 26px;
+    border-radius: 13px;
+}
+.g3-switch-sm.g3-switch-ios .g3-switch-thumb-ios {
+    width: 22px;
+    height: 22px;
+}
+.g3-switch-sm.g3-switch-ios.checked .g3-switch-thumb-ios {
+    left: 18px;
+}
+.g3-switch-sm.g3-switch-md {
+    width: 44px;
+    height: 28px;
+    border-radius: 14px;
+}
+.g3-switch-sm.g3-switch-md .g3-switch-thumb-md {
+    width: 20px;
+    height: 20px;
+}
+.g3-switch-sm.g3-switch-md.checked .g3-switch-thumb-md {
+    left: 20px;
+}
+
+/* -- Card -- */
+
+.g3-card {
+    box-sizing: border-box;
+    position: relative;
+    min-width: 0;
+}
+
+/* iOS card */
+.g3-card-ios {
+    border-radius: 13px;
+    box-shadow: none;
+    border: 0.5px solid var(--color-card-border);
+    background: var(--color-card);
+    padding: 1rem;
+    margin-bottom: 0.625rem;
+    transition: transform var(--transition-normal) var(--transition-ios),
+                box-shadow var(--transition-normal) var(--transition-ios);
+}
+.g3-card-ios.g3-card-interactive:active:not(:has(.info-btn:active)) {
+    background: #f7f7f7;
+    transform: scale(0.995);
+}
+
+/* Selected state - visible highlight */
+.g3-card.selected,
+.g3-card-ios.selected {
+    border-color: var(--color-focused);
+    background: color-mix(in srgb, var(--color-focused) 4%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+}
+.g3-card-md.selected {
+    border-color: var(--color-focused);
+    background: color-mix(in srgb, var(--color-focused) 4%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+}
+
+/* Android card */
+.g3-card-md {
+    border-radius: 0.25rem;
+    box-shadow: 0 3px 8px var(--color-shadow);
+    background: var(--color-card);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: box-shadow var(--transition-normal) var(--transition-md);
+}
+.g3-card-md.g3-card-interactive:active:not(:has(.info-btn:active)) {
+    box-shadow: 0 1px 4px var(--color-shadow);
+    transform: scale(0.99);
+}
+
+.g3-card-inset {
+    border: 1px solid var(--color-card-border);
+    border-radius: 0.25rem;
+    background: var(--color-card-inset);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    box-shadow: none;
+}
+
+.g3-card-ios.g3-card-inset {
+    border: 0.5px solid var(--color-card-border);
+    border-radius: 13px;
+    background: var(--color-card-inset);
+}
+
+.g3-card-inset.selected {
+    border: 2px solid var(--color-focused);
+    background: color-mix(in srgb, var(--color-focused) 6%, white);
+    padding: calc(0.75rem - 1px);
+    box-shadow: none;
+}
+.g3-card-ios.g3-card-inset.selected {
+    border-radius: 13px;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+}
+
+/* -- Settings Card -- */
+
+.g3-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.g3-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.g3-card-body {
+    padding-block: 0.5rem;
+}
+.g3-card-control .g3-card-body {
+    padding-block: 0;
+}
+
+.g3-settings-group-inset {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+/* -- Text Utilities -- */
+
+.g3-message-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.g3-message-text-muted {
+    color: #4b5563;
+}
+
+.g3-message-text-subtle {
+    color: #6b7280;
+}
+
+.g3-message-text-success {
+    color: #15803d;
+}
+
+.g3-message-text-danger {
+    color: #dc2626;
+}
+
+.g3-message-text-warning {
+    color: #b45309;
+}
+
+.g3-status-pill {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--color-card);
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1rem;
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    outline: 1px solid #e5e7eb;
+}
+/* -- Sheet / Bottom Sheet -- */
+
+.g3-sheet {
+    box-sizing: border-box;
+    position: fixed;
+    z-index: 90;
+    background: var(--color-card);
+    visibility: visible;
+    transition: transform var(--transition-normal) var(--transition-md), translate var(--transition-normal) var(--transition-md), visibility 0s linear var(--transition-normal);
+}
+
+.g3-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0, 0, 0, 0.5);
+    transition: opacity var(--transition-normal) var(--transition-md);
+    will-change: opacity;
+}
+.g3-sheet-backdrop-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+.g3-sheet-backdrop-closed {
+    opacity: 0;
+    pointer-events: none;
+}
+.g3-sheet.g3-sheet-closed {
+    box-shadow: none;
+    pointer-events: none;
+    visibility: hidden;
+}
+.g3-sheet-open {
+    pointer-events: auto;
+    visibility: visible;
+    transition-delay: 0s;
+}
+.g3-sheet-content {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.g3-sheet-bottom .g3-sheet-content {
+    min-height: 14rem;
+    max-height: min(50dvh, 26rem);
+}
+.g3-sheet-left .g3-sheet-content,
+.g3-sheet-right .g3-sheet-content {
+    height: 100%;
+    max-height: 100dvh;
+}
+.g3-sheet-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+.g3-sheet-bottom {
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.g3-sheet-left {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(18rem, 72vw);
+}
+.g3-sheet-right {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(18rem, 72vw);
+}
+.g3-sheet-bottom.g3-sheet-closed {
+    transform: translateY(calc(100% + 2rem));
+}
+.g3-sheet-left.g3-sheet-closed {
+    transform: translateX(calc(-100% - 2rem));
+}
+.g3-sheet-right.g3-sheet-closed {
+    transform: translateX(calc(100% + 2rem));
+}
+.g3-sheet-bottom.g3-sheet-open {
+    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
+}
+.g3-sheet-left.g3-sheet-open,
+.g3-sheet-right.g3-sheet-open {
+    transform: translate(0, 0);
+}
+/* iOS sheet */
+.g3-sheet-ios {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
+    transition-timing-function: var(--transition-ios);
+}
+.g3-sheet-ios.g3-sheet-bottom {
+    border-radius: 16px 16px 0 0;
+}
+.g3-sheet-ios.g3-sheet-left {
+    border-radius: 0 16px 16px 0;
+}
+.g3-sheet-ios.g3-sheet-right {
+    border-radius: 16px 0 0 16px;
+}
+.g3-sheet-handle-wrap-ios {
+    padding-top: 0.25rem;
+    padding-bottom: 0;
+}
+.g3-sheet-handle-ios {
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: #c7c7cc;
+    margin: 0.25rem auto;
+}
+
+/* Android sheet */
+.g3-sheet-md {
+    background: var(--color-card);
+    box-shadow: 0 -2px 12px var(--color-shadow);
+    transition-timing-function: var(--transition-md);
+}
+.g3-sheet-md.g3-sheet-bottom {
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+.g3-sheet-md.g3-sheet-left {
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+.g3-sheet-md.g3-sheet-right {
+    border-radius: 0.5rem 0 0 0.5rem;
+}
+
+/* -- Spinner -- */
+
+@keyframes g3-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.g3-spinner-wrapper {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+}
+.g3-spinner-centered {
+    width: 100%;
+    min-height: 100%;
+    justify-content: center;
+}
+.g3-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--color-bg-secondary);
+    border-top-color: var(--color-focused);
+    border-radius: 50%;
+    animation: g3-spin 0.8s linear infinite;
+}
+
+/* -- Fab Bar -- */
+
+/* -- Fab -- */
+
+.g3-fab {
+    border: none;
+    padding: 0;
+}
+
+/* iOS Fab */
+.g3-fab-ios {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-focused);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform var(--transition-normal) var(--transition-ios),
+                box-shadow var(--transition-normal) var(--transition-ios);
+}
+.g3-fab-ios:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Android Fab */
+.g3-fab-md {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-focused);
+    color: white;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: box-shadow var(--transition-normal) var(--transition-md);
+}
+.g3-fab-md:active {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    transform: scale(0.97);
+}
+.g3-fab-ios:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Mini FAB - smaller size (40px) */
+.g3-fab-small {
+    width: 40px;
+    height: 40px;
+    font-size: 0.75rem;
+}
+
+/* Translucent FAB for iOS with backdrop-filter */
+.g3-fab-translucent {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: var(--color-focused);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Edge mode - overlap header/footer by reducing margin/padding */
+.g3-fab-edge {
+    transform: translateY(-50%);
+}
+
+/* -- FabList -- */
+
+/* Base fab list container */
+.g3-fab-list {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Platform-specific fab list styles */
+.g3-fab-list-ios {
+    align-items: center;
+}
+.g3-fab-list-md {
+    align-items: center;
+}
+
+/* FabList positioning by side */
+.g3-fab-list[aria-hidden="true"] {
+    pointer-events: none;
+}
+.g3-fab-list[aria-hidden="false"] {
+    pointer-events: auto;
+}
+.g3-fab-list-top {
+    bottom: calc(100% + 0.75rem);
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column-reverse;
+}
+.g3-fab-list-bottom {
+    top: calc(100% + 0.75rem);
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+}
+.g3-fab-list-start {
+    right: calc(100% + 0.75rem);
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: row-reverse;
+}
+.g3-fab-list-end {
+    left: calc(100% + 0.75rem);
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: row;
+}
+
+/* -- Modal -- */
+
+.g3-modal {
+    box-sizing: border-box;
+}
+
+/* iOS modal */
+.g3-modal-ios {
+    border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.22);
+    padding: 1.5rem;
+}
+
+/* Android modal */
+.g3-modal-md {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px var(--color-shadow);
+    padding: 1.25rem;
+}
+
+
+
+.g3-modal-overlay {
+    --g3-modal-debug-duration: 600ms;
+    animation: g3-modal-backdrop-in var(--g3-modal-debug-duration) ease-out both;
+}
+.g3-modal {
+    animation: g3-modal-in var(--g3-modal-debug-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+.g3-modal-overlay[data-state="closed"] {
+    animation: g3-modal-backdrop-out var(--g3-modal-debug-duration) ease-in both;
+}
+.g3-modal[data-state="closed"],
+.g3-modal-overlay[data-state="closed"] .g3-modal {
+    animation: g3-modal-out var(--g3-modal-debug-duration) ease-in both;
+}
+.g3-modal-card {
+    position: fixed;
+    z-index: 50;
+    top: 50%;
+    left: 50%;
+    width: min(320px, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+    border: 1px solid var(--color-card-border);
+    transform: translate(-50%, -50%);
+}
+.g3-modal-title {
+    width: auto;
+    margin: 0;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    font-weight: 700;
+}
+.g3-modal-description {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: 1.45;
+}
+.g3-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+.g3-modal-button {
+    min-width: 5.25rem;
+}
+.g3-modal-button-label {
+    margin: 0.125rem 0.5rem;
+}
+
+@keyframes g3-modal-backdrop-in {
+    from { background: rgba(0, 0, 0, 0); }
+    to { background: rgba(0, 0, 0, 0.7); }
+}
+
+@keyframes g3-modal-backdrop-out {
+    from { background: rgba(0, 0, 0, 0.7); }
+    to { background: rgba(0, 0, 0, 0); }
+}
+
+@keyframes g3-modal-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% + 0.75rem)) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes g3-modal-out {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, calc(-50% + 2rem)) scale(0.985);
+    }
+}
+/* -- Select -- */
+
+.g3-select-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-card-border);
+    border-radius: 0.25rem;
+    background: var(--color-card);
+    color: var(--color-text);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.g3-select-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.g3-select-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.g3-select-btn:focus-visible {
+    outline: 2px solid var(--color-focused);
+    outline-offset: 2px;
+}
+[data-g3-mode="ios"] .g3-select-btn {
+    border-radius: 10px;
+    background: var(--color-control);
+}
+.g3-select-option {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    text-align: center;
+    cursor: pointer;
+}
+.g3-select-option:hover,
+.g3-select-option:focus-visible {
+    background: color-mix(in srgb, var(--color-focused) 8%, transparent);
+    outline: none;
+}
+.g3-select-option-selected {
+    color: var(--color-focused);
+    font-weight: 600;
+}
+.g3-select-separator {
+    width: 100%;
+    height: 1px;
+    background: var(--color-card-border);
+}
+/* -- Field -- */
+
+.g3-field {
+    box-sizing: border-box;
+    width: 100%;
+    color: var(--color-text);
+    outline: none;
+}
+
+/* iOS field */
+.g3-field-ios {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 0.5px solid var(--color-card-border);
+    border-radius: 10px;
+    background: var(--color-control);
+    transition: border-color var(--transition-normal) var(--transition-ios),
+                box-shadow var(--transition-normal) var(--transition-ios);
+}
+.g3-field-ios:focus {
+    border-color: var(--color-focused);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focused) 12%, transparent);
+    background: var(--color-card);
+}
+
+/* Android field */
+.g3-field-md {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-card-border);
+    border-radius: 0.25rem;
+    background: var(--color-card);
+    transition: border-color var(--transition-normal) var(--transition-md),
+                box-shadow var(--transition-normal) var(--transition-md);
+}
+.g3-field-md:focus {
+    border-color: var(--color-focused);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 12%, transparent);
+}
+
+/* -- Header -- */
+
+.g3-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+}
+
+/* Platform-specific header styles */
+.g3-header-ios {
+    padding-top: env(safe-area-inset-top);
+    background: var(--color-card);
+    border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+    box-shadow: none;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.g3-header-md {
+    background: var(--color-card);
+    box-shadow: 0 2px 8px var(--color-shadow);
+}
+
+.g3-header-row {
+    display: grid;
+    grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
+    align-items: center;
+    min-height: 56px;
+    width: 100%;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+}
+.g3-header-ios .g3-header-row {
+    min-height: 44px;
+}
+.g3-header-md .g3-header-row {
+    min-height: 56px;
+}
+.g3-header-title {
+    grid-column: 2;
+    justify-self: center;
+    min-width: 0;
+    max-width: min(220px, calc(100vw - 7rem));
+    margin: 0;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.g3-header-ios .g3-header-title {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 22px;
+}
+.g3-header-md .g3-header-title {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 24px;
+}
+.g3-header-slot {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    min-height: 44px;
+}
+.g3-header-start-slot {
+    grid-column: 1;
+    justify-content: flex-start;
+}
+.g3-header-end-slot {
+    grid-column: 3;
+    justify-content: flex-end;
+}
+.g3-header-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    width: 100%;
+    padding: 0 0.5rem 0.5rem;
+    box-sizing: border-box;
+}
+.g3-header-ios .g3-header-toolbar {
+    min-height: 36px;
+    padding: 0 4px 4px;
+}
+.g3-header-md .g3-header-toolbar {
+    min-height: 48px;
+    padding: 0;
+}
+.g3-header-ios .g3-header-slot .g3-btn {
+    min-height: 32px;
+    height: 32px;
+    padding-inline: 0.5rem;
+    font-size: 17px;
+}
+
+.g3-header-end-text {
+    display: inline-flex;
+    align-items: center;
+    height: 1.75rem;
+    margin: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* -- Body / App Shell -- */
+
+.g3-app-shell {
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    overflow: hidden;
+    height: 100dvh;
+}
+
+.g3-shell-ios {
+    background: var(--color-bg);
+}
+
+.g3-shell-md {
+    background: var(--color-bg);
+}
+
+.g3-body {
+    flex: 1;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    position: relative;
+}
+
+.g3-body-ios {
+    background: var(--color-bg);
+}
+.g3-app-shell .g3-body-content,
+.g3-app-shell .overflow-x-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-gutter: auto;
+}
+.g3-shell-md .g3-body-content {
+    scrollbar-width: none;
+}
+.g3-app-shell .g3-body-content::-webkit-scrollbar,
+.g3-app-shell .overflow-x-scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.g3-body-md {
+    background: var(--color-bg);
+}
+
+/* -- Route Sheet Surface -- */
+
+
+/* -- Utility -- */
+
+.g3-fade-in {
+    animation: g3-fade-in 0.2s ease;
+}
+
+@keyframes g3-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
