@@ -171,6 +171,16 @@ mod tests {
             }
         }
     }
+    #[component]
+    fn MobilePrimitiveAliasSmokeApp() -> Element {
+        rsx! {
+            G3Badge { color: StatusColor::Accent, "Live" }
+            G3Avatar { fallback: "GP" }
+            G3Chip { selected: true, onclick: |_| {}, "Walking" }
+            G3Progress { value: 50.0 }
+            G3Skeleton { shape: SkeletonShape::Row }
+        }
+    }
 
     #[test]
     fn primitives_render() {
@@ -185,6 +195,10 @@ mod tests {
     #[test]
     fn layouts_render() {
         render(LayoutSmokeApp);
+    }
+    #[test]
+    fn mobile_primitive_aliases_render() {
+        render(MobilePrimitiveAliasSmokeApp);
     }
 
     #[test]
@@ -208,6 +222,11 @@ mod tests {
             component_descriptors()
                 .iter()
                 .any(|descriptor| descriptor.g3_name == "G3Navbar")
+        );
+        assert!(
+            component_descriptors()
+                .iter()
+                .any(|descriptor| descriptor.g3_name == "G3Badge / G3Avatar / G3Chip")
         );
     }
 
@@ -272,6 +291,26 @@ mod tests {
         assert!(stylesheet.contains("var(--color-success)"));
         assert!(stylesheet.contains("var(--color-warning)"));
         assert!(stylesheet.contains("var(--color-danger)"));
+    }
+    #[test]
+    fn mobile_primitives_keep_accessible_defaults() {
+        let primitives_source = include_str!("components/primitives.rs");
+
+        assert!(primitives_source.contains("unwrap_or(100.0)"));
+        assert!(primitives_source.contains("let label = alt"));
+        assert!(primitives_source.contains("or_else(|| fallback.clone())"));
+        assert!(primitives_source.contains("unwrap_or_else(|| \"Avatar\".to_string())"));
+        assert!(primitives_source.contains("aria_label: label"));
+    }
+
+    #[test]
+    fn mobile_primitive_motion_respects_reduced_motion() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(stylesheet.contains("@media (prefers-reduced-motion: reduce)"));
+        assert!(stylesheet.contains(".g3-progress-indeterminate .g3-progress-fill"));
+        assert!(stylesheet.contains(".g3-skeleton"));
+        assert!(stylesheet.contains("animation: none"));
     }
     #[test]
     fn button_styles_leave_layout_spacing_to_the_caller() {

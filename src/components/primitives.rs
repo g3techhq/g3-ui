@@ -91,13 +91,15 @@ pub fn Avatar(
     class: Option<String>,
 ) -> Element {
     let size = size.unwrap_or_default();
-    let alt = alt.unwrap_or_default();
-    let image_alt = alt.clone();
+    let label = alt
+        .or_else(|| fallback.clone())
+        .unwrap_or_else(|| "Avatar".to_string());
+    let image_alt = label.clone();
     let fallback = fallback.unwrap_or_default();
     let cls = merge_classes(format!("{} {}", s::AVATAR, size.class()), class.as_deref());
 
     rsx! {
-        span { class: cls, role: "img", aria_label: alt.clone(),
+        span { class: cls, role: "img", aria_label: label,
             if let Some(src) = src {
                 img { src, alt: image_alt }
             } else {
@@ -155,7 +157,7 @@ pub fn Chip(
 /// Linear progress indicator. `None` value renders an indeterminate bar.
 #[component]
 pub fn Progress(value: Option<f64>, max: Option<f64>, class: Option<String>) -> Element {
-    let max = max.unwrap_or(1.0).max(f64::EPSILON);
+    let max = max.unwrap_or(100.0).max(f64::EPSILON);
     let clamped_value = value.map(|value| value.clamp(0.0, max));
     let ratio = clamped_value.map(|value| value / max).unwrap_or(0.0);
     let progress_value = format!("{}%", ratio * 100.0);

@@ -1654,3 +1654,15 @@
         opacity: 1;
     }
 }
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-progress-indeterminate .g3-progress-fill,
+    .g3-skeleton {
+        animation: none;
+    }
+
+    .g3-progress-indeterminate .g3-progress-fill {
+        position: static;
+        width: 100%;
+    }
+}
