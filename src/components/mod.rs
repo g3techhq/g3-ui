@@ -7,6 +7,8 @@ mod button;
 pub(crate) mod button_styles;
 mod card;
 mod card_styles;
+mod checkbox;
+mod checkbox_styles;
 mod confirm_modal;
 mod fab;
 mod fab_styles;
@@ -43,6 +45,7 @@ pub use app_wrapper::*;
 pub use body::*;
 pub use button::*;
 pub use card::*;
+pub use checkbox::*;
 pub use confirm_modal::*;
 pub use fab::*;
 pub use field::*;
@@ -72,6 +75,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         line::DESCRIPTOR,
         segment::DESCRIPTOR,
         card::DESCRIPTOR,
+        checkbox::DESCRIPTOR,
         sheet::DESCRIPTOR,
         select::DESCRIPTOR,
         confirm_modal::DESCRIPTOR,
@@ -97,6 +101,7 @@ pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
         line::PLAYGROUND,
         segment::PLAYGROUND,
         card::PLAYGROUND,
+        checkbox::PLAYGROUND,
         sheet::PLAYGROUND,
         select::PLAYGROUND,
         confirm_modal::PLAYGROUND,

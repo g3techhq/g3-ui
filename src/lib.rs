@@ -10,13 +10,14 @@ mod descriptor;
 mod theme;
 
 pub use components::{
-    Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Chip, Field, InfoButton, Line,
-    LineOrientation, Progress, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner,
-    StatusColor, Toggle, ToggleSize,
+    Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Checkbox, Chip,
+    ControlLabelPlacement, Field, InfoButton, Line, LineOrientation, Progress, SegmentButton,
+    SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor, Toggle, ToggleSize,
 };
 
 pub use components::{
-    Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Chip as G3Chip, Field as G3Field,
+    Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox,
+    Chip as G3Chip, ControlLabelPlacement as G3ControlLabelPlacement, Field as G3Field,
     InfoButton as G3InfoButton, Line as G3Line, Progress as G3Progress,
     SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Skeleton as G3Skeleton,
     Spinner as G3Spinner, Toggle as G3Toggle, ToggleSize as G3ToggleSize,
@@ -290,6 +291,34 @@ mod tests {
         }
     }
 
+    #[test]
+    fn checkbox_is_public_registered_and_accessible() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let checkbox_source =
+            std::fs::read_to_string(crate_root.join("src/components/checkbox.rs"))
+                .unwrap_or_default();
+
+        assert!(crate_root.join("src/components/checkbox.rs").exists());
+        assert!(
+            crate_root
+                .join("src/components/checkbox_styles.rs")
+                .exists()
+        );
+        assert!(components_mod.contains("mod checkbox;"));
+        assert!(components_mod.contains("checkbox::DESCRIPTOR"));
+        assert!(public_source.contains("Checkbox"));
+        assert!(public_source.contains("G3Checkbox"));
+        assert!(public_source.contains("ControlLabelPlacement"));
+        assert!(checkbox_source.contains("role: \"checkbox\""));
+        assert!(checkbox_source.contains("aria_checked"));
+        assert!(checkbox_source.contains("indeterminate"));
+    }
     #[test]
     fn mobile_primitive_styles_use_shared_theme_tokens() {
         let stylesheet = include_str!("../assets/g3_ui.css");
