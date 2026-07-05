@@ -11,16 +11,16 @@ mod theme;
 
 pub use components::{
     Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Checkbox, Chip,
-    ControlLabelPlacement, Field, InfoButton, Line, LineOrientation, Progress, SegmentButton,
-    SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor, Toggle, ToggleSize,
+    ControlLabelPlacement, Field, InfoButton, Line, LineOrientation, Progress, Radio, RadioGroup,
+    SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor, Toggle, ToggleSize,
 };
 
 pub use components::{
     Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox,
     Chip as G3Chip, ControlLabelPlacement as G3ControlLabelPlacement, Field as G3Field,
-    InfoButton as G3InfoButton, Line as G3Line, Progress as G3Progress,
-    SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Skeleton as G3Skeleton,
-    Spinner as G3Spinner, Toggle as G3Toggle, ToggleSize as G3ToggleSize,
+    InfoButton as G3InfoButton, Line as G3Line, Progress as G3Progress, Radio as G3Radio,
+    RadioGroup as G3RadioGroup, SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup,
+    Skeleton as G3Skeleton, Spinner as G3Spinner, Toggle as G3Toggle, ToggleSize as G3ToggleSize,
 };
 
 pub use components::{
@@ -319,6 +319,35 @@ mod tests {
         assert!(checkbox_source.contains("aria_checked"));
         assert!(checkbox_source.contains("indeterminate"));
     }
+
+    #[test]
+    fn radio_group_is_public_registered_and_accessible() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let radio_source =
+            std::fs::read_to_string(crate_root.join("src/components/radio.rs")).unwrap_or_default();
+
+        assert!(crate_root.join("src/components/radio.rs").exists());
+        assert!(crate_root.join("src/components/radio_styles.rs").exists());
+        assert!(components_mod.contains("mod radio;"));
+        assert!(components_mod.contains("radio::DESCRIPTOR"));
+        for symbol in ["RadioGroup", "Radio", "G3RadioGroup", "G3Radio"] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from lib exports"
+            );
+        }
+        assert!(radio_source.contains("role: \"radiogroup\""));
+        assert!(radio_source.contains("role: \"radio\""));
+        assert!(radio_source.contains("aria_checked"));
+        assert!(radio_source.contains("allow_empty_selection"));
+    }
+
     #[test]
     fn mobile_primitive_styles_use_shared_theme_tokens() {
         let stylesheet = include_str!("../assets/g3_ui.css");

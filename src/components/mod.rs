@@ -26,6 +26,8 @@ mod navbar;
 pub(crate) mod navbar_styles;
 mod primitives;
 mod primitives_styles;
+mod radio;
+mod radio_styles;
 mod segment;
 mod segment_styles;
 mod select;
@@ -55,6 +57,7 @@ pub use line::*;
 pub use modal::*;
 pub use navbar::*;
 pub use primitives::*;
+pub use radio::*;
 pub use segment::*;
 pub use select::*;
 pub use settings_group::*;
@@ -82,6 +85,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         settings_group::DESCRIPTOR,
         navbar::DESCRIPTOR,
         primitives::DESCRIPTOR,
+        radio::DESCRIPTOR,
         header::DESCRIPTOR,
         body::DESCRIPTOR,
         fab::DESCRIPTOR,
@@ -108,6 +112,7 @@ pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
         settings_group::PLAYGROUND,
         navbar::PLAYGROUND,
         primitives::PLAYGROUND,
+        radio::PLAYGROUND,
         header::PLAYGROUND,
         body::PLAYGROUND,
         fab::PLAYGROUND,
