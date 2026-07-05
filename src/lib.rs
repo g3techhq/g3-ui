@@ -345,6 +345,8 @@ mod tests {
         assert!(radio_source.contains("role: \"radiogroup\""));
         assert!(radio_source.contains("role: \"radio\""));
         assert!(radio_source.contains("aria_checked"));
+        assert!(radio_source.contains("let tab_index = if is_disabled"));
+        assert!(!radio_source.contains("group_has_selection"));
         assert!(radio_source.contains("allow_empty_selection"));
     }
 

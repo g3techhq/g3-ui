@@ -50,7 +50,6 @@ pub fn Radio(
     let mode = use_component_mode(mode);
     let mut context = use_context::<RadioGroupContext>();
     let selected = (context.value)() == value;
-    let group_has_selection = !(context.value)().is_empty();
     let is_disabled = disabled.unwrap_or(false) || context.disabled;
     let placement = placement.unwrap_or_default();
     let mode_cls = match mode {
@@ -62,11 +61,7 @@ pub fn Radio(
         class.as_deref(),
     );
     let aria_checked = selected.to_string();
-    let tab_index = if selected || !group_has_selection {
-        "0"
-    } else {
-        "-1"
-    };
+    let tab_index = if is_disabled { "-1" } else { "0" };
 
     rsx! {
         button {
