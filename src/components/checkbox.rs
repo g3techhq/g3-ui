@@ -3,6 +3,9 @@
 use super::checkbox_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_CHECKBOX_ID: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum ControlLabelPlacement {
@@ -27,6 +30,7 @@ impl ControlLabelPlacement {
 #[component]
 pub fn Checkbox(
     mut checked: Signal<bool>,
+    id: Option<String>,
     label: String,
     indeterminate: Option<bool>,
     disabled: Option<bool>,
@@ -63,7 +67,8 @@ pub fn Checkbox(
         ),
         class.as_deref(),
     );
-    let control_id = checkbox_id(&label);
+    let generated_id = use_hook(next_checkbox_id);
+    let control_id = checkbox_base_id(id, &generated_id);
     let hint_id = format!("{control_id}-hint");
     let error_id = format!("{control_id}-error");
     let aria_checked = if is_indeterminate {
@@ -80,6 +85,7 @@ pub fn Checkbox(
             role: "checkbox",
             aria_checked,
             aria_invalid: has_error.to_string(),
+            id: control_id.clone(),
             aria_describedby,
             disabled: is_disabled,
             onclick: move |_| {
@@ -106,21 +112,14 @@ pub fn Checkbox(
     }
 }
 
-fn checkbox_id(label: &str) -> String {
-    let mut slug = String::with_capacity(label.len());
-    for ch in label.chars() {
-        if ch.is_ascii_alphanumeric() {
-            slug.push(ch.to_ascii_lowercase());
-        } else if !slug.ends_with('-') {
-            slug.push('-');
-        }
-    }
-    let slug = slug.trim_matches('-');
-    if slug.is_empty() {
-        "g3-checkbox".to_string()
-    } else {
-        format!("g3-checkbox-{slug}")
-    }
+fn next_checkbox_id() -> String {
+    let id = NEXT_CHECKBOX_ID.fetch_add(1, Ordering::Relaxed);
+    format!("g3-checkbox-{id}")
+}
+
+fn checkbox_base_id(id: Option<String>, fallback_id: &str) -> String {
+    id.filter(|value| !value.is_empty())
+        .unwrap_or_else(|| fallback_id.to_string())
 }
 
 fn describedby(
@@ -216,5 +215,23 @@ mod tests {
     #[test]
     fn checkbox_renders() {
         render(CheckboxSmokeApp);
+    }
+
+    #[test]
+    fn checkbox_base_id_prefers_explicit_id() {
+        assert_eq!(
+            checkbox_base_id(Some("terms-opt-in".to_string()), "g3-checkbox-99"),
+            "terms-opt-in"
+        );
+    }
+
+    #[test]
+    fn checkbox_generated_fallback_ids_are_distinct_and_label_independent() {
+        let first = next_checkbox_id();
+        let second = next_checkbox_id();
+
+        assert_ne!(first, second);
+        assert_eq!(checkbox_base_id(None, &first), first);
+        assert_eq!(checkbox_base_id(None, &second), second);
     }
 }

@@ -652,6 +652,7 @@
 .g3-checkbox-label {
     grid-area: label;
     min-width: 0;
+    overflow-wrap: anywhere;
     color: var(--color-text);
     font-size: 1rem;
     line-height: 1.25rem;
@@ -660,6 +661,7 @@
 .g3-checkbox-hint,
 .g3-checkbox-error {
     min-width: 0;
+    overflow-wrap: anywhere;
     font-size: 0.8125rem;
     line-height: 1.125rem;
 }
