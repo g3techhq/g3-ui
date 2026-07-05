@@ -226,10 +226,25 @@ mod tests {
         assert!(
             component_descriptors()
                 .iter()
-                .any(|descriptor| descriptor.g3_name == "G3Badge / G3Avatar / G3Chip")
+                .any(|descriptor| descriptor.g3_name
+                    == "G3Badge / G3Avatar / G3Chip / G3Progress / G3Skeleton")
         );
     }
 
+    #[test]
+    fn playground_source_include_uses_explicit_manifest_relative_paths() {
+        let descriptor_source = include_str!("descriptor.rs");
+
+        let primitives_source = include_str!("components/primitives.rs");
+
+        assert!(descriptor_source.contains("source: $source:literal"));
+        assert!(
+            descriptor_source
+                .contains("include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/\", $source))")
+        );
+        assert!(primitives_source.contains("source: \"src/components/primitives.rs\""));
+        assert!(!descriptor_source.contains("include_str!(file!())"));
+    }
     #[test]
     fn mobile_primitives_are_public_and_registered() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

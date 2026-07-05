@@ -47,4 +47,5 @@ crate::g3_playground! {
     g3_name: "G3SheetButton",
     description: "Information button that opens a sheet.",
     demo: SheetButtonPlaygroundDemo,
+    source: "src/components/sheet_button.rs",
 }

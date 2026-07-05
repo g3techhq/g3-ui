@@ -94,4 +94,5 @@ crate::g3_playground! {
     g3_name: "G3ConfirmModal",
     description: "Accessible confirmation dialog.",
     demo: ConfirmModalPlaygroundDemo,
+    source: "src/components/confirm_modal.rs",
 }

@@ -70,4 +70,5 @@ crate::g3_playground! {
     g3_name: "G3AppWrapper",
     description: "Root app shell and mode provider.",
     demo: AppWrapperPlaygroundDemo,
+    source: "src/components/app_wrapper.rs",
 }

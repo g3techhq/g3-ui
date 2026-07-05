@@ -54,4 +54,5 @@ crate::g3_playground! {
     g3_name: "G3Line",
     description: "Horizontal or vertical separator.",
     demo: LinePlaygroundDemo,
+    source: "src/components/line.rs",
 }

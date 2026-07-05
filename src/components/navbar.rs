@@ -55,4 +55,5 @@ crate::g3_playground! {
     g3_name: "G3Navbar",
     description: "Persistent navigation layout that owns the base transition layer.",
     demo: NavbarPlaygroundDemo,
+    source: "src/components/navbar.rs",
 }

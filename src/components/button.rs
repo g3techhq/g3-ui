@@ -132,4 +132,5 @@ crate::g3_playground! {
     g3_name: "G3Button",
     description: "Ionic-style action button with solid, outline, clear, and neutral variants.",
     demo: ButtonPlaygroundDemo,
+    source: "src/components/button.rs",
 }

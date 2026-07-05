@@ -324,4 +324,5 @@ crate::g3_playground! {
     g3_name: "G3Fab",
     description: "Floating action button container, button, and expandable list.",
     demo: FabPlaygroundDemo,
+    source: "src/components/fab.rs",
 }

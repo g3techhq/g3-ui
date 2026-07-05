@@ -92,4 +92,5 @@ crate::g3_playground! {
     g3_name: "G3Body",
     description: "Scrollable page body with loading and error boundaries.",
     demo: BodyPlaygroundDemo,
+    source: "src/components/body.rs",
 }

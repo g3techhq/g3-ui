@@ -95,4 +95,5 @@ crate::g3_playground! {
     g3_name: "G3Header",
     description: "App header with start, title, end, and toolbar slots.",
     demo: HeaderPlaygroundDemo,
+    source: "src/components/header.rs",
 }

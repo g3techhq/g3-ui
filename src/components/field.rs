@@ -159,4 +159,5 @@ crate::g3_playground! {
     g3_name: "G3Field",
     description: "Text input with optional validation limits and debounce.",
     demo: FieldPlaygroundDemo,
+    source: "src/components/field.rs",
 }

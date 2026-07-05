@@ -77,7 +77,8 @@ macro_rules! g3_playground {
         name: $name:literal,
         g3_name: $g3_name:literal,
         description: $description:literal,
-        demo: $demo:ident $(,)?
+        demo: $demo:ident,
+        source: $source:literal $(,)?
     ) => {
         pub const DESCRIPTOR: $crate::ComponentDescriptor = $crate::ComponentDescriptor {
             name: $name,
@@ -89,7 +90,7 @@ macro_rules! g3_playground {
         pub const PLAYGROUND: $crate::ComponentPlaygroundDemo = $crate::ComponentPlaygroundDemo {
             descriptor: DESCRIPTOR,
             render: __g3_playground_render,
-            source: include_str!(file!()),
+            source: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $source)),
         };
 
         #[cfg(feature = "playground")]

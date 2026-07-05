@@ -258,9 +258,10 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Primitives",
-    g3_name: "G3Badge / G3Avatar / G3Chip",
+    g3_name: "G3Badge / G3Avatar / G3Chip / G3Progress / G3Skeleton",
     description: "Compact mobile badges, avatars, chips, progress, and skeletons.",
     demo: PrimitivesPlaygroundDemo,
+    source: "src/components/primitives.rs",
 }
 
 #[cfg(test)]

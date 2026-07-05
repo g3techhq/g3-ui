@@ -136,4 +136,5 @@ crate::g3_playground! {
     g3_name: "G3SegmentGroup",
     description: "Single-select segmented control.",
     demo: SegmentPlaygroundDemo,
+    source: "src/components/segment.rs",
 }

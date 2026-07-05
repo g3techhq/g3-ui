@@ -126,4 +126,5 @@ crate::g3_playground! {
     g3_name: "G3Card",
     description: "Ionic-style content card with title, body, and optional right slot.",
     demo: CardPlaygroundDemo,
+    source: "src/components/card.rs",
 }
