@@ -10,14 +10,16 @@ mod descriptor;
 mod theme;
 
 pub use components::{
-    Button, ButtonSize, ButtonStyle, Field, InfoButton, Line, LineOrientation, SegmentButton,
-    SegmentGroup, Spinner, Toggle, ToggleSize,
+    Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Chip, Field, InfoButton, Line,
+    LineOrientation, Progress, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner,
+    StatusColor, Toggle, ToggleSize,
 };
 
 pub use components::{
-    Button as G3Button, Field as G3Field, InfoButton as G3InfoButton, Line as G3Line,
-    SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Spinner as G3Spinner,
-    Toggle as G3Toggle, ToggleSize as G3ToggleSize,
+    Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Chip as G3Chip, Field as G3Field,
+    InfoButton as G3InfoButton, Line as G3Line, Progress as G3Progress,
+    SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Skeleton as G3Skeleton,
+    Spinner as G3Spinner, Toggle as G3Toggle, ToggleSize as G3ToggleSize,
 };
 
 pub use components::{
@@ -209,6 +211,68 @@ mod tests {
         );
     }
 
+    #[test]
+    fn mobile_primitives_are_public_and_registered() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
+
+        assert!(crate_root.join("src/components/primitives.rs").exists());
+        assert!(
+            crate_root
+                .join("src/components/primitives_styles.rs")
+                .exists()
+        );
+        assert!(components_mod.contains("mod primitives;"));
+        assert!(components_mod.contains("mod primitives_styles;"));
+        assert!(components_mod.contains("primitives::DESCRIPTOR"));
+        for symbol in [
+            "Badge",
+            "Avatar",
+            "Chip",
+            "Progress",
+            "Skeleton",
+            "SkeletonShape",
+            "StatusColor",
+            "G3Badge",
+            "G3Avatar",
+            "G3Chip",
+            "G3Progress",
+            "G3Skeleton",
+        ] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from lib exports"
+            );
+            assert!(
+                prelude_source.contains(symbol),
+                "{symbol} missing from prelude"
+            );
+        }
+    }
+
+    #[test]
+    fn mobile_primitive_styles_use_shared_theme_tokens() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        for selector in [
+            ".g3-badge",
+            ".g3-avatar",
+            ".g3-chip",
+            ".g3-progress",
+            ".g3-skeleton",
+        ] {
+            assert!(stylesheet.contains(selector), "{selector} style missing");
+        }
+        assert!(stylesheet.contains("var(--color-focused)"));
+        assert!(stylesheet.contains("var(--color-success)"));
+        assert!(stylesheet.contains("var(--color-warning)"));
+        assert!(stylesheet.contains("var(--color-danger)"));
+    }
     #[test]
     fn button_styles_leave_layout_spacing_to_the_caller() {
         let stylesheet = include_str!("../assets/g3_ui.css");

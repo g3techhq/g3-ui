@@ -8,12 +8,13 @@ pub use dioxus::prelude::*;
 
 // Components
 pub use crate::components::{
-    Button, ButtonSize, ButtonStyle, Field, InfoButton, Line, LineOrientation, SegmentButton,
-    SegmentGroup, Spinner, Toggle, ToggleSize,
+    Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Chip, Field, InfoButton, Line,
+    LineOrientation, Progress, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner,
+    StatusColor, Toggle, ToggleSize,
 };
 pub use crate::{
-    G3Button, G3Field, G3InfoButton, G3Line, G3SegmentButton, G3SegmentGroup, G3Spinner, G3Toggle,
-    G3ToggleSize,
+    G3Avatar, G3Badge, G3Button, G3Chip, G3Field, G3InfoButton, G3Line, G3Progress,
+    G3SegmentButton, G3SegmentGroup, G3Skeleton, G3Spinner, G3Toggle, G3ToggleSize,
 };
 
 // Component aliases

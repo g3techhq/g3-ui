@@ -1405,3 +1405,252 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* -- Mobile primitives -- */
+
+.g3-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    min-height: 1.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.g3-badge-neutral {
+    background: var(--color-control);
+    color: var(--color-text);
+    border-color: var(--color-card-border);
+}
+
+.g3-badge-accent {
+    background: color-mix(in srgb, var(--color-focused) 14%, transparent);
+    color: var(--color-focused);
+    border-color: color-mix(in srgb, var(--color-focused) 28%, transparent);
+}
+
+.g3-badge-success {
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    color: var(--color-success);
+    border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+}
+
+.g3-badge-warning {
+    background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+    color: var(--color-warning);
+    border-color: color-mix(in srgb, var(--color-warning) 32%, transparent);
+}
+
+.g3-badge-danger {
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+    color: var(--color-danger);
+    border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+}
+
+.g3-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-control);
+    color: var(--color-text);
+    border: 1px solid var(--color-card-border);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.g3-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.g3-avatar-sm {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+}
+
+.g3-avatar-md {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: 0.875rem;
+}
+
+.g3-avatar-lg {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1rem;
+}
+
+.g3-avatar-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.g3-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    min-height: 2rem;
+    max-width: 100%;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-card-border);
+    background: var(--color-control);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--transition-fast) var(--transition-md),
+                border-color var(--transition-fast) var(--transition-md),
+                color var(--transition-fast) var(--transition-md),
+                opacity var(--transition-fast) var(--transition-md),
+                transform var(--transition-fast) var(--transition-md);
+}
+
+.g3-chip:active {
+    transform: scale(0.98);
+}
+
+.g3-chip-selected {
+    background: color-mix(in srgb, var(--color-focused) 12%, var(--color-control));
+    color: var(--color-focused);
+    border-color: color-mix(in srgb, var(--color-focused) 38%, var(--color-card-border));
+}
+
+.g3-chip-disabled,
+.g3-chip:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
+
+.g3-chip-start,
+.g3-chip-end {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.g3-chip-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.g3-progress {
+    display: block;
+    width: 100%;
+    height: 0.25rem;
+    overflow: hidden;
+    border-radius: 999px;
+}
+
+.g3-progress-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--color-focused) 14%, var(--color-control));
+}
+
+.g3-progress-fill {
+    width: var(--g3-progress-value, 0%);
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-focused);
+    transition: width var(--transition-normal) var(--transition-md);
+}
+
+.g3-progress-indeterminate .g3-progress-fill {
+    position: absolute;
+    width: 40%;
+    animation: g3-progress-indeterminate 1.2s ease-in-out infinite;
+}
+
+.g3-skeleton {
+    display: block;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    background: color-mix(in srgb, var(--color-text) 10%, var(--color-control));
+    animation: g3-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.g3-skeleton-text {
+    width: 100%;
+    height: 0.875rem;
+    border-radius: 999px;
+}
+
+.g3-skeleton-block {
+    width: 100%;
+    min-height: 5rem;
+}
+
+.g3-skeleton-avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+}
+
+.g3-skeleton-row {
+    width: 100%;
+    height: 2.75rem;
+}
+
+.g3-primitives-demo-stack {
+    display: grid;
+    gap: 1rem;
+    width: 100%;
+}
+
+.g3-primitives-demo-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.g3-primitives-demo-skeletons {
+    display: grid;
+    gap: 0.5rem;
+}
+
+@keyframes g3-progress-indeterminate {
+    0% {
+        transform: translateX(-120%);
+    }
+    100% {
+        transform: translateX(280%);
+    }
+}
+
+@keyframes g3-skeleton-pulse {
+    0%,
+    100% {
+        opacity: 0.62;
+    }
+    50% {
+        opacity: 1;
+    }
+}
