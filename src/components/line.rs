@@ -37,13 +37,16 @@ pub fn Line(orientation: Option<LineOrientation>, class: Option<String>) -> Elem
 #[cfg(feature = "playground")]
 #[component]
 pub fn LinePlaygroundDemo() -> Element {
-    let mut vertical = use_signal(|| false);
+    let vertical = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: vertical(), onchange: move |_| vertical.toggle() } span { "Vertical" } }
+                crate::Checkbox {
+                    checked: vertical,
+                    label: "Vertical".to_string(),
+                }
             },
-            div { class: if vertical() { "h-24" } else { "w-full" },
+            div { class: if vertical() { "g3-line-demo-surface g3-line-demo-surface-vertical" } else { "g3-line-demo-surface g3-line-demo-surface-horizontal" },
                 Line { orientation: if vertical() { LineOrientation::Vertical } else { LineOrientation::Horizontal } }
             }
         }

@@ -38,8 +38,6 @@ mod segment;
 mod segment_styles;
 mod select;
 mod select_styles;
-mod settings_group;
-mod settings_group_styles;
 mod sheet;
 mod sheet_button;
 mod sheet_styles;
@@ -71,7 +69,6 @@ pub use radio::*;
 pub use refresher::*;
 pub use segment::*;
 pub use select::*;
-pub use settings_group::*;
 pub use sheet::*;
 pub use sheet_button::*;
 pub use spinner::*;
@@ -98,7 +95,6 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         sheet::DESCRIPTOR,
         select::DESCRIPTOR,
         confirm_modal::DESCRIPTOR,
-        settings_group::DESCRIPTOR,
         navbar::DESCRIPTOR,
         primitives::DESCRIPTOR,
         radio::DESCRIPTOR,
@@ -129,7 +125,6 @@ pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
         sheet::PLAYGROUND,
         select::PLAYGROUND,
         confirm_modal::PLAYGROUND,
-        settings_group::PLAYGROUND,
         navbar::PLAYGROUND,
         primitives::PLAYGROUND,
         radio::PLAYGROUND,
