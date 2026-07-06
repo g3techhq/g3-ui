@@ -11,16 +11,20 @@ mod theme;
 
 pub use components::{
     Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Checkbox, Chip,
-    ControlLabelPlacement, Field, InfoButton, Line, LineOrientation, Progress, Radio, RadioGroup,
-    SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor, Toggle, ToggleSize,
+    ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider, ItemKind, Line,
+    LineOrientation, List, ListLines, Progress, Radio, RadioGroup, SegmentButton, SegmentGroup,
+    Skeleton, SkeletonShape, Spinner, StatusColor, SwipeAction, SwipeItem, SwipeSide, SwipeState,
+    Toggle, ToggleSize,
 };
 
 pub use components::{
     Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox,
     Chip as G3Chip, ControlLabelPlacement as G3ControlLabelPlacement, Field as G3Field,
-    InfoButton as G3InfoButton, Line as G3Line, Progress as G3Progress, Radio as G3Radio,
-    RadioGroup as G3RadioGroup, SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup,
-    Skeleton as G3Skeleton, Spinner as G3Spinner, Toggle as G3Toggle, ToggleSize as G3ToggleSize,
+    InfoButton as G3InfoButton, Item as G3Item, ItemDivider as G3ItemDivider, Line as G3Line,
+    List as G3List, Progress as G3Progress, Radio as G3Radio, RadioGroup as G3RadioGroup,
+    SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Skeleton as G3Skeleton,
+    Spinner as G3Spinner, SwipeAction as G3SwipeAction, SwipeItem as G3SwipeItem,
+    Toggle as G3Toggle, ToggleSize as G3ToggleSize,
 };
 
 pub use components::{
@@ -351,6 +355,57 @@ mod tests {
         assert!(radio_source.contains("next_radio_value"));
         assert!(!radio_source.contains("let tab_index = if is_disabled"));
         assert!(!radio_source.contains("group_has_selection"));
+    }
+
+    #[test]
+    fn list_family_is_public_registered_and_uses_swipe_contracts() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
+        let list_source =
+            std::fs::read_to_string(crate_root.join("src/components/list.rs")).unwrap_or_default();
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(crate_root.join("src/components/list.rs").exists());
+        assert!(crate_root.join("src/components/list_styles.rs").exists());
+        assert!(components_mod.contains("mod list;"));
+        assert!(components_mod.contains("list::DESCRIPTOR"));
+        for symbol in [
+            "List",
+            "Item",
+            "ItemDivider",
+            "SwipeItem",
+            "SwipeAction",
+            "ListLines",
+            "ItemKind",
+            "ItemDetail",
+            "SwipeSide",
+            "SwipeState",
+            "G3List",
+            "G3Item",
+            "G3SwipeItem",
+            "G3SwipeAction",
+        ] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from lib exports"
+            );
+            assert!(
+                prelude_source.contains(symbol),
+                "{symbol} missing from prelude"
+            );
+        }
+        assert!(list_source.contains("elastic_swipe_offset"));
+        assert!(list_source.contains("should_full_swipe"));
+        assert!(list_source.contains("LONG_PRESS_MS"));
+        assert!(stylesheet.contains("--g3-swipe-offset"));
+        assert!(stylesheet.contains("--g3-swipe-progress"));
+        assert!(stylesheet.contains("--g3-swipe-action-width"));
     }
 
     #[test]

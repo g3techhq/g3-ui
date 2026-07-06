@@ -20,6 +20,8 @@ mod info_button;
 mod info_button_styles;
 mod line;
 mod line_styles;
+mod list;
+mod list_styles;
 mod modal;
 mod modal_styles;
 mod navbar;
@@ -54,6 +56,7 @@ pub use field::*;
 pub use header::*;
 pub use info_button::*;
 pub use line::*;
+pub use list::*;
 pub use modal::*;
 pub use navbar::*;
 pub use primitives::*;
@@ -76,6 +79,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         spinner::DESCRIPTOR,
         info_button::DESCRIPTOR,
         line::DESCRIPTOR,
+        list::DESCRIPTOR,
         segment::DESCRIPTOR,
         card::DESCRIPTOR,
         checkbox::DESCRIPTOR,
@@ -103,6 +107,7 @@ pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
         spinner::PLAYGROUND,
         info_button::PLAYGROUND,
         line::PLAYGROUND,
+        list::PLAYGROUND,
         segment::PLAYGROUND,
         card::PLAYGROUND,
         checkbox::PLAYGROUND,
