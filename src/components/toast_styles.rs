@@ -15,3 +15,6 @@ pub const COLOR_DANGER: &str = "g3-toast-danger";
 pub const MESSAGE: &str = "g3-toast-message";
 pub const ACTION: &str = "g3-toast-action";
 pub const CLOSE: &str = "g3-toast-close";
+
+pub const CLOSE_ICON: &str = "g3-toast-close-icon";
+pub const TIMER: &str = "g3-toast-timer";

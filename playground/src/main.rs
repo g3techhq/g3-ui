@@ -71,6 +71,7 @@ fn Playground() -> Element {
     let selected_index = use_signal(|| 0_usize);
     let mode_index = use_signal(|| 0_usize);
     let mut selector_open = use_signal(|| false);
+    let source_value = use_signal(Vec::<String>::new);
     let mut theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
     let selected = demos
         .get(selected_index())
@@ -90,6 +91,7 @@ fn Playground() -> Element {
         .copied()
         .map(|theme| SelectOption::from((theme.label(), theme.label())))
         .collect::<Vec<_>>();
+    let selected_source = playground_demo_source(selected.source);
 
     rsx! {
         g3_ui::G3ThemeProvider { mode: active_mode,
@@ -99,10 +101,11 @@ fn Playground() -> Element {
                 "data-playground-theme": active_theme.as_str(),
                 header { class: "playground-header",
                     div { class: "playground-header-row",
-                        button {
+                        g3_ui::Button {
+                            style: g3_ui::ButtonStyle::Clear,
+                            size: g3_ui::ButtonSize::Sm,
+                            aria_label: "Open component menu".to_string(),
                             class: "playground-menu-button",
-                            r#type: "button",
-                            aria_label: "Open component menu",
                             onclick: move |_| selector_open.set(true),
                             span { class: "playground-menu-icon", aria_hidden: "true",
                                 span {}
@@ -152,11 +155,12 @@ fn Playground() -> Element {
                             }
                         }
                     }
-                    details { class: "source-panel",
-                        summary { "Source" }
-                        Code {
-                            src: SourceCode::new(Language::Rust, selected.source.to_string()),
-                            theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                    g3_ui::AccordionGroup { value: source_value, class: "source-panel",
+                        g3_ui::AccordionItem { value: "source".to_string(), label: "Source".to_string(),
+                            Code {
+                                src: SourceCode::new(Language::Rust, selected_source.clone()),
+                                theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                            }
                         }
                     }
                 }
@@ -165,6 +169,40 @@ fn Playground() -> Element {
     }
 }
 
+fn playground_demo_source(source: &str) -> String {
+    let Some(marker_index) = source.find("PlaygroundDemo") else {
+        return source.trim().to_string();
+    };
+    let function_start = source[..marker_index]
+        .rfind("pub fn")
+        .unwrap_or(marker_index);
+    let start = source[..function_start]
+        .rfind("#[component]")
+        .unwrap_or(function_start);
+    let Some(open_brace) = source[function_start..]
+        .find('{')
+        .map(|index| function_start + index)
+    else {
+        return source[start..].trim().to_string();
+    };
+
+    let mut depth = 0_i32;
+    for (index, ch) in source[open_brace..].char_indices() {
+        match ch {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    let end = open_brace + index + ch.len_utf8();
+                    return source[start..end].trim().to_string();
+                }
+            }
+            _ => {}
+        }
+    }
+
+    source[start..].trim().to_string()
+}
 #[component]
 fn PlaygroundNav(
     demos: Vec<ComponentPlaygroundDemo>,
@@ -172,7 +210,7 @@ fn PlaygroundNav(
     mut selector_open: Signal<bool>,
 ) -> Element {
     rsx! {
-        nav { class: "playground-nav",
+        g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
             for (idx, demo) in demos.iter().copied().enumerate() {
                 ComponentNavButton { demo, idx, selected_index, selector_open }
             }
@@ -198,21 +236,40 @@ fn ComponentNavButton(
     mut selector_open: Signal<bool>,
 ) -> Element {
     let is_selected = selected_index() == idx;
-    let class = if is_selected {
-        "nav-button nav-button-selected"
-    } else {
-        "nav-button nav-button-default"
-    };
 
     rsx! {
-        button {
-            class,
-            r#type: "button",
+        g3_ui::Item {
+            kind: g3_ui::ItemKind::Button,
+            selected: is_selected,
+            label: demo.descriptor.name.to_string(),
             onclick: move |_| {
                 selected_index.set(idx);
                 selector_open.set(false);
             },
-            "{demo.descriptor.name}"
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::playground_demo_source;
+
+    #[test]
+    fn source_panel_extracts_only_playground_demo_function() {
+        let source = r#"
+fn helper() {}
+#[component]
+pub fn ButtonPlaygroundDemo() -> Element {
+    rsx! { div { "Button" } }
+}
+crate::g3_playground! { name: "Button" }
+"#;
+
+        let extracted = playground_demo_source(source);
+
+        assert!(extracted.contains("pub fn ButtonPlaygroundDemo"));
+        assert!(extracted.contains("Button"));
+        assert!(!extracted.contains("fn helper"));
+        assert!(!extracted.contains("g3_playground"));
     }
 }

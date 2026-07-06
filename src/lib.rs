@@ -14,7 +14,8 @@ pub use components::{
     Checkbox, Chip, ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider,
     ItemKind, Line, LineOrientation, List, ListLines, Progress, Radio, RadioGroup, Refresher,
     RefresherState, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor,
-    SwipeAction, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle, ToggleSize,
+    SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle,
+    ToggleSize,
 };
 
 pub use components::{
@@ -30,17 +31,15 @@ pub use components::{
 
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
-    FabVertical, Navbar, RightSlot, Select, SelectOption, Separator, Setting, SettingAction,
-    SettingLink, SettingsGroup, Sheet, SheetButton, SheetPlacement,
+    FabVertical, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
+    SheetButton, SheetPlacement,
 };
 
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
     FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
-    Select as G3Select, Separator as G3Separator, Setting as G3Setting,
-    SettingAction as G3SettingAction, SettingLink as G3SettingLink,
-    SettingsGroup as G3SettingsGroup, Sheet as G3Sheet, SheetButton as G3SheetButton,
-    SheetPlacement as G3SheetPlacement,
+    NavbarTab as G3NavbarTab, NavbarTabBar as G3NavbarTabBar, Select as G3Select, Sheet as G3Sheet,
+    SheetButton as G3SheetButton, SheetPlacement as G3SheetPlacement,
 };
 
 pub use components::{AppWrapper, Body, Header};
@@ -111,10 +110,9 @@ mod tests {
         let select_value = use_signal(|| "One".to_string());
 
         rsx! {
-            G3Card { title: "Card", "Body" }
-            G3Card {
-                G3SettingsGroup { inset: true,
-                    G3Setting { label: "Setting", value: "Value" }
+            G3Card { title: "Card", "Body" }            G3Card {
+                G3List { inset: true,
+                    G3Item { label: "Setting", metadata: "Value" }
                 }
             }
             G3Card {
@@ -134,19 +132,10 @@ mod tests {
                 value: select_value,
                 options: vec![SelectOption::from("One"), SelectOption::from(("Two", "Second"))],
                 onchange: |_| {},
-            }
-            G3SettingsGroup {
-                G3Setting { label: "Setting", value: "Value" }
-                G3Separator {}
-                G3SettingAction {
-                    label: "Action",
-                    onclick: |_| {},
-                }
-                G3Separator {}
-                G3SettingLink {
-                    label: "Link",
-                    href: "https://example.com",
-                }
+            }            G3List { inset: true,
+                G3Item { label: "Setting", metadata: "Value" }
+                G3Item { kind: ItemKind::Button, label: "Action", onclick: |_| {} }
+                G3Item { kind: ItemKind::Link("https://example.com".to_string()), label: "Link" }
             }
             G3Fab {
                 G3FabButton { onclick: |_| {}, "Fab" }
@@ -359,6 +348,21 @@ mod tests {
     }
 
     #[test]
+    fn mobile_polish_regressions_are_guarded_in_css() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
+        assert!(stylesheet.contains(".g3-switch-ios.checked .g3-switch-thumb-ios"));
+        assert!(stylesheet.contains("transform: translate3d(20px, -50%, 0)"));
+        assert!(stylesheet.contains("right: 1rem;"));
+        assert!(stylesheet.contains(".g3-list .g3-item-row:last-child .g3-item::after"));
+        assert!(stylesheet.contains("backface-visibility: hidden"));
+        assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-sheet-content"));
+        assert!(playground_stylesheet.contains("overflow-y: auto"));
+        assert!(stylesheet.contains(".g3-checkbox:active:not(:disabled)"));
+        assert!(stylesheet.contains("padding: 0.625rem 0.75rem"));
+        assert!(stylesheet.contains("overflow: hidden"));
+    }
+    #[test]
     fn feedback_disclosure_and_refresh_components_are_public_registered() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let components_mod =
@@ -408,8 +412,12 @@ mod tests {
         }
 
         assert!(stylesheet.contains("--g3-refresher-pull"));
+        let toast_source = include_str!("components/toast.rs");
         assert!(stylesheet.contains(".g3-toast"));
+        assert!(stylesheet.contains(".g3-toast-close-icon"));
         assert!(stylesheet.contains(".g3-accordion-group"));
+        assert!(toast_source.contains("dioxus_icons::lucide::X"));
+        assert!(toast_source.contains("duration_ms.unwrap_or(3000)"));
     }
     #[test]
     fn list_family_is_public_registered_and_uses_swipe_contracts() {
@@ -439,6 +447,7 @@ mod tests {
             "ItemKind",
             "ItemDetail",
             "SwipeSide",
+            "SwipeBehavior",
             "SwipeState",
             "G3List",
             "G3Item",
@@ -456,10 +465,90 @@ mod tests {
         }
         assert!(list_source.contains("elastic_swipe_offset"));
         assert!(list_source.contains("should_full_swipe"));
+        assert!(list_source.contains("SwipeBehavior::Reveal"));
+        assert!(list_source.contains("on_swipe_action"));
         assert!(list_source.contains("LONG_PRESS_MS"));
         assert!(stylesheet.contains("--g3-swipe-offset"));
         assert!(stylesheet.contains("--g3-swipe-progress"));
         assert!(stylesheet.contains("--g3-swipe-action-width"));
+    }
+    #[test]
+    fn followup_mobile_polish_contracts_are_enforced() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
+        let playground_source =
+            std::fs::read_to_string(crate_root.join("playground/src/main.rs")).unwrap();
+        let toast_source = include_str!("components/toast.rs");
+        let toast_styles = include_str!("components/toast_styles.rs");
+        let accordion_source = include_str!("components/accordion.rs");
+        let line_source = include_str!("components/line.rs");
+        let list_source = include_str!("components/list.rs");
+
+        assert!(toast_source.contains("s::TIMER"));
+        assert!(toast_styles.contains("g3-toast-timer"));
+        assert!(stylesheet.contains(".g3-toast-timer"));
+        assert!(accordion_source.contains("value: Option<Signal<Vec<String>>>"));
+        assert!(accordion_source.contains("use_signal(Vec::<String>::new)"));
+        assert!(!accordion_source.contains("hidden: !expanded"));
+        assert!(stylesheet.contains("grid-template-rows: 0fr"));
+        assert!(stylesheet.contains("grid-template-rows: 1fr"));
+        assert!(stylesheet.contains(".g3-accordion-panel[data-state=\"closed\"]"));
+        assert!(stylesheet.contains("user-select: none"));
+        assert!(stylesheet.contains("-webkit-user-select: none"));
+        assert!(stylesheet.contains(".g3-list > .g3-swipe-item:last-child .g3-item::after"));
+        assert!(list_source.contains("DEFAULT_ACTIVATE_ACTION_WIDTH"));
+        assert!(stylesheet.contains(".g3-navbar-md .g3-navbar-tab-selected"));
+        assert!(stylesheet.contains(".g3-navbar {"));
+        assert!(stylesheet.contains("flex-direction: column"));
+        assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
+        assert!(stylesheet.contains(".g3-navbar-tab:active:not(:disabled)::before"));
+        assert!(playground_source.contains("g3_ui::List"));
+        assert!(!playground_source.contains("nav-button"));
+        assert!(!playground_stylesheet.contains(".nav-button"));
+        assert!(playground_source.contains("g3_ui::AccordionGroup"));
+        assert!(playground_source.contains("playground_demo_source"));
+        assert!(!playground_source.contains("details { class: \"source-panel\""));
+        assert!(stylesheet.contains("color-mix(in srgb, var(--color-label-secondary"));
+        assert!(stylesheet.contains("min-width: 1px"));
+        assert!(line_source.contains("crate::Checkbox"));
+        assert!(line_source.contains("g3-line-demo-surface-horizontal"));
+        assert!(stylesheet.contains(".g3-line-demo-surface-horizontal"));
+    }
+
+    #[test]
+    fn settings_group_is_removed_from_public_surface() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
+
+        assert!(!crate_root.join("src/components/settings_group.rs").exists());
+        assert!(
+            !crate_root
+                .join("src/components/settings_group_styles.rs")
+                .exists()
+        );
+        assert!(!components_mod.contains("settings_group"));
+        for symbol in [
+            "SettingsGroup",
+            "SettingAction",
+            "SettingLink",
+            "G3SettingsGroup",
+        ] {
+            assert!(
+                !public_source.contains(symbol),
+                "{symbol} should not be public"
+            );
+            assert!(
+                !prelude_source.contains(symbol),
+                "{symbol} should not be in prelude"
+            );
+        }
     }
 
     #[test]
@@ -607,7 +696,9 @@ mod tests {
         assert!(stylesheet.contains("border-radius: 0.25rem"));
         assert!(stylesheet.contains(".g3-card-control"));
         assert!(stylesheet.contains(".g3-card-inset"));
-        assert!(stylesheet.contains(".g3-settings-group-inset"));
+        assert!(stylesheet.contains(".g3-list-inset"));
+        assert!(stylesheet.contains(".g3-item"));
+        assert!(!stylesheet.contains(".g3-settings-group-inset"));
     }
 
     #[test]
@@ -661,12 +752,30 @@ mod tests {
         assert!(components_mod.contains("mod navbar;"));
         assert!(components_mod.contains("pub(crate) mod navbar_styles;"));
         assert!(components_mod.contains("pub use navbar::*;"));
-        assert!(public_source.contains("Navbar"));
-        assert!(public_source.contains("G3Navbar"));
-        assert!(prelude_source.contains("Navbar"));
-        assert!(prelude_source.contains("G3Navbar"));
+        for symbol in [
+            "Navbar",
+            "NavbarTab",
+            "NavbarTabBar",
+            "G3Navbar",
+            "G3NavbarTab",
+            "G3NavbarTabBar",
+        ] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from lib exports"
+            );
+            assert!(
+                prelude_source.contains(symbol),
+                "{symbol} missing from prelude"
+            );
+        }
         assert!(navbar_source.contains("#[cfg(feature = \"transitions\")]"));
+        let stylesheet = include_str!("../assets/g3_ui.css");
         assert!(navbar_source.contains("ROUTE_TRANSITION_BASE_CLASS"));
+        assert!(navbar_source.contains("pub fn NavbarTabBar"));
+        assert!(navbar_source.contains("role: \"tab\""));
+        assert!(stylesheet.contains(".g3-navbar-tab-bar"));
+        assert!(stylesheet.contains(".g3-navbar-tab-selected"));
     }
     #[test]
     fn transitions_feature_is_optional_and_drives_shell_and_body_markers() {

@@ -12,9 +12,23 @@ pub enum SwipeSide {
     End,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum SwipeBehavior {
+    #[default]
+    Reveal,
+    Activate,
+    Dismiss,
+}
+
 pub const DEFAULT_SWIPE_ACTION_WIDTH: f64 = 88.0;
+pub const DEFAULT_ACTIVATE_ACTION_WIDTH: f64 = 136.0;
 pub const FULL_SWIPE_MARGIN: f64 = 30.0;
 pub const ELASTIC_FACTOR: f64 = 0.55;
+pub const ACTIVATE_SWIPE_RATIO: f64 = 0.48;
+pub const ACTIVATE_SOFTENING_RATIO: f64 = 0.72;
+pub const DISMISS_SWIPE_OFFSET: f64 = 1200.0;
+pub const DISMISS_EXIT_MS: u64 = 220;
+pub const DISMISS_COLLAPSE_MS: u64 = 180;
 pub const LONG_PRESS_MS: u64 = 500;
 pub const LONG_PRESS_CANCEL_DISTANCE: f64 = 8.0;
 
@@ -63,17 +77,59 @@ pub fn is_swipe_side_available(
     }
 }
 
+pub fn reveal_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
+    raw_offset.clamp(-action_width.max(1.0), action_width.max(1.0))
+}
+
+pub fn activate_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
+    let limit = action_width.max(1.0);
+    let sign = raw_offset.signum();
+    let distance = raw_offset.abs();
+    let soften_start = limit * ACTIVATE_SOFTENING_RATIO;
+    if distance <= soften_start {
+        raw_offset
+    } else {
+        let extra = distance - soften_start;
+        let remaining = (limit - soften_start).max(1.0);
+        sign * (soften_start + remaining * (extra / (extra + remaining)))
+    }
+}
+
+pub fn should_activate_swipe(offset: f64, action_width: f64) -> bool {
+    offset.abs() >= action_width.max(1.0) * ACTIVATE_SWIPE_RATIO
+}
+
+pub fn swipe_offset_for_behavior(
+    raw_offset: f64,
+    action_width: f64,
+    has_start_actions: bool,
+    has_end_actions: bool,
+    behavior: SwipeBehavior,
+) -> f64 {
+    if !is_swipe_side_available(raw_offset, has_start_actions, has_end_actions) {
+        return 0.0;
+    }
+    match behavior {
+        SwipeBehavior::Reveal => reveal_swipe_offset(raw_offset, action_width),
+        SwipeBehavior::Activate => activate_swipe_offset(raw_offset, action_width),
+        SwipeBehavior::Dismiss => elastic_swipe_offset(raw_offset, action_width),
+    }
+}
+
+#[allow(dead_code)]
 pub fn constrained_swipe_offset(
     raw_offset: f64,
     action_width: f64,
     has_start_actions: bool,
     has_end_actions: bool,
 ) -> f64 {
-    if is_swipe_side_available(raw_offset, has_start_actions, has_end_actions) {
-        elastic_swipe_offset(raw_offset, action_width)
-    } else {
-        0.0
-    }
+    swipe_offset_for_behavior(
+        raw_offset,
+        action_width,
+        has_start_actions,
+        has_end_actions,
+        SwipeBehavior::Dismiss,
+    )
 }
 
 fn swipe_state(offset: f64, action_width: f64, full: bool) -> Option<SwipeState> {
@@ -94,6 +150,23 @@ fn settled_swipe_offset(offset: f64, action_width: f64) -> f64 {
         }
     } else {
         0.0
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum DismissPhase {
+    Idle,
+    Exiting,
+    Collapsing,
+}
+
+impl DismissPhase {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Idle => "idle",
+            Self::Exiting => "exiting",
+            Self::Collapsing => "collapsing",
+        }
     }
 }
 
@@ -258,14 +331,20 @@ pub fn SwipeItem(
     start_actions: Option<Element>,
     end_actions: Option<Element>,
     action_width: Option<f64>,
+    behavior: Option<SwipeBehavior>,
     disabled: Option<bool>,
     class: Option<String>,
     on_drag: Option<Callback<SwipeState>>,
     on_full_swipe: Option<Callback<SwipeState>>,
+    on_swipe_action: Option<Callback<SwipeState>>,
     on_long_press: Option<Callback<()>>,
     children: Element,
 ) -> Element {
-    let action_width = action_width.unwrap_or(DEFAULT_SWIPE_ACTION_WIDTH);
+    let behavior = behavior.unwrap_or_default();
+    let action_width = action_width.unwrap_or(match behavior {
+        SwipeBehavior::Activate => DEFAULT_ACTIVATE_ACTION_WIDTH,
+        SwipeBehavior::Reveal | SwipeBehavior::Dismiss => DEFAULT_SWIPE_ACTION_WIDTH,
+    });
     let has_start_actions = start_actions.is_some();
     let has_end_actions = end_actions.is_some();
     let disabled = disabled.unwrap_or(false);
@@ -274,10 +353,12 @@ pub fn SwipeItem(
     let mut offset = use_signal(|| 0.0);
     let mut dragging = use_signal(|| false);
     let mut long_press_generation = use_signal(|| 0_u64);
+    let mut dismiss_phase = use_signal(|| DismissPhase::Idle);
     let on_drag_move = on_drag;
     let on_long_press_down = on_long_press;
     let on_drag_up = on_drag;
     let on_full_swipe_up = on_full_swipe;
+    let on_swipe_action_up = on_swipe_action;
     let start_actions_hidden = offset() <= 0.0;
     let end_actions_hidden = offset() >= 0.0;
     let start_actions_inert = start_actions_hidden.then(|| "".to_string());
@@ -287,8 +368,10 @@ pub fn SwipeItem(
         div {
             class: merge_classes(s::SWIPE_ITEM, class.as_deref()),
             style: format!("--g3-swipe-offset: {}px; --g3-swipe-progress: {}; --g3-swipe-action-width: {}px;", offset(), swipe_ratio(offset(), action_width).abs().min(1.4), action_width),
+            "data-behavior": match behavior { SwipeBehavior::Reveal => "reveal", SwipeBehavior::Activate => "activate", SwipeBehavior::Dismiss => "dismiss" },
+            "data-state": dismiss_phase().as_str(),
             onpointerdown: move |event: PointerEvent| {
-                if disabled { return; }
+                if disabled || dismiss_phase() != DismissPhase::Idle { return; }
                 dragging.set(true);
                 start_x.set(event.client_coordinates().x);
                 start_y.set(event.client_coordinates().y);
@@ -303,45 +386,74 @@ pub fn SwipeItem(
                 }
             },
             onpointermove: move |event: PointerEvent| {
-                if !dragging() || disabled { return; }
+                if !dragging() || disabled || dismiss_phase() != DismissPhase::Idle { return; }
                 let dx = event.client_coordinates().x - start_x();
                 let dy = event.client_coordinates().y - start_y();
                 if should_cancel_long_press(dx, dy) {
                     long_press_generation.with_mut(|value| *value += 1);
                 }
-                let next = constrained_swipe_offset(dx, action_width, has_start_actions, has_end_actions);
+                let next = swipe_offset_for_behavior(dx, action_width, has_start_actions, has_end_actions, behavior);
                 offset.set(next);
-                if let Some(state) = swipe_state(next, action_width, should_full_swipe(next, action_width)) {
+                let active = match behavior {
+                    SwipeBehavior::Reveal | SwipeBehavior::Dismiss => should_full_swipe(next, action_width),
+                    SwipeBehavior::Activate => should_activate_swipe(next, action_width),
+                };
+                if let Some(state) = swipe_state(next, action_width, active) {
                     if let Some(on_drag) = on_drag_move {
                         on_drag.call(state);
                     }
                 }
             },
             onpointerup: move |_| {
-                if disabled { return; }
+                if disabled || dismiss_phase() != DismissPhase::Idle { return; }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 let current = offset();
-                if should_full_swipe(current, action_width) && is_swipe_side_available(current, has_start_actions, has_end_actions) {
-                    if let Some(state) = swipe_state(current, action_width, true) {
-                        if let Some(on_drag) = on_drag_up { on_drag.call(state); }
-                        if let Some(on_full_swipe) = on_full_swipe_up { on_full_swipe.call(state); }
+                match behavior {
+                    SwipeBehavior::Reveal => {
+                        offset.set(settled_swipe_offset(current, action_width));
                     }
-                    offset.set(0.0);
-                } else {
-                    offset.set(settled_swipe_offset(current, action_width));
+                    SwipeBehavior::Activate => {
+                        if should_activate_swipe(current, action_width) && is_swipe_side_available(current, has_start_actions, has_end_actions) {
+                            if let Some(state) = swipe_state(current, action_width, true) {
+                                if let Some(on_drag) = on_drag_up { on_drag.call(state); }
+                                if let Some(on_swipe_action) = on_swipe_action_up { on_swipe_action.call(state); }
+                            }
+                        }
+                        offset.set(0.0);
+                    }
+                    SwipeBehavior::Dismiss => {
+                        if should_full_swipe(current, action_width) && is_swipe_side_available(current, has_start_actions, has_end_actions) {
+                            if let Some(state) = swipe_state(current, action_width, true) {
+                                if let Some(on_drag) = on_drag_up { on_drag.call(state); }
+                                let direction = if state.side == SwipeSide::Start { 1.0 } else { -1.0 };
+                                offset.set(direction * DISMISS_SWIPE_OFFSET);
+                                dismiss_phase.set(DismissPhase::Exiting);
+                                spawn(async move {
+                                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS)).await;
+                                    dismiss_phase.set(DismissPhase::Collapsing);
+                                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS)).await;
+                                    if let Some(on_full_swipe) = on_full_swipe_up { on_full_swipe.call(state); }
+                                });
+                            }
+                        } else {
+                            offset.set(0.0);
+                        }
+                    }
                 }
             },
             onpointercancel: move |_| {
+                if dismiss_phase() != DismissPhase::Idle { return; }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 offset.set(0.0);
             },
             onpointerleave: move |_| {
+                if dismiss_phase() != DismissPhase::Idle { return; }
                 if !dragging() { return; }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
-                offset.set(settled_swipe_offset(offset(), action_width));
+                offset.set(if behavior == SwipeBehavior::Reveal { settled_swipe_offset(offset(), action_width) } else { 0.0 });
             },
             if let Some(start_actions) = start_actions { div { class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_START), aria_hidden: start_actions_hidden.to_string(), inert: start_actions_inert, {start_actions} } }
             if let Some(end_actions) = end_actions { div { class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_END), aria_hidden: end_actions_hidden.to_string(), inert: end_actions_inert, {end_actions} } }
@@ -353,7 +465,8 @@ pub fn SwipeItem(
 #[cfg(feature = "playground")]
 #[component]
 pub fn ListPlaygroundDemo() -> Element {
-    let mut last_action = use_signal(|| "Swipe or long-press the middle row".to_string());
+    let mut last_action = use_signal(|| "Long-press the reveal row or swipe any row".to_string());
+    let mut dismiss_visible = use_signal(|| true);
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
@@ -361,22 +474,45 @@ pub fn ListPlaygroundDemo() -> Element {
                 List { inset: true,
                     ItemDivider { "Round" }
                     Item { start: rsx! { crate::Avatar { fallback: "MW" } }, label: "Matthew Weisfeld", description: "Walking 18 holes", metadata: "9:40" }
-                    SwipeItem {
-                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, onclick: move |_| last_action.set("Pinned".to_string()), "Pin" } },
-                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, onclick: move |_| last_action.set("Removed".to_string()), "Delete" } },
-                        on_full_swipe: move |state: SwipeState| last_action.set(format!("Full swipe: {:?}", state.side)),
-                        on_long_press: move |_| last_action.set("Long press".to_string()),
-                        Item { kind: ItemKind::Button, label: "Swipe actions", description: "Drag left or right", onclick: |_| {} }
-                    }
                     Item { kind: ItemKind::Link("https://example.com".to_string()), label: "Link row", description: "Opens a destination" }
                     Item { kind: ItemKind::Button, label: "Button row", description: "Tap action", detail: ItemDetail::Show, onclick: move |_| last_action.set("Tapped button row".to_string()) }
+                    ItemDivider { "Swipe" }
+                    SwipeItem {
+                        behavior: SwipeBehavior::Reveal,
+                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, onclick: move |_| last_action.set("Pinned from revealed action".to_string()), "Pin" } },
+                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, onclick: move |_| last_action.set("Deleted from revealed action".to_string()), "Delete" } },
+                        on_long_press: move |_| last_action.set("Long press fired".to_string()),
+                        Item { kind: ItemKind::Button, label: "Reveal actions", description: "Long press or expose side buttons", onclick: |_| {} }
+                    }
+                    SwipeItem {
+                        behavior: SwipeBehavior::Activate,
+                        action_width: DEFAULT_ACTIVATE_ACTION_WIDTH,
+                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, "Archive" } },
+                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Flag" } },
+                        on_swipe_action: move |state: SwipeState| last_action.set(format!("Quick swipe activated: {:?}", state.side)),
+                        Item { label: "Quick swipe", description: "Stops early and emits the side action" }
+                    }
+                    if dismiss_visible() {
+                        SwipeItem {
+                            behavior: SwipeBehavior::Dismiss,
+                            action_width: 96.0,
+                            end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Remove" } },
+                            on_full_swipe: move |state: SwipeState| {
+                                last_action.set(format!("Dismissed by {:?} swipe", state.side));
+                                dismiss_visible.set(false);
+                            },
+                            Item { label: "Dismiss swipe", description: "Full swipe removes the row" }
+                        }
+                    }
                 }
                 crate::Badge { color: crate::StatusColor::Neutral, "{last_action()}" }
+                if !dismiss_visible() {
+                    crate::Button { style: crate::ButtonStyle::Clear, onclick: move |_| dismiss_visible.set(true), "Restore dismiss row" }
+                }
             }
         }
     }
 }
-
 crate::g3_playground! {
     name: "List",
     g3_name: "G3List / G3Item",
@@ -429,6 +565,64 @@ mod tests {
     }
 
     #[test]
+    fn reveal_swipe_offsets_stop_at_action_width() {
+        assert_eq!(
+            swipe_offset_for_behavior(188.0, 88.0, true, true, SwipeBehavior::Reveal),
+            88.0
+        );
+        assert_eq!(
+            swipe_offset_for_behavior(-188.0, 88.0, true, true, SwipeBehavior::Reveal),
+            -88.0
+        );
+    }
+
+    #[test]
+    fn activate_swipe_offsets_slow_toward_limit() {
+        let offset = swipe_offset_for_behavior(400.0, 88.0, true, true, SwipeBehavior::Activate);
+        assert!(offset > 44.0);
+        assert!(offset < 88.0);
+    }
+
+    #[test]
+    fn activate_swipe_follows_farther_before_soft_limit() {
+        assert_eq!(activate_swipe_offset(80.0, 136.0), 80.0);
+        let midpoint = activate_swipe_offset(136.0, 136.0);
+        assert!(midpoint > 110.0);
+        assert!(midpoint < 136.0);
+        let long_drag = activate_swipe_offset(400.0, 136.0);
+        assert!(long_drag > 130.0);
+        assert!(long_drag < 136.0);
+    }
+
+    #[test]
+    fn dismiss_swipe_delays_callback_until_exit_and_gap_collapse() {
+        let source = include_str!("list.rs");
+        let stylesheet = include_str!("../../assets/g3_ui.css");
+
+        assert!(source.contains("DismissPhase::Exiting"));
+        assert!(source.contains("DISMISS_EXIT_MS"));
+        assert!(source.contains("DISMISS_COLLAPSE_MS"));
+        assert!(source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS))"));
+        assert!(
+            source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS))")
+        );
+        assert!(
+            source
+                .find("offset.set(direction * DISMISS_SWIPE_OFFSET)")
+                .unwrap()
+                < source.find("on_full_swipe.call(state)").unwrap()
+        );
+        assert!(stylesheet.contains(".g3-swipe-item[data-state=\"exiting\"]"));
+        assert!(stylesheet.contains(".g3-swipe-item[data-state=\"collapsing\"]"));
+        assert!(stylesheet.contains("max-height"));
+    }
+
+    #[test]
+    fn activate_swipe_uses_early_threshold() {
+        assert!(!should_activate_swipe(39.0, 88.0));
+        assert!(should_activate_swipe(44.0, 88.0));
+    }
+    #[test]
     fn constrained_swipe_offset_ignores_missing_action_sides() {
         assert_eq!(constrained_swipe_offset(44.0, 88.0, false, true), 0.0);
         assert_eq!(constrained_swipe_offset(-44.0, 88.0, true, false), 0.0);
@@ -445,6 +639,14 @@ mod tests {
         assert!(stylesheet.contains(
             ":not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none)"
         ));
+        assert!(
+            stylesheet.contains(".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item")
+        );
+        assert!(
+            stylesheet.contains(
+                ".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item::after"
+            )
+        );
     }
 
     #[test]

@@ -63,7 +63,7 @@ fn next_accordion_values(current: &[String], item_value: &str, multiple: bool) -
 
 #[component]
 pub fn AccordionGroup(
-    value: Signal<Vec<String>>,
+    value: Option<Signal<Vec<String>>>,
     id: Option<String>,
     multiple: Option<bool>,
     class: Option<String>,
@@ -72,6 +72,8 @@ pub fn AccordionGroup(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    let internal_value = use_signal(Vec::<String>::new);
+    let value = value.unwrap_or(internal_value);
     let generated_id = use_hook(next_accordion_group_id);
     let id_prefix = accordion_group_id(id, &generated_id);
     let mode_cls = match mode {
@@ -154,8 +156,10 @@ pub fn AccordionItem(
                 id: panel_id,
                 class: s::PANEL,
                 role: "region",
+                "data-state": state,
+                aria_hidden: (!expanded).to_string(),
                 aria_labelledby: button_id,
-                hidden: (!expanded).then(|| "".to_string()),
+                inert: (!expanded).then(|| "".to_string()),
                 div { class: s::CONTENT, {children} }
             }
         }

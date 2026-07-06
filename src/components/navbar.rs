@@ -3,6 +3,8 @@
 use super::navbar_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+#[cfg(feature = "playground")]
+use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Trophy};
 #[cfg(feature = "transitions")]
 use dx_route_transitions::ROUTE_TRANSITION_BASE_CLASS;
 
@@ -27,10 +29,55 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
     }
 }
 
+#[component]
+pub fn NavbarTabBar(class: Option<String>, children: Element) -> Element {
+    rsx! {
+        nav { class: merge_classes(s::TAB_BAR, class.as_deref()), role: "tablist", {children} }
+    }
+}
+
+#[component]
+pub fn NavbarTab(
+    label: String,
+    selected: Option<bool>,
+    disabled: Option<bool>,
+    icon: Option<Element>,
+    class: Option<String>,
+    onclick: Option<Callback<Event<MouseData>>>,
+) -> Element {
+    let selected = selected.unwrap_or(false);
+    let disabled = disabled.unwrap_or(false);
+    let selected_cls = if selected { s::TAB_SELECTED } else { "" };
+    let disabled_cls = if disabled { s::TAB_DISABLED } else { "" };
+
+    rsx! {
+        button {
+            class: merge_classes(format!("{} {selected_cls} {disabled_cls}", s::TAB), class.as_deref()),
+            r#type: "button",
+            role: "tab",
+            disabled,
+            aria_selected: selected.to_string(),
+            onclick: move |event| {
+                if disabled {
+                    return;
+                }
+                if let Some(onclick) = onclick {
+                    onclick.call(event);
+                }
+            },
+            span { class: s::TAB_ICON, aria_hidden: "true",
+                if let Some(icon) = icon { {icon} }
+            }
+            span { class: s::TAB_LABEL, "{label}" }
+        }
+    }
+}
+
 #[cfg(feature = "playground")]
 #[component]
 pub fn NavbarPlaygroundDemo() -> Element {
     let playground_mode = crate::use_component_mode(None);
+    let mut active = use_signal(|| 0_usize);
     rsx! {
         crate::PlaygroundDemoFrame { app: false,
             crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
@@ -39,10 +86,10 @@ pub fn NavbarPlaygroundDemo() -> Element {
                     crate::Body { has_footer_space: false,
                         crate::Card { title: "Content", "Route content sits above a persistent navigation bar." }
                     }
-                    nav { class: "flex justify-around border-t-2 border-t-focused bg-white flex-0 z-40",
-                        span { class: "flex flex-col items-center py-2 text-xs text-focused", "Games" }
-                        span { class: "flex flex-col items-center py-2 text-xs text-light", "Tourneys" }
-                        span { class: "flex flex-col items-center py-2 text-xs text-light", "Account" }
+                    NavbarTabBar {
+                        NavbarTab { label: "Games".to_string(), selected: active() == 0, icon: rsx! { Trophy { size: 20, class: "fill-none" } }, onclick: move |_| active.set(0) }
+                        NavbarTab { label: "Tourneys".to_string(), selected: active() == 1, icon: rsx! { CalendarDays { size: 20, class: "fill-none" } }, onclick: move |_| active.set(1) }
+                        NavbarTab { label: "Account".to_string(), selected: active() == 2, icon: rsx! { CircleUserRound { size: 20, class: "fill-none" } }, onclick: move |_| active.set(2) }
                     }
                 }
             }

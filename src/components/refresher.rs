@@ -1,10 +1,10 @@
-﻿//! Pull-to-refresh wrapper component.
+//! Pull-to-refresh wrapper component.
 
 use super::refresher_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
-pub const DEFAULT_REFRESH_THRESHOLD: f64 = 72.0;
+pub const DEFAULT_REFRESH_THRESHOLD: f64 = 48.0;
 pub const REFRESH_ELASTIC_FACTOR: f64 = 0.42;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -120,11 +120,7 @@ pub fn Refresher(
                 }
             },
             onpointerleave: move |_| {
-                if !pulling() { return; }
-                pulling.set(false);
-                if !refreshing {
-                    pull.set(0.0);
-                }
+                // Keep pull state while the pointer leaves; mobile drags often leave the row before release.
             },
             div { class: s::INDICATOR, role: "status", aria_live: "polite",
                 span { class: s::SPINNER, aria_hidden: "true" }
@@ -175,14 +171,14 @@ mod tests {
     #[test]
     fn pull_distance_is_elastic_after_threshold() {
         assert_eq!(refresher_pull_distance(-10.0, 72.0), 0.0);
-        assert_eq!(refresher_pull_distance(36.0, 72.0), 36.0);
-        assert_eq!(refresher_pull_distance(172.0, 72.0), 114.0);
+        assert_eq!(refresher_pull_distance(24.0, 48.0), 24.0);
+        assert_eq!(refresher_pull_distance(148.0, 48.0), 90.0);
     }
 
     #[test]
     fn refresh_triggers_at_threshold() {
-        assert!(!should_trigger_refresh(71.0, 72.0));
-        assert!(should_trigger_refresh(72.0, 72.0));
+        assert!(!should_trigger_refresh(47.0, 48.0));
+        assert!(should_trigger_refresh(48.0, 48.0));
     }
 
     #[test]

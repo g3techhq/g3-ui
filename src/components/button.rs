@@ -28,6 +28,7 @@ pub fn Button(
     style: Option<ButtonStyle>,
     size: Option<ButtonSize>,
     disabled: Option<bool>,
+    aria_label: Option<String>,
     expand: Option<bool>,
     class: Option<String>,
     mode: Option<ComponentMode>,
@@ -71,6 +72,7 @@ pub fn Button(
             class: cls,
             r#type: "button",
             disabled: is_disabled,
+            aria_label,
             onclick: move |event| {
                 onclick.call(event);
             },
@@ -133,4 +135,14 @@ crate::g3_playground! {
     description: "Ionic-style action button with solid, outline, clear, and neutral variants.",
     demo: ButtonPlaygroundDemo,
     source: "src/components/button.rs",
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn button_exposes_aria_label_for_icon_only_triggers() {
+        let source = include_str!("button.rs");
+        assert!(source.contains("aria_label: Option<String>"));
+        assert!(source.contains("aria_label,"));
+    }
 }

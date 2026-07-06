@@ -253,7 +253,9 @@ textarea {
 }
 
 .playground-selector-sheet .g3-sheet-content {
+  min-height: 0;
   padding: 0;
+  overflow-y: auto;
 }
 
 .playground-sidebar-header {
@@ -276,32 +278,8 @@ textarea {
 
 .playground-nav {
   padding: 12px;
-  display: grid;
-  gap: 4px;
 }
 
-.nav-button {
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-text, #26313a);
-  text-align: left;
-  cursor: pointer;
-}
-
-.nav-button:hover {
-  background: color-mix(in srgb, var(--color-focused, #1f7a4d) 8%, transparent);
-}
-
-.nav-button-selected {
-  border-color: color-mix(in srgb, var(--color-focused, #1f7a4d) 36%, transparent);
-  background: color-mix(in srgb, var(--color-focused, #1f7a4d) 12%, transparent);
-  color: var(--color-focused, #146b38);
-  font-weight: 650;
-}
 .g3-playground-preview {
   position: relative;
   width: min(390px, 100%);
@@ -471,18 +449,10 @@ textarea {
 
 .source-panel {
   max-width: 1080px;
-  border: 1px solid var(--color-card-border, #d5dde3);
-  border-radius: 8px;
-  background: var(--color-card, #ffffff);
-  overflow: hidden;
 }
 
-.source-panel summary {
-  padding: 10px 12px;
-  cursor: pointer;
-  color: var(--color-text, #26313a);
-  font-size: 13px;
-  font-weight: 700;
+.source-panel .g3-accordion-content {
+  padding: 0;
 }
 
 .source-panel pre {

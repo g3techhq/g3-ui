@@ -4,6 +4,7 @@ use super::toast_styles as s;
 use crate::components::StatusColor;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+use dioxus_icons::lucide::X;
 use std::time::Duration;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
@@ -61,6 +62,12 @@ pub fn Toast(
         ComponentMode::Md => s::TOAST_MD,
     };
     let state = if open() { "open" } else { "closed" };
+    let auto_dismiss_ms = duration_ms.unwrap_or(3000);
+    let timer_state = if auto_dismiss_ms == 0 {
+        "none"
+    } else {
+        "active"
+    };
     let closed_inert = (!open()).then(|| "".to_string());
     let mut dismiss_generation = use_signal(|| 0_u64);
 
@@ -72,11 +79,11 @@ pub fn Toast(
         if !open() {
             return;
         }
-        let Some(duration_ms) = duration_ms.filter(|duration| *duration > 0) else {
+        if auto_dismiss_ms == 0 {
             return;
-        };
+        }
         spawn(async move {
-            dioxus_sdk_time::sleep(Duration::from_millis(duration_ms)).await;
+            dioxus_sdk_time::sleep(Duration::from_millis(auto_dismiss_ms)).await;
             if dismiss_generation() == generation && open() {
                 open.set(false);
                 if let Some(on_dismiss) = on_dismiss {
@@ -97,6 +104,8 @@ pub fn Toast(
             aria_hidden: (!open()).to_string(),
             inert: closed_inert,
             "data-state": state,
+            "data-timer": timer_state,
+            style: format!("--g3-toast-duration: {auto_dismiss_ms}ms;"),
             div { class: s::MESSAGE, "{message}" }
             if let Some(action) = action {
                 div { class: s::ACTION, {action} }
@@ -113,8 +122,9 @@ pub fn Toast(
                         on_dismiss.call(());
                     }
                 },
-                "x"
+                X { class: s::CLOSE_ICON, size: 18 }
             }
+            div { class: s::TIMER, aria_hidden: "true" }
         }
     }
 }
@@ -127,10 +137,10 @@ pub fn ToastPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                button { class: "g3-playground-button", r#type: "button", onclick: move |_| open.set(true), "Show toast" }
+                crate::Button { onclick: move |_| open.set(true), "Show toast" }
             },
             div { class: "g3-toast-demo-stage",
-                Toast { open, message: "Round saved".to_string(), color: StatusColor::Success, duration_ms: 0 }
+                Toast { open, message: "Round saved".to_string(), color: StatusColor::Success, duration_ms: 2500 }
             }
         }
     }
@@ -198,6 +208,7 @@ mod tests {
             .next()
             .expect("toast source should have production section");
         assert!(source.contains("dioxus_sdk_time::sleep"));
+        assert!(source.contains("duration_ms.unwrap_or(3000)"));
         assert!(!source.contains("document::eval"));
     }
 }

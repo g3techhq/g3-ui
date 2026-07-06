@@ -12,7 +12,8 @@ pub use crate::components::{
     Checkbox, Chip, ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider,
     ItemKind, Line, LineOrientation, List, ListLines, Progress, Radio, RadioGroup, Refresher,
     RefresherState, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor,
-    SwipeAction, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle, ToggleSize,
+    SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle,
+    ToggleSize,
 };
 pub use crate::{
     G3AccordionGroup, G3AccordionItem, G3Avatar, G3Badge, G3Button, G3Checkbox, G3Chip,
@@ -24,13 +25,12 @@ pub use crate::{
 // Component aliases
 pub use crate::components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide,
-    FabVertical, Navbar, RightSlot, Select, SelectOption, Separator, Setting, SettingAction,
-    SettingLink, SettingsGroup, Sheet, SheetButton, SheetPlacement,
+    FabVertical, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
+    SheetButton, SheetPlacement,
 };
 pub use crate::{
     G3Card, G3ConfirmModal, G3Fab, G3FabButton, G3FabContainer, G3FabList, G3Modal, G3Navbar,
-    G3Select, G3Separator, G3Setting, G3SettingAction, G3SettingLink, G3SettingsGroup, G3Sheet,
-    G3SheetButton, G3SheetPlacement,
+    G3NavbarTab, G3NavbarTabBar, G3Select, G3Sheet, G3SheetButton, G3SheetPlacement,
 };
 
 // Layout components
