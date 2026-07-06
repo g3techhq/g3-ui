@@ -10,20 +10,21 @@ mod descriptor;
 mod theme;
 
 pub use components::{
-    Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle, Checkbox, Chip,
-    ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider, ItemKind, Line,
-    LineOrientation, List, ListLines, Progress, Radio, RadioGroup, SegmentButton, SegmentGroup,
-    Skeleton, SkeletonShape, Spinner, StatusColor, SwipeAction, SwipeItem, SwipeSide, SwipeState,
-    Toggle, ToggleSize,
+    AccordionGroup, AccordionItem, Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle,
+    Checkbox, Chip, ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider,
+    ItemKind, Line, LineOrientation, List, ListLines, Progress, Radio, RadioGroup, Refresher,
+    RefresherState, SegmentButton, SegmentGroup, Skeleton, SkeletonShape, Spinner, StatusColor,
+    SwipeAction, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle, ToggleSize,
 };
 
 pub use components::{
-    Avatar as G3Avatar, Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox,
-    Chip as G3Chip, ControlLabelPlacement as G3ControlLabelPlacement, Field as G3Field,
-    InfoButton as G3InfoButton, Item as G3Item, ItemDivider as G3ItemDivider, Line as G3Line,
-    List as G3List, Progress as G3Progress, Radio as G3Radio, RadioGroup as G3RadioGroup,
+    AccordionGroup as G3AccordionGroup, AccordionItem as G3AccordionItem, Avatar as G3Avatar,
+    Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox, Chip as G3Chip,
+    ControlLabelPlacement as G3ControlLabelPlacement, Field as G3Field, InfoButton as G3InfoButton,
+    Item as G3Item, ItemDivider as G3ItemDivider, Line as G3Line, List as G3List,
+    Progress as G3Progress, Radio as G3Radio, RadioGroup as G3RadioGroup, Refresher as G3Refresher,
     SegmentButton as G3SegmentButton, SegmentGroup as G3SegmentGroup, Skeleton as G3Skeleton,
-    Spinner as G3Spinner, SwipeAction as G3SwipeAction, SwipeItem as G3SwipeItem,
+    Spinner as G3Spinner, SwipeAction as G3SwipeAction, SwipeItem as G3SwipeItem, Toast as G3Toast,
     Toggle as G3Toggle, ToggleSize as G3ToggleSize,
 };
 
@@ -357,6 +358,59 @@ mod tests {
         assert!(!radio_source.contains("group_has_selection"));
     }
 
+    #[test]
+    fn feedback_disclosure_and_refresh_components_are_public_registered() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let components_mod =
+            std::fs::read_to_string(crate_root.join("src/components/mod.rs")).unwrap();
+        let public_source = include_str!("lib.rs")
+            .split("#[cfg(test)]")
+            .next()
+            .expect("library source should have a public section");
+        let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        for component in ["accordion", "refresher", "toast"] {
+            assert!(
+                crate_root
+                    .join(format!("src/components/{component}.rs"))
+                    .exists()
+            );
+            assert!(
+                crate_root
+                    .join(format!("src/components/{component}_styles.rs"))
+                    .exists()
+            );
+            assert!(components_mod.contains(&format!("mod {component};")));
+            assert!(components_mod.contains(&format!("{component}::DESCRIPTOR")));
+        }
+
+        for symbol in [
+            "AccordionGroup",
+            "AccordionItem",
+            "Refresher",
+            "RefresherState",
+            "Toast",
+            "ToastPosition",
+            "G3AccordionGroup",
+            "G3AccordionItem",
+            "G3Refresher",
+            "G3Toast",
+        ] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from lib exports"
+            );
+            assert!(
+                prelude_source.contains(symbol),
+                "{symbol} missing from prelude"
+            );
+        }
+
+        assert!(stylesheet.contains("--g3-refresher-pull"));
+        assert!(stylesheet.contains(".g3-toast"));
+        assert!(stylesheet.contains(".g3-accordion-group"));
+    }
     #[test]
     fn list_family_is_public_registered_and_uses_swipe_contracts() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

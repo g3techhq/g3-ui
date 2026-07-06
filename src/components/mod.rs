@@ -1,5 +1,7 @@
 //! Flat component module for g3_ui.
 
+mod accordion;
+mod accordion_styles;
 mod app_wrapper;
 mod body;
 pub(crate) mod body_styles;
@@ -30,6 +32,8 @@ mod primitives;
 mod primitives_styles;
 mod radio;
 mod radio_styles;
+mod refresher;
+mod refresher_styles;
 mod segment;
 mod segment_styles;
 mod select;
@@ -42,9 +46,12 @@ mod sheet_styles;
 mod shell_styles;
 mod spinner;
 mod spinner_styles;
+mod toast;
+mod toast_styles;
 mod toggle;
 mod toggle_styles;
 
+pub use accordion::*;
 pub use app_wrapper::*;
 pub use body::*;
 pub use button::*;
@@ -61,25 +68,30 @@ pub use modal::*;
 pub use navbar::*;
 pub use primitives::*;
 pub use radio::*;
+pub use refresher::*;
 pub use segment::*;
 pub use select::*;
 pub use settings_group::*;
 pub use sheet::*;
 pub use sheet_button::*;
 pub use spinner::*;
+pub use toast::*;
 pub use toggle::*;
 
 use crate::ComponentDescriptor;
 
 pub fn component_descriptors() -> Vec<ComponentDescriptor> {
     vec![
+        accordion::DESCRIPTOR,
         button::DESCRIPTOR,
+        toast::DESCRIPTOR,
         toggle::DESCRIPTOR,
         field::DESCRIPTOR,
         spinner::DESCRIPTOR,
         info_button::DESCRIPTOR,
         line::DESCRIPTOR,
         list::DESCRIPTOR,
+        refresher::DESCRIPTOR,
         segment::DESCRIPTOR,
         card::DESCRIPTOR,
         checkbox::DESCRIPTOR,
@@ -101,13 +113,16 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
 #[cfg(feature = "playground")]
 pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
     vec![
+        accordion::PLAYGROUND,
         button::PLAYGROUND,
+        toast::PLAYGROUND,
         toggle::PLAYGROUND,
         field::PLAYGROUND,
         spinner::PLAYGROUND,
         info_button::PLAYGROUND,
         line::PLAYGROUND,
         list::PLAYGROUND,
+        refresher::PLAYGROUND,
         segment::PLAYGROUND,
         card::PLAYGROUND,
         checkbox::PLAYGROUND,
