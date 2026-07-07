@@ -8,10 +8,10 @@ use dioxus::prelude::*;
 pub fn Field(
     #[props(extends=input)] attributes: Vec<Attribute>,
     label: String,
+    mut value: Signal<String>,
     oninput: Option<EventHandler<Event<FormData>>>,
-    onchange: EventHandler<Event<FormData>>,
+    onchange: Option<EventHandler<Event<FormData>>>,
     debounce: Option<u32>,
-    value: ReadSignal<String>,
     disabled: Option<bool>,
     maxlength: Option<usize>,
     minlength: Option<usize>,
@@ -89,6 +89,12 @@ pub fn Field(
                 onfocus: move |_| { is_focused.set(true); },
                 onblur: move |_| { is_focused.set(false); },
                 oninput: move |event: Event<FormData>| {
+                    let new_value = event.value();
+                    if !check_validity(new_value.clone()) {
+                        return;
+                    }
+                    value.set(new_value);
+                    modified.set(true);
                     if let Some(oninput) = oninput {
                         oninput.call(event.clone());
                     }
@@ -97,21 +103,21 @@ pub fn Field(
                             *generation += 1;
                             *generation
                         });
-                        if !check_validity(event.value()) { return; }
                         let ev = event;
                         spawn(async move {
                             dioxus_sdk_time::sleep(std::time::Duration::from_millis(d as u64)).await;
                             if debounce_generation() != generation { return; }
-                            modified.set(true);
-                            onchange.call(ev);
+                            if let Some(onchange) = onchange {
+                                onchange.call(ev);
+                            }
                         });
                     }
                 },
                 onchange: move |event| {
                     if debounce.is_some() { return; }
-                    if !check_validity(event.value()) { return; }
-                    modified.set(true);
-                    onchange.call(event);
+                    if let Some(onchange) = onchange {
+                        onchange.call(event);
+                    }
                 },
                 value: &combo_value()[..combo_value().len() - 1],
                 min,
@@ -130,16 +136,16 @@ pub fn Field(
 #[component]
 pub fn FieldPlaygroundDemo() -> Element {
     let value = use_signal(String::new);
-    let mut label = use_signal(|| "Club".to_string());
-    let mut placeholder = use_signal(|| "Club name".to_string());
+    let label = use_signal(|| "Club".to_string());
+    let placeholder = use_signal(|| "Club name".to_string());
     let disabled = use_signal(|| false);
     let numeric = use_signal(|| false);
 
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
-                crate::Field { label: "Placeholder".to_string(), value: placeholder, oninput: move |event: Event<FormData>| placeholder.set(event.value()), onchange: move |event: Event<FormData>| placeholder.set(event.value()) }
+                crate::Field { label: "Label".to_string(), value: label }
+                crate::Field { label: "Placeholder".to_string(), value: placeholder }
                 crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
                 crate::Checkbox { checked: numeric, label: "Number type".to_string() }
             },
@@ -149,7 +155,6 @@ pub fn FieldPlaygroundDemo() -> Element {
                 placeholder: placeholder(),
                 disabled: disabled(),
                 r#type: if numeric() { "number" } else { "text" },
-                onchange: |_| {},
             }
         }
     }

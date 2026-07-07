@@ -132,11 +132,13 @@ pub fn SegmentPlaygroundDemo() -> Element {
                         }
                     },
                 }
-                crate::Card { title: "Standalone", class: "g3-segment-demo-card",
-                    SegmentGroup { active: standalone_active,
-                        SegmentButton { index: 0, "Gross" }
-                        SegmentButton { index: 1, "Net" }
-                        SegmentButton { index: 2, "Skins" }
+                crate::Body { has_footer_space: false, padding: true,
+                    crate::Card { title: "Standalone", class: "g3-segment-demo-card",
+                        SegmentGroup { active: standalone_active,
+                            SegmentButton { index: 0, "Gross" }
+                            SegmentButton { index: 1, "Net" }
+                            SegmentButton { index: 2, "Skins" }
+                        }
                     }
                 }
             }

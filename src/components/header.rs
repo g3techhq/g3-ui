@@ -58,12 +58,12 @@ pub fn Header(
 #[component]
 pub fn HeaderPlaygroundDemo() -> Element {
     let active = use_signal(|| 0_usize);
-    let mut title = use_signal(|| "Pending Game".to_string());
+    let title = use_signal(|| "Pending Game".to_string());
     let toolbar = use_signal(|| true);
     let start_button = use_signal(|| true);
     let end_button = use_signal(|| true);
-    let mut start_text = use_signal(|| "Close".to_string());
-    let mut end_text = use_signal(|| "Create".to_string());
+    let start_text = use_signal(|| "Close".to_string());
+    let end_text = use_signal(|| "Create".to_string());
     let playground_mode = crate::use_component_mode(None);
     let toolbar_slot = toolbar().then(|| {
         rsx! {
@@ -78,11 +78,11 @@ pub fn HeaderPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
+                crate::Field { label: "Title".to_string(), value: title }
                 crate::Checkbox { checked: start_button, label: "Start button".to_string() }
-                crate::Field { label: "Start text".to_string(), value: start_text, oninput: move |event: Event<FormData>| start_text.set(event.value()), onchange: move |event: Event<FormData>| start_text.set(event.value()) }
+                crate::Field { label: "Start text".to_string(), value: start_text }
                 crate::Checkbox { checked: end_button, label: "End button".to_string() }
-                crate::Field { label: "End text".to_string(), value: end_text, oninput: move |event: Event<FormData>| end_text.set(event.value()), onchange: move |event: Event<FormData>| end_text.set(event.value()) }
+                crate::Field { label: "End text".to_string(), value: end_text }
                 crate::Checkbox { checked: toolbar, label: "Toolbar".to_string() }
             },
             crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",

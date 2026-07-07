@@ -96,7 +96,7 @@ pub fn ButtonPlaygroundDemo() -> Element {
     let size_index = use_signal(|| 1_usize);
     let disabled = use_signal(|| false);
     let expand = use_signal(|| false);
-    let mut label = use_signal(|| "Create".to_string());
+    let label = use_signal(|| "Create".to_string());
     let style = match style_index() {
         1 => ButtonStyle::Outline,
         2 => ButtonStyle::Clear,
@@ -112,7 +112,7 @@ pub fn ButtonPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
+                crate::Field { label: "Label".to_string(), value: label }
                 div {
                     span { "Style" }
                     crate::SegmentGroup { active: style_index,

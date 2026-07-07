@@ -219,7 +219,7 @@ pub fn Skeleton(shape: Option<SkeletonShape>, class: Option<String>) -> Element 
 #[component]
 pub fn PrimitivesPlaygroundDemo() -> Element {
     let mut selected = use_signal(|| true);
-    let mut progress_value = use_signal(|| "62".to_string());
+    let progress_value = use_signal(|| "62".to_string());
     let progress = progress_value()
         .parse::<f64>()
         .map(|value| value.clamp(0.0, 100.0) / 100.0)
@@ -230,7 +230,7 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
             center: false,
             controls: rsx! {
                 crate::Checkbox { checked: selected, label: "Selected chip".to_string() }
-                crate::Field { label: "Progress".to_string(), value: progress_value, r#type: "range", min: 0, max: 100, oninput: move |event: Event<FormData>| progress_value.set(event.value()), onchange: move |event: Event<FormData>| progress_value.set(event.value()) }
+                crate::Field { label: "Progress".to_string(), value: progress_value, r#type: "range", min: 0, max: 100 }
             },
             div { class: "g3-primitives-demo-stack",
                 div { class: "g3-primitives-demo-row",

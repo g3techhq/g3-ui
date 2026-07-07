@@ -72,7 +72,7 @@ fn Playground() -> Element {
     let mode_index = use_signal(|| 0_usize);
     let mut selector_open = use_signal(|| false);
     let source_value = use_signal(Vec::<String>::new);
-    let mut theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
+    let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
     let selected = demos
         .get(selected_index())
         .copied()
@@ -131,7 +131,6 @@ fn Playground() -> Element {
                                     value: theme_value,
                                     mode: active_mode,
                                     options: theme_options,
-                                    onchange: move |next| theme_value.set(next),
                                 }
                             }
                         }

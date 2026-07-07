@@ -45,11 +45,11 @@ pub fn InfoButton(
 #[cfg(feature = "playground")]
 #[component]
 pub fn InfoButtonPlaygroundDemo() -> Element {
-    let mut label = use_signal(|| "More information".to_string());
+    let label = use_signal(|| "More information".to_string());
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Aria label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
+                crate::Field { label: "Aria label".to_string(), value: label }
             },
             InfoButton { aria_label: label(), onclick: |_| {} }
         }

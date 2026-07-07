@@ -78,6 +78,11 @@ Components must work across platforms:
 - Enums for variants, sizes, positions, etc.
 - `children: Element` or `Option<Element>` for slot-based composition.
 - `class: String` for override (with `#[props(into, default)]`).
+- **State ownership**: stateful components take an owned `Signal<T>` for their primary value
+  (`checked`, `value`, `open`, `active`) and read/write it directly, rather than taking a
+  `ReadSignal<T>` + required `onchange`. Pair it with an *optional* `onchange`/`on_*` callback for
+  side effects the caller wants to observe. This is the convention `Field` and `Select` were
+  migrated to — do not reintroduce the `ReadSignal` + required-callback pattern for new components.
 
 ### Slots
 - Follow Ionic's slot naming: `start`, `end`, `primary`, `secondary` for toolbar components.
@@ -85,8 +90,11 @@ Components must work across platforms:
 
 ### Theming
 - CSS variables for all color/sizing tokens.
-- Runtime theme switching via context provider.
-- 26 built-in themes inherited from eq_ui pattern (or custom theme support).
+- Theme is resolved once at provider mount via context (like `mode`), not a reactive `Signal`. To
+  switch themes at runtime, remount `G3ThemeProvider`/`G3AppWrapper` with a new `Theme`.
+- Two built-in presets today: `Theme::default_light()` and `Theme::default_dark()`. All `Theme`
+  fields are public, so consumers build custom themes via struct-update syntax or `with_focused()`.
+  (`eq_ui` ships ~26 preset themes; g3_ui has not built out an equivalent preset library yet.)
 
 ### ARIA & Accessibility
 - Full WAI-ARIA roles, attributes, and keyboard navigation on all interactive components.

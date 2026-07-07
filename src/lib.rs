@@ -31,7 +31,7 @@ pub use components::{
 
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
-    FabVertical, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
+    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
     SheetButton, SheetPlacement,
 };
 

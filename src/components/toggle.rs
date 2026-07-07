@@ -14,7 +14,7 @@ pub enum ToggleSize {
 #[component]
 pub fn Toggle(
     mut checked: Signal<bool>,
-    on_checked_change: Option<Callback<bool>>,
+    onchange: Option<Callback<bool>>,
     size: Option<ToggleSize>,
     class: Option<String>,
     mode: Option<ComponentMode>,
@@ -47,8 +47,8 @@ pub fn Toggle(
             onclick: move |_| {
                 let new_checked = !checked();
                 checked.set(new_checked);
-                if let Some(ref on_checked_change) = on_checked_change {
-                    on_checked_change.call(new_checked);
+                if let Some(ref onchange) = onchange {
+                    onchange.call(new_checked);
                 }
             },
             span { class: thumb_cls, aria_hidden: "true" }

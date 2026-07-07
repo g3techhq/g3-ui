@@ -50,12 +50,12 @@ impl From<(String, String)> for SelectOption {
 
 #[component]
 pub fn Select(
-    value: ReadSignal<String>,
+    value: Signal<String>,
     disabled: Option<bool>,
     mode: Option<ComponentMode>,
     options: Vec<SelectOption>,
     class: Option<String>,
-    onchange: EventHandler<String>,
+    onchange: Option<EventHandler<String>>,
 ) -> Element {
     let mut is_open = use_signal(|| false);
 
@@ -89,12 +89,12 @@ pub fn Select(
 
 #[component]
 fn SelectOptionComponent(
-    value: ReadSignal<String>,
+    mut value: Signal<String>,
     is_open: Signal<bool>,
     option_value: String,
     text: Option<String>,
     is_first: bool,
-    onchange: EventHandler<String>,
+    onchange: Option<EventHandler<String>>,
 ) -> Element {
     let is_selected = value() == option_value;
     let option_cls = merge_classes(s::OPTION, is_selected.then_some(s::OPTION_SELECTED));
@@ -109,7 +109,10 @@ fn SelectOptionComponent(
             role: "option",
             aria_selected: is_selected.to_string(),
             onclick: move |_| {
-                onchange.call(option_value.clone());
+                value.set(option_value.clone());
+                if let Some(onchange) = onchange {
+                    onchange.call(option_value.clone());
+                }
                 is_open.set(false);
             },
             if let Some(text) = text {
@@ -123,7 +126,7 @@ fn SelectOptionComponent(
 #[cfg(feature = "playground")]
 #[component]
 pub fn SelectPlaygroundDemo() -> Element {
-    let mut value = use_signal(|| "Stroke".to_string());
+    let value = use_signal(|| "Stroke".to_string());
     let disabled = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
@@ -138,7 +141,6 @@ pub fn SelectPlaygroundDemo() -> Element {
                     SelectOption::from(("Match", "Match play")),
                     SelectOption::from(("Skins", "Skins")),
                 ],
-                onchange: move |next| value.set(next),
             }
         }
     }

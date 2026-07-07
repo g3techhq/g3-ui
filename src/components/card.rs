@@ -97,7 +97,7 @@ pub fn Card(
 #[cfg(feature = "playground")]
 #[component]
 pub fn CardPlaygroundDemo() -> Element {
-    let mut title = use_signal(|| "Game".to_string());
+    let title = use_signal(|| "Game".to_string());
     let inset = use_signal(|| false);
     let selected = use_signal(|| false);
     let interactive = use_signal(|| false);
@@ -105,7 +105,7 @@ pub fn CardPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
+                crate::Field { label: "Title".to_string(), value: title }
                 crate::Checkbox { checked: inset, label: "Inset".to_string() }
                 crate::Checkbox { checked: selected, label: "Selected".to_string() }
                 crate::Checkbox { checked: interactive, label: "Interactive".to_string() }

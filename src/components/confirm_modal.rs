@@ -70,13 +70,13 @@ pub fn ConfirmModal(
 #[component]
 pub fn ConfirmModalPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
-    let mut title = use_signal(|| "Delete game".to_string());
-    let mut confirm_text = use_signal(|| "Delete".to_string());
+    let title = use_signal(|| "Delete game".to_string());
+    let confirm_text = use_signal(|| "Delete".to_string());
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
-                crate::Field { label: "Confirm text".to_string(), value: confirm_text, oninput: move |event: Event<FormData>| confirm_text.set(event.value()), onchange: move |event: Event<FormData>| confirm_text.set(event.value()) }
+                crate::Field { label: "Title".to_string(), value: title }
+                crate::Field { label: "Confirm text".to_string(), value: confirm_text }
             },
             crate::Button { onclick: move |_| open.set(true), "Open confirmation" }
             ConfirmModal {

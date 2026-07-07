@@ -25,7 +25,7 @@ pub use crate::{
 // Component aliases
 pub use crate::components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide,
-    FabVertical, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
+    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
     SheetButton, SheetPlacement,
 };
 pub use crate::{

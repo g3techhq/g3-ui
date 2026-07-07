@@ -31,12 +31,11 @@ pub fn SheetButton(
 #[cfg(feature = "playground")]
 #[component]
 pub fn SheetButtonPlaygroundDemo() -> Element {
-    let mut description =
-        use_signal(|| "Handicaps adjust player scoring for the match.".to_string());
+    let description = use_signal(|| "Handicaps adjust player scoring for the match.".to_string());
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Description".to_string(), value: description, oninput: move |event: Event<FormData>| description.set(event.value()), onchange: move |event: Event<FormData>| description.set(event.value()) }
+                crate::Field { label: "Description".to_string(), value: description }
             },
             SheetButton { description: description() }
         }
