@@ -341,10 +341,6 @@ textarea {
   inset: 0;
 }
 
-.g3-playground-preview .g3-sheet {
-  position: absolute;
-}
-
 .g3-playground-preview .g3-sheet.g3-sheet-closed {
   visibility: hidden;
 }

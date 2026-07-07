@@ -4,8 +4,62 @@ use super::overlay_scroll::use_lock_body_scroll;
 use super::sheet_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 const SHEET_DISMISS_DISTANCE: f64 = 96.0;
+
+static SHEET_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
+
+// Drag tracking runs entirely in JS (attached directly to the handle/dialog
+// DOM nodes) so per-frame pointer movement never has to round-trip through
+// Dioxus re-renders. Only the final dismiss/no-dismiss decision is sent back
+// to Rust. This also sidesteps a dioxus-interpreter-js quirk where clearing
+// the `style` attribute back to "" restores previously-set inline properties
+// instead of removing them, which left `--g3-sheet-drag-y` stuck after a
+// drag-to-dismiss and made the next open animate in short of fully open.
+const SHEET_DRAG_SCRIPT: &str = r#"
+const dialog = document.getElementById("__DIALOG_ID__");
+const handle = document.getElementById("__HANDLE_ID__");
+if (dialog && handle) {
+    let dragging = false;
+    let startY = 0;
+    let deltaY = 0;
+    const DISMISS_DISTANCE = __DISMISS_DISTANCE__;
+
+    const onDown = (e) => {
+        dragging = true;
+        startY = e.clientY;
+        deltaY = 0;
+        dialog.style.setProperty("transition", "none");
+        dialog.style.setProperty("touch-action", "none");
+        try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+    };
+
+    const onMove = (e) => {
+        if (!dragging) return;
+        deltaY = Math.max(0, e.clientY - startY);
+        dialog.style.setProperty("--g3-sheet-drag-y", deltaY + "px");
+        e.preventDefault();
+    };
+
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        dialog.style.removeProperty("transition");
+        dialog.style.removeProperty("touch-action");
+        dialog.style.setProperty("--g3-sheet-drag-y", "0px");
+        if (deltaY > DISMISS_DISTANCE) {
+            dioxus.send(true);
+        }
+    };
+
+    handle.addEventListener("pointerdown", onDown);
+    handle.addEventListener("pointermove", onMove);
+    handle.addEventListener("pointerup", onEnd);
+    handle.addEventListener("pointercancel", onEnd);
+}
+"#;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SheetPlacement {
@@ -24,12 +78,10 @@ pub fn Sheet(
     mode: Option<ComponentMode>,
     children: Element,
 ) -> Element {
-    let mut drag_start_y = use_signal(|| 0.0);
-    let mut current_y = use_signal(|| 0.0);
-    let mut is_dragging = use_signal(|| false);
     let mode = use_component_mode(mode);
     let placement = placement.unwrap_or_default();
     let is_draggable = draggable.unwrap_or(true);
+    let instance_id = use_hook(|| SHEET_INSTANCE_ID.fetch_add(1, Ordering::Relaxed));
 
     let mode_cls = match mode {
         ComponentMode::Ios => s::SHEET_IOS,
@@ -43,58 +95,28 @@ pub fn Sheet(
 
     let sheet_cls = format!("{} {mode_cls} {placement_cls}", s::SHEET);
     let has_handle = placement == SheetPlacement::Bottom;
+    let dialog_id = format!("g3-sheet-{instance_id}");
+    let handle_id = format!("g3-sheet-handle-{instance_id}");
 
-    let handle_start = move |evt: MouseEvent| {
-        evt.prevent_default();
-        is_dragging.set(true);
-        drag_start_y.set(evt.client_coordinates().y);
-        current_y.set(0.0);
-    };
-
-    let handle_start_pointer = move |evt: PointerEvent| {
-        evt.prevent_default();
-        is_dragging.set(true);
-        drag_start_y.set(evt.client_coordinates().y);
-        current_y.set(0.0);
-    };
-
-    let handle_move = move |evt: MouseEvent| {
-        if is_dragging() {
-            evt.prevent_default();
-            let delta_y = (evt.client_coordinates().y - drag_start_y()).max(0.0);
-            current_y.set(delta_y);
-        }
-    };
-
-    let handle_move_pointer = move |evt: PointerEvent| {
-        if is_dragging() {
-            evt.prevent_default();
-            let delta_y = (evt.client_coordinates().y - drag_start_y()).max(0.0);
-            current_y.set(delta_y);
-        }
-    };
-
-    let handle_end = move |evt: MouseEvent| {
-        if is_dragging() {
-            evt.prevent_default();
-            is_dragging.set(false);
-            if current_y() > SHEET_DISMISS_DISTANCE {
-                is_open.set(false);
+    {
+        let dialog_id = dialog_id.clone();
+        let handle_id = handle_id.clone();
+        use_effect(move || {
+            if !(is_draggable && has_handle) {
+                return;
             }
-            current_y.set(0.0);
-        }
-    };
-
-    let handle_end_pointer = move |evt: PointerEvent| {
-        if is_dragging() {
-            evt.prevent_default();
-            is_dragging.set(false);
-            if current_y() > SHEET_DISMISS_DISTANCE {
-                is_open.set(false);
-            }
-            current_y.set(0.0);
-        }
-    };
+            let script = SHEET_DRAG_SCRIPT
+                .replace("__DIALOG_ID__", &dialog_id)
+                .replace("__HANDLE_ID__", &handle_id)
+                .replace("__DISMISS_DISTANCE__", &SHEET_DISMISS_DISTANCE.to_string());
+            spawn(async move {
+                let mut eval = document::eval(&script);
+                while let Ok(true) = eval.recv::<bool>().await {
+                    is_open.set(false);
+                }
+            });
+        });
+    }
 
     let backdrop_cls = format!(
         "{} {}",
@@ -119,35 +141,21 @@ pub fn Sheet(
             aria_label: "Sheet backdrop",
             class: format!("{backdrop_cls} appearance-none border-0 p-0"),
             onclick: move |_| is_open.set(false),
-            onpointermove: handle_move_pointer,
-            onpointerup: handle_end_pointer,
-            onpointercancel: handle_end_pointer,
         }
         div {
+            id: dialog_id,
             role: "dialog",
             aria_modal: "true",
             aria_label: "Sheet",
             aria_hidden: (!is_open_now).to_string(),
             inert: (!is_open_now).then(|| "".to_string()),
             class: merge_classes(format!("{sheet_cls} {state_cls}"), class.as_deref()),
-            style: if is_dragging() && placement == SheetPlacement::Bottom { format!("--g3-sheet-drag-y: {}px; touch-action: none;", current_y()) } else { "".to_string() },
-            onmousemove: handle_move,
-            onpointermove: handle_move_pointer,
-            onmouseup: handle_end,
-            onpointerup: handle_end_pointer,
-            onpointercancel: handle_end_pointer,
             if is_draggable && has_handle {
                 button {
+                    id: handle_id,
                     r#type: "button",
                     class: s::HANDLE_WRAP_IOS,
                     aria_label: "Sheet handle",
-                    onmousedown: handle_start,
-                    onmousemove: handle_move,
-                    onmouseup: handle_end,
-                            onpointerdown: handle_start_pointer,
-                    onpointermove: handle_move_pointer,
-                    onpointerup: handle_end_pointer,
-                            onpointercancel: handle_end_pointer,
                     div { class: s::HANDLE_IOS }
                 }
             }
