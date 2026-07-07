@@ -36,7 +36,7 @@ pub fn SheetButtonPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Description" } textarea { value: "{description()}", oninput: move |event: Event<FormData>| description.set(event.value()) } }
+                crate::Field { label: "Description".to_string(), value: description, oninput: move |event: Event<FormData>| description.set(event.value()), onchange: move |event: Event<FormData>| description.set(event.value()) }
             },
             SheetButton { description: description() }
         }

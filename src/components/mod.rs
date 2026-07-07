@@ -28,6 +28,7 @@ mod modal;
 mod modal_styles;
 mod navbar;
 pub(crate) mod navbar_styles;
+mod overlay_scroll;
 mod primitives;
 mod primitives_styles;
 mod radio;

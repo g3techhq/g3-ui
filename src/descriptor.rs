@@ -65,7 +65,7 @@ pub fn PlaygroundDemoFrame(
                 }
             }
             if let Some(controls) = controls {
-                div { class: "g3-playground-controls", {controls} }
+                div { class: "playground-controls-pane", {controls} }
             }
         }
     }

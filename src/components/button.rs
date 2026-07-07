@@ -92,40 +92,48 @@ pub fn Button(
 #[cfg(feature = "playground")]
 #[component]
 pub fn ButtonPlaygroundDemo() -> Element {
-    let mut style = use_signal(ButtonStyle::default);
-    let mut size = use_signal(ButtonSize::default);
-    let mut disabled = use_signal(|| false);
-    let mut expand = use_signal(|| false);
+    let style_index = use_signal(|| 0_usize);
+    let size_index = use_signal(|| 1_usize);
+    let disabled = use_signal(|| false);
+    let expand = use_signal(|| false);
     let mut label = use_signal(|| "Create".to_string());
+    let style = match style_index() {
+        1 => ButtonStyle::Outline,
+        2 => ButtonStyle::Clear,
+        3 => ButtonStyle::Neutral,
+        _ => ButtonStyle::Solid,
+    };
+    let size = match size_index() {
+        0 => ButtonSize::Sm,
+        2 => ButtonSize::Lg,
+        _ => ButtonSize::Md,
+    };
 
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-control",
-                    span { "Label" }
-                    input { value: "{label()}", oninput: move |event: Event<FormData>| label.set(event.value()) }
-                }
-                div { class: "g3-playground-control",
+                crate::Field { label: "Label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
+                div {
                     span { "Style" }
-                    div { class: "g3-playground-segments",
-                        button { class: if style() == ButtonStyle::Solid { "selected" } else { "" }, r#type: "button", onclick: move |_| style.set(ButtonStyle::Solid), "Solid" }
-                        button { class: if style() == ButtonStyle::Outline { "selected" } else { "" }, r#type: "button", onclick: move |_| style.set(ButtonStyle::Outline), "Outline" }
-                        button { class: if style() == ButtonStyle::Clear { "selected" } else { "" }, r#type: "button", onclick: move |_| style.set(ButtonStyle::Clear), "Clear" }
-                        button { class: if style() == ButtonStyle::Neutral { "selected" } else { "" }, r#type: "button", onclick: move |_| style.set(ButtonStyle::Neutral), "Neutral" }
+                    crate::SegmentGroup { active: style_index,
+                        crate::SegmentButton { index: 0, "Solid" }
+                        crate::SegmentButton { index: 1, "Outline" }
+                        crate::SegmentButton { index: 2, "Clear" }
+                        crate::SegmentButton { index: 3, "Neutral" }
                     }
                 }
-                div { class: "g3-playground-control",
+                div {
                     span { "Size" }
-                    div { class: "g3-playground-segments",
-                        button { class: if size() == ButtonSize::Sm { "selected" } else { "" }, r#type: "button", onclick: move |_| size.set(ButtonSize::Sm), "Sm" }
-                        button { class: if size() == ButtonSize::Md { "selected" } else { "" }, r#type: "button", onclick: move |_| size.set(ButtonSize::Md), "Md" }
-                        button { class: if size() == ButtonSize::Lg { "selected" } else { "" }, r#type: "button", onclick: move |_| size.set(ButtonSize::Lg), "Lg" }
+                    crate::SegmentGroup { active: size_index,
+                        crate::SegmentButton { index: 0, "Sm" }
+                        crate::SegmentButton { index: 1, "Md" }
+                        crate::SegmentButton { index: 2, "Lg" }
                     }
                 }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: disabled(), onchange: move |_| disabled.toggle() } span { "Disabled" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: expand(), onchange: move |_| expand.toggle() } span { "Expand" } }
+                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: expand, label: "Expand".to_string() }
             },
-            Button { style: style(), size: size(), disabled: disabled(), expand: expand(), onclick: |_| {}, "{label()}" }
+            Button { style, size, disabled: disabled(), expand: expand(), onclick: |_| {}, "{label()}" }
         }
     }
 }

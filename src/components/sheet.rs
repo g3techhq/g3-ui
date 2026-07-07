@@ -1,8 +1,11 @@
 //! Sheet component - bottom and side sheet with drag-to-dismiss and platform styling.
 
+use super::overlay_scroll::use_lock_body_scroll;
 use super::sheet_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+
+const SHEET_DISMISS_DISTANCE: f64 = 96.0;
 
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SheetPlacement {
@@ -16,6 +19,7 @@ pub enum SheetPlacement {
 pub fn Sheet(
     mut is_open: Signal<bool>,
     placement: Option<SheetPlacement>,
+    draggable: Option<bool>,
     class: Option<String>,
     mode: Option<ComponentMode>,
     children: Element,
@@ -25,6 +29,7 @@ pub fn Sheet(
     let mut is_dragging = use_signal(|| false);
     let mode = use_component_mode(mode);
     let placement = placement.unwrap_or_default();
+    let is_draggable = draggable.unwrap_or(true);
 
     let mode_cls = match mode {
         ComponentMode::Ios => s::SHEET_IOS,
@@ -37,10 +42,7 @@ pub fn Sheet(
     };
 
     let sheet_cls = format!("{} {mode_cls} {placement_cls}", s::SHEET);
-    let has_handle = matches!(
-        (mode, placement),
-        (ComponentMode::Ios, SheetPlacement::Bottom)
-    );
+    let has_handle = placement == SheetPlacement::Bottom;
 
     let handle_start = move |evt: MouseEvent| {
         evt.prevent_default();
@@ -76,7 +78,7 @@ pub fn Sheet(
         if is_dragging() {
             evt.prevent_default();
             is_dragging.set(false);
-            if current_y() > 24.0 {
+            if current_y() > SHEET_DISMISS_DISTANCE {
                 is_open.set(false);
             }
             current_y.set(0.0);
@@ -87,7 +89,7 @@ pub fn Sheet(
         if is_dragging() {
             evt.prevent_default();
             is_dragging.set(false);
-            if current_y() > 24.0 {
+            if current_y() > SHEET_DISMISS_DISTANCE {
                 is_open.set(false);
             }
             current_y.set(0.0);
@@ -103,6 +105,7 @@ pub fn Sheet(
             "g3-sheet-backdrop-closed pointer-events-none"
         }
     );
+    use_lock_body_scroll(is_open);
     let is_open_now = is_open();
     let state_cls = if is_open_now {
         s::STATE_OPEN
@@ -124,6 +127,8 @@ pub fn Sheet(
             role: "dialog",
             aria_modal: "true",
             aria_label: "Sheet",
+            aria_hidden: (!is_open_now).to_string(),
+            inert: (!is_open_now).then(|| "".to_string()),
             class: merge_classes(format!("{sheet_cls} {state_cls}"), class.as_deref()),
             style: if is_dragging() && placement == SheetPlacement::Bottom { format!("--g3-sheet-drag-y: {}px; touch-action: none;", current_y()) } else { "".to_string() },
             onmousemove: handle_move,
@@ -131,8 +136,9 @@ pub fn Sheet(
             onmouseup: handle_end,
             onpointerup: handle_end_pointer,
             onpointercancel: handle_end_pointer,
-            if has_handle {
-                div {
+            if is_draggable && has_handle {
+                button {
+                    r#type: "button",
                     class: s::HANDLE_WRAP_IOS,
                     aria_label: "Sheet handle",
                     onmousedown: handle_start,
@@ -153,22 +159,33 @@ pub fn Sheet(
 #[component]
 pub fn SheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
-    let mut placement = use_signal(SheetPlacement::default);
+    let placement_index = use_signal(|| 0_usize);
+    let placement = match placement_index() {
+        1 => SheetPlacement::Left,
+        2 => SheetPlacement::Right,
+        _ => SheetPlacement::Bottom,
+    };
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                div { class: "g3-playground-control",
+                div {
                     span { "Placement" }
-                    div { class: "g3-playground-segments",
-                        button { class: if placement() == SheetPlacement::Bottom { "selected" } else { "" }, r#type: "button", onclick: move |_| placement.set(SheetPlacement::Bottom), "Bottom" }
-                        button { class: if placement() == SheetPlacement::Left { "selected" } else { "" }, r#type: "button", onclick: move |_| placement.set(SheetPlacement::Left), "Left" }
-                        button { class: if placement() == SheetPlacement::Right { "selected" } else { "" }, r#type: "button", onclick: move |_| placement.set(SheetPlacement::Right), "Right" }
+                    crate::SegmentGroup { active: placement_index,
+                        crate::SegmentButton { index: 0, "Bottom" }
+                        crate::SegmentButton { index: 1, "Left" }
+                        crate::SegmentButton { index: 2, "Right" }
                     }
                 }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: open(), onchange: move |_| open.toggle() } span { "Open" } }
+                crate::Checkbox { checked: open, label: "Open".to_string() }
             },
             crate::Button { onclick: move |_| open.set(true), "Open sheet" }
-            Sheet { is_open: open, placement: placement(), "Sheet content" }
+            Sheet { is_open: open, placement,
+                crate::List { inset: true, lines: crate::ListLines::None,
+                    crate::Item { label: "Round settings", description: "Use the handle or backdrop to close." }
+                    crate::Item { label: "Tee time", metadata: "9:40" }
+                    crate::Item { label: "Players", metadata: "4" }
+                }
+            }
         }
     }
 }

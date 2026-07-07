@@ -120,7 +120,7 @@ fn Playground() -> Element {
                         div { class: "playground-top-controls",
                             div { class: "playground-top-control playground-mode-control",
                                 span { "Mode" }
-                                SegmentGroup { active: mode_index, toolbar: true, mode: active_mode,
+                                SegmentGroup { active: mode_index, mode: active_mode,
                                     SegmentButton { index: 0, mode: active_mode, "MD" }
                                     SegmentButton { index: 1, mode: active_mode, "iOS" }
                                 }

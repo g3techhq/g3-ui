@@ -58,13 +58,13 @@ pub fn Toggle(
 #[cfg(feature = "playground")]
 #[component]
 pub fn TogglePlaygroundDemo() -> Element {
-    let mut checked = use_signal(|| true);
-    let mut large = use_signal(|| false);
+    let checked = use_signal(|| true);
+    let large = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: checked(), onchange: move |_| checked.toggle() } span { "Checked" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: large(), onchange: move |_| large.toggle() } span { "Large" } }
+                crate::Checkbox { checked, label: "Checked".to_string() }
+                crate::Checkbox { checked: large, label: "Large".to_string() }
             },
             Toggle { checked, size: if large() { ToggleSize::Md } else { ToggleSize::Sm } }
         }

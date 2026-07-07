@@ -49,7 +49,7 @@ pub fn InfoButtonPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Aria label" } input { value: "{label()}", oninput: move |event: Event<FormData>| label.set(event.value()) } }
+                crate::Field { label: "Aria label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
             },
             InfoButton { aria_label: label(), onclick: |_| {} }
         }

@@ -1,6 +1,7 @@
 //! Modal component - generic alert dialog surface with platform styling.
 
 use super::modal_styles as s;
+use super::overlay_scroll::use_lock_body_scroll;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
@@ -15,7 +16,9 @@ pub fn Modal(
     children: Option<Element>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let state = if open() { "open" } else { "closed" };
+    use_lock_body_scroll(open);
+    let open_now = open();
+    let state = if open_now { "open" } else { "closed" };
 
     let modal_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::MODAL, s::MODAL_IOS),
@@ -26,13 +29,10 @@ pub fn Modal(
         div {
             class: s::OVERLAY,
             "data-state": state,
-            aria_hidden: (!open()).to_string(),
+            aria_hidden: (!open_now).to_string(),
             onclick: move |_| open.set(false),
             div {
-                class: merge_classes(
-                    format!("{modal_cls} g3-modal-card"),
-                    class.as_deref(),
-                ),
+                class: merge_classes(format!("{modal_cls} g3-modal-card"), class.as_deref()),
                 role: "alertdialog",
                 aria_modal: "true",
                 "data-state": state,

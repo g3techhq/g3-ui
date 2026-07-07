@@ -75,8 +75,8 @@ pub fn ConfirmModalPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Title" } input { value: "{title()}", oninput: move |event: Event<FormData>| title.set(event.value()) } }
-                label { class: "g3-playground-control", span { "Confirm text" } input { value: "{confirm_text()}", oninput: move |event: Event<FormData>| confirm_text.set(event.value()) } }
+                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
+                crate::Field { label: "Confirm text".to_string(), value: confirm_text, oninput: move |event: Event<FormData>| confirm_text.set(event.value()), onchange: move |event: Event<FormData>| confirm_text.set(event.value()) }
             },
             crate::Button { onclick: move |_| open.set(true), "Open confirmation" }
             ConfirmModal {

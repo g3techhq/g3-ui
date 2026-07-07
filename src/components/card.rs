@@ -98,17 +98,17 @@ pub fn Card(
 #[component]
 pub fn CardPlaygroundDemo() -> Element {
     let mut title = use_signal(|| "Game".to_string());
-    let mut inset = use_signal(|| false);
-    let mut selected = use_signal(|| false);
-    let mut interactive = use_signal(|| false);
+    let inset = use_signal(|| false);
+    let selected = use_signal(|| false);
+    let interactive = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Title" } input { value: "{title()}", oninput: move |event: Event<FormData>| title.set(event.value()) } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: inset(), onchange: move |_| inset.toggle() } span { "Inset" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: selected(), onchange: move |_| selected.toggle() } span { "Selected" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: interactive(), onchange: move |_| interactive.toggle() } span { "Interactive" } }
+                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
+                crate::Checkbox { checked: inset, label: "Inset".to_string() }
+                crate::Checkbox { checked: selected, label: "Selected".to_string() }
+                crate::Checkbox { checked: interactive, label: "Interactive".to_string() }
             },
             Card {
                 title: title(),

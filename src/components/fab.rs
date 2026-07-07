@@ -73,7 +73,7 @@ pub fn Fab(
     };
 
     let container_cls = merge_classes(
-        format!("absolute z-39 {vert_cls} {horiz_cls} {edge_cls} flex flex-col items-center"),
+        format!("{} {vert_cls} {horiz_cls} {edge_cls}", s::FAB_CONTAINER),
         class.as_deref(),
     );
 
@@ -204,7 +204,7 @@ pub fn FabList(
     rsx! {
         div {
             class: merge_classes(
-                format!("{} {} {} flex-col gap-2", s::FAB_LIST_BASE, list_cls, side_cls),
+                format!("{} {} {}", s::FAB_LIST_BASE, list_cls, side_cls),
                 class.as_deref(),
             ),
             aria_hidden: (!is_activated).to_string(),
@@ -263,57 +263,85 @@ pub fn FabContainer(
 #[cfg(feature = "playground")]
 #[component]
 pub fn FabPlaygroundDemo() -> Element {
-    let mut activated = use_signal(|| true);
-    let mut small = use_signal(|| false);
-    let mut edge = use_signal(|| false);
-    let mut vertical = use_signal(|| FabVertical::Bottom);
-    let mut horizontal = use_signal(|| FabHorizontal::End);
-    let mut list_side = use_signal(|| FabListSide::Top);
+    let activated = use_signal(|| true);
+    let small = use_signal(|| false);
+    let edge = use_signal(|| false);
+    let vertical_index = use_signal(|| 2_usize);
+    let horizontal_index = use_signal(|| 2_usize);
+    let list_side_index = use_signal(|| 0_usize);
+    let playground_mode = crate::use_component_mode(None);
+    let vertical = match vertical_index() {
+        0 => FabVertical::Top,
+        1 => FabVertical::Center,
+        _ => FabVertical::Bottom,
+    };
+    let horizontal = match horizontal_index() {
+        0 => FabHorizontal::Start,
+        1 => FabHorizontal::Center,
+        _ => FabHorizontal::End,
+    };
+    let list_side = match list_side_index() {
+        1 => FabListSide::Bottom,
+        2 => FabListSide::Start,
+        3 => FabListSide::End,
+        _ => FabListSide::Top,
+    };
 
     rsx! {
         crate::PlaygroundDemoFrame {
+            app: false,
             center: false,
             controls: rsx! {
-                div { class: "g3-playground-control",
+                div {
                     span { "Vertical" }
-                    div { class: "g3-playground-segments",
-                        button { class: if vertical() == FabVertical::Top { "selected" } else { "" }, r#type: "button", onclick: move |_| vertical.set(FabVertical::Top), "Top" }
-                        button { class: if vertical() == FabVertical::Center { "selected" } else { "" }, r#type: "button", onclick: move |_| vertical.set(FabVertical::Center), "Center" }
-                        button { class: if vertical() == FabVertical::Bottom { "selected" } else { "" }, r#type: "button", onclick: move |_| vertical.set(FabVertical::Bottom), "Bottom" }
+                    crate::SegmentGroup { active: vertical_index,
+                        crate::SegmentButton { index: 0, "Top" }
+                        crate::SegmentButton { index: 1, "Center" }
+                        crate::SegmentButton { index: 2, "Bottom" }
                     }
                 }
-                div { class: "g3-playground-control",
+                div {
                     span { "Horizontal" }
-                    div { class: "g3-playground-segments",
-                        button { class: if horizontal() == FabHorizontal::Start { "selected" } else { "" }, r#type: "button", onclick: move |_| horizontal.set(FabHorizontal::Start), "Start" }
-                        button { class: if horizontal() == FabHorizontal::Center { "selected" } else { "" }, r#type: "button", onclick: move |_| horizontal.set(FabHorizontal::Center), "Center" }
-                        button { class: if horizontal() == FabHorizontal::End { "selected" } else { "" }, r#type: "button", onclick: move |_| horizontal.set(FabHorizontal::End), "End" }
+                    crate::SegmentGroup { active: horizontal_index,
+                        crate::SegmentButton { index: 0, "Start" }
+                        crate::SegmentButton { index: 1, "Center" }
+                        crate::SegmentButton { index: 2, "End" }
                     }
                 }
-                div { class: "g3-playground-control",
+                div {
                     span { "List side" }
-                    div { class: "g3-playground-segments",
-                        button { class: if list_side() == FabListSide::Top { "selected" } else { "" }, r#type: "button", onclick: move |_| list_side.set(FabListSide::Top), "Top" }
-                        button { class: if list_side() == FabListSide::Bottom { "selected" } else { "" }, r#type: "button", onclick: move |_| list_side.set(FabListSide::Bottom), "Bottom" }
-                        button { class: if list_side() == FabListSide::Start { "selected" } else { "" }, r#type: "button", onclick: move |_| list_side.set(FabListSide::Start), "Start" }
-                        button { class: if list_side() == FabListSide::End { "selected" } else { "" }, r#type: "button", onclick: move |_| list_side.set(FabListSide::End), "End" }
+                    crate::SegmentGroup { active: list_side_index,
+                        crate::SegmentButton { index: 0, "Top" }
+                        crate::SegmentButton { index: 1, "Bottom" }
+                        crate::SegmentButton { index: 2, "Start" }
+                        crate::SegmentButton { index: 3, "End" }
                     }
                 }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: activated(), onchange: move |_| activated.toggle() } span { "List active" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: small(), onchange: move |_| small.toggle() } span { "Small main button" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: edge(), onchange: move |_| edge.toggle() } span { "Edge" } }
+                crate::Checkbox { checked: activated, label: "List active".to_string() }
+                crate::Checkbox { checked: small, label: "Small main button".to_string() }
+                crate::Checkbox { checked: edge, label: "Edge".to_string() }
             },
-            crate::Card { title: "Actions", "FAB is anchored to the body, and the list opens from the selected side." }
-            crate::Card { title: "Content", "The button stays over scrolling body content." }
-            Fab {
-                vertical: vertical(),
-                horizontal: horizontal(),
-                edge: edge(),
-                FabButton { onclick: |_| {}, size: if small() { FabSize::Small } else { FabSize::Normal }, "+" }
-                FabList { activated: activated(), side: list_side(),
-                    FabButton { size: FabSize::Small, onclick: |_| {}, "A" }
-                    FabButton { size: FabSize::Small, onclick: |_| {}, "B" }
-                    FabButton { size: FabSize::Small, onclick: |_| {}, "C" }
+            crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
+                crate::Header { title: "Fab" }
+                crate::Body {
+                    fab: rsx! {
+                        Fab {
+                            vertical,
+                            horizontal,
+                            edge: edge(),
+                            FabButton { onclick: |_| {}, size: if small() { FabSize::Small } else { FabSize::Normal }, "+" }
+                            FabList { activated: activated(), side: list_side,
+                                FabButton { size: FabSize::Small, onclick: |_| {}, "A" }
+                                FabButton { size: FabSize::Small, onclick: |_| {}, "B" }
+                                FabButton { size: FabSize::Small, onclick: |_| {}, "C" }
+                            }
+                        }
+                    },
+                    crate::Card { title: "Actions", "FAB is anchored to the body, and the list opens from the selected side." }
+                    crate::Card { title: "Content", "The button stays over scrolling body content." }
+                    for index in 1..=8 {
+                        crate::Card { title: format!("Row {index}"), "Scrollable content for checking FAB overlap." }
+                    }
                 }
             }
         }

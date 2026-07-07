@@ -70,7 +70,7 @@ pub fn Select(
             span { class: s::SELECT_VALUE, "{value()}" }
             ChevronDown { class: "fill-gray ml-1 shrink-0", size: 16 }
         }
-        Sheet { is_open, mode, class: s::SELECT_SHEET,
+        Sheet { is_open, mode, class: s::SELECT_SHEET, draggable: false,
             div { class: "flex flex-col w-full", role: "listbox",
                 for (index , option) in options.into_iter().enumerate() {
                     SelectOptionComponent {
@@ -124,11 +124,11 @@ fn SelectOptionComponent(
 #[component]
 pub fn SelectPlaygroundDemo() -> Element {
     let mut value = use_signal(|| "Stroke".to_string());
-    let mut disabled = use_signal(|| false);
+    let disabled = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: disabled(), onchange: move |_| disabled.toggle() } span { "Disabled" } }
+                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
             },
             Select {
                 value,

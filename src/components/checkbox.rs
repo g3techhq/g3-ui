@@ -46,6 +46,7 @@ pub fn Checkbox(
     let is_indeterminate = indeterminate.unwrap_or(false);
     let is_disabled = disabled.unwrap_or(false);
     let has_error = error.as_ref().is_some_and(|value| !value.is_empty());
+    let has_hint = hint.as_ref().is_some_and(|value| !value.is_empty());
     let placement = label_placement.unwrap_or_default();
     let mode_cls = match mode {
         ComponentMode::Ios => s::CHECKBOX_IOS,
@@ -59,9 +60,19 @@ pub fn Checkbox(
     };
     let disabled_cls = if is_disabled { "disabled" } else { "" };
     let invalid_cls = if has_error { "invalid" } else { "" };
+    let single_line_cls = if !has_error
+        && !has_hint
+        && matches!(
+            placement,
+            ControlLabelPlacement::Start | ControlLabelPlacement::End
+        ) {
+        "g3-checkbox-single-line"
+    } else {
+        ""
+    };
     let cls = merge_classes(
         format!(
-            "{} {mode_cls} {} {checked_cls} {indeterminate_cls} {disabled_cls} {invalid_cls}",
+            "{} {mode_cls} {} {checked_cls} {indeterminate_cls} {disabled_cls} {invalid_cls} {single_line_cls}",
             s::CHECKBOX,
             placement.class(),
         ),
@@ -142,15 +153,15 @@ fn describedby(
 #[component]
 pub fn CheckboxPlaygroundDemo() -> Element {
     let checked = use_signal(|| true);
-    let mut disabled = use_signal(|| false);
+    let disabled = use_signal(|| false);
     let mut indeterminate = use_signal(|| false);
 
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: disabled(), onchange: move |_| disabled.toggle() } span { "Disabled" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: indeterminate(), onchange: move |_| indeterminate.toggle() } span { "Indeterminate" } }
+                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: indeterminate, label: "Indeterminate".to_string() }
             },
             div { class: "g3-checkbox-demo-stack",
                 Checkbox {

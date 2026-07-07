@@ -133,19 +133,66 @@ pub fn Toast(
 #[component]
 pub fn ToastPlaygroundDemo() -> Element {
     let mut open = use_signal(|| true);
+    let duration_index = use_signal(|| 1_usize);
+    let position_index = use_signal(|| 2_usize);
+    let color_index = use_signal(|| 1_usize);
+    let duration_ms = match duration_index() {
+        0 => 1500,
+        2 => 5000,
+        3 => 0,
+        _ => 2500,
+    };
+    let position = match position_index() {
+        0 => ToastPosition::Top,
+        1 => ToastPosition::Middle,
+        _ => ToastPosition::Bottom,
+    };
+    let color = match color_index() {
+        0 => StatusColor::Neutral,
+        1 => StatusColor::Accent,
+        3 => StatusColor::Warning,
+        4 => StatusColor::Danger,
+        _ => StatusColor::Success,
+    };
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
                 crate::Button { onclick: move |_| open.set(true), "Show toast" }
+                div {
+                    span { "Duration" }
+                    crate::SegmentGroup { active: duration_index,
+                        crate::SegmentButton { index: 0, "1.5s" }
+                        crate::SegmentButton { index: 1, "2.5s" }
+                        crate::SegmentButton { index: 2, "5s" }
+                        crate::SegmentButton { index: 3, "Off" }
+                    }
+                }
+                div {
+                    span { "Position" }
+                    crate::SegmentGroup { active: position_index,
+                        crate::SegmentButton { index: 0, "Top" }
+                        crate::SegmentButton { index: 1, "Middle" }
+                        crate::SegmentButton { index: 2, "Bottom" }
+                    }
+                }
+                div {
+                    span { "Color" }
+                    crate::SegmentGroup { active: color_index,
+                        crate::SegmentButton { index: 0, "Neutral" }
+                        crate::SegmentButton { index: 1, "Accent" }
+                        crate::SegmentButton { index: 2, "Success" }
+                        crate::SegmentButton { index: 3, "Warn" }
+                        crate::SegmentButton { index: 4, "Danger" }
+                    }
+                }
             },
             div { class: "g3-toast-demo-stage",
-                Toast { open, message: "Round saved".to_string(), color: StatusColor::Success, duration_ms: 2500 }
+                Toast { open, message: "Round saved".to_string(), color, position, duration_ms }
             }
         }
     }
 }
-
 crate::g3_playground! {
     name: "Toast",
     g3_name: "G3Toast",

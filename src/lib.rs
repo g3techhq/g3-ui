@@ -64,6 +64,8 @@ mod tests {
     use super::*;
     use dioxus::prelude::*;
 
+    const SEGMENT_SOURCE: &str = include_str!("components/segment.rs");
+
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
@@ -484,6 +486,9 @@ mod tests {
         let accordion_source = include_str!("components/accordion.rs");
         let line_source = include_str!("components/line.rs");
         let list_source = include_str!("components/list.rs");
+        let fab_source = include_str!("components/fab.rs");
+        let sheet_source = include_str!("components/sheet.rs");
+        let modal_source = include_str!("components/modal.rs");
 
         assert!(toast_source.contains("s::TIMER"));
         assert!(toast_styles.contains("g3-toast-timer"));
@@ -498,11 +503,32 @@ mod tests {
         assert!(stylesheet.contains("-webkit-user-select: none"));
         assert!(stylesheet.contains(".g3-list > .g3-swipe-item:last-child .g3-item::after"));
         assert!(list_source.contains("DEFAULT_ACTIVATE_ACTION_WIDTH"));
+        assert!(list_source.contains("DEFAULT_DISMISS_ACTION_WIDTH"));
+        assert!(list_source.contains("action_width_for_behavior"));
+        assert!(!list_source.contains("action_width: Option<f64>"));
+        assert!(list_source.contains("crate::Checkbox { checked: inset"));
+        assert!(list_source.contains("crate::SegmentGroup { active: lines_index"));
+        assert!(stylesheet.contains(":has(+ .g3-item-divider)"));
+        assert!(stylesheet.contains(".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions"));
+        assert!(stylesheet.contains("transition-duration: 560ms"));
         assert!(stylesheet.contains(".g3-navbar-md .g3-navbar-tab-selected"));
         assert!(stylesheet.contains(".g3-navbar {"));
         assert!(stylesheet.contains("flex-direction: column"));
         assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
         assert!(stylesheet.contains(".g3-navbar-tab:active:not(:disabled)::before"));
+        assert!(stylesheet.contains("transition: opacity 220ms ease-out"));
+        assert!(fab_source.contains("s::FAB_CONTAINER"));
+        assert!(fab_source.contains("fab: rsx!"));
+        assert!(stylesheet.contains(".g3-fab-container"));
+        assert!(sheet_source.contains("let has_handle = placement == SheetPlacement::Bottom"));
+        assert!(stylesheet.contains("overscroll-behavior: contain"));
+        assert!(stylesheet.contains(".g3-select-sheet.g3-sheet-bottom .g3-sheet-content"));
+        assert!(modal_source.contains("onclick: move |_| open.set(false)"));
+        assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"]"));
+        assert!(stylesheet.contains("pointer-events: none"));
+        assert!(playground_stylesheet.contains("justify-items: center"));
+        assert!(playground_stylesheet.contains("calc((100dvh - 180px) * 390 / 844)"));
+        assert!(playground_stylesheet.contains("touch-action: pan-y"));
         assert!(playground_source.contains("g3_ui::List"));
         assert!(!playground_source.contains("nav-button"));
         assert!(!playground_stylesheet.contains(".nav-button"));
@@ -516,6 +542,76 @@ mod tests {
         assert!(stylesheet.contains(".g3-line-demo-surface-horizontal"));
     }
 
+    #[test]
+    fn playground_has_no_component_clone_controls() {
+        let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
+        let button_source = include_str!("components/button.rs");
+        let field_source = include_str!("components/field.rs");
+        let toggle_source = include_str!("components/toggle.rs");
+        let spinner_source = include_str!("components/spinner.rs");
+        let line_source = include_str!("components/line.rs");
+        let card_source = include_str!("components/card.rs");
+        let sheet_source = include_str!("components/sheet.rs");
+        let list_source = include_str!("components/list.rs");
+        let toast_source = include_str!("components/toast.rs");
+        let fab_source = include_str!("components/fab.rs");
+        let body_styles_source = include_str!("components/body_styles.rs");
+        let component_sources = std::fs::read_dir(crate_root.join("src/components"))
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.path().extension().is_some_and(|ext| ext == "rs"))
+            .map(|entry| std::fs::read_to_string(entry.path()).unwrap())
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        for forbidden in [
+            "g3-playground-control",
+            "g3-playground-check",
+            "g3-playground-segments",
+            "g3-playground-button",
+        ] {
+            assert!(!component_sources.contains(forbidden), "found {forbidden}");
+            assert!(
+                !playground_stylesheet.contains(forbidden),
+                "stylesheet still defines {forbidden}"
+            );
+        }
+
+        assert!(button_source.contains("crate::Field"));
+        assert!(field_source.contains("crate::Field"));
+        assert!(toggle_source.contains("crate::Checkbox"));
+        assert!(spinner_source.contains("crate::Checkbox"));
+        assert!(line_source.contains("crate::Checkbox"));
+        assert!(card_source.contains("crate::Field"));
+        assert!(sheet_source.contains("crate::SegmentGroup"));
+        assert!(list_source.contains("crate::SegmentGroup"));
+        assert!(toast_source.contains("Duration"));
+        assert!(toast_source.contains("duration_ms"));
+        assert!(stylesheet.contains(".g3-toast-success"));
+        assert!(toast_source.contains("let color_index = use_signal(|| 1_usize)"));
+        assert!(stylesheet.contains(".g3-switch"));
+        assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
+        assert!(!stylesheet.contains(".g3-fab-ios:active"));
+        assert!(!stylesheet.contains(".g3-fab-md:active"));
+        assert!(stylesheet.contains(".info-btn"));
+        assert!(stylesheet.contains(".info-btn:active"));
+        assert!(list_source.contains("DISMISS_SWIPE_OFFSET: f64 = 430.0"));
+        assert!(list_source.contains("DISMISS_EXIT_MS: u64 = 560"));
+        assert!(stylesheet.contains("transition-duration: 560ms"));
+        assert!(stylesheet.contains(
+            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions-end .g3-swipe-action"
+        ));
+        assert!(stylesheet.contains("justify-content: flex-end"));
+        assert!(sheet_source.contains("crate::List"));
+        assert!(stylesheet.contains(".g3-sheet-handle-wrap-ios"));
+        assert!(stylesheet.contains("min-height: 44px"));
+        assert!(!stylesheet.contains(".g3-sheet.g3-sheet-closed .g3-sheet-content"));
+        assert!(fab_source.contains("s::FAB_CONTAINER"));
+        assert!(body_styles_source.contains("g3-body"));
+        assert!(!body_styles_source.contains(" relative"));
+    }
     #[test]
     fn settings_group_is_removed_from_public_surface() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -884,6 +980,7 @@ mod tests {
     #[test]
     fn header_toolbar_and_ios_scrollbar_contracts_are_mobile_clean() {
         let stylesheet = include_str!("../assets/g3_ui.css");
+        let header_source = include_str!("components/header.rs");
 
         let ios_header_block = stylesheet
             .split(".g3-header-ios")
@@ -905,6 +1002,28 @@ mod tests {
         assert!(stylesheet.contains("scrollbar-width: none"));
         assert!(stylesheet.contains(".g3-shell-md .g3-body-content"));
         assert!(stylesheet.contains("-ms-overflow-style: none"));
+        assert!(header_source.contains("HeaderToolbarContext"));
+        assert!(header_source.contains("provide_context(HeaderToolbarContext)"));
+        assert!(SEGMENT_SOURCE.contains("try_consume_context::<HeaderToolbarContext>()"));
+        assert!(!SEGMENT_SOURCE.contains("toolbar: Option<bool>"));
+        assert!(!SEGMENT_SOURCE.contains("toolbar.unwrap_or"));
+    }
+
+    #[test]
+    fn body_padding_can_be_disabled_without_custom_classes() {
+        let body_source = include_str!("components/body.rs");
+        let body_styles = include_str!("components/body_styles.rs");
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(body_source.contains("padding: Option<bool>"));
+        assert!(body_source.contains("padding.unwrap_or(true)"));
+        assert!(body_source.contains("--g3-body-padding"));
+        assert!(body_source.contains("data-padding"));
+        assert!(body_source.contains("BODY_CONTENT_NO_PADDING"));
+        assert!(body_styles.contains("g3-body-content-no-padding"));
+        assert!(stylesheet.contains(".g3-body-content-no-padding"));
+        assert!(stylesheet.contains("padding: var(--g3-body-padding, 1.5rem)"));
+        assert!(stylesheet.contains("--g3-body-padding: 0"));
     }
 
     #[test]
@@ -980,6 +1099,112 @@ mod tests {
         assert!(stylesheet.contains(".g3-sheet-content::-webkit-scrollbar"));
         assert!(stylesheet.contains(".g3-sheet-content"));
         assert!(stylesheet.contains("scrollbar-width: none"));
+    }
+
+    #[test]
+    fn sheets_keep_side_open_selectors_distinct_from_closed_content_rules() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(stylesheet.contains(".g3-sheet-bottom.g3-sheet-open"));
+        assert!(stylesheet.contains(".g3-sheet-left.g3-sheet-open,"));
+        assert!(stylesheet.contains(".g3-sheet-right.g3-sheet-open"));
+        assert!(!stylesheet.contains(".g3-sheet.g3-sheet-closed .g3-sheet-content"));
+        assert!(!stylesheet.contains(".g3-sheet-right.g3-sheet.g3-sheet-closed .g3-sheet-content"));
+        assert!(
+            !stylesheet.contains(
+                ".g3-sheet-left.g3-sheet-open,\n.g3-sheet-right.g3-sheet.g3-sheet-closed"
+            )
+        );
+    }
+    #[test]
+    fn overlays_lock_background_scroll_while_open() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let sheet_source = include_str!("components/sheet.rs");
+        let modal_source = include_str!("components/modal.rs");
+
+        assert!(sheet_source.contains(r#"use_lock_body_scroll(is_open);"#));
+        assert!(modal_source.contains(r#"use_lock_body_scroll(open);"#));
+        assert!(stylesheet.contains("body.g3-overlay-scroll-locked"));
+        assert!(stylesheet.contains("overscroll-behavior: none"));
+    }
+
+    #[test]
+    fn select_sheet_drag_is_limited_to_the_handle() {
+        let sheet_source = include_str!("components/sheet.rs");
+
+        assert!(sheet_source.contains("draggable: Option<bool>"));
+        assert!(sheet_source.contains("let is_draggable = draggable.unwrap_or(true);"));
+        assert!(sheet_source.contains("if is_draggable && has_handle"));
+        assert!(sheet_source.contains("const SHEET_DISMISS_DISTANCE: f64 = 96.0;"));
+        assert!(sheet_source.contains("r#type: \"button\""));
+        assert!(sheet_source.contains("aria_hidden: (!is_open_now).to_string()"));
+        assert!(sheet_source.contains("inert: (!is_open_now).then"));
+        assert!(include_str!("components/select.rs").contains("draggable: false"));
+    }
+
+    #[test]
+    fn ios_segment_buttons_do_not_use_sibling_border_separators_or_press_flash() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(!stylesheet.contains(".g3-segment-btn-ios + .g3-segment-btn-ios"));
+        assert!(!stylesheet.contains(".g3-segment-btn-ios:active"));
+        assert!(stylesheet.contains(".g3-segment-btn-ios {\n"));
+        assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
+    }
+
+    #[test]
+    fn playground_menu_button_suppresses_global_button_press_fill() {
+        let stylesheet = include_str!("../playground/assets/playground.css");
+
+        assert!(stylesheet.contains(".playground-menu-button:active"));
+        assert!(stylesheet.contains("background: transparent"));
+        assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
+    }
+
+    #[test]
+    fn toast_color_is_visible_as_a_strong_accent_edge() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(stylesheet.contains("border-inline-start"));
+        assert!(stylesheet.contains("var(--g3-toast-accent-color"));
+        assert!(
+            stylesheet.contains("border-color: color-mix(in srgb, var(--g3-toast-accent-color")
+        );
+    }
+
+    #[test]
+    fn checkbox_single_line_rows_center_label_and_control() {
+        let checkbox_source = include_str!("components/checkbox.rs");
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        let control_block = stylesheet
+            .split(".g3-checkbox-control {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing checkbox control block");
+
+        assert!(checkbox_source.contains("g3-checkbox-single-line"));
+        assert!(stylesheet.contains(".g3-checkbox-single-line"));
+        assert!(stylesheet.contains("align-items: center"));
+        assert!(stylesheet.contains(".g3-checkbox-single-line.g3-control-label-start"));
+        assert!(stylesheet.contains("row-gap: 0"));
+        assert!(stylesheet.contains("min-height: 22px"));
+        assert!(control_block.contains("background: var(--color-card)"));
+        assert!(!control_block.contains("background: var(--color-control)"));
+        assert!(stylesheet.contains(".g3-checkbox-single-line .g3-checkbox-label {"));
+        assert!(stylesheet.contains("min-height: 22px;"));
+        assert!(stylesheet.contains("line-height: 22px;"));
+        assert!(stylesheet.contains("transform: translateY(1px);"));
+    }
+
+    #[test]
+    fn confirm_modal_playground_controls_use_shared_fields_only() {
+        let source = include_str!("components/confirm_modal.rs");
+
+        assert!(source.contains("crate::Field"));
+        assert!(!source.contains("g3-playground-control"));
+        assert!(!source.contains("g3-playground-input"));
+        assert!(!source.contains("g3-playground-field"));
     }
 
     #[test]
@@ -1097,16 +1322,15 @@ mod tests {
     #[test]
     fn segment_panel_is_removed_from_public_surface() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let segment_source = include_str!("components/segment.rs");
         let lib_source = include_str!("lib.rs")
             .split("#[cfg(test)]")
             .next()
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
 
-        assert!(!segment_source.contains("pub fn SegmentPanel"));
-        assert!(!segment_source.contains("render: Callback"));
-        assert!(!segment_source.contains("render.call"));
+        assert!(!SEGMENT_SOURCE.contains("pub fn SegmentPanel"));
+        assert!(!SEGMENT_SOURCE.contains("render: Callback"));
+        assert!(!SEGMENT_SOURCE.contains("render.call"));
         assert!(!lib_source.contains("SegmentPanel"));
         assert!(!lib_source.contains("G3SegmentPanel"));
         assert!(!prelude_source.contains("SegmentPanel"));
@@ -1115,32 +1339,27 @@ mod tests {
 
     #[test]
     fn segment_group_is_not_route_or_transition_aware() {
-        let segment_source = include_str!("components/segment.rs");
-
-        assert!(!segment_source.contains("SegmentRouteTarget"));
-        assert!(!segment_source.contains("HashMap"));
-        assert!(!segment_source.contains("animated_update"));
-        assert!(!segment_source.contains("NavigationAnimation"));
-        assert!(!segment_source.contains("navigator.push"));
-        assert!(!segment_source.contains("route: Option"));
+        assert!(!SEGMENT_SOURCE.contains("SegmentRouteTarget"));
+        assert!(!SEGMENT_SOURCE.contains("HashMap"));
+        assert!(!SEGMENT_SOURCE.contains("animated_update"));
+        assert!(!SEGMENT_SOURCE.contains("NavigationAnimation"));
+        assert!(!SEGMENT_SOURCE.contains("navigator.push"));
+        assert!(!SEGMENT_SOURCE.contains("route: Option"));
     }
     #[test]
     fn segment_group_can_defer_active_for_animated_callers() {
-        let segment_source = include_str!("components/segment.rs");
-
-        assert!(segment_source.contains("defer_active: Option<bool>"));
-        assert!(segment_source.contains("defer_active: defer_active.unwrap_or(false)"));
-        assert!(segment_source.contains("if !context.defer_active"));
-        assert!(segment_source.contains("(context.active).set(index)"));
+        assert!(SEGMENT_SOURCE.contains("defer_active: Option<bool>"));
+        assert!(SEGMENT_SOURCE.contains("defer_active: defer_active.unwrap_or(false)"));
+        assert!(SEGMENT_SOURCE.contains("if !context.defer_active"));
+        assert!(SEGMENT_SOURCE.contains("(context.active).set(index)"));
     }
 
     #[test]
     fn segments_expose_indicator_and_child_view_contracts() {
         let stylesheet = include_str!("../assets/g3_ui.css");
-        let segment_source = include_str!("components/segment.rs");
         let segment_styles = include_str!("components/segment_styles.rs");
 
-        assert!(segment_source.contains("\"data-active\""));
+        assert!(SEGMENT_SOURCE.contains("\"data-active\""));
         assert!(stylesheet.contains(".g3-segment-md::after"));
         assert!(stylesheet.contains(".g3-segment-ios::before"));
         assert!(stylesheet.contains("--g3-segment-count"));
@@ -1148,7 +1367,7 @@ mod tests {
         assert!(
             stylesheet.contains("transform: translateX(calc(var(--g3-segment-active, 0) * 100%))")
         );
-        assert!(!segment_source.contains("s::VIEWPORT"));
+        assert!(!SEGMENT_SOURCE.contains("s::VIEWPORT"));
         assert!(!segment_styles.contains("VIEWPORT"));
         assert!(!stylesheet.contains(".g3-segment-viewport"));
         assert!(!stylesheet.contains(".g3-segment-view"));
@@ -1161,11 +1380,10 @@ mod tests {
 
     #[test]
     fn segment_on_change_observes_previous_active_index() {
-        let segment_source = include_str!("components/segment.rs");
-        let callback_index = segment_source
+        let callback_index = SEGMENT_SOURCE
             .find("on_change.call(index)")
             .expect("missing segment on_change callback");
-        let active_set_index = segment_source
+        let active_set_index = SEGMENT_SOURCE
             .find("(context.active).set(index)")
             .expect("missing segment active mutation");
 
@@ -1178,12 +1396,11 @@ mod tests {
     #[test]
     fn segment_group_does_not_own_child_panel_layout() {
         let stylesheet = include_str!("../assets/g3_ui.css");
-        let segment_source = include_str!("components/segment.rs");
 
         assert!(!stylesheet.contains(".g3-segment-viewport"));
         assert!(!stylesheet.contains(".g3-segment-view"));
         assert!(!stylesheet.contains(".g3-segment-view-exiting"));
-        assert!(!segment_source.contains("{children}\n            }\n        }\n    }\n}"));
+        assert!(!SEGMENT_SOURCE.contains("{children}\n            }\n        }\n    }\n}"));
     }
 
     #[test]
@@ -1212,8 +1429,9 @@ mod tests {
         let stylesheet = include_str!("../assets/g3_ui.css");
 
         assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"] .g3-modal"));
-        assert!(stylesheet.contains("g3-modal-out var(--g3-modal-debug-duration)"));
-        assert!(stylesheet.contains("--g3-modal-debug-duration: 600ms"));
+        assert!(stylesheet.contains("g3-modal-out var(--g3-modal-duration)"));
+        assert!(stylesheet.contains("--g3-modal-duration: 220ms"));
+        assert!(!stylesheet.contains("--g3-modal-debug-duration: 600ms"));
         assert!(stylesheet.contains("calc(-50% + 2rem)"));
     }
 
@@ -1230,14 +1448,13 @@ mod tests {
     #[test]
     fn segments_use_custom_properties_for_animated_any_count_indicators() {
         let stylesheet = include_str!("../assets/g3_ui.css");
-        let segment_source = include_str!("components/segment.rs");
 
-        assert!(!segment_source.contains("count: Option<usize>"));
-        assert!(segment_source.contains("count_segment_children"));
-        assert!(segment_source.contains("count_dynamic_components"));
-        assert!(segment_source.contains("DynamicNode::Fragment"));
-        assert!(segment_source.contains("--g3-segment-count"));
-        assert!(segment_source.contains("--g3-segment-active"));
+        assert!(!SEGMENT_SOURCE.contains("count: Option<usize>"));
+        assert!(SEGMENT_SOURCE.contains("count_segment_children"));
+        assert!(SEGMENT_SOURCE.contains("count_dynamic_components"));
+        assert!(SEGMENT_SOURCE.contains("DynamicNode::Fragment"));
+        assert!(SEGMENT_SOURCE.contains("--g3-segment-count"));
+        assert!(SEGMENT_SOURCE.contains("--g3-segment-active"));
         assert!(stylesheet.contains("width: calc(100% / var(--g3-segment-count, 3))"));
         assert!(stylesheet.contains("width: calc((100% - 8px) / var(--g3-segment-count, 3))"));
 
@@ -1247,6 +1464,27 @@ mod tests {
         assert!(!stylesheet.contains(":nth-child(5):last-child"));
         assert!(!stylesheet.contains("translateX(400%)"));
     }
+
+    #[test]
+    fn segment_demo_shows_toolbar_context_and_full_width_body_card() {
+        assert!(SEGMENT_SOURCE.contains("crate::Header"));
+        assert!(SEGMENT_SOURCE.contains("toolbar: rsx!"));
+        assert!(SEGMENT_SOURCE.contains("Body {"));
+        assert!(SEGMENT_SOURCE.contains("padding: false"));
+        assert!(SEGMENT_SOURCE.contains("crate::Card { title: \"Standalone\""));
+        assert!(!SEGMENT_SOURCE.contains("label: \"Toolbar\""));
+    }
+
+    #[test]
+    fn swipe_items_draw_parent_list_dividers_between_swipe_rows() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        assert!(stylesheet.contains(".g3-list[data-lines=\"inset\"] > .g3-swipe-item"));
+        assert!(stylesheet.contains(".g3-list[data-lines=\"full\"] > .g3-swipe-item"));
+        assert!(stylesheet.contains(".g3-list[data-lines=\"none\"] > .g3-swipe-item::after"));
+        assert!(stylesheet.contains("pointer-events: none"));
+    }
+
     #[test]
     fn timing_uses_dioxus_sdk_time_instead_of_custom_target_split() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));

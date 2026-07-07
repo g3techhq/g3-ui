@@ -22,12 +22,13 @@ pub enum SwipeBehavior {
 
 pub const DEFAULT_SWIPE_ACTION_WIDTH: f64 = 88.0;
 pub const DEFAULT_ACTIVATE_ACTION_WIDTH: f64 = 136.0;
+pub const DEFAULT_DISMISS_ACTION_WIDTH: f64 = 104.0;
 pub const FULL_SWIPE_MARGIN: f64 = 30.0;
 pub const ELASTIC_FACTOR: f64 = 0.55;
 pub const ACTIVATE_SWIPE_RATIO: f64 = 0.48;
 pub const ACTIVATE_SOFTENING_RATIO: f64 = 0.72;
-pub const DISMISS_SWIPE_OFFSET: f64 = 1200.0;
-pub const DISMISS_EXIT_MS: u64 = 220;
+pub const DISMISS_SWIPE_OFFSET: f64 = 430.0;
+pub const DISMISS_EXIT_MS: u64 = 560;
 pub const DISMISS_COLLAPSE_MS: u64 = 180;
 pub const LONG_PRESS_MS: u64 = 500;
 pub const LONG_PRESS_CANCEL_DISTANCE: f64 = 8.0;
@@ -113,6 +114,14 @@ pub fn swipe_offset_for_behavior(
         SwipeBehavior::Reveal => reveal_swipe_offset(raw_offset, action_width),
         SwipeBehavior::Activate => activate_swipe_offset(raw_offset, action_width),
         SwipeBehavior::Dismiss => elastic_swipe_offset(raw_offset, action_width),
+    }
+}
+
+pub fn action_width_for_behavior(behavior: SwipeBehavior) -> f64 {
+    match behavior {
+        SwipeBehavior::Reveal => DEFAULT_SWIPE_ACTION_WIDTH,
+        SwipeBehavior::Activate => DEFAULT_ACTIVATE_ACTION_WIDTH,
+        SwipeBehavior::Dismiss => DEFAULT_DISMISS_ACTION_WIDTH,
     }
 }
 
@@ -330,7 +339,6 @@ pub fn SwipeAction(
 pub fn SwipeItem(
     start_actions: Option<Element>,
     end_actions: Option<Element>,
-    action_width: Option<f64>,
     behavior: Option<SwipeBehavior>,
     disabled: Option<bool>,
     class: Option<String>,
@@ -341,10 +349,7 @@ pub fn SwipeItem(
     children: Element,
 ) -> Element {
     let behavior = behavior.unwrap_or_default();
-    let action_width = action_width.unwrap_or(match behavior {
-        SwipeBehavior::Activate => DEFAULT_ACTIVATE_ACTION_WIDTH,
-        SwipeBehavior::Reveal | SwipeBehavior::Dismiss => DEFAULT_SWIPE_ACTION_WIDTH,
-    });
+    let action_width = action_width_for_behavior(behavior);
     let has_start_actions = start_actions.is_some();
     let has_end_actions = end_actions.is_some();
     let disabled = disabled.unwrap_or(false);
@@ -467,11 +472,29 @@ pub fn SwipeItem(
 pub fn ListPlaygroundDemo() -> Element {
     let mut last_action = use_signal(|| "Long-press the reveal row or swipe any row".to_string());
     let mut dismiss_visible = use_signal(|| true);
+    let inset = use_signal(|| true);
+    let lines_index = use_signal(|| 1_usize);
+    let lines = match lines_index() {
+        0 => ListLines::Full,
+        2 => ListLines::None,
+        _ => ListLines::Inset,
+    };
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
+            controls: rsx! {
+                crate::Checkbox { checked: inset, label: "Inset".to_string() }
+                div {
+                    span { "Dividers" }
+                    crate::SegmentGroup { active: lines_index,
+                        crate::SegmentButton { index: 0, "Full" }
+                        crate::SegmentButton { index: 1, "Inset" }
+                        crate::SegmentButton { index: 2, "None" }
+                    }
+                }
+            },
             div { class: "g3-list-demo-stack",
-                List { inset: true,
+                List { inset: inset(), lines,
                     ItemDivider { "Round" }
                     Item { start: rsx! { crate::Avatar { fallback: "MW" } }, label: "Matthew Weisfeld", description: "Walking 18 holes", metadata: "9:40" }
                     Item { kind: ItemKind::Link("https://example.com".to_string()), label: "Link row", description: "Opens a destination" }
@@ -486,7 +509,6 @@ pub fn ListPlaygroundDemo() -> Element {
                     }
                     SwipeItem {
                         behavior: SwipeBehavior::Activate,
-                        action_width: DEFAULT_ACTIVATE_ACTION_WIDTH,
                         start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, "Archive" } },
                         end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Flag" } },
                         on_swipe_action: move |state: SwipeState| last_action.set(format!("Quick swipe activated: {:?}", state.side)),
@@ -495,7 +517,6 @@ pub fn ListPlaygroundDemo() -> Element {
                     if dismiss_visible() {
                         SwipeItem {
                             behavior: SwipeBehavior::Dismiss,
-                            action_width: 96.0,
                             end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Remove" } },
                             on_full_swipe: move |state: SwipeState| {
                                 last_action.set(format!("Dismissed by {:?} swipe", state.side));

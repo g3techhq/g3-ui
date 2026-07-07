@@ -219,18 +219,18 @@ pub fn Skeleton(shape: Option<SkeletonShape>, class: Option<String>) -> Element 
 #[component]
 pub fn PrimitivesPlaygroundDemo() -> Element {
     let mut selected = use_signal(|| true);
-    let mut progress = use_signal(|| 0.62_f64);
+    let mut progress_value = use_signal(|| "62".to_string());
+    let progress = progress_value()
+        .parse::<f64>()
+        .map(|value| value.clamp(0.0, 100.0) / 100.0)
+        .unwrap_or(0.0);
 
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: selected(), onchange: move |_| selected.toggle() } span { "Selected chip" } }
-                label { class: "g3-playground-control", span { "Progress" } input { r#type: "range", min: "0", max: "100", value: "{(progress() * 100.0).round()}", oninput: move |event: Event<FormData>| {
-                    if let Ok(value) = event.value().parse::<f64>() {
-                        progress.set(value / 100.0);
-                    }
-                } } }
+                crate::Checkbox { checked: selected, label: "Selected chip".to_string() }
+                crate::Field { label: "Progress".to_string(), value: progress_value, r#type: "range", min: 0, max: 100, oninput: move |event: Event<FormData>| progress_value.set(event.value()), onchange: move |event: Event<FormData>| progress_value.set(event.value()) }
             },
             div { class: "g3-primitives-demo-stack",
                 div { class: "g3-primitives-demo-row",
@@ -244,7 +244,7 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
                     Chip { selected: selected(), onclick: move |_| selected.toggle(), start: rsx! { span { "#" } }, "Front nine" }
                     Chip { disabled: true, "Locked" }
                 }
-                Progress { value: progress(), max: 1.0 }
+                Progress { value: progress, max: 1.0 }
                 Progress { max: 1.0 }
                 div { class: "g3-primitives-demo-skeletons",
                     Skeleton { shape: SkeletonShape::Row }

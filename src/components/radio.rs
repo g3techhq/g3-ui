@@ -184,15 +184,15 @@ fn next_radio_value(current: &str, clicked: &str, allow_empty_selection: bool) -
 #[component]
 pub fn RadioPlaygroundDemo() -> Element {
     let selected = use_signal(|| "push".to_string());
-    let mut disabled = use_signal(|| false);
-    let mut allow_empty = use_signal(|| false);
+    let disabled = use_signal(|| false);
+    let allow_empty = use_signal(|| false);
 
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: disabled(), onchange: move |_| disabled.toggle() } span { "Disabled" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: allow_empty(), onchange: move |_| allow_empty.toggle() } span { "Allow empty" } }
+                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: allow_empty, label: "Allow empty".to_string() }
             },
             div { class: "g3-radio-demo-stack",
                 RadioGroup {

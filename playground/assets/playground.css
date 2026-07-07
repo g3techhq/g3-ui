@@ -186,6 +186,7 @@ textarea {
 }
 
 .playground-menu-button {
+  -webkit-tap-highlight-color: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -200,6 +201,12 @@ textarea {
 
 .playground-menu-button:hover {
   background: color-mix(in srgb, var(--color-control, #eef2f4) 72%, transparent);
+}
+
+.playground-menu-button:active {
+  background: transparent;
+  transform: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .playground-menu-button:focus-visible {
@@ -245,6 +252,7 @@ textarea {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(260px, 390px);
   align-items: start;
+  justify-items: center;
   gap: 24px;
 }
 
@@ -256,6 +264,8 @@ textarea {
   min-height: 0;
   padding: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .playground-sidebar-header {
@@ -282,7 +292,8 @@ textarea {
 
 .g3-playground-preview {
   position: relative;
-  width: min(390px, 100%);
+  width: min(390px, 100%, calc((100dvh - 180px) * 390 / 844));
+  max-height: min(844px, calc(100dvh - 180px));
   aspect-ratio: 390 / 844;
   display: block;
   padding: 0;
@@ -302,7 +313,7 @@ textarea {
 }
 
 .g3-playground-preview .g3-body-content {
-  padding: 16px;
+  padding: var(--g3-body-padding, 16px);
 }
 
 .g3-playground-preview .g3-playground-body-center .g3-body-content {
@@ -368,67 +379,11 @@ textarea {
   transform: translate(-50%, -50%) scale(1);
 }
 
-.g3-playground-controls {
+.playground-controls-pane {
   display: grid;
   align-content: start;
   gap: 12px;
   order: -1;
-}
-
-.g3-playground-control {
-  display: grid;
-  gap: 6px;
-  color: var(--color-text-secondary, #37434f);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.g3-playground-control input,
-.g3-playground-control textarea {
-  width: 100%;
-  min-height: 36px;
-  padding: 6px 8px;
-  border: 1px solid var(--color-card-border, #cfd8df);
-  border-radius: 6px;
-  background: var(--color-card, #ffffff);
-  color: var(--color-text, #17202a);
-}
-
-.g3-playground-control textarea {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.g3-playground-check {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--color-text-secondary, #37434f);
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.g3-playground-segments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.g3-playground-segments button {
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--color-card-border, #cfd8df);
-  border-radius: 6px;
-  background: var(--color-card, #ffffff);
-  color: var(--color-text, #26313a);
-  cursor: pointer;
-}
-
-.g3-playground-segments button.selected {
-  border-color: #7fb392;
-  background: #e7f3eb;
-  color: #146b38;
-  font-weight: 700;
 }
 
 .g3-playground-spinner-box {
@@ -505,7 +460,7 @@ textarea {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .g3-playground-controls {
+  .playground-controls-pane {
     order: -1;
   }
 

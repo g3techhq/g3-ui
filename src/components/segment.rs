@@ -1,5 +1,6 @@
 //! Segment control with iOS and Android styling.
 
+use super::header::HeaderToolbarContext;
 use super::segment_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::{core::DynamicNode, prelude::*};
@@ -14,7 +15,6 @@ struct SegmentGroupContext {
 #[component]
 pub fn SegmentGroup(
     active: Signal<usize>,
-    toolbar: Option<bool>,
     on_change: Option<Callback<usize>>,
     defer_active: Option<bool>,
     class: Option<String>,
@@ -23,6 +23,7 @@ pub fn SegmentGroup(
 ) -> Element {
     let mode = use_component_mode(mode);
     let segment_count = count_segment_children(&children);
+    let in_toolbar = try_consume_context::<HeaderToolbarContext>().is_some();
 
     provide_context(SegmentGroupContext {
         active,
@@ -38,7 +39,7 @@ pub fn SegmentGroup(
     rsx! {
         div {
             class: merge_classes(
-                format!("{segment_cls} {}", if toolbar.unwrap_or(false) { s::TOOLBAR } else { s::STANDALONE }),
+                format!("{segment_cls} {}", if in_toolbar { s::TOOLBAR } else { s::STANDALONE }),
                 class.as_deref(),
             ),
             role: "tablist",
@@ -114,18 +115,31 @@ pub fn SegmentButton(
 #[cfg(feature = "playground")]
 #[component]
 pub fn SegmentPlaygroundDemo() -> Element {
-    let active = use_signal(|| 0_usize);
-    let mut toolbar = use_signal(|| false);
+    let toolbar_active = use_signal(|| 0_usize);
+    let standalone_active = use_signal(|| 0_usize);
+    let playground_mode = crate::use_component_mode(None);
+
     rsx! {
-        crate::PlaygroundDemoFrame {
-            controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: toolbar(), onchange: move |_| toolbar.toggle() } span { "Toolbar" } }
-            },
-            crate::Card { title: "Pending Game",
-                SegmentGroup { active, toolbar: toolbar(),
-                    SegmentButton { index: 0, "Players" }
-                    SegmentButton { index: 1, "Bet" }
-                    SegmentButton { index: 2, "Ready" }
+        crate::PlaygroundDemoFrame { app: false, center: false,
+            crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
+                crate::Header {
+                    title: "Segments",
+                    toolbar: rsx! {
+                        SegmentGroup { active: toolbar_active,
+                            SegmentButton { index: 0, "Players" }
+                            SegmentButton { index: 1, "Bet" }
+                            SegmentButton { index: 2, "Ready" }
+                        }
+                    },
+                }
+                crate::Body { has_footer_space: false, padding: false,
+                    crate::Card { title: "Standalone", class: "g3-segment-demo-card",
+                        SegmentGroup { active: standalone_active,
+                            SegmentButton { index: 0, "Gross" }
+                            SegmentButton { index: 1, "Net" }
+                            SegmentButton { index: 2, "Skins" }
+                        }
+                    }
                 }
             }
         }

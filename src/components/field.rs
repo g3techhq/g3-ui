@@ -132,16 +132,16 @@ pub fn FieldPlaygroundDemo() -> Element {
     let value = use_signal(String::new);
     let mut label = use_signal(|| "Club".to_string());
     let mut placeholder = use_signal(|| "Club name".to_string());
-    let mut disabled = use_signal(|| false);
-    let mut numeric = use_signal(|| false);
+    let disabled = use_signal(|| false);
+    let numeric = use_signal(|| false);
 
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Label" } input { value: "{label()}", oninput: move |event: Event<FormData>| label.set(event.value()) } }
-                label { class: "g3-playground-control", span { "Placeholder" } input { value: "{placeholder()}", oninput: move |event: Event<FormData>| placeholder.set(event.value()) } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: disabled(), onchange: move |_| disabled.toggle() } span { "Disabled" } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: numeric(), onchange: move |_| numeric.toggle() } span { "Number type" } }
+                crate::Field { label: "Label".to_string(), value: label, oninput: move |event: Event<FormData>| label.set(event.value()), onchange: move |event: Event<FormData>| label.set(event.value()) }
+                crate::Field { label: "Placeholder".to_string(), value: placeholder, oninput: move |event: Event<FormData>| placeholder.set(event.value()), onchange: move |event: Event<FormData>| placeholder.set(event.value()) }
+                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: numeric, label: "Number type".to_string() }
             },
             Field {
                 label: label(),

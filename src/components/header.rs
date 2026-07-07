@@ -4,6 +4,16 @@ use super::header_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
+#[derive(Clone, Copy)]
+pub(crate) struct HeaderToolbarContext;
+
+#[component]
+fn HeaderToolbarContextProvider(children: Element) -> Element {
+    provide_context(HeaderToolbarContext);
+
+    rsx! { {children} }
+}
+
 #[component]
 pub fn Header(
     title: String,
@@ -38,7 +48,7 @@ pub fn Header(
             }
             if let Some(t) = toolbar {
                 div { class: s::TOOLBAR,
-                    {t}
+                    HeaderToolbarContextProvider { {t} }
                 }
             }
         }
@@ -49,15 +59,15 @@ pub fn Header(
 pub fn HeaderPlaygroundDemo() -> Element {
     let active = use_signal(|| 0_usize);
     let mut title = use_signal(|| "Pending Game".to_string());
-    let mut toolbar = use_signal(|| true);
-    let mut start_button = use_signal(|| true);
-    let mut end_button = use_signal(|| true);
+    let toolbar = use_signal(|| true);
+    let start_button = use_signal(|| true);
+    let end_button = use_signal(|| true);
     let mut start_text = use_signal(|| "Close".to_string());
     let mut end_text = use_signal(|| "Create".to_string());
     let playground_mode = crate::use_component_mode(None);
     let toolbar_slot = toolbar().then(|| {
         rsx! {
-            crate::SegmentGroup { active, toolbar: true,
+            crate::SegmentGroup { active,
                 crate::SegmentButton { index: 0, "Players" }
                 crate::SegmentButton { index: 1, "Bet" }
             }
@@ -68,12 +78,12 @@ pub fn HeaderPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                label { class: "g3-playground-control", span { "Title" } input { value: "{title()}", oninput: move |event: Event<FormData>| title.set(event.value()) } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: start_button(), onchange: move |_| start_button.toggle() } span { "Start button" } }
-                label { class: "g3-playground-control", span { "Start text" } input { value: "{start_text()}", oninput: move |event: Event<FormData>| start_text.set(event.value()) } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: end_button(), onchange: move |_| end_button.toggle() } span { "End button" } }
-                label { class: "g3-playground-control", span { "End text" } input { value: "{end_text()}", oninput: move |event: Event<FormData>| end_text.set(event.value()) } }
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: toolbar(), onchange: move |_| toolbar.toggle() } span { "Toolbar" } }
+                crate::Field { label: "Title".to_string(), value: title, oninput: move |event: Event<FormData>| title.set(event.value()), onchange: move |event: Event<FormData>| title.set(event.value()) }
+                crate::Checkbox { checked: start_button, label: "Start button".to_string() }
+                crate::Field { label: "Start text".to_string(), value: start_text, oninput: move |event: Event<FormData>| start_text.set(event.value()), onchange: move |event: Event<FormData>| start_text.set(event.value()) }
+                crate::Checkbox { checked: end_button, label: "End button".to_string() }
+                crate::Field { label: "End text".to_string(), value: end_text, oninput: move |event: Event<FormData>| end_text.set(event.value()), onchange: move |event: Event<FormData>| end_text.set(event.value()) }
+                crate::Checkbox { checked: toolbar, label: "Toolbar".to_string() }
             },
             crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
                 Header {

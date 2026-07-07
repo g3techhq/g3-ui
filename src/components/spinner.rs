@@ -26,7 +26,7 @@ pub fn Spinner(class: Option<String>, center: Option<bool>) -> Element {
 #[cfg(feature = "playground")]
 #[component]
 pub fn SpinnerPlaygroundDemo() -> Element {
-    let mut center = use_signal(|| true);
+    let center = use_signal(|| true);
     let box_cls = if center() {
         "g3-playground-spinner-box g3-playground-spinner-box-centered"
     } else {
@@ -36,7 +36,7 @@ pub fn SpinnerPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                label { class: "g3-playground-check", input { r#type: "checkbox", checked: center(), onchange: move |_| center.toggle() } span { "Center" } }
+                crate::Checkbox { checked: center, label: "Center".to_string() }
             },
             div { class: box_cls,
                 Spinner { center: center() }
