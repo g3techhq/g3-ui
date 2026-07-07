@@ -89,9 +89,18 @@ Components must work across platforms:
 - Body content passed as `children` or explicit `Element` props.
 
 ### Theming
-- CSS variables for all color/sizing tokens.
-- Theme is resolved once at provider mount via context (like `mode`), not a reactive `Signal`. To
-  switch themes at runtime, remount `G3ThemeProvider`/`G3AppWrapper` with a new `Theme`.
+- CSS variables for all color/sizing tokens. Component CSS must reference `--color-*` tokens (or
+  `color-mix()` over them) rather than literal colors, so custom themes take effect everywhere. The
+  only sanctioned literals are intentional third-party brand colors (e.g. the Google provider
+  button) and neutral elevation/scrim shadows (`rgba(0,0,0,...)`).
+- Theme switching is reactive via the prop, not a `Signal<Theme>`: `G3AppWrapper`/`G3ThemeProvider`
+  render the theme as inline CSS custom properties on the shell element, so passing a new `Theme`
+  (e.g. from a signal flipping light/dark) re-themes the whole subtree without a remount. Note the
+  `provide_context(theme)` call is currently unused by components (they read the cascading CSS vars),
+  so do not rely on consuming `Theme` from context.
+- `color-scheme` is a theme concern, not a mode concern: it defaults to `light` on `:root` and is
+  overridden by a dark theme's inline `color-scheme`. Mode selectors (`[data-g3-mode="ios/md"]`)
+  must not set `color-scheme`.
 - Two built-in presets today: `Theme::default_light()` and `Theme::default_dark()`. All `Theme`
   fields are public, so consumers build custom themes via struct-update syntax or `with_focused()`.
   (`eq_ui` ships ~26 preset themes; g3_ui has not built out an equivalent preset library yet.)

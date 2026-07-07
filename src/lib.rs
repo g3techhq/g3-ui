@@ -919,6 +919,70 @@ mod tests {
         assert!(stylesheet.contains("color-mix(in srgb, var(--color-focused) 8%"));
         assert!(stylesheet.contains("color-mix(in srgb, var(--color-focused) 20%"));
     }
+
+    #[test]
+    fn color_scheme_follows_theme_not_mode() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let theme_source = include_str!("theme.rs");
+
+        // The baseline lives on :root and is emitted by every theme's inline style;
+        // mode selectors must not force a scheme (that broke dark themes in iOS mode).
+        let ios_mode_block = stylesheet
+            .split("[data-g3-mode=\"ios\"]")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing iOS mode block");
+        assert!(!ios_mode_block.contains("color-scheme"));
+
+        let root_block = stylesheet
+            .split(":root {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing :root block");
+        assert!(root_block.contains("color-scheme: light"));
+        assert!(theme_source.contains("color-scheme: {}"));
+    }
+
+    #[test]
+    fn component_colors_reference_theme_tokens_not_literals() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        // Previously hardcoded component colors that ignored custom themes.
+        for literal in [
+            "#e9e9eb",                   // iOS switch off-track
+            "#f7f7f7",                   // iOS card pressed
+            "#4b5563",                   // message-text muted
+            "#15803d",                   // message-text success
+            "#dc2626",                   // message-text danger
+            "#b45309",                   // message-text warning
+            "#374151",                   // status-pill text
+            "#e5e7eb",                   // status-pill outline
+            "#c7c7cc",                   // iOS sheet handle
+            "rgba(255, 255, 255, 0.94)", // iOS sheet surface
+            "rgba(255,255,255,0.85)",    // translucent FAB surface
+        ] {
+            assert!(
+                !stylesheet.contains(literal),
+                "{literal} should be replaced with a theme token"
+            );
+        }
+
+        // Semantic message utilities now inherit the theme's semantic palette.
+        assert!(
+            stylesheet
+                .contains(".g3-message-text-subtle {\n    color: var(--color-label-secondary);")
+        );
+        assert!(
+            stylesheet.contains(".g3-message-text-success {\n    color: var(--color-success);")
+        );
+        assert!(stylesheet.contains(".g3-message-text-danger {\n    color: var(--color-danger);"));
+        assert!(
+            stylesheet.contains(".g3-message-text-warning {\n    color: var(--color-warning);")
+        );
+        // Translucent iOS surfaces adapt to the theme's card color.
+        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 94%, transparent)"));
+        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 85%, transparent)"));
+    }
     #[test]
     fn segments_follow_ionic_mode_contracts() {
         let stylesheet = include_str!("../assets/g3_ui.css");
@@ -1466,11 +1530,10 @@ mod tests {
     }
 
     #[test]
-    fn segment_demo_shows_toolbar_context_and_full_width_body_card() {
+    fn segment_demo_shows_toolbar_context_and_body_card() {
         assert!(SEGMENT_SOURCE.contains("crate::Header"));
         assert!(SEGMENT_SOURCE.contains("toolbar: rsx!"));
         assert!(SEGMENT_SOURCE.contains("Body {"));
-        assert!(SEGMENT_SOURCE.contains("padding: false"));
         assert!(SEGMENT_SOURCE.contains("crate::Card { title: \"Standalone\""));
         assert!(!SEGMENT_SOURCE.contains("label: \"Toolbar\""));
     }

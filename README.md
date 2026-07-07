@@ -128,10 +128,22 @@ let custom = Theme {
 };
 ```
 
-Pass a `Theme` to `G3AppWrapper` (or `G3ThemeProvider` if you're not using the app shell) to apply it
-to everything nested inside. Theme tokens are resolved once at mount, the same as `mode` — to switch
-themes at runtime, remount the provider with a new `Theme` value (e.g. keyed on a signal that flips
-between light/dark).
+Pass a `Theme` to `G3AppWrapper` (or `G3ThemeProvider` if you're not using the app shell) to apply
+it to everything nested inside. The theme is written as CSS custom properties on the shell element,
+so switching it at runtime is reactive — drive the `theme` prop from a signal and the whole tree
+re-themes without a remount:
+
+```rust,ignore
+let dark = use_signal(|| false);
+let theme = if dark() { Theme::default_dark() } else { Theme::default_light() };
+
+rsx! {
+    G3AppWrapper { theme,
+        G3Toggle { checked: dark }   // flip to re-theme live
+        // ...
+    }
+}
+```
 
 ## Route Transition Integration
 

@@ -4,7 +4,8 @@
     {
       "name": "playground",
       "runtimeExecutable": "dx",
-      "runtimeArgs": ["serve", "--package", "g3-ui-playground"],
+      "runtimeArgs": ["serve", "--port", "8080"],
+      "cwd": "playground",
       "port": 8080
     }
   ]

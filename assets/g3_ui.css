@@ -60,6 +60,10 @@
     --color-warning: #ff9f0a;
     --color-danger: #ff3b30;
 
+    /* Baseline scheme; overridden by a theme's inline `color-scheme` (dark themes)
+     * or by a wrapping theme selector. Mode selectors must NOT set this. */
+    color-scheme: light;
+
     --transition-normal: 0.25s;
     --transition-fast: 0.15s;
     --transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
@@ -75,7 +79,6 @@
     --color-surface: #ffffff;
     --color-control: rgba(118, 118, 128, 0.12);
     --color-shadow: rgba(60, 60, 67, 0.12);
-    color-scheme: light;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
@@ -544,8 +547,8 @@ body.g3-overlay-scroll-locked {
     width: 51px;
     height: 31px;
     border-radius: 15.5px;
-    background: #e9e9eb;
-    border: 1px solid rgba(60, 60, 67, 0.08);
+    background: color-mix(in srgb, var(--color-text) 9%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
     position: relative;
     transition: background var(--transition-normal) var(--transition-ios);
 }
@@ -858,7 +861,7 @@ body.g3-overlay-scroll-locked {
                 box-shadow var(--transition-normal) var(--transition-ios);
 }
 .g3-card-ios.g3-card-interactive:active:not(:has(.info-btn:active)) {
-    background: #f7f7f7;
+    background: color-mix(in srgb, var(--color-text) 3%, var(--color-card));
     transform: scale(0.995);
 }
 
@@ -941,23 +944,23 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-message-text-muted {
-    color: #4b5563;
+    color: var(--color-text-secondary);
 }
 
 .g3-message-text-subtle {
-    color: #6b7280;
+    color: var(--color-label-secondary);
 }
 
 .g3-message-text-success {
-    color: #15803d;
+    color: var(--color-success);
 }
 
 .g3-message-text-danger {
-    color: #dc2626;
+    color: var(--color-danger);
 }
 
 .g3-message-text-warning {
-    color: #b45309;
+    color: var(--color-warning);
 }
 
 .g3-status-pill {
@@ -970,9 +973,9 @@ body.g3-overlay-scroll-locked {
     font-size: 0.75rem;
     font-weight: 600;
     line-height: 1rem;
-    color: #374151;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-    outline: 1px solid #e5e7eb;
+    color: var(--color-text-secondary);
+    box-shadow: 0 1px 2px var(--color-shadow);
+    outline: 1px solid var(--color-card-border);
 }
 /* -- Sheet / Bottom Sheet -- */
 
@@ -1084,7 +1087,7 @@ body.g3-overlay-scroll-locked {
 
 /* iOS sheet */
 .g3-sheet-ios {
-    background: rgba(255, 255, 255, 0.94);
+    background: color-mix(in srgb, var(--color-card) 94%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
@@ -1124,7 +1127,7 @@ body.g3-overlay-scroll-locked {
     width: 32px;
     height: 4px;
     border-radius: 2px;
-    background: #c7c7cc;
+    background: color-mix(in srgb, var(--color-text) 24%, transparent);
     margin: 0 auto;
 }
 
@@ -1281,7 +1284,7 @@ body.g3-overlay-scroll-locked {
 
 /* Translucent FAB for iOS with backdrop-filter */
 .g3-fab-translucent {
-    background: rgba(255,255,255,0.85);
+    background: color-mix(in srgb, var(--color-card) 85%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     color: var(--color-focused);
@@ -1568,7 +1571,7 @@ body.g3-overlay-scroll-locked {
 .g3-header-ios {
     padding-top: env(safe-area-inset-top);
     background: var(--color-card);
-    border-bottom: 0.5px solid rgba(60, 60, 67, 0.18);
+    border-bottom: 0.5px solid var(--color-card-border);
     box-shadow: none;
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
