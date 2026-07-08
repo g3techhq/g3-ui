@@ -99,8 +99,11 @@ fn Playground() -> Element {
                 class: "playground-root",
                 "data-g3-mode": active_mode.as_str(),
                 "data-playground-theme": active_theme.as_str(),
-                header { class: "playground-header",
-                    div { class: "playground-header-row",
+                g3_ui::Header {
+                    title: selected.descriptor.g3_name.to_string(),
+                    mode: active_mode,
+                    class: "playground-header",
+                    start_button: rsx! {
                         g3_ui::Button {
                             style: g3_ui::ButtonStyle::Clear,
                             size: g3_ui::ButtonSize::Sm,
@@ -113,10 +116,8 @@ fn Playground() -> Element {
                                 span {}
                             }
                         }
-                        div { class: "playground-title-block",
-                            h1 { "{selected.descriptor.g3_name}" }
-                            p { class: "description", "{selected.descriptor.description}" }
-                        }
+                    },
+                    end_button: rsx! {
                         div { class: "playground-top-controls",
                             div { class: "playground-top-control playground-mode-control",
                                 span { "Mode" }
@@ -134,7 +135,10 @@ fn Playground() -> Element {
                                 }
                             }
                         }
-                    }
+                    },
+                    toolbar: rsx! {
+                        p { class: "description", "{selected.descriptor.description}" }
+                    },
                 }
                 Sheet { is_open: selector_open, placement: SheetPlacement::Left, mode: active_mode, class: "playground-selector-sheet",
                     div { class: "playground-sidebar-header",

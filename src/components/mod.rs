@@ -12,6 +12,7 @@ mod card_styles;
 mod checkbox;
 mod checkbox_styles;
 mod confirm_modal;
+mod demo_app;
 mod fab;
 mod fab_styles;
 mod field;
@@ -80,6 +81,7 @@ use crate::ComponentDescriptor;
 
 pub fn component_descriptors() -> Vec<ComponentDescriptor> {
     vec![
+        demo_app::DESCRIPTOR,
         accordion::DESCRIPTOR,
         button::DESCRIPTOR,
         toast::DESCRIPTOR,
@@ -110,6 +112,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
 #[cfg(feature = "playground")]
 pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
     vec![
+        demo_app::PLAYGROUND,
         accordion::PLAYGROUND,
         button::PLAYGROUND,
         toast::PLAYGROUND,

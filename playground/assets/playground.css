@@ -227,6 +227,39 @@ textarea {
   background: currentColor;
 }
 
+/* Reflow the g3_ui Header component for the wide desktop playground chrome. */
+.playground-header.g3-header {
+  background: color-mix(in srgb, var(--color-card, #ffffff) 94%, transparent);
+}
+.playground-header .g3-header-row {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px 0;
+}
+.playground-header .g3-header-start-slot,
+.playground-header .g3-header-end-slot {
+  padding: 0;
+}
+.playground-header .g3-header-end-slot {
+  justify-self: end;
+}
+.playground-header .g3-header-title {
+  justify-self: start;
+  width: auto;
+  text-align: left;
+  font-size: 22px;
+  font-weight: 700;
+}
+.playground-header .g3-header-toolbar {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 2px 20px 12px;
+  justify-content: flex-start;
+}
+
 .playground-main {
   width: min(1180px, 100%);
   min-width: 0;

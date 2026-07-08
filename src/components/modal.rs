@@ -17,7 +17,20 @@ pub fn Modal(
 ) -> Element {
     let mode = use_component_mode(mode);
     use_lock_body_scroll(open);
+    // Track whether the modal has ever been opened. A modal that mounts in the
+    // closed state (e.g. navigating to a page that declares a closed modal)
+    // must not play the dismiss animation, so we render nothing until the first
+    // open. Once opened, later closes still animate out normally.
+    let mut ever_opened = use_signal(|| false);
+    use_effect(move || {
+        if open() {
+            ever_opened.set(true);
+        }
+    });
     let open_now = open();
+    if !open_now && !ever_opened() {
+        return rsx! {};
+    }
     let state = if open_now { "open" } else { "closed" };
 
     let modal_cls = match mode {

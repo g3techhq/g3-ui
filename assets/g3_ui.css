@@ -359,6 +359,144 @@ body.g3-overlay-scroll-locked {
 .g3-line-demo-surface-vertical .g3-line {
     align-self: stretch;
 }
+
+/* -- Demo App (kitchen-sink playground) -- */
+.g3-demo-fab {
+    /* Self-contained bottom-right placement (the Tailwind `--spacing`
+       utilities the FAB normally uses are unavailable in this context). */
+    inset: auto 1rem 1rem auto;
+}
+.g3-demo-separator {
+    margin-top: 1rem;
+}
+.g3-demo-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.g3-demo-menu-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem 0 0.5rem;
+}
+.g3-demo-menu-name {
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+.g3-demo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 0.25rem 0.25rem 0.5rem;
+}
+.g3-demo-info-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+.g3-demo-info-lead {
+    margin: -0.375rem 0 0.25rem;
+    color: var(--color-label-secondary);
+    line-height: 1.4;
+}
+.g3-demo-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+.g3-demo-info-row .g3-badge {
+    min-width: 2.25rem;
+    justify-content: center;
+    margin-top: 0.125rem;
+}
+.g3-demo-info-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+.g3-demo-info-term {
+    font-weight: 600;
+}
+.g3-demo-info-desc {
+    font-size: 0.875rem;
+    color: var(--color-label-secondary);
+    line-height: 1.4;
+}
+.g3-demo-progress-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.g3-demo-progress-row > span {
+    font-size: 0.8125rem;
+    color: var(--color-label-secondary);
+}
+.g3-demo-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.g3-demo-button-row {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1rem 0 0.5rem;
+}
+.g3-demo-button-row > * {
+    flex: 1 1 0;
+}
+.g3-demo-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin: 1.25rem 0 0.5rem;
+}
+.g3-demo-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-label-secondary);
+}
+.g3-demo-field-label {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--color-label-secondary);
+}
+.g3-demo-radio-group {
+    margin: 0.75rem 0;
+}
+.g3-demo-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0.25rem 0.25rem;
+}
+.g3-demo-sheet-body h3 {
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+.g3-demo-profile-head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.g3-demo-profile-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+.g3-demo-profile-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+}
+
 /* -- Segment / Tab Bar -- */
 
 /* iOS segment - pill-shaped active tab with a sliding checked indicator */
@@ -1396,7 +1534,6 @@ body.g3-overlay-scroll-locked {
     flex-direction: column;
     gap: 1rem;
     overflow-y: auto;
-    border: 1px solid var(--color-card-border);
     transform: translate(-50%, -50%);
 }
 .g3-modal-title {

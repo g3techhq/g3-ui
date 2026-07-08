@@ -66,6 +66,9 @@ pub fn AccordionGroup(
     value: Option<Signal<Vec<String>>>,
     id: Option<String>,
     multiple: Option<bool>,
+    /// When true, opening an item collapses any other open item so only one
+    /// stays expanded at a time. Overrides `multiple`.
+    exclusive: Option<bool>,
     class: Option<String>,
     mode: Option<ComponentMode>,
     on_change: Option<Callback<Vec<String>>>,
@@ -80,9 +83,12 @@ pub fn AccordionGroup(
         ComponentMode::Ios => s::GROUP_IOS,
         ComponentMode::Md => s::GROUP_MD,
     };
+    // Exclusive (one-at-a-time) forces single-open behavior even if `multiple`
+    // was requested, and additionally collapses stale entries on open.
+    let multiple = multiple.unwrap_or(false) && !exclusive.unwrap_or(false);
     provide_context(AccordionGroupContext {
         value,
-        multiple: multiple.unwrap_or(false),
+        multiple,
         on_change,
         id_prefix: id_prefix.clone(),
     });
