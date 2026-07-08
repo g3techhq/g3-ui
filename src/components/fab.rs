@@ -83,11 +83,7 @@ pub fn Fab(
         .collect();
 
     rsx! {
-        div {
-            class: container_cls,
-            ..final_attributes,
-            {children}
-        }
+        div { class: container_cls, ..final_attributes, {children} }
     }
 }
 
@@ -138,7 +134,7 @@ pub fn FabButton(
     if let Some(ref href) = href {
         rsx! {
             a {
-                href: href,
+                href,
                 target: target.clone(),
                 class: btn_cls,
                 aria_disabled: is_disabled.to_string(),
@@ -157,7 +153,9 @@ pub fn FabButton(
                 r#type: "button",
                 disabled: is_disabled,
                 onclick: move |event| {
-                    if is_disabled { return; }
+                    if is_disabled {
+                        return;
+                    }
                     if let Some(ref handler) = onclick {
                         handler.call(event);
                     }
@@ -251,11 +249,7 @@ pub fn FabContainer(
                 {main_button}
             }
             if let Some(list) = list_buttons {
-                FabList {
-                    activated: is_activated(),
-                    side: list_side,
-                    {list}
-                }
+                FabList { activated: is_activated(), side: list_side, {list} }
             }
         }
     }
@@ -325,10 +319,7 @@ pub fn FabPlaygroundDemo() -> Element {
                 crate::Header { title: "Fab" }
                 crate::Body {
                     fab: rsx! {
-                        Fab {
-                            vertical,
-                            horizontal,
-                            edge: edge(),
+                        Fab { vertical, horizontal, edge: edge(),
                             FabButton { onclick: |_| {}, size: if small() { FabSize::Small } else { FabSize::Normal }, "+" }
                             FabList { activated: activated(), side: list_side,
                                 FabButton { size: FabSize::Small, onclick: |_| {}, "A" }
@@ -337,10 +328,14 @@ pub fn FabPlaygroundDemo() -> Element {
                             }
                         }
                     },
-                    crate::Card { title: "Actions", "FAB is anchored to the body, and the list opens from the selected side." }
+                    crate::Card { title: "Actions",
+                        "FAB is anchored to the body, and the list opens from the selected side."
+                    }
                     crate::Card { title: "Content", "The button stays over scrolling body content." }
                     for index in 1..=8 {
-                        crate::Card { title: format!("Row {index}"), "Scrollable content for checking FAB overlap." }
+                        crate::Card { title: format!("Row {index}"),
+                            "Scrollable content for checking FAB overlap."
+                        }
                     }
                 }
             }
@@ -349,7 +344,6 @@ pub fn FabPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Fab",
-    g3_name: "G3Fab",
     description: "Floating action button container, button, and expandable list.",
     demo: FabPlaygroundDemo,
     source: "src/components/fab.rs",

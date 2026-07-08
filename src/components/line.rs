@@ -27,11 +27,7 @@ pub fn Line(orientation: Option<LineOrientation>, class: Option<String>) -> Elem
     };
 
     rsx! {
-        hr {
-            class: cls,
-            role: "separator",
-            aria_orientation,
-        }
+        hr { class: cls, role: "separator", aria_orientation }
     }
 }
 #[cfg(feature = "playground")]
@@ -41,10 +37,7 @@ pub fn LinePlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Checkbox {
-                    checked: vertical,
-                    label: "Vertical".to_string(),
-                }
+                crate::Checkbox { checked: vertical, label: "Vertical".to_string() }
             },
             div { class: if vertical() { "g3-line-demo-surface g3-line-demo-surface-vertical" } else { "g3-line-demo-surface g3-line-demo-surface-horizontal" },
                 Line { orientation: if vertical() { LineOrientation::Vertical } else { LineOrientation::Horizontal } }
@@ -54,7 +47,6 @@ pub fn LinePlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Line",
-    g3_name: "G3Line",
     description: "Horizontal or vertical separator.",
     demo: LinePlaygroundDemo,
     source: "src/components/line.rs",

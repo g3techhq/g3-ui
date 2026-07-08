@@ -42,9 +42,11 @@ pub fn Body(
     let content_cls = body_content_cls;
 
     rsx! {
-        div {
-            class: merge_classes(body_cls, class.as_deref()),
-            div { class: content_cls, style: body_padding_style, "data-padding": body_padding_state,
+        div { class: merge_classes(body_cls, class.as_deref()),
+            div {
+                class: content_cls,
+                style: body_padding_style,
+                "data-padding": body_padding_state,
                 ErrorBoundary {
                     handle_error: |_| rsx! {
                         div {
@@ -91,12 +93,16 @@ pub fn BodyPlaygroundDemo() -> Element {
                     has_footer_space: footer_space(),
                     padding: padding(),
                     fab: show_fab().then_some(rsx! {
-                        crate::Fab { vertical: crate::FabVertical::Bottom, horizontal: crate::FabHorizontal::End,
+                        crate::Fab {
+                            vertical: crate::FabVertical::Bottom,
+                            horizontal: crate::FabHorizontal::End,
                             crate::FabButton { onclick: |_| {}, "+" }
                         }
                     }),
                     for index in 1..=12 {
-                        crate::Card { title: format!("Hole {index}"), "Scrollable content row with enough body content to show overflow." }
+                        crate::Card { title: format!("Hole {index}"),
+                            "Scrollable content row with enough body content to show overflow."
+                        }
                     }
                 }
             }
@@ -106,7 +112,6 @@ pub fn BodyPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Body",
-    g3_name: "G3Body",
     description: "Scrollable page body with loading and error boundaries.",
     demo: BodyPlaygroundDemo,
     source: "src/components/body.rs",

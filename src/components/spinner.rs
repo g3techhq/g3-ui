@@ -46,7 +46,6 @@ pub fn SpinnerPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Spinner",
-    g3_name: "G3Spinner",
     description: "Accessible loading indicator.",
     demo: SpinnerPlaygroundDemo,
     source: "src/components/spinner.rs",

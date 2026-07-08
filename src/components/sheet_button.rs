@@ -20,12 +20,7 @@ pub fn SheetButton(
                 is_open.set(true);
             },
         }
-        Sheet {
-            is_open,
-            class,
-            mode,
-            "{description}"
-        }
+        Sheet { is_open, class, mode, "{description}" }
     }
 }
 #[cfg(feature = "playground")]
@@ -43,7 +38,6 @@ pub fn SheetButtonPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "SheetButton",
-    g3_name: "G3SheetButton",
     description: "Information button that opens a sheet.",
     demo: SheetButtonPlaygroundDemo,
     source: "src/components/sheet_button.rs",

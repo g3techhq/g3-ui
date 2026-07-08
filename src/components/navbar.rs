@@ -21,18 +21,18 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
     let navbar_cls = merge_classes(navbar_cls, class.as_deref());
 
     rsx! {
-        div {
-            class: navbar_cls,
-            "data-g3-mode": mode.as_str(),
-            {children}
-        }
+        div { class: navbar_cls, "data-g3-mode": mode.as_str(), {children} }
     }
 }
 
 #[component]
 pub fn NavbarTabBar(class: Option<String>, children: Element) -> Element {
     rsx! {
-        nav { class: merge_classes(s::TAB_BAR, class.as_deref()), role: "tablist", {children} }
+        nav {
+            class: merge_classes(s::TAB_BAR, class.as_deref()),
+            role: "tablist",
+            {children}
+        }
     }
 }
 
@@ -66,7 +66,9 @@ pub fn NavbarTab(
                 }
             },
             span { class: s::TAB_ICON, aria_hidden: "true",
-                if let Some(icon) = icon { {icon} }
+                if let Some(icon) = icon {
+                    {icon}
+                }
             }
             span { class: s::TAB_LABEL, "{label}" }
         }
@@ -87,9 +89,30 @@ pub fn NavbarPlaygroundDemo() -> Element {
                         crate::Card { title: "Content", "Route content sits above a persistent navigation bar." }
                     }
                     NavbarTabBar {
-                        NavbarTab { label: "Games".to_string(), selected: active() == 0, icon: rsx! { Trophy { size: 20, class: "fill-none" } }, onclick: move |_| active.set(0) }
-                        NavbarTab { label: "Tourneys".to_string(), selected: active() == 1, icon: rsx! { CalendarDays { size: 20, class: "fill-none" } }, onclick: move |_| active.set(1) }
-                        NavbarTab { label: "Account".to_string(), selected: active() == 2, icon: rsx! { CircleUserRound { size: 20, class: "fill-none" } }, onclick: move |_| active.set(2) }
+                        NavbarTab {
+                            label: "Games".to_string(),
+                            selected: active() == 0,
+                            icon: rsx! {
+                                Trophy { size: 20, class: "fill-none" }
+                            },
+                            onclick: move |_| active.set(0),
+                        }
+                        NavbarTab {
+                            label: "Tourneys".to_string(),
+                            selected: active() == 1,
+                            icon: rsx! {
+                                CalendarDays { size: 20, class: "fill-none" }
+                            },
+                            onclick: move |_| active.set(1),
+                        }
+                        NavbarTab {
+                            label: "Account".to_string(),
+                            selected: active() == 2,
+                            icon: rsx! {
+                                CircleUserRound { size: 20, class: "fill-none" }
+                            },
+                            onclick: move |_| active.set(2),
+                        }
                     }
                 }
             }
@@ -99,7 +122,6 @@ pub fn NavbarPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Navbar",
-    g3_name: "G3Navbar",
     description: "Persistent navigation layout that owns the base transition layer.",
     demo: NavbarPlaygroundDemo,
     source: "src/components/navbar.rs",

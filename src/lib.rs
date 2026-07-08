@@ -78,12 +78,13 @@ mod tests {
         let field_value = use_signal(String::new);
 
         rsx! {
-            G3ThemeProvider {
-                mode: ComponentMode::Ios,
+            G3ThemeProvider { mode: ComponentMode::Ios,
                 G3Button { onclick: |_| {}, "Button" }
                 G3Button {
                     style: ButtonStyle::Neutral,
-                    start: rsx! { span { "G" } },
+                    start: rsx! {
+                        span { "G" }
+                    },
                     onclick: |_| {},
                     "Provider"
                 }
@@ -112,7 +113,8 @@ mod tests {
         let select_value = use_signal(|| "One".to_string());
 
         rsx! {
-            G3Card { title: "Card", "Body" }            G3Card {
+            G3Card { title: "Card", "Body" }
+            G3Card {
                 G3List { inset: true,
                     G3Item { label: "Setting", metadata: "Value" }
                 }
@@ -123,26 +125,30 @@ mod tests {
                 selected: true,
                 onclick: |_| {},
                 "Choice body"
-            }            G3Sheet { is_open: sheet_open, "Sheet body" }
-            G3SheetButton { description: "Sheet button body" }
-            G3ConfirmModal {
-                open: modal_open,
-                title: "Confirm",
-                on_confirm: |_| {},
             }
+            G3Sheet { is_open: sheet_open, "Sheet body" }
+            G3SheetButton { description: "Sheet button body" }
+            G3ConfirmModal { open: modal_open, title: "Confirm", on_confirm: |_| {} }
             G3Select {
                 value: select_value,
                 options: vec![SelectOption::from("One"), SelectOption::from(("Two", "Second"))],
                 onchange: |_| {},
-            }            G3List { inset: true,
+            }
+            G3List { inset: true,
                 G3Item { label: "Setting", metadata: "Value" }
-                G3Item { kind: ItemKind::Button, label: "Action", onclick: |_| {} }
-                G3Item { kind: ItemKind::Link("https://example.com".to_string()), label: "Link" }
+                G3Item {
+                    kind: ItemKind::Button,
+                    label: "Action",
+                    onclick: |_| {},
+                }
+                G3Item {
+                    kind: ItemKind::Link("https://example.com".to_string()),
+                    label: "Link",
+                }
             }
             G3Fab {
                 G3FabButton { onclick: |_| {}, "Fab" }
-                G3FabList {
-                    activated: true,
+                G3FabList { activated: true,
                     G3FabButton { onclick: |_| {}, size: FabSize::Small, "Mini" }
                 }
             }
@@ -196,36 +202,6 @@ mod tests {
     #[test]
     fn mobile_primitive_aliases_render() {
         render(MobilePrimitiveAliasSmokeApp);
-    }
-
-    #[test]
-    fn descriptors_cover_public_surface() {
-        assert!(
-            component_descriptors()
-                .iter()
-                .any(|descriptor| descriptor.g3_name == "G3Button")
-        );
-        assert!(
-            component_descriptors()
-                .iter()
-                .any(|descriptor| descriptor.g3_name == "G3Sheet")
-        );
-        assert!(
-            !component_descriptors()
-                .iter()
-                .any(|descriptor| descriptor.g3_name == "G3SettingsCard")
-        );
-        assert!(
-            component_descriptors()
-                .iter()
-                .any(|descriptor| descriptor.g3_name == "G3Navbar")
-        );
-        assert!(
-            component_descriptors()
-                .iter()
-                .any(|descriptor| descriptor.g3_name
-                    == "G3Badge / G3Avatar / G3Chip / G3Progress / G3Skeleton")
-        );
     }
 
     #[test]

@@ -73,7 +73,6 @@ pub fn TogglePlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Toggle",
-    g3_name: "G3Toggle",
     description: "Platform-styled switch control.",
     demo: TogglePlaygroundDemo,
     source: "src/components/toggle.rs",

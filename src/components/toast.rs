@@ -188,14 +188,19 @@ pub fn ToastPlaygroundDemo() -> Element {
                 }
             },
             div { class: "g3-toast-demo-stage",
-                Toast { open, message: "Round saved".to_string(), color, position, duration_ms }
+                Toast {
+                    open,
+                    message: "Round saved".to_string(),
+                    color,
+                    position,
+                    duration_ms,
+                }
             }
         }
     }
 }
 crate::g3_playground! {
     name: "Toast",
-    g3_name: "G3Toast",
     description: "Transient mobile feedback banner with positions and status colors.",
     demo: ToastPlaygroundDemo,
     source: "src/components/toast.rs",
@@ -216,7 +221,12 @@ mod tests {
         let open = use_signal(|| true);
         rsx! {
             G3ThemeProvider { mode: ComponentMode::Ios,
-                Toast { open, message: "Saved".to_string(), color: StatusColor::Success, duration_ms: 0 }
+                Toast {
+                    open,
+                    message: "Saved".to_string(),
+                    color: StatusColor::Success,
+                    duration_ms: 0,
+                }
             }
         }
     }

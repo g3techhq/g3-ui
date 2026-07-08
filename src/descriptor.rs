@@ -6,7 +6,6 @@ use dioxus::prelude::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ComponentDescriptor {
     pub name: &'static str,
-    pub g3_name: &'static str,
     pub description: &'static str,
 }
 
@@ -55,10 +54,8 @@ pub fn PlaygroundDemoFrame(
         div { class: "g3-playground-demo-stack",
             div { class: preview_cls,
                 if app.unwrap_or(true) {
-                    crate::components::AppWrapper { mode: mode, class: "g3-playground-device-app",
-                        crate::components::Body { class: body_cls, has_footer_space: false,
-                            {children}
-                        }
+                    crate::components::AppWrapper { mode, class: "g3-playground-device-app",
+                        crate::components::Body { class: body_cls, has_footer_space: false, {children} }
                     }
                 } else {
                     div { class: "g3-playground-raw-surface", {children} }
@@ -75,14 +72,12 @@ pub fn PlaygroundDemoFrame(
 macro_rules! g3_playground {
     (
         name: $name:literal,
-        g3_name: $g3_name:literal,
         description: $description:literal,
         demo: $demo:ident,
         source: $source:literal $(,)?
     ) => {
         pub const DESCRIPTOR: $crate::ComponentDescriptor = $crate::ComponentDescriptor {
             name: $name,
-            g3_name: $g3_name,
             description: $description,
         };
 

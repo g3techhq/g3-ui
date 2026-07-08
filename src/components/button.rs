@@ -133,13 +133,19 @@ pub fn ButtonPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
                 crate::Checkbox { checked: expand, label: "Expand".to_string() }
             },
-            Button { style, size, disabled: disabled(), expand: expand(), onclick: |_| {}, "{label()}" }
+            Button {
+                style,
+                size,
+                disabled: disabled(),
+                expand: expand(),
+                onclick: |_| {},
+                "{label()}"
+            }
         }
     }
 }
 crate::g3_playground! {
     name: "Button",
-    g3_name: "G3Button",
     description: "Ionic-style action button with solid, outline, clear, and neutral variants.",
     demo: ButtonPlaygroundDemo,
     source: "src/components/button.rs",

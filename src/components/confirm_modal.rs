@@ -91,7 +91,6 @@ pub fn ConfirmModalPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "ConfirmModal",
-    g3_name: "G3ConfirmModal",
     description: "Accessible confirmation dialog.",
     demo: ConfirmModalPlaygroundDemo,
     source: "src/components/confirm_modal.rs",

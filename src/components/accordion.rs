@@ -11,7 +11,10 @@ static NEXT_ACCORDION_GROUP_ID: AtomicU64 = AtomicU64::new(1);
 #[derive(Clone)]
 struct AccordionGroupContext {
     value: Signal<Vec<String>>,
-    multiple: bool,
+    // Held as a Signal (not a plain bool) so an already-mounted item — which may
+    // be memoized and never re-read the context — still sees the current value
+    // when `multiple` is toggled reactively.
+    multiple: Signal<bool>,
     on_change: Option<Callback<Vec<String>>>,
     id_prefix: String,
 }
@@ -65,10 +68,10 @@ fn next_accordion_values(current: &[String], item_value: &str, multiple: bool) -
 pub fn AccordionGroup(
     value: Option<Signal<Vec<String>>>,
     id: Option<String>,
+    /// When `true`, more than one item in the group can be expanded at a time.
+    /// When `false` (the default), opening an item collapses any other open
+    /// item so only one stays expanded.
     multiple: Option<bool>,
-    /// When true, opening an item collapses any other open item so only one
-    /// stays expanded at a time. Overrides `multiple`.
-    exclusive: Option<bool>,
     class: Option<String>,
     mode: Option<ComponentMode>,
     on_change: Option<Callback<Vec<String>>>,
@@ -83,9 +86,12 @@ pub fn AccordionGroup(
         ComponentMode::Ios => s::GROUP_IOS,
         ComponentMode::Md => s::GROUP_MD,
     };
-    // Exclusive (one-at-a-time) forces single-open behavior even if `multiple`
-    // was requested, and additionally collapses stale entries on open.
-    let multiple = multiple.unwrap_or(false) && !exclusive.unwrap_or(false);
+    let multiple_value = multiple.unwrap_or(false);
+    let mut multiple = use_signal(|| multiple_value);
+    // Keep the shared signal in sync with the reactive prop.
+    if *multiple.peek() != multiple_value {
+        multiple.set(multiple_value);
+    }
     provide_context(AccordionGroupContext {
         value,
         multiple,
@@ -138,7 +144,11 @@ pub fn AccordionItem(
                     if disabled {
                         return;
                     }
-                    let next = next_accordion_values(&(context.value)(), &value, context.multiple);
+                    let next = next_accordion_values(
+                        &(context.value)(),
+                        &value,
+                        (context.multiple)(),
+                    );
                     if let Some(on_change) = context.on_change {
                         on_change.call(next.clone());
                     }
@@ -176,14 +186,24 @@ pub fn AccordionItem(
 #[component]
 pub fn AccordionPlaygroundDemo() -> Element {
     let value = use_signal(|| vec!["round".to_string()]);
+    let allow_multiple = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
-            AccordionGroup { value, multiple: true,
-                AccordionItem { value: "round".to_string(), label: "Round setup".to_string(), description: "Players and tees".to_string(),
+            controls: rsx! {
+                crate::Checkbox { checked: allow_multiple, label: "Allow multiple open".to_string() }
+            },
+            AccordionGroup { value, multiple: allow_multiple(),
+                AccordionItem {
+                    value: "round".to_string(),
+                    label: "Round setup".to_string(),
+                    description: "Players and tees".to_string(),
                     p { "Choose players, tees, and starting hole before creating the round." }
                 }
-                AccordionItem { value: "scoring".to_string(), label: "Scoring".to_string(), description: "Bets and formats".to_string(),
+                AccordionItem {
+                    value: "scoring".to_string(),
+                    label: "Scoring".to_string(),
+                    description: "Bets and formats".to_string(),
                     p { "Match play, skins, and side bets can be configured per group." }
                 }
             }
@@ -193,7 +213,6 @@ pub fn AccordionPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Accordion",
-    g3_name: "G3AccordionGroup / G3AccordionItem",
     description: "Expandable mobile content sections with grouped state.",
     demo: AccordionPlaygroundDemo,
     source: "src/components/accordion.rs",

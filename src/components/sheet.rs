@@ -189,7 +189,10 @@ pub fn SheetPlaygroundDemo() -> Element {
             crate::Button { onclick: move |_| open.set(true), "Open sheet" }
             Sheet { is_open: open, placement,
                 crate::List { inset: true, lines: crate::ListLines::None,
-                    crate::Item { label: "Round settings", description: "Use the handle or backdrop to close." }
+                    crate::Item {
+                        label: "Round settings",
+                        description: "Use the handle or backdrop to close.",
+                    }
                     crate::Item { label: "Tee time", metadata: "9:40" }
                     crate::Item { label: "Players", metadata: "4" }
                 }
@@ -199,7 +202,6 @@ pub fn SheetPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Sheet",
-    g3_name: "G3Sheet",
     description: "Bottom and side sheet with backdrop dismissal.",
     demo: SheetPlaygroundDemo,
     source: "src/components/sheet.rs",

@@ -42,23 +42,8 @@ pub fn InfoButton(
         }
     }
 }
-#[cfg(feature = "playground")]
-#[component]
-pub fn InfoButtonPlaygroundDemo() -> Element {
-    let label = use_signal(|| "More information".to_string());
-    rsx! {
-        crate::PlaygroundDemoFrame {
-            controls: rsx! {
-                crate::Field { label: "Aria label".to_string(), value: label }
-            },
-            InfoButton { aria_label: label(), onclick: |_| {} }
-        }
-    }
-}
-crate::g3_playground! {
-    name: "InfoButton",
-    g3_name: "G3InfoButton",
-    description: "Icon-only information button.",
-    demo: InfoButtonPlaygroundDemo,
-    source: "src/components/info_button.rs",
-}
+// NOTE: `InfoButton` has no standalone playground/gallery entry. In practice it
+// is never used on its own — every usage (here and in greenside-partee) pairs it
+// with a `Sheet`, which is exactly what `SheetButton` bundles. It stays a public
+// component because greenside-partee imports it directly, but the gallery shows
+// `SheetButton` as the canonical, complete pattern.

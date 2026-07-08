@@ -230,7 +230,13 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
             center: false,
             controls: rsx! {
                 crate::Checkbox { checked: selected, label: "Selected chip".to_string() }
-                crate::Field { label: "Progress".to_string(), value: progress_value, r#type: "range", min: 0, max: 100 }
+                crate::Field {
+                    label: "Progress".to_string(),
+                    value: progress_value,
+                    r#type: "range",
+                    min: 0,
+                    max: 100,
+                }
             },
             div { class: "g3-primitives-demo-stack",
                 div { class: "g3-primitives-demo-row",
@@ -240,8 +246,19 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
                     Badge { color: StatusColor::Danger, "Late" }
                 }
                 div { class: "g3-primitives-demo-row",
-                    Avatar { fallback: "MP", alt: "Matthew Player", size: AvatarSize::Lg }
-                    Chip { selected: selected(), onclick: move |_| selected.toggle(), start: rsx! { span { "#" } }, "Front nine" }
+                    Avatar {
+                        fallback: "MP",
+                        alt: "Matthew Player",
+                        size: AvatarSize::Lg,
+                    }
+                    Chip {
+                        selected: selected(),
+                        onclick: move |_| selected.toggle(),
+                        start: rsx! {
+                            span { "#" }
+                        },
+                        "Front nine"
+                    }
                     Chip { disabled: true, "Locked" }
                 }
                 Progress { value: progress, max: 1.0 }
@@ -258,7 +275,6 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Primitives",
-    g3_name: "G3Badge / G3Avatar / G3Chip / G3Progress / G3Skeleton",
     description: "Compact mobile badges, avatars, chips, progress, and skeletons.",
     demo: PrimitivesPlaygroundDemo,
     source: "src/components/primitives.rs",

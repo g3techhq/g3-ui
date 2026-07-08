@@ -244,7 +244,14 @@ pub fn List(
         ListLines::Inset => "inset",
         ListLines::None => "none",
     };
-    rsx! { div { class: merge_classes(format!("{} {mode_cls} {inset_cls}", s::LIST), class.as_deref()), role: "list", "data-lines": lines, {children} } }
+    rsx! {
+        div {
+            class: merge_classes(format!("{} {mode_cls} {inset_cls}", s::LIST), class.as_deref()),
+            role: "list",
+            "data-lines": lines,
+            {children}
+        }
+    }
 }
 
 #[component]
@@ -294,22 +301,168 @@ pub fn Item(
     let aria_disabled = disabled.then(|| "true".to_string());
     match kind {
         ItemKind::Link(href) if !disabled => {
-            rsx! { div { class: s::ITEM_ROW, role: "listitem", a { class: cls, href, if let Some(start) = start { span { class: s::ITEM_START, {start} } } span { class: s::ITEM_MAIN, if let Some(overline) = overline { span { class: s::ITEM_OVERLINE, "{overline}" } } if let Some(label) = label { span { class: s::ITEM_LABEL, "{label}" } } if let Some(description) = description { span { class: s::ITEM_DESCRIPTION, "{description}" } } if let Some(children) = children { {children} } } if let Some(metadata) = metadata { span { class: s::ITEM_METADATA, "{metadata}" } } if let Some(end) = end { span { class: s::ITEM_END, {end} } } if show_detail { span { aria_hidden: "true", ChevronRight { class: s::ITEM_DETAIL, size: 18 } } } } } }
+            rsx! {
+                div { class: s::ITEM_ROW, role: "listitem",
+                    a { class: cls, href,
+                        if let Some(start) = start {
+                            span { class: s::ITEM_START, {start} }
+                        }
+                        span { class: s::ITEM_MAIN,
+                            if let Some(overline) = overline {
+                                span { class: s::ITEM_OVERLINE, "{overline}" }
+                            }
+                            if let Some(label) = label {
+                                span { class: s::ITEM_LABEL, "{label}" }
+                            }
+                            if let Some(description) = description {
+                                span { class: s::ITEM_DESCRIPTION, "{description}" }
+                            }
+                            if let Some(children) = children {
+                                {children}
+                            }
+                        }
+                        if let Some(metadata) = metadata {
+                            span { class: s::ITEM_METADATA, "{metadata}" }
+                        }
+                        if let Some(end) = end {
+                            span { class: s::ITEM_END, {end} }
+                        }
+                        if show_detail {
+                            span { aria_hidden: "true",
+                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
+                            }
+                        }
+                    }
+                }
+            }
         }
         ItemKind::Link(_) => {
-            rsx! { div { class: s::ITEM_ROW, role: "listitem", div { class: cls, role: "link", aria_disabled, if let Some(start) = start { span { class: s::ITEM_START, {start} } } span { class: s::ITEM_MAIN, if let Some(overline) = overline { span { class: s::ITEM_OVERLINE, "{overline}" } } if let Some(label) = label { span { class: s::ITEM_LABEL, "{label}" } } if let Some(description) = description { span { class: s::ITEM_DESCRIPTION, "{description}" } } if let Some(children) = children { {children} } } if let Some(metadata) = metadata { span { class: s::ITEM_METADATA, "{metadata}" } } if let Some(end) = end { span { class: s::ITEM_END, {end} } } if show_detail { span { aria_hidden: "true", ChevronRight { class: s::ITEM_DETAIL, size: 18 } } } } } }
+            rsx! {
+                div { class: s::ITEM_ROW, role: "listitem",
+                    div { class: cls, role: "link", aria_disabled,
+                        if let Some(start) = start {
+                            span { class: s::ITEM_START, {start} }
+                        }
+                        span { class: s::ITEM_MAIN,
+                            if let Some(overline) = overline {
+                                span { class: s::ITEM_OVERLINE, "{overline}" }
+                            }
+                            if let Some(label) = label {
+                                span { class: s::ITEM_LABEL, "{label}" }
+                            }
+                            if let Some(description) = description {
+                                span { class: s::ITEM_DESCRIPTION, "{description}" }
+                            }
+                            if let Some(children) = children {
+                                {children}
+                            }
+                        }
+                        if let Some(metadata) = metadata {
+                            span { class: s::ITEM_METADATA, "{metadata}" }
+                        }
+                        if let Some(end) = end {
+                            span { class: s::ITEM_END, {end} }
+                        }
+                        if show_detail {
+                            span { aria_hidden: "true",
+                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
+                            }
+                        }
+                    }
+                }
+            }
         }
         ItemKind::Button => {
-            rsx! { div { class: s::ITEM_ROW, role: "listitem", button { class: cls, r#type: "button", disabled, onclick: move |event| if let Some(onclick) = onclick { onclick.call(event); }, if let Some(start) = start { span { class: s::ITEM_START, {start} } } span { class: s::ITEM_MAIN, if let Some(overline) = overline { span { class: s::ITEM_OVERLINE, "{overline}" } } if let Some(label) = label { span { class: s::ITEM_LABEL, "{label}" } } if let Some(description) = description { span { class: s::ITEM_DESCRIPTION, "{description}" } } if let Some(children) = children { {children} } } if let Some(metadata) = metadata { span { class: s::ITEM_METADATA, "{metadata}" } } if let Some(end) = end { span { class: s::ITEM_END, {end} } } if show_detail { span { aria_hidden: "true", ChevronRight { class: s::ITEM_DETAIL, size: 18 } } } } } }
+            rsx! {
+                div { class: s::ITEM_ROW, role: "listitem",
+                    button {
+                        class: cls,
+                        r#type: "button",
+                        disabled,
+                        onclick: move |event| {
+                            if let Some(onclick) = onclick {
+                                onclick.call(event);
+                            }
+                        },
+                        if let Some(start) = start {
+                            span { class: s::ITEM_START, {start} }
+                        }
+                        span { class: s::ITEM_MAIN,
+                            if let Some(overline) = overline {
+                                span { class: s::ITEM_OVERLINE, "{overline}" }
+                            }
+                            if let Some(label) = label {
+                                span { class: s::ITEM_LABEL, "{label}" }
+                            }
+                            if let Some(description) = description {
+                                span { class: s::ITEM_DESCRIPTION, "{description}" }
+                            }
+                            if let Some(children) = children {
+                                {children}
+                            }
+                        }
+                        if let Some(metadata) = metadata {
+                            span { class: s::ITEM_METADATA, "{metadata}" }
+                        }
+                        if let Some(end) = end {
+                            span { class: s::ITEM_END, {end} }
+                        }
+                        if show_detail {
+                            span { aria_hidden: "true",
+                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
+                            }
+                        }
+                    }
+                }
+            }
         }
         ItemKind::Static => {
-            rsx! { div { class: s::ITEM_ROW, role: "listitem", div { class: cls, if let Some(start) = start { span { class: s::ITEM_START, {start} } } span { class: s::ITEM_MAIN, if let Some(overline) = overline { span { class: s::ITEM_OVERLINE, "{overline}" } } if let Some(label) = label { span { class: s::ITEM_LABEL, "{label}" } } if let Some(description) = description { span { class: s::ITEM_DESCRIPTION, "{description}" } } if let Some(children) = children { {children} } } if let Some(metadata) = metadata { span { class: s::ITEM_METADATA, "{metadata}" } } if let Some(end) = end { span { class: s::ITEM_END, {end} } } if show_detail { span { aria_hidden: "true", ChevronRight { class: s::ITEM_DETAIL, size: 18 } } } } } }
+            rsx! {
+                div { class: s::ITEM_ROW, role: "listitem",
+                    div { class: cls,
+                        if let Some(start) = start {
+                            span { class: s::ITEM_START, {start} }
+                        }
+                        span { class: s::ITEM_MAIN,
+                            if let Some(overline) = overline {
+                                span { class: s::ITEM_OVERLINE, "{overline}" }
+                            }
+                            if let Some(label) = label {
+                                span { class: s::ITEM_LABEL, "{label}" }
+                            }
+                            if let Some(description) = description {
+                                span { class: s::ITEM_DESCRIPTION, "{description}" }
+                            }
+                            if let Some(children) = children {
+                                {children}
+                            }
+                        }
+                        if let Some(metadata) = metadata {
+                            span { class: s::ITEM_METADATA, "{metadata}" }
+                        }
+                        if let Some(end) = end {
+                            span { class: s::ITEM_END, {end} }
+                        }
+                        if show_detail {
+                            span { aria_hidden: "true",
+                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 #[component]
 pub fn ItemDivider(class: Option<String>, children: Element) -> Element {
-    rsx! { div { class: merge_classes(s::ITEM_DIVIDER, class.as_deref()), role: "separator", {children} } }
+    rsx! {
+        div {
+            class: merge_classes(s::ITEM_DIVIDER, class.as_deref()),
+            role: "separator",
+            {children}
+        }
+    }
 }
 
 #[component]
@@ -332,7 +485,19 @@ pub fn SwipeAction(
         SwipeSide::Start => "start",
         SwipeSide::End => "end",
     };
-    rsx! { button { class: merge_classes(format!("{} {variant}", s::SWIPE_ACTION), class.as_deref()), r#type: "button", "data-side": side, onclick: move |event| if let Some(onclick) = onclick { onclick.call(event); }, {children} } }
+    rsx! {
+        button {
+            class: merge_classes(format!("{} {variant}", s::SWIPE_ACTION), class.as_deref()),
+            r#type: "button",
+            "data-side": side,
+            onclick: move |event| {
+                if let Some(onclick) = onclick {
+                    onclick.call(event);
+                }
+            },
+            {children}
+        }
+    }
 }
 
 #[component]
@@ -372,15 +537,30 @@ pub fn SwipeItem(
     rsx! {
         div {
             class: merge_classes(s::SWIPE_ITEM, class.as_deref()),
-            style: format!("--g3-swipe-offset: {}px; --g3-swipe-progress: {}; --g3-swipe-action-width: {}px;", offset(), swipe_ratio(offset(), action_width).abs().min(1.4), action_width),
-            "data-behavior": match behavior { SwipeBehavior::Reveal => "reveal", SwipeBehavior::Activate => "activate", SwipeBehavior::Dismiss => "dismiss" },
+            style: format!(
+                "--g3-swipe-offset: {}px; --g3-swipe-progress: {}; --g3-swipe-action-width: {}px;",
+                offset(),
+                swipe_ratio(offset(), action_width).abs().min(1.4),
+                action_width,
+            ),
+            "data-behavior": match behavior {
+                SwipeBehavior::Reveal => "reveal",
+                SwipeBehavior::Activate => "activate",
+                SwipeBehavior::Dismiss => "dismiss",
+            },
             "data-state": dismiss_phase().as_str(),
             onpointerdown: move |event: PointerEvent| {
-                if disabled || dismiss_phase() != DismissPhase::Idle { return; }
+                if disabled || dismiss_phase() != DismissPhase::Idle {
+                    return;
+                }
                 dragging.set(true);
                 start_x.set(event.client_coordinates().x);
                 start_y.set(event.client_coordinates().y);
-                let generation = long_press_generation.with_mut(|value| { *value += 1; *value });
+                let generation = long_press_generation
+                    .with_mut(|value| {
+                        *value += 1;
+                        *value
+                    });
                 if let Some(on_long_press) = on_long_press_down {
                     spawn(async move {
                         dioxus_sdk_time::sleep(Duration::from_millis(LONG_PRESS_MS)).await;
@@ -391,16 +571,26 @@ pub fn SwipeItem(
                 }
             },
             onpointermove: move |event: PointerEvent| {
-                if !dragging() || disabled || dismiss_phase() != DismissPhase::Idle { return; }
+                if !dragging() || disabled || dismiss_phase() != DismissPhase::Idle {
+                    return;
+                }
                 let dx = event.client_coordinates().x - start_x();
                 let dy = event.client_coordinates().y - start_y();
                 if should_cancel_long_press(dx, dy) {
                     long_press_generation.with_mut(|value| *value += 1);
                 }
-                let next = swipe_offset_for_behavior(dx, action_width, has_start_actions, has_end_actions, behavior);
+                let next = swipe_offset_for_behavior(
+                    dx,
+                    action_width,
+                    has_start_actions,
+                    has_end_actions,
+                    behavior,
+                );
                 offset.set(next);
                 let active = match behavior {
-                    SwipeBehavior::Reveal | SwipeBehavior::Dismiss => should_full_swipe(next, action_width),
+                    SwipeBehavior::Reveal | SwipeBehavior::Dismiss => {
+                        should_full_swipe(next, action_width)
+                    }
                     SwipeBehavior::Activate => should_activate_swipe(next, action_width),
                 };
                 if let Some(state) = swipe_state(next, action_width, active) {
@@ -410,7 +600,9 @@ pub fn SwipeItem(
                 }
             },
             onpointerup: move |_| {
-                if disabled || dismiss_phase() != DismissPhase::Idle { return; }
+                if disabled || dismiss_phase() != DismissPhase::Idle {
+                    return;
+                }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 let current = offset();
@@ -419,26 +611,56 @@ pub fn SwipeItem(
                         offset.set(settled_swipe_offset(current, action_width));
                     }
                     SwipeBehavior::Activate => {
-                        if should_activate_swipe(current, action_width) && is_swipe_side_available(current, has_start_actions, has_end_actions) {
+                        if should_activate_swipe(current, action_width)
+                            && is_swipe_side_available(
+                                current,
+                                has_start_actions,
+                                has_end_actions,
+                            )
+                        {
                             if let Some(state) = swipe_state(current, action_width, true) {
-                                if let Some(on_drag) = on_drag_up { on_drag.call(state); }
-                                if let Some(on_swipe_action) = on_swipe_action_up { on_swipe_action.call(state); }
+                                if let Some(on_drag) = on_drag_up {
+                                    on_drag.call(state);
+                                }
+                                if let Some(on_swipe_action) = on_swipe_action_up {
+                                    on_swipe_action.call(state);
+                                }
                             }
                         }
                         offset.set(0.0);
                     }
                     SwipeBehavior::Dismiss => {
-                        if should_full_swipe(current, action_width) && is_swipe_side_available(current, has_start_actions, has_end_actions) {
+                        if should_full_swipe(current, action_width)
+                            && is_swipe_side_available(
+                                current,
+                                has_start_actions,
+                                has_end_actions,
+                            )
+                        {
                             if let Some(state) = swipe_state(current, action_width, true) {
-                                if let Some(on_drag) = on_drag_up { on_drag.call(state); }
-                                let direction = if state.side == SwipeSide::Start { 1.0 } else { -1.0 };
+                                if let Some(on_drag) = on_drag_up {
+                                    on_drag.call(state);
+                                }
+                                let direction = if state.side == SwipeSide::Start {
+                                    1.0
+                                } else {
+                                    -1.0
+                                };
                                 offset.set(direction * DISMISS_SWIPE_OFFSET);
                                 dismiss_phase.set(DismissPhase::Exiting);
                                 spawn(async move {
-                                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS)).await;
+                                    dioxus_sdk_time::sleep(
+                                            Duration::from_millis(DISMISS_EXIT_MS),
+                                        )
+                                        .await;
                                     dismiss_phase.set(DismissPhase::Collapsing);
-                                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS)).await;
-                                    if let Some(on_full_swipe) = on_full_swipe_up { on_full_swipe.call(state); }
+                                    dioxus_sdk_time::sleep(
+                                            Duration::from_millis(DISMISS_COLLAPSE_MS),
+                                        )
+                                        .await;
+                                    if let Some(on_full_swipe) = on_full_swipe_up {
+                                        on_full_swipe.call(state);
+                                    }
                                 });
                             }
                         } else {
@@ -448,20 +670,47 @@ pub fn SwipeItem(
                 }
             },
             onpointercancel: move |_| {
-                if dismiss_phase() != DismissPhase::Idle { return; }
+                if dismiss_phase() != DismissPhase::Idle {
+                    return;
+                }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 offset.set(0.0);
             },
             onpointerleave: move |_| {
-                if dismiss_phase() != DismissPhase::Idle { return; }
-                if !dragging() { return; }
+                if dismiss_phase() != DismissPhase::Idle {
+                    return;
+                }
+                if !dragging() {
+                    return;
+                }
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
-                offset.set(if behavior == SwipeBehavior::Reveal { settled_swipe_offset(offset(), action_width) } else { 0.0 });
+                offset
+                    .set(
+                        if behavior == SwipeBehavior::Reveal {
+                            settled_swipe_offset(offset(), action_width)
+                        } else {
+                            0.0
+                        },
+                    );
             },
-            if let Some(start_actions) = start_actions { div { class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_START), aria_hidden: start_actions_hidden.to_string(), inert: start_actions_inert, {start_actions} } }
-            if let Some(end_actions) = end_actions { div { class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_END), aria_hidden: end_actions_hidden.to_string(), inert: end_actions_inert, {end_actions} } }
+            if let Some(start_actions) = start_actions {
+                div {
+                    class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_START),
+                    aria_hidden: start_actions_hidden.to_string(),
+                    inert: start_actions_inert,
+                    {start_actions}
+                }
+            }
+            if let Some(end_actions) = end_actions {
+                div {
+                    class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_END),
+                    aria_hidden: end_actions_hidden.to_string(),
+                    inert: end_actions_inert,
+                    {end_actions}
+                }
+            }
             div { class: s::SWIPE_CONTENT, {children} }
         }
     }
@@ -496,39 +745,93 @@ pub fn ListPlaygroundDemo() -> Element {
             div { class: "g3-list-demo-stack",
                 List { inset: inset(), lines,
                     ItemDivider { "Round" }
-                    Item { start: rsx! { crate::Avatar { fallback: "MW" } }, label: "Matthew Weisfeld", description: "Walking 18 holes", metadata: "9:40" }
-                    Item { kind: ItemKind::Link("https://example.com".to_string()), label: "Link row", description: "Opens a destination" }
-                    Item { kind: ItemKind::Button, label: "Button row", description: "Tap action", detail: ItemDetail::Show, onclick: move |_| last_action.set("Tapped button row".to_string()) }
+                    Item {
+                        start: rsx! {
+                            crate::Avatar { fallback: "MW" }
+                        },
+                        label: "Matthew Weisfeld",
+                        description: "Walking 18 holes",
+                        metadata: "9:40",
+                    }
+                    Item {
+                        kind: ItemKind::Link("https://example.com".to_string()),
+                        label: "Link row",
+                        description: "Opens a destination",
+                    }
+                    Item {
+                        kind: ItemKind::Button,
+                        label: "Button row",
+                        description: "Tap action",
+                        detail: ItemDetail::Show,
+                        onclick: move |_| last_action.set("Tapped button row".to_string()),
+                    }
                     ItemDivider { "Swipe" }
                     SwipeItem {
                         behavior: SwipeBehavior::Reveal,
-                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, onclick: move |_| last_action.set("Pinned from revealed action".to_string()), "Pin" } },
-                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, onclick: move |_| last_action.set("Deleted from revealed action".to_string()), "Delete" } },
+                        start_actions: rsx! {
+                            SwipeAction {
+                                side: SwipeSide::Start,
+                                accent: true,
+                                onclick: move |_| last_action.set("Pinned from revealed action".to_string()),
+                                "Pin"
+                            }
+                        },
+                        end_actions: rsx! {
+                            SwipeAction {
+                                side: SwipeSide::End,
+                                destructive: true,
+                                onclick: move |_| last_action.set("Deleted from revealed action".to_string()),
+                                "Delete"
+                            }
+                        },
                         on_long_press: move |_| last_action.set("Long press fired".to_string()),
-                        Item { kind: ItemKind::Button, label: "Reveal actions", description: "Long press or expose side buttons", onclick: |_| {} }
+                        Item {
+                            kind: ItemKind::Button,
+                            label: "Reveal actions",
+                            description: "Long press or expose side buttons",
+                            onclick: |_| {},
+                        }
                     }
                     SwipeItem {
                         behavior: SwipeBehavior::Activate,
-                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, "Archive" } },
-                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Flag" } },
-                        on_swipe_action: move |state: SwipeState| last_action.set(format!("Quick swipe activated: {:?}", state.side)),
-                        Item { label: "Quick swipe", description: "Stops early and emits the side action" }
+                        start_actions: rsx! {
+                            SwipeAction { side: SwipeSide::Start, accent: true, "Archive" }
+                        },
+                        end_actions: rsx! {
+                            SwipeAction { side: SwipeSide::End, destructive: true, "Flag" }
+                        },
+                        on_swipe_action: move |state: SwipeState| {
+                            last_action.set(format!("Quick swipe activated: {:?}", state.side))
+                        },
+                        Item {
+                            label: "Quick swipe",
+                            description: "Stops early and emits the side action",
+                        }
                     }
                     if dismiss_visible() {
                         SwipeItem {
                             behavior: SwipeBehavior::Dismiss,
-                            end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Remove" } },
+                            end_actions: rsx! {
+                                SwipeAction { side: SwipeSide::End, destructive: true, "Remove" }
+                            },
                             on_full_swipe: move |state: SwipeState| {
                                 last_action.set(format!("Dismissed by {:?} swipe", state.side));
                                 dismiss_visible.set(false);
                             },
-                            Item { label: "Dismiss swipe", description: "Full swipe removes the row" }
+                            Item {
+                                label: "Dismiss swipe",
+                                description: "Full swipe removes the row",
+                            }
                         }
                     }
                 }
                 crate::Badge { color: crate::StatusColor::Neutral, "{last_action()}" }
                 if !dismiss_visible() {
-                    crate::Button { style: crate::ButtonStyle::Clear, onclick: move |_| dismiss_visible.set(true), "Restore dismiss row" }
+                    crate::Button {
+                        style: crate::ButtonStyle::Clear,
+                        onclick: move |_| dismiss_visible.set(true),
+                        "Restore dismiss row"
+                    }
                 }
             }
         }
@@ -536,7 +839,6 @@ pub fn ListPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "List",
-    g3_name: "G3List / G3Item",
     description: "Mobile list rows with slots, dividers, and swipe actions.",
     demo: ListPlaygroundDemo,
     source: "src/components/list.rs",
@@ -733,8 +1035,12 @@ mod tests {
                 List { inset: true,
                     Item { label: "Static", description: "Description" }
                     SwipeItem {
-                        start_actions: rsx! { SwipeAction { side: SwipeSide::Start, accent: true, "Pin" } },
-                        end_actions: rsx! { SwipeAction { side: SwipeSide::End, destructive: true, "Delete" } },
+                        start_actions: rsx! {
+                            SwipeAction { side: SwipeSide::Start, accent: true, "Pin" }
+                        },
+                        end_actions: rsx! {
+                            SwipeAction { side: SwipeSide::End, destructive: true, "Delete" }
+                        },
                         Item { label: "Swipe", description: "Drag row" }
                     }
                 }

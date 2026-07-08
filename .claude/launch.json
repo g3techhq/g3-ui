@@ -7,6 +7,12 @@
       "runtimeArgs": ["serve", "--port", "8080"],
       "cwd": "playground",
       "port": 8080
+    },
+    {
+      "name": "harness",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8130"],
+      "port": 8130
     }
   ]
 }

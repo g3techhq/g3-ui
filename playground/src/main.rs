@@ -3,8 +3,8 @@
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
 use g3_ui::{
-    ComponentMode, ComponentPlaygroundDemo, SegmentButton, SegmentGroup, Select, SelectOption,
-    Sheet, SheetPlacement, UI_CSS, component_playground_demos,
+    ComponentMode, ComponentPlaygroundDemo, SegmentButton, SegmentGroup, Sheet, SheetPlacement, Select, SelectOption,
+    UI_CSS, component_playground_demos,
 };
 use manganis::asset;
 
@@ -72,7 +72,7 @@ fn Playground() -> Element {
     let mode_index = use_signal(|| 0_usize);
     let mut selector_open = use_signal(|| false);
     let source_value = use_signal(Vec::<String>::new);
-    let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
+    let mut theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
     let selected = demos
         .get(selected_index())
         .copied()
@@ -86,12 +86,13 @@ fn Playground() -> Element {
     let active_theme = PlaygroundTheme::from_value(&theme_value());
     g3_ui::set_mode(active_mode);
 
+    let selected_source = playground_demo_source(selected.source);
+
     let theme_options = PlaygroundTheme::all()
         .iter()
         .copied()
         .map(|theme| SelectOption::from((theme.label(), theme.label())))
         .collect::<Vec<_>>();
-    let selected_source = playground_demo_source(selected.source);
 
     rsx! {
         g3_ui::G3ThemeProvider { mode: active_mode,
@@ -100,7 +101,7 @@ fn Playground() -> Element {
                 "data-g3-mode": active_mode.as_str(),
                 "data-playground-theme": active_theme.as_str(),
                 g3_ui::Header {
-                    title: selected.descriptor.g3_name.to_string(),
+                    title: selected.descriptor.name.to_string(),
                     mode: active_mode,
                     class: "playground-header",
                     start_button: rsx! {
@@ -118,48 +119,51 @@ fn Playground() -> Element {
                         }
                     },
                     end_button: rsx! {
-                        div { class: "playground-top-controls",
-                            div { class: "playground-top-control playground-mode-control",
-                                span { "Mode" }
-                                SegmentGroup { active: mode_index, mode: active_mode,
-                                    SegmentButton { index: 0, mode: active_mode, "MD" }
-                                    SegmentButton { index: 1, mode: active_mode, "iOS" }
-                                }
-                            }
-                            div { class: "playground-top-control playground-theme-control",
-                                span { "Theme" }
-                                Select {
-                                    value: theme_value,
-                                    mode: active_mode,
-                                    options: theme_options,
-                                }
-                            }
-                        }
+                        Select { value: theme_value, mode: active_mode, options: theme_options }
                     },
                     toolbar: rsx! {
-                        p { class: "description", "{selected.descriptor.description}" }
+                        SegmentGroup { active: mode_index, mode: active_mode,
+                            SegmentButton { index: 0, mode: active_mode, "MD" }
+                            SegmentButton { index: 1, mode: active_mode, "iOS" }
+                        }
                     },
                 }
-                Sheet { is_open: selector_open, placement: SheetPlacement::Left, mode: active_mode, class: "playground-selector-sheet",
+                Sheet {
+                    is_open: selector_open,
+                    placement: SheetPlacement::Left,
+                    mode: active_mode,
+                    class: "playground-selector-sheet",
                     div { class: "playground-sidebar-header",
                         h2 { "g3_ui" }
                         div { class: "subtitle", "{count} demos" }
                     }
-                    PlaygroundNav { demos: demos.clone(), selected_index, selector_open }
+                    PlaygroundNav {
+                        demos: demos.clone(),
+                        selected_index,
+                        selector_open,
+                    }
                 }
                 main { class: "playground-main",
+                    p { class: "playground-description", "{selected.descriptor.description}" }
                     div { class: "playground-stage",
                         div {
                             key: "{active_mode.as_str()}-{active_theme.as_str()}-{selected.descriptor.name}",
                             "data-g3-mode": active_mode.as_str(),
                             "data-playground-theme": active_theme.as_str(),
                             g3_ui::G3ThemeProvider { mode: active_mode,
-                                RenderSelectedDemo { key: "{active_mode.as_str()}-{active_theme.as_str()}-{selected.descriptor.name}", demo: selected, mode: active_mode, theme: active_theme }
+                                RenderSelectedDemo {
+                                    key: "{active_mode.as_str()}-{active_theme.as_str()}-{selected.descriptor.name}",
+                                    demo: selected,
+                                    mode: active_mode,
+                                    theme: active_theme,
+                                }
                             }
                         }
                     }
                     g3_ui::AccordionGroup { value: source_value, class: "source-panel",
-                        g3_ui::AccordionItem { value: "source".to_string(), label: "Source".to_string(),
+                        g3_ui::AccordionItem {
+                            value: "source".to_string(),
+                            label: "Source".to_string(),
                             Code {
                                 src: SourceCode::new(Language::Rust, selected_source.clone()),
                                 theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
@@ -214,8 +218,13 @@ fn PlaygroundNav(
 ) -> Element {
     rsx! {
         g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
-            for (idx, demo) in demos.iter().copied().enumerate() {
-                ComponentNavButton { demo, idx, selected_index, selector_open }
+            for (idx , demo) in demos.iter().copied().enumerate() {
+                ComponentNavButton {
+                    demo,
+                    idx,
+                    selected_index,
+                    selector_open,
+                }
             }
         }
     }

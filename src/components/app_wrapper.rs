@@ -67,7 +67,6 @@ pub fn AppWrapperPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "AppWrapper",
-    g3_name: "G3AppWrapper",
     description: "Root app shell and mode provider.",
     demo: AppWrapperPlaygroundDemo,
     source: "src/components/app_wrapper.rs",

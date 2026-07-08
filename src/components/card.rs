@@ -75,7 +75,9 @@ pub fn Card(
                         Some(RightSlot::Text(text)) => rsx! {
                             div { class: s::RIGHT_TEXT, "{text}" }
                         },
-                        Some(RightSlot::Element(element)) => rsx! { {element} },
+                        Some(RightSlot::Element(element)) => rsx! {
+                            {element}
+                        },
                         None => rsx! {},
                     }
                 }
@@ -86,7 +88,9 @@ pub fn Card(
                         RightSlot::Text(text) => rsx! {
                             div { class: s::RIGHT_TEXT, "{text}" }
                         },
-                        RightSlot::Element(element) => rsx! { {element} },
+                        RightSlot::Element(element) => rsx! {
+                            {element}
+                        },
                     }
                 }
             }
@@ -123,7 +127,6 @@ pub fn CardPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Card",
-    g3_name: "G3Card",
     description: "Ionic-style content card with title, body, and optional right slot.",
     demo: CardPlaygroundDemo,
     source: "src/components/card.rs",

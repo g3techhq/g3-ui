@@ -191,7 +191,6 @@ pub fn CheckboxPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Checkbox",
-    g3_name: "G3Checkbox",
     description: "Controlled checkbox with Ionic-style label placement.",
     demo: CheckboxPlaygroundDemo,
     source: "src/components/checkbox.rs",

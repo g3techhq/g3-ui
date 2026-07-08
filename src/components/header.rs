@@ -11,7 +11,10 @@ pub(crate) struct HeaderToolbarContext;
 fn HeaderToolbarContextProvider(children: Element) -> Element {
     provide_context(HeaderToolbarContext);
 
-    rsx! { {children} }
+    rsx! {
+        {children}
+
+    }
 }
 
 #[component]
@@ -31,8 +34,7 @@ pub fn Header(
     };
 
     rsx! {
-        header {
-            class: merge_classes(format!("{header_cls} relative"), class.as_deref()),
+        header { class: merge_classes(format!("{header_cls} relative"), class.as_deref()),
             div { class: s::HEADER_ROW,
                 div { class: s::HEADER_START_SLOT,
                     if let Some(start) = start_button {
@@ -88,8 +90,12 @@ pub fn HeaderPlaygroundDemo() -> Element {
             crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
                 Header {
                     title: title(),
-                    start_button: start_button().then(|| rsx! { crate::Button { style: crate::ButtonStyle::Clear, onclick: |_| {}, "{start_text()}" } }),
-                    end_button: end_button().then(|| rsx! { crate::Button { style: crate::ButtonStyle::Outline, onclick: |_| {}, "{end_text()}" } }),
+                    start_button: start_button().then(|| rsx! {
+                        crate::Button { style: crate::ButtonStyle::Clear, onclick: |_| {}, "{start_text()}" }
+                    }),
+                    end_button: end_button().then(|| rsx! {
+                        crate::Button { style: crate::ButtonStyle::Outline, onclick: |_| {}, "{end_text()}" }
+                    }),
                     toolbar: toolbar_slot,
                 }
                 crate::Body { has_footer_space: false,
@@ -102,7 +108,6 @@ pub fn HeaderPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Header",
-    g3_name: "G3Header",
     description: "App header with start, title, end, and toolbar slots.",
     demo: HeaderPlaygroundDemo,
     source: "src/components/header.rs",

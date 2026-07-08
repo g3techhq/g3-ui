@@ -86,8 +86,12 @@ pub fn Field(
                 id,
                 class: field_cls,
                 style: "width: stretch;",
-                onfocus: move |_| { is_focused.set(true); },
-                onblur: move |_| { is_focused.set(false); },
+                onfocus: move |_| {
+                    is_focused.set(true);
+                },
+                onblur: move |_| {
+                    is_focused.set(false);
+                },
                 oninput: move |event: Event<FormData>| {
                     let new_value = event.value();
                     if !check_validity(new_value.clone()) {
@@ -99,14 +103,17 @@ pub fn Field(
                         oninput.call(event.clone());
                     }
                     if let Some(d) = debounce {
-                        let generation = debounce_generation.with_mut(|generation| {
-                            *generation += 1;
-                            *generation
-                        });
+                        let generation = debounce_generation
+                            .with_mut(|generation| {
+                                *generation += 1;
+                                *generation
+                            });
                         let ev = event;
                         spawn(async move {
                             dioxus_sdk_time::sleep(std::time::Duration::from_millis(d as u64)).await;
-                            if debounce_generation() != generation { return; }
+                            if debounce_generation() != generation {
+                                return;
+                            }
                             if let Some(onchange) = onchange {
                                 onchange.call(ev);
                             }
@@ -114,7 +121,9 @@ pub fn Field(
                     }
                 },
                 onchange: move |event| {
-                    if debounce.is_some() { return; }
+                    if debounce.is_some() {
+                        return;
+                    }
                     if let Some(onchange) = onchange {
                         onchange.call(event);
                     }
@@ -161,7 +170,6 @@ pub fn FieldPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Field",
-    g3_name: "G3Field",
     description: "Text input with optional validation limits and debounce.",
     demo: FieldPlaygroundDemo,
     source: "src/components/field.rs",

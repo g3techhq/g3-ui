@@ -83,23 +83,41 @@ pub fn Refresher(
     rsx! {
         div {
             class: merge_classes(format!("{} {mode_cls}", s::REFRESHER), class.as_deref()),
-            style: format!("--g3-refresher-pull: {}px; --g3-refresher-progress: {};", visible_pull, progress),
+            style: format!(
+                "--g3-refresher-pull: {}px; --g3-refresher-progress: {};",
+                visible_pull,
+                progress,
+            ),
             "data-state": state,
             onpointerdown: move |event: PointerEvent| {
-                if disabled || refreshing || !can_refresh { return; }
+                if disabled || refreshing || !can_refresh {
+                    return;
+                }
                 pulling.set(true);
                 start_y.set(event.client_coordinates().y);
             },
             onpointermove: move |event: PointerEvent| {
-                if !pulling() || disabled || refreshing || !can_refresh { return; }
-                let distance = refresher_pull_distance(event.client_coordinates().y - start_y(), threshold);
+                if !pulling() || disabled || refreshing || !can_refresh {
+                    return;
+                }
+                let distance = refresher_pull_distance(
+                    event.client_coordinates().y - start_y(),
+                    threshold,
+                );
                 pull.set(distance);
                 if let Some(on_pull) = on_pull {
-                    on_pull.call(RefresherState { pull: distance, progress: (distance / threshold).min(1.4), refreshing });
+                    on_pull
+                        .call(RefresherState {
+                            pull: distance,
+                            progress: (distance / threshold).min(1.4),
+                            refreshing,
+                        });
                 }
             },
             onpointerup: move |_| {
-                if !pulling() || disabled { return; }
+                if !pulling() || disabled {
+                    return;
+                }
                 pulling.set(false);
                 let current = pull();
                 if should_trigger_refresh(current, threshold) {
@@ -119,13 +137,21 @@ pub fn Refresher(
                     pull.set(0.0);
                 }
             },
-            onpointerleave: move |_| {
-                // Keep pull state while the pointer leaves; mobile drags often leave the row before release.
-            },
+            onpointerleave: move |_| {}, // Intentionally keep the pull state when the pointer leaves the,
             div { class: s::INDICATOR, role: "status", aria_live: "polite",
                 span { class: s::SPINNER, aria_hidden: "true" }
                 span { class: s::LABEL,
-                    if refreshing { "Refreshing" } else if visible_pull > 0.0 { "Release to refresh" } else { "Pull to refresh" }
+                    // "Release to refresh" is only meaningful while the finger is
+                    // actively down and past the threshold. Gating on `pulling`
+                    // stops it from flashing back after release once the caller's
+                    // refresh has finished and the indicator is settling away.
+                    if refreshing {
+                        "Refreshing"
+                    } else if pulling() && should_trigger_refresh(visible_pull, threshold) {
+                        "Release to refresh"
+                    } else {
+                        "Pull to refresh"
+                    }
                 }
             }
             div { class: s::CONTENT, {children} }
@@ -138,12 +164,26 @@ pub fn Refresher(
 pub fn RefresherPlaygroundDemo() -> Element {
     let mut refreshing = use_signal(|| false);
     rsx! {
-        crate::PlaygroundDemoFrame {
-            center: false,
-            Refresher { refreshing: refreshing(), can_refresh: true, on_refresh: move |_| { refreshing.set(true); spawn(async move { dioxus_sdk_time::sleep(std::time::Duration::from_millis(700)).await; refreshing.set(false); }); },
+        crate::PlaygroundDemoFrame { center: false,
+            Refresher {
+                refreshing: refreshing(),
+                can_refresh: true,
+                on_refresh: move |_| {
+                    refreshing.set(true);
+                    spawn(async move {
+                        dioxus_sdk_time::sleep(std::time::Duration::from_millis(700)).await;
+                        refreshing.set(false);
+                    });
+                },
                 crate::List { inset: true,
-                    crate::Item { label: "Leaderboard".to_string(), description: "Pull down to simulate refresh".to_string() }
-                    crate::Item { label: "Skins".to_string(), metadata: "$12".to_string() }
+                    crate::Item {
+                        label: "Leaderboard".to_string(),
+                        description: "Pull down to simulate refresh".to_string(),
+                    }
+                    crate::Item {
+                        label: "Skins".to_string(),
+                        metadata: "$12".to_string(),
+                    }
                 }
             }
         }
@@ -152,7 +192,6 @@ pub fn RefresherPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Refresher",
-    g3_name: "G3Refresher",
     description: "Pull-to-refresh container with thresholded mobile gestures.",
     demo: RefresherPlaygroundDemo,
     source: "src/components/refresher.rs",
@@ -200,7 +239,9 @@ mod tests {
     fn RefresherSmokeApp() -> Element {
         rsx! {
             G3ThemeProvider { mode: ComponentMode::Ios,
-                Refresher { refreshing: false, can_refresh: true, div { "Rows" } }
+                Refresher { refreshing: false, can_refresh: true,
+                    div { "Rows" }
+                }
             }
         }
     }

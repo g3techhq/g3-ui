@@ -116,26 +116,6 @@ textarea {
   color-scheme: dark;
 }
 
-.playground-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  border-bottom: 1px solid var(--color-card-border, #d5dde3);
-  background: color-mix(in srgb, var(--color-card, #ffffff) 94%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.playground-header-row {
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-}
-
 .playground-title-block {
   min-width: 0;
 }
@@ -155,34 +135,66 @@ textarea {
   line-height: 1.4;
 }
 
-.playground-top-controls {
-  display: flex;
-  align-items: end;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.playground-top-control {
+/* Theme control: a small stacked label above the select, sitting in the
+   header's end slot. The Mode segment lives in the toolbar slot (below) with no
+   label, exactly as a toolbar segment is designed to. */
+.playground-control {
   display: grid;
-  gap: 6px;
-  min-width: 132px;
-  color: var(--color-text-secondary, #52606b);
-  font-size: 12px;
-  font-weight: 700;
+  gap: 5px;
 }
 
-.playground-mode-control {
-  min-width: 160px;
+.playground-control-label {
+  color: var(--color-text-secondary, #52606b);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .playground-theme-control {
-  min-width: 172px;
+  min-width: 132px;
 }
 
-.playground-theme-control .g3-select-btn {
+.playground-theme-select {
   width: 100%;
-  min-height: 36px;
+  min-height: 38px;
+  padding: 0 34px 0 12px;
+  border: 1px solid var(--color-card-border, #d5dde3);
+  border-radius: 10px;
+  background-color: var(--color-card, #ffffff);
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 15px center, right 10px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  color: var(--color-text, #17202a);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.playground-theme-select:hover {
+  border-color: var(--color-focused, #2563eb);
+}
+
+.playground-theme-select:focus-visible {
+  outline: 2px solid var(--color-focused, #2563eb);
+  outline-offset: 2px;
+}
+
+/* Component description: no natural home in the header chrome, so it captions
+   the demo stage in the main content area instead. */
+.playground-description {
+  justify-self: center;
+  max-width: 640px;
+  margin: 0;
+  color: var(--color-text-secondary, #5c6873);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: center;
 }
 
 .playground-menu-button {
@@ -227,46 +239,13 @@ textarea {
   background: currentColor;
 }
 
-/* Reflow the g3_ui Header component for the wide desktop playground chrome. */
-.playground-header.g3-header {
-  background: color-mix(in srgb, var(--color-card, #ffffff) 94%, transparent);
-}
-.playground-header .g3-header-row {
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 20px 0;
-}
-.playground-header .g3-header-start-slot,
-.playground-header .g3-header-end-slot {
-  padding: 0;
-}
-.playground-header .g3-header-end-slot {
-  justify-self: end;
-}
-.playground-header .g3-header-title {
-  justify-self: start;
-  width: auto;
-  text-align: left;
-  font-size: 22px;
-  font-weight: 700;
-}
-.playground-header .g3-header-toolbar {
-  width: min(1180px, 100%);
-  margin: 0 auto;
-  padding: 2px 20px 12px;
-  justify-content: flex-start;
-}
-
 .playground-main {
   width: min(1180px, 100%);
   min-width: 0;
   margin: 0 auto;
   padding: 24px 20px 32px;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 18px;
 }
 
@@ -451,21 +430,6 @@ textarea {
   line-height: 1.5;
 }
 
-@media (max-width: 860px) {
-  .playground-header-row {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .playground-top-controls {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-
-  .playground-mode-control,
-  .playground-theme-control {
-    min-width: min(180px, 100%);
-  }
-}
 
 @media (max-width: 760px) {
   .playground-header-row {

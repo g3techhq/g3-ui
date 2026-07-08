@@ -197,10 +197,10 @@ pub fn RadioPlaygroundDemo() -> Element {
             div { class: "g3-radio-demo-stack",
                 RadioGroup {
                     value: selected,
-                disabled: disabled(),
-                allow_empty_selection: allow_empty(),
-                Radio { value: "push", label: "Push notifications" }
-                Radio { value: "email", label: "Email summaries" }
+                    disabled: disabled(),
+                    allow_empty_selection: allow_empty(),
+                    Radio { value: "push", label: "Push notifications" }
+                    Radio { value: "email", label: "Email summaries" }
                     Radio {
                         value: "none",
                         label: "No reminders",
@@ -214,7 +214,6 @@ pub fn RadioPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Radio",
-    g3_name: "G3RadioGroup / G3Radio",
     description: "Single-select radio group.",
     demo: RadioPlaygroundDemo,
     source: "src/components/radio.rs",

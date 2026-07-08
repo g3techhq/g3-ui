@@ -472,11 +472,13 @@ body.g3-overlay-scroll-locked {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 0.5rem 0.25rem 0.25rem;
+    padding: 0.25rem 0.25rem 1.5rem;
 }
 .g3-demo-sheet-body h3 {
-    font-size: 1.0625rem;
-    font-weight: 600;
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 650;
+    line-height: 1.2;
 }
 .g3-demo-profile-head {
     display: flex;
@@ -1130,6 +1132,13 @@ body.g3-overlay-scroll-locked {
     position: fixed;
     inset: 0;
     z-index: 80;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
     background: rgba(0, 0, 0, 0.5);
     transition: opacity var(--transition-normal) var(--transition-md);
     will-change: opacity;
@@ -1998,6 +2007,9 @@ body.g3-overlay-scroll-locked {
     border: 1px solid var(--color-card-border);
     background: var(--color-control);
     color: var(--color-text);
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
     font: inherit;
     font-size: 0.875rem;
     font-weight: 500;
@@ -2308,14 +2320,23 @@ body.g3-overlay-scroll-locked {
     user-select: none;
 }
 
+/* Inset lists mirror the card treatment per platform so a list and a card
+   sitting next to each other read as the same surface: iOS uses a hairline
+   border with no elevation, MD uses a soft shadow with no border. */
 .g3-list-inset {
     overflow: hidden;
-    border: 1px solid var(--color-card-border);
     border-radius: 12px;
+    background: var(--color-card);
+}
+
+.g3-list-ios.g3-list-inset {
+    border: 0.5px solid var(--color-card-border);
+    border-radius: 13px;
 }
 
 .g3-list-md.g3-list-inset {
     border-radius: 0.25rem;
+    box-shadow: 0 3px 8px var(--color-shadow);
 }
 
 .g3-item-row {
@@ -2613,6 +2634,9 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-swipe-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-width: var(--g3-swipe-action-width, 88px);
     margin: 0;
     border: 0;
@@ -2775,21 +2799,23 @@ body.g3-overlay-scroll-locked {
     to { transform: scaleX(0); }
 }
 
+/* Accordion groups use the same card treatment as inset lists so the three
+   surfaces read consistently: iOS a hairline border with no elevation, MD a
+   soft shadow with no border. */
 .g3-accordion-group {
     overflow: hidden;
     width: 100%;
-    --g3-toast-accent-color: var(--color-card-border);
-    border: 1px solid color-mix(in srgb, var(--g3-toast-accent-color) 34%, var(--color-card-border));
-    border-inline-start: 6px solid var(--g3-toast-accent-color);
     background: var(--color-card);
 }
 
 .g3-accordion-group-ios {
+    border: 0.5px solid var(--color-card-border);
     border-radius: 0.875rem;
 }
 
 .g3-accordion-group-md {
     border-radius: 0.25rem;
+    box-shadow: 0 3px 8px var(--color-shadow);
 }
 
 .g3-accordion-item + .g3-accordion-item {
@@ -2923,6 +2949,13 @@ body.g3-overlay-scroll-locked {
 .g3-refresher-content {
     transform: translate3d(0, var(--g3-refresher-pull), 0);
     transition: transform var(--transition-normal) var(--transition-md);
+}
+
+/* While the finger is actively dragging, follow the pointer 1:1 instead of
+   easing toward each intermediate value, which otherwise made the gesture feel
+   laggy and unresponsive. The spring/settle transition only applies on release. */
+.g3-refresher[data-state="pulling"] .g3-refresher-content {
+    transition: none;
 }
 
 .g3-refresher[data-state="refreshing"] .g3-refresher-content {

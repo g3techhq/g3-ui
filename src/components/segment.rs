@@ -147,7 +147,6 @@ pub fn SegmentPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "SegmentGroup",
-    g3_name: "G3SegmentGroup",
     description: "Single-select segmented control.",
     demo: SegmentPlaygroundDemo,
     source: "src/components/segment.rs",

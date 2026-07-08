@@ -70,7 +70,11 @@ pub fn Select(
             span { class: s::SELECT_VALUE, "{value()}" }
             ChevronDown { class: "fill-gray ml-1 shrink-0", size: 16 }
         }
-        Sheet { is_open, mode, class: s::SELECT_SHEET, draggable: false,
+        Sheet {
+            is_open,
+            mode,
+            class: s::SELECT_SHEET,
+            draggable: false,
             div { class: "flex flex-col w-full", role: "listbox",
                 for (index , option) in options.into_iter().enumerate() {
                     SelectOptionComponent {
@@ -101,7 +105,11 @@ fn SelectOptionComponent(
 
     rsx! {
         if !is_first {
-            div { class: s::SEPARATOR, role: "separator", aria_orientation: "horizontal" }
+            div {
+                class: s::SEPARATOR,
+                role: "separator",
+                aria_orientation: "horizontal",
+            }
         }
         button {
             class: option_cls,
@@ -147,7 +155,6 @@ pub fn SelectPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Select",
-    g3_name: "G3Select",
     description: "Button-triggered picker backed by a sheet.",
     demo: SelectPlaygroundDemo,
     source: "src/components/select.rs",
