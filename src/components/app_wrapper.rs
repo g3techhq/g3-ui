@@ -19,10 +19,47 @@ pub fn AppWrapper(
     provide_context(G3Mode { mode });
     provide_context(theme.unwrap_or_default());
 
-    let shell_cls = match mode {
+    // The stylesheet is attached at runtime (below), so on first load the DOM is
+    // painted before it applies. Without this, overlays (sheets, modals) would
+    // transition from their unstyled/on-screen position to their closed
+    // off-screen transform and visibly slide out. Hold a `g3-preload` class that
+    // kills transitions, then drop it a couple of frames after mount.
+    let mut preloading = use_signal(|| true);
+    use_effect(move || {
+        spawn(async move {
+            // Poll (per frame) until the stylesheet's sentinel var is readable,
+            // i.e. the CSS has actually applied, then drop the guard one frame
+            // later. A frame cap keeps it from spinning forever if CSS is absent.
+            let mut eval = document::eval(
+                r#"
+                let tries = 0;
+                const ready = () => getComputedStyle(document.documentElement)
+                    .getPropertyValue("--g3-css-loaded").trim() === "1";
+                const shell = document.querySelector(".g3-app-shell");
+                console.log("[g3-preload] start; shell classes:", shell ? shell.className : "no shell");
+                const tick = () => {
+                    if (ready() || tries++ > 300) {
+                        console.log("[g3-preload] css ready after", tries, "frames; dropping guard next frame");
+                        requestAnimationFrame(() => dioxus.send(true));
+                    } else {
+                        requestAnimationFrame(tick);
+                    }
+                };
+                tick();
+                "#,
+            );
+            let _ = eval.recv::<bool>().await;
+            preloading.set(false);
+        });
+    });
+
+    let mut shell_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
         ComponentMode::Md => format!("{} {}", s::SHELL_BASE, s::SHELL_MD),
     };
+    if preloading() {
+        shell_cls = format!("{shell_cls} {}", s::SHELL_PRELOAD);
+    }
     #[cfg(feature = "transitions")]
     let shell_cls = merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS));
     let shell_cls = merge_classes(shell_cls, class.as_deref());

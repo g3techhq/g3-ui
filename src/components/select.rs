@@ -2,7 +2,7 @@
 
 use super::Sheet;
 use super::select_styles as s;
-use crate::theme::{ComponentMode, merge_classes};
+use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronDown;
 
@@ -58,10 +58,15 @@ pub fn Select(
     onchange: Option<EventHandler<String>>,
 ) -> Element {
     let mut is_open = use_signal(|| false);
+    let resolved_mode = use_component_mode(mode);
+    let mode_cls = match resolved_mode {
+        ComponentMode::Ios => s::SELECT_BTN_IOS,
+        ComponentMode::Md => s::SELECT_BTN_MD,
+    };
 
     rsx! {
         button {
-            class: merge_classes(s::SELECT_BTN, class.as_deref()),
+            class: merge_classes(format!("{} {mode_cls}", s::SELECT_BTN), class.as_deref()),
             r#type: "button",
             aria_haspopup: "listbox",
             aria_expanded: is_open().to_string(),

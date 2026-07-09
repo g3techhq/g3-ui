@@ -12,7 +12,10 @@ static NEXT_RADIO_GROUP_NAME: AtomicU64 = AtomicU64::new(1);
 struct RadioGroupContext {
     value: Signal<String>,
     name: String,
-    disabled: bool,
+    // Reactive so toggling the group's `disabled` after mount actually reaches
+    // the child `Radio`s. A plain `bool` here would be captured once (child
+    // props don't change on toggle, so the children never re-run to read it).
+    disabled: ReadSignal<bool>,
     allow_empty_selection: bool,
     on_change: Option<Callback<String>>,
 }
@@ -32,10 +35,16 @@ pub fn RadioGroup(
     let is_disabled = disabled.unwrap_or(false);
     let aria_disabled = is_disabled.then(|| "true".to_string());
 
+    // Keep a reactive mirror of the prop so children re-render when it changes.
+    let mut disabled_signal = use_signal(|| is_disabled);
+    if *disabled_signal.peek() != is_disabled {
+        disabled_signal.set(is_disabled);
+    }
+
     provide_context(RadioGroupContext {
         value,
         name: group_name,
-        disabled: is_disabled,
+        disabled: disabled_signal.into(),
         allow_empty_selection: allow_empty_selection.unwrap_or(false),
         on_change,
     });
@@ -67,7 +76,7 @@ pub fn Radio(
     let mode = use_component_mode(mode);
     let context = use_context::<RadioGroupContext>();
     let selected = (context.value)() == value;
-    let is_disabled = disabled.unwrap_or(false) || context.disabled;
+    let is_disabled = disabled.unwrap_or(false) || (context.disabled)();
     let placement = placement.unwrap_or_default();
     let mode_cls = match mode {
         ComponentMode::Ios => s::RADIO_IOS,

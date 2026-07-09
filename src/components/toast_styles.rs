@@ -12,6 +12,7 @@ pub const COLOR_ACCENT: &str = "g3-toast-accent";
 pub const COLOR_SUCCESS: &str = "g3-toast-success";
 pub const COLOR_WARNING: &str = "g3-toast-warning";
 pub const COLOR_DANGER: &str = "g3-toast-danger";
+pub const INDICATOR: &str = "g3-toast-indicator";
 pub const MESSAGE: &str = "g3-toast-message";
 pub const ACTION: &str = "g3-toast-action";
 pub const CLOSE: &str = "g3-toast-close";

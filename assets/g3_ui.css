@@ -68,6 +68,10 @@
     --transition-fast: 0.15s;
     --transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
     --transition-md: ease-out;
+
+    /* Sentinel so AppWrapper can detect that this (runtime-attached) stylesheet
+       has actually applied before it drops the `g3-preload` transition guard. */
+    --g3-css-loaded: 1;
 }
 
 [data-g3-mode="ios"] {
@@ -101,6 +105,12 @@ body.g3-overlay-scroll-locked {
     overflow: hidden;
     overscroll-behavior: none;
     touch-action: none;
+}
+
+/* Suppress transitions on first paint (see AppWrapper) so overlays don't
+   animate out of their closed state while the stylesheet is still landing. */
+.g3-preload * {
+    transition: none !important;
 }
 
 *::-webkit-scrollbar {
@@ -341,6 +351,12 @@ body.g3-overlay-scroll-locked {
     width: 1px;
     min-width: 1px;
     min-height: 1rem;
+}
+.g3-line-h.g3-line-margins {
+    margin-block: 1rem;
+}
+.g3-line-v.g3-line-margins {
+    margin-inline: 1rem;
 }
 
 .g3-line-demo-surface {
@@ -1607,16 +1623,26 @@ body.g3-overlay-scroll-locked {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    min-height: 44px;
     max-width: 100%;
-    padding: 0.625rem 0.75rem;
     border: 1px solid var(--color-card-border);
-    border-radius: 0.25rem;
     background: var(--color-card);
     color: var(--color-text);
     line-height: 1;
     white-space: nowrap;
     cursor: pointer;
+}
+/* Material: sharper corners, standard 44px control height. */
+.g3-select-btn-md {
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.25rem;
+}
+/* iOS: rounded corners and a more compact height so the control keeps
+   breathing room inside a 44px header row instead of touching the edges. */
+.g3-select-btn-ios {
+    min-height: 36px;
+    padding: 0.4375rem 0.625rem;
+    border-radius: 10px;
 }
 .g3-select-value {
     min-width: 0;
@@ -1631,10 +1657,6 @@ body.g3-overlay-scroll-locked {
 .g3-select-btn:focus-visible {
     outline: 2px solid var(--color-focused);
     outline-offset: 2px;
-}
-[data-g3-mode="ios"] .g3-select-btn {
-    border-radius: 10px;
-    background: var(--color-control);
 }
 .g3-select-option {
     width: 100%;
@@ -1680,7 +1702,7 @@ body.g3-overlay-scroll-locked {
     padding: 0.75rem 1rem;
     border: 0.5px solid var(--color-card-border);
     border-radius: 10px;
-    background: var(--color-control);
+    background: var(--color-card);
     transition: border-color var(--transition-normal) var(--transition-ios),
                 box-shadow var(--transition-normal) var(--transition-ios);
 }
@@ -2677,22 +2699,36 @@ body.g3-overlay-scroll-locked {
     left: max(1rem, env(safe-area-inset-left));
     right: max(1rem, env(safe-area-inset-right));
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 0.75rem;
     min-height: 48px;
     padding: 0.75rem 0.875rem;
-    --g3-toast-accent-color: var(--color-card-border);
-    border: 1px solid color-mix(in srgb, var(--g3-toast-accent-color) 34%, var(--color-card-border));
-    border-inline-start: 6px solid var(--g3-toast-accent-color);
-    background: var(--color-card);
+    /* Colour is carried by the leading status dot + a whisper of surface tint,
+       not by a coloured outline or the old left accent bar. This matches the
+       card treatment used by items, cards and the accordion. */
+    --g3-toast-accent-color: var(--color-label-secondary);
+    --g3-toast-surface: var(--color-card);
+    border: 1px solid var(--color-card-border);
+    background: var(--g3-toast-surface);
     color: var(--color-text);
-    box-shadow: var(--shadow-lg);
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
     transform: translate3d(0, 0.5rem, 0) scale(0.98);
     transition: opacity var(--transition-normal) var(--transition-md), transform var(--transition-normal) var(--transition-md);
+}
+
+/* Leading status dot — the primary colour signal. */
+.g3-toast-indicator {
+    width: 0.625rem;
+    height: 0.625rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--g3-toast-accent-color);
+}
+.g3-toast-neutral .g3-toast-indicator {
+    display: none;
 }
 
 .g3-toast[data-state="open"] {
@@ -2718,32 +2754,45 @@ body.g3-overlay-scroll-locked {
     bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* iOS: a frosted, translucent pill with generous rounding and a soft, diffuse
+   shadow — no hard border weight. */
 .g3-toast-ios {
     border-radius: 0.875rem;
+    border-color: color-mix(in srgb, var(--color-card-border) 60%, transparent);
+    background: color-mix(in srgb, var(--g3-toast-surface) 82%, transparent);
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--color-shadow) 80%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
+/* Material: a flat, opaque, near-square surface that reads as an elevated
+   snackbar — no border, a crisper drop shadow. */
 .g3-toast-md {
     border-radius: 0.25rem;
+    border: 0;
+    box-shadow: 0 3px 12px var(--color-shadow), 0 1px 3px var(--color-shadow);
 }
 
+/* Colour is applied as the status accent (drives the dot) plus a faint surface
+   tint, so it reads on both light and dark themes without a coloured outline. */
 .g3-toast-accent {
     --g3-toast-accent-color: var(--color-focused);
-    border-color: color-mix(in srgb, var(--g3-toast-accent-color) 46%, var(--color-card-border));
+    --g3-toast-surface: color-mix(in srgb, var(--color-focused) 8%, var(--color-card));
 }
 
 .g3-toast-success {
     --g3-toast-accent-color: var(--color-success);
-    border-color: color-mix(in srgb, var(--g3-toast-accent-color) 54%, var(--color-card-border));
+    --g3-toast-surface: color-mix(in srgb, var(--color-success) 8%, var(--color-card));
 }
 
 .g3-toast-warning {
     --g3-toast-accent-color: var(--color-warning);
-    border-color: color-mix(in srgb, var(--g3-toast-accent-color) 60%, var(--color-card-border));
+    --g3-toast-surface: color-mix(in srgb, var(--color-warning) 8%, var(--color-card));
 }
 
 .g3-toast-danger {
     --g3-toast-accent-color: var(--color-danger);
-    border-color: color-mix(in srgb, var(--g3-toast-accent-color) 60%, var(--color-card-border));
+    --g3-toast-surface: color-mix(in srgb, var(--color-danger) 8%, var(--color-card));
 }
 
 .g3-toast-message {
@@ -2784,8 +2833,8 @@ body.g3-overlay-scroll-locked {
     left: 0;
     height: 3px;
     transform-origin: left center;
-    background: currentColor;
-    opacity: 0.5;
+    background: var(--g3-toast-accent-color);
+    opacity: 0.55;
     animation: g3-toast-timer var(--g3-toast-duration, 3000ms) linear forwards;
 }
 
@@ -2909,11 +2958,15 @@ body.g3-overlay-scroll-locked {
 .g3-refresher {
     --g3-refresher-pull: 0px;
     --g3-refresher-progress: 0;
+    --g3-refresher-indicator-h: 56px;
     position: relative;
     overflow: visible;
     width: 100%;
     overscroll-behavior-y: contain;
-    touch-action: pan-y;
+    /* `touch-action` is intentionally left at its default so normal vertical
+       scrolling works. The drag script cancels the scroll via a non-passive
+       `touchmove` `preventDefault()` only once a downward pull engages at the
+       top, so the pull follows the finger instead of the page scrolling. */
 }
 
 .g3-refresher-indicator {
@@ -2922,14 +2975,24 @@ body.g3-overlay-scroll-locked {
     top: 0;
     z-index: 1;
     display: flex;
-    height: 56px;
+    height: var(--g3-refresher-indicator-h);
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     color: var(--color-text-secondary);
     opacity: clamp(0, var(--g3-refresher-progress), 1);
-    transform: translate3d(0, calc(-100% + var(--g3-refresher-pull)), 0);
+    /* Slide down out of its hidden slot as the pull grows, but stop once it
+       reaches its resting spot (one indicator-height) — extra elastic pull only
+       stretches the content, and the resting spot is exactly where the
+       refreshing state sits, so there's no jump on release. */
+    transform: translate3d(0, calc(min(var(--g3-refresher-pull), var(--g3-refresher-indicator-h)) - var(--g3-refresher-indicator-h)), 0);
+    transition: transform var(--transition-normal) var(--transition-md),
+                opacity var(--transition-fast) var(--transition-md);
     pointer-events: none;
+}
+
+.g3-refresher[data-state="pulling"] .g3-refresher-indicator {
+    transition: none;
 }
 
 .g3-refresher-spinner {
@@ -2959,11 +3022,24 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-refresher[data-state="refreshing"] .g3-refresher-content {
-    transform: translate3d(0, 56px, 0);
+    transform: translate3d(0, var(--g3-refresher-indicator-h), 0);
 }
 
-.g3-refresher-md .g3-refresher-indicator {
-    height: 48px;
+/* While Rust holds the refreshing state the pull var is cleared, so pin the
+   indicator fully visible at its resting spot independent of the pull var. */
+.g3-refresher[data-state="refreshing"] .g3-refresher-indicator {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+/* At rest the indicator is always hidden, regardless of any leftover progress
+   var the drag script wrote (it doesn't reset it on hand-off to refreshing). */
+.g3-refresher[data-state="idle"] .g3-refresher-indicator {
+    opacity: 0;
+}
+
+.g3-refresher-md {
+    --g3-refresher-indicator-h: 48px;
 }
 
 @media (prefers-reduced-motion: reduce) {

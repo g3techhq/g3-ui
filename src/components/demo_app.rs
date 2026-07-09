@@ -639,27 +639,10 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
             }
         }
 
-        crate::Line {}
-
-        div { class: "g3-demo-button-row",
-            crate::Button {
-                style: crate::ButtonStyle::Outline,
-                expand: true,
-                onclick: move |_| confirm_open.set(true),
-                "Leave round"
-            }
-        }
-    }
-}
-
-/// Tab 4 — a dedicated loading screen showcasing spinner + skeleton placeholders.
-#[cfg(feature = "playground")]
-#[component]
-fn ActivityScreen() -> Element {
-    rsx! {
         div { class: "g3-demo-section-head",
             span { class: "g3-demo-section-title", "Syncing latest scores" }
         }
+
         crate::List { inset: true, lines: crate::ListLines::Inset,
             crate::Item {
                 start: rsx! {
@@ -687,6 +670,22 @@ fn ActivityScreen() -> Element {
             }
         }
 
+        div { class: "g3-demo-button-row",
+            crate::Button {
+                style: crate::ButtonStyle::Outline,
+                expand: true,
+                onclick: move |_| confirm_open.set(true),
+                "Leave round"
+            }
+        }
+    }
+}
+
+/// Tab 4 — a dedicated loading screen showcasing spinner + skeleton placeholders.
+#[cfg(feature = "playground")]
+#[component]
+fn ActivityScreen() -> Element {
+    rsx! {
         crate::Spinner { center: true }
     }
 }

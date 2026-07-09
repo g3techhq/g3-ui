@@ -106,6 +106,7 @@ pub fn Toast(
             "data-state": state,
             "data-timer": timer_state,
             style: format!("--g3-toast-duration: {auto_dismiss_ms}ms;"),
+            span { class: s::INDICATOR, aria_hidden: "true" }
             div { class: s::MESSAGE, "{message}" }
             if let Some(action) = action {
                 div { class: s::ACTION, {action} }

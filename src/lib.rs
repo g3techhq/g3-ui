@@ -1202,14 +1202,41 @@ mod tests {
     }
 
     #[test]
-    fn toast_color_is_visible_as_a_strong_accent_edge() {
+    fn toast_color_is_shown_by_a_status_dot_and_surface_tint() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let toast_source = include_str!("components/toast.rs");
+
+        // The colour signal is a leading status dot plus a faint surface tint —
+        // not the old coloured outline / left accent bar. Matches the card
+        // treatment shared by items, cards and the accordion.
+        assert!(!stylesheet.contains("border-inline-start: 6px solid var(--g3-toast-accent-color)"));
+        assert!(toast_source.contains("s::INDICATOR"));
+        assert!(stylesheet.contains(".g3-toast-indicator"));
+        assert!(stylesheet.contains("background: var(--g3-toast-accent-color)"));
+        assert!(stylesheet.contains("--g3-toast-surface: color-mix(in srgb, var(--color-success)"));
+    }
+
+    #[test]
+    fn toast_has_distinct_ios_and_md_treatments() {
         let stylesheet = include_str!("../assets/g3_ui.css");
 
-        assert!(stylesheet.contains("border-inline-start"));
-        assert!(stylesheet.contains("var(--g3-toast-accent-color"));
-        assert!(
-            stylesheet.contains("border-color: color-mix(in srgb, var(--g3-toast-accent-color")
-        );
+        let ios = stylesheet
+            .split(".g3-toast-ios {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing .g3-toast-ios block");
+        let md = stylesheet
+            .split(".g3-toast-md {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing .g3-toast-md block");
+
+        // iOS is a frosted, translucent pill; MD is a flat, opaque elevated slab.
+        assert!(ios.contains("backdrop-filter"));
+        assert!(ios.contains("border-radius: 0.875rem"));
+        assert!(!md.contains("backdrop-filter"));
+        assert!(md.contains("border-radius: 0.25rem"));
+        assert!(md.contains("border: 0"));
     }
 
     #[test]

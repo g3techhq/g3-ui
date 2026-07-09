@@ -3,9 +3,12 @@
 use super::refresher_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub const DEFAULT_REFRESH_THRESHOLD: f64 = 48.0;
 pub const REFRESH_ELASTIC_FACTOR: f64 = 0.42;
+
+static REFRESHER_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RefresherState {
@@ -14,21 +17,131 @@ pub struct RefresherState {
     pub refreshing: bool,
 }
 
-pub fn refresher_pull_distance(delta_y: f64, threshold: f64) -> f64 {
-    if delta_y <= 0.0 {
-        return 0.0;
-    }
-    let threshold = threshold.max(1.0);
-    if delta_y > threshold {
-        threshold + (delta_y - threshold) * REFRESH_ELASTIC_FACTOR
-    } else {
-        delta_y
-    }
-}
+// The pull gesture is tracked in JS, attached directly to the refresher DOM
+// node — the same approach the Sheet uses for drag-to-dismiss. This fixes the
+// "snaps straight back / does nothing" bug: the enclosing scroll container was
+// claiming the vertical drag before the pull was ever visible.
+//
+// The key detail is *how* we stop that scroll. Setting `touch-action: none`
+// mid-gesture is too late (the browser has already committed to scrolling), and
+// `preventDefault()` on a pointer event does not cancel scrolling at all. The
+// only thing that reliably halts an in-progress touch scroll is
+// `preventDefault()` on a **non-passive `touchmove`** listener — so touch uses
+// that, while the mouse path (desktop dev) rides pointer events. We only
+// preventDefault while the scroll container is at the top and the finger is
+// moving *down*, so normal scrolling in every other direction is untouched.
+// Only the final "past threshold" decision is sent back to Rust.
+const REFRESHER_DRAG_SCRIPT: &str = r#"
+const LOG = (...a) => console.log("[g3-refresher __ROOT_ID__]", ...a);
+const root = document.getElementById("__ROOT_ID__");
+const label = document.getElementById("__LABEL_ID__");
+LOG("script ran; root found:", !!root);
+if (root) {
+    const THRESHOLD = __THRESHOLD__;
+    const ELASTIC = __ELASTIC__;
+    let dragging = false;
+    let engaged = false;
+    let startY = 0;
+    let pull = 0;
 
-pub fn should_trigger_refresh(pull: f64, threshold: f64) -> bool {
-    pull >= threshold.max(1.0)
+    const scrollParent = () => {
+        let el = root.parentElement;
+        while (el) {
+            const oy = getComputedStyle(el).overflowY;
+            if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+                return el;
+            }
+            el = el.parentElement;
+        }
+        return null;
+    };
+
+    const gateOk = () =>
+        root.dataset.canRefresh === "true" &&
+        root.dataset.refreshing !== "true" &&
+        root.dataset.disabled !== "true";
+
+    const atTop = () => {
+        const sp = scrollParent();
+        return !sp || sp.scrollTop <= 0;
+    };
+
+    const setPull = (p) => {
+        pull = p;
+        root.style.setProperty("--g3-refresher-pull", p + "px");
+        root.style.setProperty("--g3-refresher-progress", Math.min(p / THRESHOLD, 1.4));
+        root.setAttribute("data-state", p > 0 ? "pulling" : "idle");
+        if (label) {
+            label.textContent = p >= THRESHOLD ? "Release to refresh" : "Pull to refresh";
+        }
+    };
+
+    const onDown = (y, src) => {
+        const sp = scrollParent();
+        LOG(src + " down y=" + Math.round(y), "gateOk=" + gateOk(), "atTop=" + atTop(),
+            "scrollParent=" + (sp ? sp.className : "none"),
+            "dataset=", JSON.stringify(root.dataset));
+        if (!gateOk() || !atTop()) return;
+        dragging = true;
+        engaged = false;
+        startY = y;
+    };
+
+    // `e` is optional (touch path passes it so we can preventDefault the scroll).
+    const onMove = (y, e, src) => {
+        if (!dragging) return;
+        const dy = y - startY;
+        if (dy <= 0) {
+            if (engaged) {
+                engaged = false;
+                setPull(0);
+            }
+            return;
+        }
+        if (!engaged) {
+            if (!atTop()) return;
+            engaged = true;
+            LOG(src + " engaged, cancelable=" + (e ? e.cancelable : "n/a"));
+        }
+        // Non-passive touchmove: this is what actually stops the page scrolling.
+        if (e && e.cancelable) e.preventDefault();
+        const dist = dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy;
+        setPull(dist);
+    };
+
+    const onEnd = (src) => {
+        if (!dragging) return;
+        dragging = false;
+        LOG(src + " end; engaged=" + engaged + " pull=" + Math.round(pull) + " threshold=" + THRESHOLD);
+        if (!engaged) return;
+        engaged = false;
+        if (pull >= THRESHOLD && root.dataset.hasRefresh === "true") {
+            // Hand off to the Rust `refreshing` state. Clear the pull var so the
+            // content settles flush again once refreshing ends; while refreshing
+            // the indicator is driven by the `data-state="refreshing"` rules.
+            LOG("triggering refresh");
+            root.style.setProperty("--g3-refresher-pull", "0px");
+            root.style.setProperty("--g3-refresher-progress", "1");
+            root.setAttribute("data-state", "refreshing");
+            if (label) label.textContent = "Refreshing";
+            dioxus.send(true);
+        } else {
+            setPull(0);
+        }
+    };
+
+    // Mouse (desktop) rides pointer events; touch uses touch events so the
+    // touchmove listener can be non-passive and cancel the scroll.
+    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientY, "mouse"); });
+    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientY, null, "mouse"); });
+    root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") onEnd("mouse"); });
+    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientY, "touch"); }, { passive: true });
+    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientY, e, "touch"); }, { passive: false });
+    root.addEventListener("touchend", () => onEnd("touch"));
+    root.addEventListener("touchcancel", () => onEnd("touch"));
+    LOG("listeners attached");
 }
+"#;
 
 #[component]
 pub fn Refresher(
@@ -39,7 +152,6 @@ pub fn Refresher(
     class: Option<String>,
     mode: Option<ComponentMode>,
     on_refresh: Option<Callback<()>>,
-    on_pull: Option<Callback<RefresherState>>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
@@ -47,111 +159,60 @@ pub fn Refresher(
     let disabled = disabled.unwrap_or(false);
     let can_refresh = can_refresh.unwrap_or(false);
     let threshold = threshold.unwrap_or(DEFAULT_REFRESH_THRESHOLD).max(1.0);
+    let has_refresh = on_refresh.is_some();
     let mode_cls = match mode {
         ComponentMode::Ios => s::REFRESHER_IOS,
         ComponentMode::Md => s::REFRESHER_MD,
     };
-    let mut start_y = use_signal(|| 0.0);
-    let mut pulling = use_signal(|| false);
-    let mut pull = use_signal(|| 0.0);
-    let mut was_refreshing = use_signal(|| false);
 
-    use_effect(move || {
-        if refreshing {
-            was_refreshing.set(true);
-            pull.set(threshold);
-        } else if was_refreshing() {
-            was_refreshing.set(false);
-            pull.set(0.0);
-        }
-    });
+    let instance_id = use_hook(|| REFRESHER_INSTANCE_ID.fetch_add(1, Ordering::Relaxed));
+    let root_id = format!("g3-refresher-{instance_id}");
+    let label_id = format!("g3-refresher-label-{instance_id}");
 
-    let visible_pull = if refreshing { threshold } else { pull() };
-    let progress = if refreshing {
-        1.0
-    } else {
-        (visible_pull / threshold).min(1.4)
-    };
-    let state = if refreshing {
-        "refreshing"
-    } else if visible_pull > 0.0 {
-        "pulling"
-    } else {
-        "idle"
-    };
+    // Attach the pointer/drag listeners once the node exists, then relay the
+    // "past threshold on release" signal back to the caller's refresh handler.
+    {
+        let root_id = root_id.clone();
+        let label_id = label_id.clone();
+        use_effect(move || {
+            let script = REFRESHER_DRAG_SCRIPT
+                .replace("__ROOT_ID__", &root_id)
+                .replace("__LABEL_ID__", &label_id)
+                .replace("__THRESHOLD__", &threshold.to_string())
+                .replace("__ELASTIC__", &REFRESH_ELASTIC_FACTOR.to_string());
+            spawn(async move {
+                let mut eval = document::eval(&script);
+                while let Ok(true) = eval.recv::<bool>().await {
+                    if let Some(on_refresh) = on_refresh {
+                        on_refresh.call(());
+                    }
+                }
+            });
+        });
+    }
+
+    // While refreshing, the indicator + content offset are driven purely by the
+    // `data-state="refreshing"` CSS rules, so Rust owns only the discrete state
+    // and the JS owns the live pull. Rust never renders `--g3-refresher-pull`
+    // into the style attribute, which keeps it from clobbering the value the
+    // drag script is writing inline mid-gesture.
+    let state = if refreshing { "refreshing" } else { "idle" };
 
     rsx! {
         div {
+            id: root_id,
             class: merge_classes(format!("{} {mode_cls}", s::REFRESHER), class.as_deref()),
-            style: format!(
-                "--g3-refresher-pull: {}px; --g3-refresher-progress: {};",
-                visible_pull,
-                progress,
-            ),
             "data-state": state,
-            onpointerdown: move |event: PointerEvent| {
-                if disabled || refreshing || !can_refresh {
-                    return;
-                }
-                pulling.set(true);
-                start_y.set(event.client_coordinates().y);
-            },
-            onpointermove: move |event: PointerEvent| {
-                if !pulling() || disabled || refreshing || !can_refresh {
-                    return;
-                }
-                let distance = refresher_pull_distance(
-                    event.client_coordinates().y - start_y(),
-                    threshold,
-                );
-                pull.set(distance);
-                if let Some(on_pull) = on_pull {
-                    on_pull
-                        .call(RefresherState {
-                            pull: distance,
-                            progress: (distance / threshold).min(1.4),
-                            refreshing,
-                        });
-                }
-            },
-            onpointerup: move |_| {
-                if !pulling() || disabled {
-                    return;
-                }
-                pulling.set(false);
-                let current = pull();
-                if should_trigger_refresh(current, threshold) {
-                    if let Some(on_refresh) = on_refresh {
-                        pull.set(threshold);
-                        on_refresh.call(());
-                    } else if !refreshing {
-                        pull.set(0.0);
-                    }
-                } else if !refreshing {
-                    pull.set(0.0);
-                }
-            },
-            onpointercancel: move |_| {
-                pulling.set(false);
-                if !refreshing {
-                    pull.set(0.0);
-                }
-            },
-            onpointerleave: move |_| {}, // Intentionally keep the pull state when the pointer leaves the,
+            "data-can-refresh": can_refresh.to_string(),
+            "data-refreshing": refreshing.to_string(),
+            "data-disabled": disabled.to_string(),
+            "data-has-refresh": has_refresh.to_string(),
             div { class: s::INDICATOR, role: "status", aria_live: "polite",
                 span { class: s::SPINNER, aria_hidden: "true" }
-                span { class: s::LABEL,
-                    // "Release to refresh" is only meaningful while the finger is
-                    // actively down and past the threshold. Gating on `pulling`
-                    // stops it from flashing back after release once the caller's
-                    // refresh has finished and the indicator is settling away.
-                    if refreshing {
-                        "Refreshing"
-                    } else if pulling() && should_trigger_refresh(visible_pull, threshold) {
-                        "Release to refresh"
-                    } else {
-                        "Pull to refresh"
-                    }
+                span {
+                    id: label_id,
+                    class: s::LABEL,
+                    if refreshing { "Refreshing" } else { "Pull to refresh" }
                 }
             }
             div { class: s::CONTENT, {children} }
@@ -171,7 +232,7 @@ pub fn RefresherPlaygroundDemo() -> Element {
                 on_refresh: move |_| {
                     refreshing.set(true);
                     spawn(async move {
-                        dioxus_sdk_time::sleep(std::time::Duration::from_millis(700)).await;
+                        dioxus_sdk_time::sleep(std::time::Duration::from_millis(1200)).await;
                         refreshing.set(false);
                     });
                 },
@@ -208,31 +269,31 @@ mod tests {
     }
 
     #[test]
-    fn pull_distance_is_elastic_after_threshold() {
-        assert_eq!(refresher_pull_distance(-10.0, 72.0), 0.0);
-        assert_eq!(refresher_pull_distance(24.0, 48.0), 24.0);
-        assert_eq!(refresher_pull_distance(148.0, 48.0), 90.0);
-    }
-
-    #[test]
-    fn refresh_triggers_at_threshold() {
-        assert!(!should_trigger_refresh(47.0, 48.0));
-        assert!(should_trigger_refresh(48.0, 48.0));
-    }
-
-    #[test]
-    fn refresher_requires_explicit_refresh_gate() {
+    fn refresher_gates_on_scroll_top_and_can_refresh() {
         let source = include_str!("refresher.rs");
+        // The gesture must only engage when the caller allows it and the scroll
+        // container is already at the top.
         assert!(source.contains("can_refresh.unwrap_or(false)"));
-        assert!(source.contains("disabled || refreshing || !can_refresh"));
+        assert!(source.contains("root.dataset.canRefresh === \"true\""));
+        assert!(source.contains("sp.scrollTop <= 0"));
     }
 
     #[test]
-    fn triggered_refresh_holds_indicator_until_caller_completes() {
+    fn refresher_takes_over_the_touch_gesture() {
         let source = include_str!("refresher.rs");
-        assert!(source.contains("pull.set(threshold)"));
-        assert!(source.contains("let visible_pull = if refreshing { threshold } else { pull() }"));
-        assert!(source.contains("if refreshing"));
+        // Stopping an in-progress touch scroll requires a *non-passive*
+        // `touchmove` listener that calls `preventDefault()`. Pointer-event
+        // preventDefault (and mid-gesture `touch-action`) do not cancel scroll.
+        assert!(source.contains("\"touchmove\""));
+        assert!(source.contains("{ passive: false }"));
+        assert!(source.contains("e.preventDefault()"));
+    }
+
+    #[test]
+    fn refresher_hands_off_to_rust_refreshing_state() {
+        let source = include_str!("refresher.rs");
+        assert!(source.contains("dioxus.send(true)"));
+        assert!(source.contains("root.dataset.hasRefresh === \"true\""));
     }
 
     #[component]
