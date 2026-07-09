@@ -9,8 +9,8 @@
 use dioxus::prelude::*;
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::{
-    Activity, Bell, CalendarDays, ChevronRight, CircleUserRound, Heart, House, LogOut, MapPin, Menu,
-    Search, Settings, Star, Trophy, Zap,
+    Activity, Bell, CalendarDays, ChevronRight, CircleUserRound, Heart, House, LogOut, MapPin,
+    Menu, Search, Settings, Star, Trophy, Zap,
 };
 
 #[cfg(feature = "playground")]

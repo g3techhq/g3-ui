@@ -56,6 +56,11 @@
     --color-text: #000000;
     --color-text-secondary: #6b6b6b;
     --color-shadow: rgba(0, 0, 0, 0.1);
+    --g3-shadow-ios-card: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --g3-shadow-ios-float: 0 12px 30px rgba(0, 0, 0, 0.18);
+    --g3-shadow-md-elevation-1: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+    --g3-shadow-md-elevation-2: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+    --g3-shadow-md-fab: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
     --color-success: #37c964;
     --color-warning: #ff9f0a;
     --color-danger: #ff3b30;
@@ -185,11 +190,19 @@ body.g3-overlay-scroll-locked {
     transition: var(--transition-fast) var(--transition-ios);
 }
 
-/* Android button - no shadow, flat Material Design */
+/* Material button */
 .g3-btn-md {
-    border-radius: 0.25rem;
-    font-weight: 400;
-    font-size: 1rem;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.g3-btn-md.g3-btn-solid {
+    box-shadow: var(--g3-shadow-md-elevation-1);
+}
+.g3-btn-md.g3-btn-solid:active {
+    box-shadow: var(--g3-shadow-md-elevation-2);
 }
 .g3-btn-md:active {
     transform: scale(0.98);
@@ -589,7 +602,7 @@ body.g3-overlay-scroll-locked {
     outline-offset: 2px;
 }
 
-/* Android segment - material tabs with a sliding bottom indicator */
+/* Material segment - tabs with a sliding bottom indicator */
 .g3-segment-md {
     position: relative;
     display: flex;
@@ -727,32 +740,33 @@ body.g3-overlay-scroll-locked {
     transform: translate3d(20px, -50%, 0);
 }
 
-/* Android switch */
+/* Material switch */
 .g3-switch-md {
     -webkit-tap-highlight-color: transparent;
-    width: 52px;
-    height: 32px;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--color-text) 32%, transparent);
+    width: 36px;
+    height: 14px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--color-text) 39%, transparent);
     position: relative;
-    transition: background var(--transition-normal) var(--transition-md);
+    transition: background 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .g3-switch-md.checked {
-    background: var(--color-focused);
+    background: color-mix(in srgb, var(--color-focused) 50%, transparent);
 }
 .g3-switch-thumb-md {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: var(--color-card);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.22);
+    box-shadow: var(--g3-shadow-md-elevation-1);
     position: absolute;
-    top: 4px;
-    left: 4px;
-    transition: left var(--transition-normal) var(--transition-md), background var(--transition-normal) var(--transition-md);
+    top: -3px;
+    left: 0;
+    transition: left 160ms cubic-bezier(0.4, 0, 0.2, 1), background 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 .g3-switch-md.checked .g3-switch-thumb-md {
-    left: 24px;
+    left: 16px;
+    background: var(--color-focused);
 }
 .g3-switch-sm.g3-switch-ios {
     -webkit-tap-highlight-color: transparent;
@@ -769,16 +783,17 @@ body.g3-overlay-scroll-locked {
 }
 .g3-switch-sm.g3-switch-md {
     -webkit-tap-highlight-color: transparent;
-    width: 44px;
-    height: 28px;
-    border-radius: 14px;
+    width: 32px;
+    height: 12px;
+    border-radius: 6px;
 }
 .g3-switch-sm.g3-switch-md .g3-switch-thumb-md {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
+    top: -3px;
 }
 .g3-switch-sm.g3-switch-md.checked .g3-switch-thumb-md {
-    left: 20px;
+    left: 14px;
 }
 
 /* -- Checkbox -- */
@@ -939,18 +954,23 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-checkbox-ios .g3-checkbox-control {
-    border-radius: 6px;
-    border-width: 1.5px;
-    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--color-text) 8%, transparent);
+    border-radius: 50%;
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--color-text) 23%, transparent);
+    box-shadow: none;
 }
 
 .g3-checkbox-md {
-    border-radius: 0.25rem;
+    border-radius: 4px;
     min-height: 48px;
 }
 
 .g3-checkbox-md .g3-checkbox-control {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
     border-radius: 2px;
+    border-color: color-mix(in srgb, var(--color-text) 60%, transparent);
 }
 
 .g3-control-label-start {
@@ -1005,73 +1025,80 @@ body.g3-overlay-scroll-locked {
     min-width: 0;
 }
 
-/* iOS card */
+/* iOS card: Ionic uses a rounded white surface with soft elevation, not a
+   colored outline. */
 .g3-card-ios {
-    border-radius: 13px;
-    box-shadow: none;
-    border: 0.5px solid var(--color-card-border);
+    border: 0;
+    border-radius: 8px;
+    box-shadow: var(--g3-shadow-ios-card);
     background: var(--color-card);
     padding: 1rem;
-    margin-bottom: 0.625rem;
-    transition: transform var(--transition-normal) var(--transition-ios),
-                box-shadow var(--transition-normal) var(--transition-ios);
+    margin-bottom: 1.5rem;
+    transition: transform 500ms cubic-bezier(0.12, 0.72, 0.29, 1),
+                box-shadow var(--transition-normal) var(--transition-ios),
+                background var(--transition-fast) var(--transition-ios);
 }
 .g3-card-ios.g3-card-interactive:active:not(:has(.info-btn:active)) {
     background: color-mix(in srgb, var(--color-text) 3%, var(--color-card));
-    transform: scale(0.995);
+    transform: scale3d(0.97, 0.97, 1);
 }
 
-/* Selected state - visible highlight */
-.g3-card.selected,
+/* Selected state - tint the surface and add an outside ring without replacing
+   the platform elevation. */
+.g3-card.selected {
+    background: color-mix(in srgb, var(--color-focused) 4%, var(--color-card));
+}
 .g3-card-ios.selected {
-    border-color: var(--color-focused);
-    background: color-mix(in srgb, var(--color-focused) 4%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 .g3-card-md.selected {
-    border-color: var(--color-focused);
-    background: color-mix(in srgb, var(--color-focused) 4%, transparent);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 
-/* Android card */
+/* Material card */
 .g3-card-md {
-    border-radius: 0.25rem;
-    box-shadow: 0 3px 8px var(--color-shadow);
+    border: 0;
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-1);
     background: var(--color-card);
     padding: 1rem;
     margin-bottom: 0.75rem;
-    transition: box-shadow var(--transition-normal) var(--transition-md);
+    transition: box-shadow var(--transition-normal) var(--transition-md),
+                transform var(--transition-fast) var(--transition-md),
+                background var(--transition-fast) var(--transition-md);
 }
 .g3-card-md.g3-card-interactive:active:not(:has(.info-btn:active)) {
-    box-shadow: 0 1px 4px var(--color-shadow);
+    box-shadow: var(--g3-shadow-md-elevation-2);
     transform: scale(0.99);
 }
 
 .g3-card-inset {
-    border: 1px solid var(--color-card-border);
-    border-radius: 0.25rem;
+    border: 0;
     background: var(--color-card-inset);
     padding: 0.75rem;
     margin-bottom: 0.5rem;
-    box-shadow: none;
 }
 
 .g3-card-ios.g3-card-inset {
-    border: 0.5px solid var(--color-card-border);
-    border-radius: 13px;
-    background: var(--color-card-inset);
+    border-radius: 8px;
+    box-shadow: var(--g3-shadow-ios-card);
+    background: var(--color-card);
+}
+
+.g3-card-md.g3-card-inset {
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-1);
+    background: var(--color-card);
 }
 
 .g3-card-inset.selected {
-    border: 2px solid var(--color-focused);
-    background: color-mix(in srgb, var(--color-focused) 6%, white);
-    padding: calc(0.75rem - 1px);
-    box-shadow: none;
+    background: color-mix(in srgb, var(--color-focused) 6%, var(--color-card));
 }
 .g3-card-ios.g3-card-inset.selected {
-    border-radius: 13px;
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+}
+.g3-card-md.g3-card-inset.selected {
+    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 
 /* -- Settings Card -- */
@@ -1253,7 +1280,7 @@ body.g3-overlay-scroll-locked {
     background: color-mix(in srgb, var(--color-card) 94%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    box-shadow: 0 -8px 28px rgba(0,0,0,0.16);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.16);
     transition-timing-function: var(--transition-ios);
 }
 
@@ -1294,23 +1321,23 @@ body.g3-overlay-scroll-locked {
     margin: 0 auto;
 }
 
-/* Android sheet */
+/* Material sheet */
 .g3-sheet-md {
     background: var(--color-card);
-    box-shadow: 0 -2px 12px var(--color-shadow);
+    box-shadow: var(--g3-shadow-md-elevation-2);
     transition-timing-function: var(--transition-md);
 }
 
 .g3-sheet-md.g3-sheet-bottom {
-    border-radius: 0.5rem 0.5rem 0 0;
+    border-radius: 4px 4px 0 0;
 }
 
 .g3-sheet-md.g3-sheet-left {
-    border-radius: 0 0.5rem 0.5rem 0;
+    border-radius: 0 4px 4px 0;
 }
 
 .g3-sheet-md.g3-sheet-right {
-    border-radius: 0.5rem 0 0 0.5rem;
+    border-radius: 4px 0 0 4px;
 }
 /* -- Spinner -- */
 
@@ -1409,7 +1436,7 @@ body.g3-overlay-scroll-locked {
     border-radius: 50%;
     background: var(--color-focused);
     color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: var(--g3-shadow-ios-card);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1420,7 +1447,7 @@ body.g3-overlay-scroll-locked {
     transition: transform var(--transition-normal) var(--transition-ios),
                 box-shadow var(--transition-normal) var(--transition-ios);
 }
-/* Android Fab */
+/* Material Fab */
 .g3-fab-md {
     position: relative;
     width: 56px;
@@ -1428,7 +1455,7 @@ body.g3-overlay-scroll-locked {
     border-radius: 50%;
     background: var(--color-focused);
     color: white;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    box-shadow: var(--g3-shadow-md-fab);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1518,14 +1545,14 @@ body.g3-overlay-scroll-locked {
 /* iOS modal */
 .g3-modal-ios {
     border-radius: 14px;
-    box-shadow: 0 12px 34px rgba(0,0,0,0.22);
+    box-shadow: var(--g3-shadow-ios-float);
     padding: 1.5rem;
 }
 
-/* Android modal */
+/* Material modal */
 .g3-modal-md {
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 16px var(--color-shadow);
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-2);
     padding: 1.25rem;
 }
 
@@ -1712,7 +1739,7 @@ body.g3-overlay-scroll-locked {
     background: var(--color-card);
 }
 
-/* Android field */
+/* Material field */
 .g3-field-md {
     padding: 0.75rem 1rem;
     border: 1px solid var(--color-card-border);
@@ -2296,12 +2323,28 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-radio-ios .g3-radio-control {
-    border-width: 1.5px;
-    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--color-text) 8%, transparent);
+    width: 15px;
+    height: 24px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.g3-radio-ios .g3-radio-mark {
+    width: 33%;
+    height: 50%;
+    border-right: 2px solid var(--color-focused);
+    border-bottom: 2px solid var(--color-focused);
+    border-radius: 0;
+    background: transparent;
+    transform: rotate(45deg) scale(0.8);
+}
+.g3-radio-ios.checked .g3-radio-mark {
+    transform: rotate(45deg) scale(1);
 }
 
 .g3-radio-md {
-    border-radius: 0.25rem;
+    border-radius: 4px;
     min-height: 48px;
 }
 
@@ -2342,23 +2385,23 @@ body.g3-overlay-scroll-locked {
     user-select: none;
 }
 
-/* Inset lists mirror the card treatment per platform so a list and a card
-   sitting next to each other read as the same surface: iOS uses a hairline
-   border with no elevation, MD uses a soft shadow with no border. */
+/* Inset lists share the card surface treatment per platform, with row
+   separators inside the elevated container. */
 .g3-list-inset {
     overflow: hidden;
-    border-radius: 12px;
     background: var(--color-card);
 }
 
 .g3-list-ios.g3-list-inset {
-    border: 0.5px solid var(--color-card-border);
-    border-radius: 13px;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: var(--g3-shadow-ios-card);
 }
 
 .g3-list-md.g3-list-inset {
-    border-radius: 0.25rem;
-    box-shadow: 0 3px 8px var(--color-shadow);
+    border: 0;
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-1);
 }
 
 .g3-item-row {
@@ -2765,12 +2808,11 @@ body.g3-overlay-scroll-locked {
     -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
-/* Material: a flat, opaque, near-square surface that reads as an elevated
-   snackbar — no border, a crisper drop shadow. */
+/* Material: an opaque, near-square elevated snackbar. */
 .g3-toast-md {
-    border-radius: 0.25rem;
+    border-radius: 4px;
     border: 0;
-    box-shadow: 0 3px 12px var(--color-shadow), 0 1px 3px var(--color-shadow);
+    box-shadow: var(--g3-shadow-md-fab);
 }
 
 /* Colour is applied as the status accent (drives the dot) plus a faint surface
@@ -2848,9 +2890,8 @@ body.g3-overlay-scroll-locked {
     to { transform: scaleX(0); }
 }
 
-/* Accordion groups use the same card treatment as inset lists so the three
-   surfaces read consistently: iOS a hairline border with no elevation, MD a
-   soft shadow with no border. */
+/* Accordion groups share the same elevated platform surface as cards and
+   inset lists. */
 .g3-accordion-group {
     overflow: hidden;
     width: 100%;
@@ -2858,13 +2899,15 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-accordion-group-ios {
-    border: 0.5px solid var(--color-card-border);
-    border-radius: 0.875rem;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: var(--g3-shadow-ios-card);
 }
 
 .g3-accordion-group-md {
-    border-radius: 0.25rem;
-    box-shadow: 0 3px 8px var(--color-shadow);
+    border: 0;
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-1);
 }
 
 .g3-accordion-item + .g3-accordion-item {

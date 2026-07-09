@@ -1209,7 +1209,9 @@ mod tests {
         // The colour signal is a leading status dot plus a faint surface tint —
         // not the old coloured outline / left accent bar. Matches the card
         // treatment shared by items, cards and the accordion.
-        assert!(!stylesheet.contains("border-inline-start: 6px solid var(--g3-toast-accent-color)"));
+        assert!(
+            !stylesheet.contains("border-inline-start: 6px solid var(--g3-toast-accent-color)")
+        );
         assert!(toast_source.contains("s::INDICATOR"));
         assert!(stylesheet.contains(".g3-toast-indicator"));
         assert!(stylesheet.contains("background: var(--g3-toast-accent-color)"));
@@ -1231,11 +1233,11 @@ mod tests {
             .and_then(|rest| rest.split('}').next())
             .expect("missing .g3-toast-md block");
 
-        // iOS is a frosted, translucent pill; MD is a flat, opaque elevated slab.
+        // iOS is a frosted, translucent pill; MD is an opaque elevated slab.
         assert!(ios.contains("backdrop-filter"));
         assert!(ios.contains("border-radius: 0.875rem"));
         assert!(!md.contains("backdrop-filter"));
-        assert!(md.contains("border-radius: 0.25rem"));
+        assert!(md.contains("border-radius: 4px"));
         assert!(md.contains("border: 0"));
     }
 
@@ -1551,6 +1553,60 @@ mod tests {
         assert!(stylesheet.contains("pointer-events: none"));
     }
 
+    #[test]
+    fn grouped_surfaces_share_ionic_platform_elevation_contract() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+
+        for (selector, label) in [
+            (".g3-card-ios {", "iOS card"),
+            (".g3-list-ios.g3-list-inset {", "iOS inset list"),
+            (".g3-accordion-group-ios {", "iOS accordion group"),
+        ] {
+            let block = stylesheet
+                .split(selector)
+                .nth(1)
+                .unwrap_or_else(|| panic!("missing {label} style block"))
+                .split('}')
+                .next()
+                .unwrap_or_else(|| panic!("missing {label} declaration block"));
+
+            assert!(
+                block.contains("border-radius: 8px"),
+                "{label} radius differs from card"
+            );
+            assert!(
+                block.contains("box-shadow: var(--g3-shadow-ios-card)"),
+                "{label} shadow differs from card"
+            );
+            assert!(
+                block.contains("border: 0"),
+                "{label} should not use a colored border"
+            );
+        }
+
+        for (selector, label) in [
+            (".g3-card-md {", "MD card"),
+            (".g3-list-md.g3-list-inset {", "MD inset list"),
+            (".g3-accordion-group-md {", "MD accordion group"),
+        ] {
+            let block = stylesheet
+                .split(selector)
+                .nth(1)
+                .unwrap_or_else(|| panic!("missing {label} style block"))
+                .split('}')
+                .next()
+                .unwrap_or_else(|| panic!("missing {label} declaration block"));
+
+            assert!(
+                block.contains("border-radius: 4px"),
+                "{label} radius differs from card"
+            );
+            assert!(
+                block.contains("box-shadow: var(--g3-shadow-md-elevation-1)"),
+                "{label} shadow differs from card"
+            );
+        }
+    }
     #[test]
     fn timing_uses_dioxus_sdk_time_instead_of_custom_target_split() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
