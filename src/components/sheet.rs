@@ -17,10 +17,16 @@ static SHEET_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
 // the `style` attribute back to "" restores previously-set inline properties
 // instead of removing them, which left `--g3-sheet-drag-y` stuck after a
 // drag-to-dismiss and made the next open animate in short of fully open.
+const SHEET_PRESENT_SCRIPT: &str = r#"
+requestAnimationFrame(() => dioxus.send(true));
+"#;
+
 const SHEET_DRAG_SCRIPT: &str = r#"
 const dialog = document.getElementById("__DIALOG_ID__");
 const handle = document.getElementById("__HANDLE_ID__");
-if (dialog && handle) {
+if (dialog && handle && handle.dataset.g3SheetDragBound !== "true") {
+    handle.dataset.g3SheetDragBound = "true";
+
     let dragging = false;
     let startY = 0;
     let deltaY = 0;
@@ -97,12 +103,32 @@ pub fn Sheet(
     let has_handle = placement == SheetPlacement::Bottom;
     let dialog_id = format!("g3-sheet-{instance_id}");
     let handle_id = format!("g3-sheet-handle-{instance_id}");
+    let mut ever_opened = use_signal(|| false);
+    let mut presented_open = use_signal(|| false);
+
+    use_effect(move || {
+        if !is_open() {
+            presented_open.set(false);
+            return;
+        }
+        ever_opened.set(true);
+        if presented_open() {
+            return;
+        }
+        spawn(async move {
+            let mut eval = document::eval(SHEET_PRESENT_SCRIPT);
+            let _ = eval.recv::<bool>().await;
+            if is_open() {
+                presented_open.set(true);
+            }
+        });
+    });
 
     {
         let dialog_id = dialog_id.clone();
         let handle_id = handle_id.clone();
         use_effect(move || {
-            if !(is_draggable && has_handle) {
+            if !(is_open() && is_draggable && has_handle) {
                 return;
             }
             let script = SHEET_DRAG_SCRIPT
@@ -118,18 +144,23 @@ pub fn Sheet(
         });
     }
 
+    use_lock_body_scroll(is_open);
+    let is_open_now = is_open();
+    if !is_open_now && !ever_opened() {
+        return rsx! {};
+    }
+    let visual_open = is_open_now && presented_open();
+
     let backdrop_cls = format!(
         "{} {}",
         s::BACKDROP,
-        if is_open() {
+        if visual_open {
             "g3-sheet-backdrop-open"
         } else {
             "g3-sheet-backdrop-closed pointer-events-none"
         }
     );
-    use_lock_body_scroll(is_open);
-    let is_open_now = is_open();
-    let state_cls = if is_open_now {
+    let state_cls = if visual_open {
         s::STATE_OPEN
     } else {
         s::STATE_CLOSED

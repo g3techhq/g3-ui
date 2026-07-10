@@ -113,7 +113,10 @@ body.g3-overlay-scroll-locked {
 }
 
 /* Suppress transitions on first paint (see AppWrapper) so overlays don't
-   animate out of their closed state while the stylesheet is still landing. */
+   animate out of their closed state while the stylesheet is still landing.
+   The rule that actually matters during the load race is inlined by
+   AppWrapper (document::Style) since this file isn't loaded yet during that
+   window; this copy just keeps behavior consistent after CSS lands. */
 .g3-preload * {
     transition: none !important;
 }

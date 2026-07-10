@@ -3,8 +3,9 @@
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
 use g3_ui::{
-    ComponentMode, ComponentPlaygroundDemo, SegmentButton, SegmentGroup, Sheet, SheetPlacement, Select, SelectOption,
-    UI_CSS, component_playground_demos,
+    CSS_PRELOAD_CLASS, ComponentMode, ComponentPlaygroundDemo, G3PreloadStyle, SegmentButton,
+    SegmentGroup, Select, SelectOption, Sheet, SheetPlacement, UI_CSS, component_playground_demos,
+    use_css_preload_guard,
 };
 use manganis::asset;
 
@@ -59,6 +60,7 @@ fn main() {
 #[component]
 fn App() -> Element {
     rsx! {
+        G3PreloadStyle {}
         document::Link { rel: "stylesheet", href: UI_CSS }
         document::Link { rel: "stylesheet", href: PLAYGROUND_CSS }
         Playground {}
@@ -86,6 +88,16 @@ fn Playground() -> Element {
     let active_theme = PlaygroundTheme::from_value(&theme_value());
     g3_ui::set_mode(active_mode);
 
+    // See G3PreloadStyle: UI_CSS loads at runtime, so the nav Sheet and rest
+    // of this root would render unstyled for however many frames that takes
+    // unless we hold the preload guard class until it's confirmed applied.
+    let preloading = use_css_preload_guard();
+    let root_cls = if preloading() {
+        format!("playground-root {CSS_PRELOAD_CLASS}")
+    } else {
+        "playground-root".to_string()
+    };
+
     let selected_source = playground_demo_source(selected.source);
 
     let theme_options = PlaygroundTheme::all()
@@ -97,7 +109,7 @@ fn Playground() -> Element {
     rsx! {
         g3_ui::G3ThemeProvider { mode: active_mode,
             div {
-                class: "playground-root",
+                class: root_cls,
                 "data-g3-mode": active_mode.as_str(),
                 "data-playground-theme": active_theme.as_str(),
                 g3_ui::Header {

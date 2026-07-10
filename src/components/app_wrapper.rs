@@ -2,7 +2,10 @@
 
 use super::shell_styles as s;
 use crate::UI_CSS;
-use crate::theme::{ComponentMode, G3Mode, Theme, merge_classes, use_component_mode};
+use crate::theme::{
+    ComponentMode, G3Mode, G3PreloadStyle, Theme, merge_classes, use_component_mode,
+    use_css_preload_guard,
+};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
 use dx_route_transitions::{ROUTE_TRANSITION_COVER_CLASS, RouteTransitionProvider};
@@ -21,37 +24,11 @@ pub fn AppWrapper(
 
     // The stylesheet is attached at runtime (below), so on first load the DOM is
     // painted before it applies. Without this, overlays (sheets, modals) would
-    // transition from their unstyled/on-screen position to their closed
-    // off-screen transform and visibly slide out. Hold a `g3-preload` class that
-    // kills transitions, then drop it a couple of frames after mount.
-    let mut preloading = use_signal(|| true);
-    use_effect(move || {
-        spawn(async move {
-            // Poll (per frame) until the stylesheet's sentinel var is readable,
-            // i.e. the CSS has actually applied, then drop the guard one frame
-            // later. A frame cap keeps it from spinning forever if CSS is absent.
-            let mut eval = document::eval(
-                r#"
-                let tries = 0;
-                const ready = () => getComputedStyle(document.documentElement)
-                    .getPropertyValue("--g3-css-loaded").trim() === "1";
-                const shell = document.querySelector(".g3-app-shell");
-                console.log("[g3-preload] start; shell classes:", shell ? shell.className : "no shell");
-                const tick = () => {
-                    if (ready() || tries++ > 300) {
-                        console.log("[g3-preload] css ready after", tries, "frames; dropping guard next frame");
-                        requestAnimationFrame(() => dioxus.send(true));
-                    } else {
-                        requestAnimationFrame(tick);
-                    }
-                };
-                tick();
-                "#,
-            );
-            let _ = eval.recv::<bool>().await;
-            preloading.set(false);
-        });
-    });
+    // render fully unstyled (and, once the transform rules do land, visibly
+    // slide out of their unstyled position). Hold a `g3-preload` class - backed
+    // by the inline `G3PreloadStyle` guard, since g3_ui.css hasn't loaded yet
+    // during this exact window - until the stylesheet is confirmed applied.
+    let preloading = use_css_preload_guard();
 
     let mut shell_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
@@ -75,12 +52,14 @@ pub fn AppWrapper(
 
     #[cfg(feature = "transitions")]
     return rsx! {
+        G3PreloadStyle {}
         document::Link { rel: "stylesheet", href: UI_CSS }
         RouteTransitionProvider { {shell} }
     };
 
     #[cfg(not(feature = "transitions"))]
     rsx! {
+        G3PreloadStyle {}
         document::Link { rel: "stylesheet", href: UI_CSS }
         {shell}
     }

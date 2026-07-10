@@ -55,8 +55,8 @@ pub mod prelude;
 
 /// Re-export theme utilities.
 pub use theme::{
-    ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
-    merge_classes, set_mode, use_component_mode,
+    CSS_PRELOAD_CLASS, ComponentMode, G3Mode, G3PreloadStyle, G3Theme, G3ThemeProvider, Theme,
+    get_mode, init_auto_mode, merge_classes, set_mode, use_component_mode, use_css_preload_guard,
 };
 
 #[cfg(test)]
@@ -1000,6 +1000,12 @@ mod tests {
         let sheet_source = include_str!("components/sheet.rs");
 
         assert!(sheet_source.contains("STATE_CLOSED"));
+        assert!(sheet_source.contains("let mut ever_opened = use_signal(|| false);"));
+        assert!(sheet_source.contains("let mut presented_open = use_signal(|| false);"));
+        assert!(sheet_source.contains("requestAnimationFrame(() => dioxus.send(true))"));
+        assert!(sheet_source.contains("if !is_open_now && !ever_opened()"));
+        assert!(sheet_source.contains("return rsx! {};"));
+        assert!(sheet_source.contains("let visual_open = is_open_now && presented_open();"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-closed"));
         assert!(stylesheet.contains("box-shadow: none"));
     }
@@ -1174,8 +1180,9 @@ mod tests {
 
         assert!(sheet_source.contains("draggable: Option<bool>"));
         assert!(sheet_source.contains("let is_draggable = draggable.unwrap_or(true);"));
-        assert!(sheet_source.contains("if is_draggable && has_handle"));
+        assert!(sheet_source.contains("if !(is_open() && is_draggable && has_handle)"));
         assert!(sheet_source.contains("const SHEET_DISMISS_DISTANCE: f64 = 96.0;"));
+        assert!(sheet_source.contains("handle.dataset.g3SheetDragBound"));
         assert!(sheet_source.contains("r#type: \"button\""));
         assert!(sheet_source.contains("aria_hidden: (!is_open_now).to_string()"));
         assert!(sheet_source.contains("inert: (!is_open_now).then"));

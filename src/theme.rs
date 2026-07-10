@@ -220,6 +220,56 @@ pub fn init_auto_mode() {
     set_mode(detect_platform_mode());
 }
 
+/// Class applied to a root element while g3_ui's stylesheet is still loading.
+/// Pair with [`use_css_preload_guard`] and [`G3PreloadStyle`]: add this class
+/// to the root's class list while the returned signal is `true`.
+pub const CSS_PRELOAD_CLASS: &str = "g3-preload";
+
+const CSS_PRELOAD_POLL_SCRIPT: &str = r#"
+let tries = 0;
+const ready = () => getComputedStyle(document.documentElement)
+    .getPropertyValue("--g3-css-loaded").trim() === "1";
+const tick = () => {
+    if (ready() || tries++ > 300) {
+        requestAnimationFrame(() => dioxus.send(true));
+    } else {
+        requestAnimationFrame(tick);
+    }
+};
+tick();
+"#;
+
+/// Tracks whether g3_ui.css (attached at runtime via `document::Link`) has
+/// finished loading. Any root that renders overlays (sheets, modals) before
+/// this resolves should hold [`CSS_PRELOAD_CLASS`] on itself so the paired
+/// [`G3PreloadStyle`] guard can hide it - otherwise those overlays render
+/// unstyled for however many frames the stylesheet takes to land.
+pub fn use_css_preload_guard() -> Signal<bool> {
+    let mut preloading = use_signal(|| true);
+    use_effect(move || {
+        spawn(async move {
+            let mut eval = document::eval(CSS_PRELOAD_POLL_SCRIPT);
+            let _ = eval.recv::<bool>().await;
+            preloading.set(false);
+        });
+    });
+    preloading
+}
+
+/// Inline (network-free) style that hides [`CSS_PRELOAD_CLASS`] roots and
+/// kills their transitions. Must be inline rather than living in g3_ui.css
+/// itself, since that external stylesheet is exactly what hasn't loaded yet
+/// during the window this guard needs to cover. Render this once per root
+/// that uses [`use_css_preload_guard`].
+#[component]
+pub fn G3PreloadStyle() -> Element {
+    rsx! {
+        document::Style {
+            r#".g3-preload, .g3-preload * {{ transition: none !important; }} .g3-preload {{ visibility: hidden !important; }}"#
+        }
+    }
+}
+
 impl ComponentMode {
     pub fn as_str(self) -> &'static str {
         match self {
