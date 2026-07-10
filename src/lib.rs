@@ -55,8 +55,8 @@ pub mod prelude;
 
 /// Re-export theme utilities.
 pub use theme::{
-    CSS_PRELOAD_CLASS, ComponentMode, G3Mode, G3PreloadStyle, G3Theme, G3ThemeProvider, Theme,
-    get_mode, init_auto_mode, merge_classes, set_mode, use_component_mode, use_css_preload_guard,
+    ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
+    merge_classes, set_mode, use_component_mode,
 };
 
 #[cfg(test)]
@@ -884,8 +884,16 @@ mod tests {
         let source = include_str!("components/app_wrapper.rs");
 
         assert!(source.contains("theme: Option<Theme>"));
-        assert!(source.contains("theme.as_ref().map(Theme::to_style_attr)"));
+        assert!(source.contains("effective_theme.to_style_attr()"));
         assert!(!source.contains("G3Theme { mode }"));
+    }
+
+    #[test]
+    fn app_wrapper_falls_back_to_an_ambient_theme_for_nested_wrappers() {
+        let source = include_str!("components/app_wrapper.rs");
+
+        assert!(source.contains("try_use_context::<Theme>()"));
+        assert!(source.contains("layout: Option<bool>"));
     }
     #[test]
     fn focused_theme_color_drives_tint_styles() {

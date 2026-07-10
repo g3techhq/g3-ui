@@ -24,96 +24,10 @@ textarea {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  background: var(--playground-shell-bg, var(--color-bg, #eef2f4));
+  /* Colors come from the g3_ui::Theme passed to AppWrapper (see main.rs
+     PlaygroundTheme::to_theme) - not from a theme attribute selector. */
+  background: var(--color-bg, #eef2f4);
   color: var(--color-text, #17202a);
-}
-
-.playground-root[data-playground-theme="blue"],
-[data-playground-theme="blue"],
-[data-playground-theme="blue"] [data-g3-mode] {
-  --color-focused: #2563eb;
-  --color-bg: #eef5ff;
-  --color-bg-secondary: #dbeafe;
-  --color-card: #ffffff;
-  --color-card-inset: #f8fbff;
-  --color-surface: #ffffff;
-  --color-control: #eaf2ff;
-  --color-card-border: rgba(37, 99, 235, 0.2);
-  --color-label-primary: #102033;
-  --color-label-secondary: #496278;
-  --color-text: #102033;
-  --color-text-secondary: #53677f;
-  --color-shadow: rgba(30, 64, 175, 0.16);
-  --playground-shell-bg: #e7f0ff;
-  --playground-code-bg: #101827;
-  --playground-code-text: #dbeafe;
-  color-scheme: light;
-}
-
-.playground-root[data-playground-theme="green"],
-[data-playground-theme="green"],
-[data-playground-theme="green"] [data-g3-mode] {
-  --color-focused: #1f7a4d;
-  --color-bg: #edf7f0;
-  --color-bg-secondary: #dceee2;
-  --color-card: #ffffff;
-  --color-card-inset: #f5fbf7;
-  --color-surface: #ffffff;
-  --color-control: #e5f3ea;
-  --color-card-border: rgba(31, 122, 77, 0.24);
-  --color-label-primary: #12251a;
-  --color-label-secondary: #4d6657;
-  --color-text: #12251a;
-  --color-text-secondary: #52685c;
-  --color-shadow: rgba(24, 74, 47, 0.16);
-  --playground-shell-bg: #e2f0e7;
-  --playground-code-bg: #0f1f17;
-  --playground-code-text: #d9fbe7;
-  color-scheme: light;
-}
-
-.playground-root[data-playground-theme="night"],
-[data-playground-theme="night"],
-[data-playground-theme="night"] [data-g3-mode] {
-  --color-focused: #7dd3fc;
-  --color-bg: #07111f;
-  --color-bg-secondary: #0e1b2e;
-  --color-card: #111d2e;
-  --color-card-inset: #172438;
-  --color-surface: #101a2b;
-  --color-control: #1b2a40;
-  --color-card-border: rgba(148, 163, 184, 0.24);
-  --color-label-primary: #e5edf6;
-  --color-label-secondary: #b8c7d8;
-  --color-text: #e5edf6;
-  --color-text-secondary: #9fb0c3;
-  --color-shadow: rgba(0, 0, 0, 0.54);
-  --playground-shell-bg: #050b14;
-  --playground-code-bg: #020617;
-  --playground-code-text: #dbeafe;
-  color-scheme: dark;
-}
-
-.playground-root[data-playground-theme="forest"],
-[data-playground-theme="forest"],
-[data-playground-theme="forest"] [data-g3-mode] {
-  --color-focused: #34d399;
-  --color-bg: #050806;
-  --color-bg-secondary: #0b130d;
-  --color-card: #101811;
-  --color-card-inset: #162218;
-  --color-surface: #0e1610;
-  --color-control: #18241b;
-  --color-card-border: rgba(134, 239, 172, 0.2);
-  --color-label-primary: #e6f4e8;
-  --color-label-secondary: #b8d4bd;
-  --color-text: #e6f4e8;
-  --color-text-secondary: #9eb5a4;
-  --color-shadow: rgba(0, 0, 0, 0.62);
-  --playground-shell-bg: #030604;
-  --playground-code-bg: #020603;
-  --playground-code-text: #dcfce7;
-  color-scheme: dark;
 }
 
 .playground-title-block {

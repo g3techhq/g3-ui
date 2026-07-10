@@ -3,9 +3,8 @@
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
 use g3_ui::{
-    CSS_PRELOAD_CLASS, ComponentMode, ComponentPlaygroundDemo, G3PreloadStyle, SegmentButton,
-    SegmentGroup, Select, SelectOption, Sheet, SheetPlacement, UI_CSS, component_playground_demos,
-    use_css_preload_guard,
+    AppWrapper, ComponentMode, ComponentPlaygroundDemo, G3Theme, SegmentButton, SegmentGroup,
+    Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
 };
 use manganis::asset;
 
@@ -29,15 +28,6 @@ impl PlaygroundTheme {
         }
     }
 
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::Blue => "blue",
-            Self::Green => "green",
-            Self::Night => "night",
-            Self::Forest => "forest",
-        }
-    }
-
     fn label(self) -> &'static str {
         match self {
             Self::Blue => "Blue",
@@ -50,6 +40,73 @@ impl PlaygroundTheme {
     fn all() -> [Self; 4] {
         [Self::Blue, Self::Green, Self::Night, Self::Forest]
     }
+
+    /// Real `g3_ui::Theme` for this brand - fed straight into `AppWrapper`'s
+    /// `theme` prop, the same way any consumer of the library themes its app.
+    fn to_theme(self) -> G3Theme {
+        match self {
+            Self::Blue => G3Theme {
+                focused: "#2563eb".into(),
+                bg: "#eef5ff".into(),
+                bg_secondary: "#dbeafe".into(),
+                card_inset: "#f8fbff".into(),
+                control: "#eaf2ff".into(),
+                card_border: "rgba(37, 99, 235, 0.2)".into(),
+                label_primary: "#102033".into(),
+                label_secondary: "#496278".into(),
+                text: "#102033".into(),
+                text_secondary: "#53677f".into(),
+                shadow: "rgba(30, 64, 175, 0.16)".into(),
+                ..G3Theme::default_light()
+            },
+            Self::Green => G3Theme {
+                focused: "#1f7a4d".into(),
+                bg: "#edf7f0".into(),
+                bg_secondary: "#dceee2".into(),
+                card_inset: "#f5fbf7".into(),
+                control: "#e5f3ea".into(),
+                card_border: "rgba(31, 122, 77, 0.24)".into(),
+                label_primary: "#12251a".into(),
+                label_secondary: "#4d6657".into(),
+                text: "#12251a".into(),
+                text_secondary: "#52685c".into(),
+                shadow: "rgba(24, 74, 47, 0.16)".into(),
+                ..G3Theme::default_light()
+            },
+            Self::Night => G3Theme {
+                focused: "#7dd3fc".into(),
+                bg: "#07111f".into(),
+                bg_secondary: "#0e1b2e".into(),
+                card: "#111d2e".into(),
+                card_inset: "#172438".into(),
+                surface: "#101a2b".into(),
+                control: "#1b2a40".into(),
+                card_border: "rgba(148, 163, 184, 0.24)".into(),
+                label_primary: "#e5edf6".into(),
+                label_secondary: "#b8c7d8".into(),
+                text: "#e5edf6".into(),
+                text_secondary: "#9fb0c3".into(),
+                shadow: "rgba(0, 0, 0, 0.54)".into(),
+                ..G3Theme::default_dark()
+            },
+            Self::Forest => G3Theme {
+                focused: "#34d399".into(),
+                bg: "#050806".into(),
+                bg_secondary: "#0b130d".into(),
+                card: "#101811".into(),
+                card_inset: "#162218".into(),
+                surface: "#0e1610".into(),
+                control: "#18241b".into(),
+                card_border: "rgba(134, 239, 172, 0.2)".into(),
+                label_primary: "#e6f4e8".into(),
+                label_secondary: "#b8d4bd".into(),
+                text: "#e6f4e8".into(),
+                text_secondary: "#9eb5a4".into(),
+                shadow: "rgba(0, 0, 0, 0.62)".into(),
+                ..G3Theme::default_dark()
+            },
+        }
+    }
 }
 
 fn main() {
@@ -60,8 +117,6 @@ fn main() {
 #[component]
 fn App() -> Element {
     rsx! {
-        G3PreloadStyle {}
-        document::Link { rel: "stylesheet", href: UI_CSS }
         document::Link { rel: "stylesheet", href: PLAYGROUND_CSS }
         Playground {}
     }
@@ -74,7 +129,7 @@ fn Playground() -> Element {
     let mode_index = use_signal(|| 0_usize);
     let mut selector_open = use_signal(|| false);
     let source_value = use_signal(Vec::<String>::new);
-    let mut theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
+    let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
     let selected = demos
         .get(selected_index())
         .copied()
@@ -88,16 +143,6 @@ fn Playground() -> Element {
     let active_theme = PlaygroundTheme::from_value(&theme_value());
     g3_ui::set_mode(active_mode);
 
-    // See G3PreloadStyle: UI_CSS loads at runtime, so the nav Sheet and rest
-    // of this root would render unstyled for however many frames that takes
-    // unless we hold the preload guard class until it's confirmed applied.
-    let preloading = use_css_preload_guard();
-    let root_cls = if preloading() {
-        format!("playground-root {CSS_PRELOAD_CLASS}")
-    } else {
-        "playground-root".to_string()
-    };
-
     let selected_source = playground_demo_source(selected.source);
 
     let theme_options = PlaygroundTheme::all()
@@ -107,79 +152,77 @@ fn Playground() -> Element {
         .collect::<Vec<_>>();
 
     rsx! {
-        g3_ui::G3ThemeProvider { mode: active_mode,
-            div {
-                class: root_cls,
-                "data-g3-mode": active_mode.as_str(),
-                "data-playground-theme": active_theme.as_str(),
-                g3_ui::Header {
-                    title: selected.descriptor.name.to_string(),
-                    mode: active_mode,
-                    class: "playground-header",
-                    start_button: rsx! {
-                        g3_ui::Button {
-                            style: g3_ui::ButtonStyle::Clear,
-                            size: g3_ui::ButtonSize::Sm,
-                            aria_label: "Open component menu".to_string(),
-                            class: "playground-menu-button",
-                            onclick: move |_| selector_open.set(true),
-                            span { class: "playground-menu-icon", aria_hidden: "true",
-                                span {}
-                                span {}
-                                span {}
-                            }
+        AppWrapper {
+            theme: active_theme.to_theme(),
+            mode: active_mode,
+            class: "playground-root",
+            layout: false,
+            g3_ui::Header {
+                title: selected.descriptor.name.to_string(),
+                mode: active_mode,
+                class: "playground-header",
+                start_button: rsx! {
+                    g3_ui::Button {
+                        style: g3_ui::ButtonStyle::Clear,
+                        size: g3_ui::ButtonSize::Sm,
+                        aria_label: "Open component menu".to_string(),
+                        class: "playground-menu-button",
+                        onclick: move |_| selector_open.set(true),
+                        span { class: "playground-menu-icon", aria_hidden: "true",
+                            span {}
+                            span {}
+                            span {}
                         }
-                    },
-                    end_button: rsx! {
-                        Select { value: theme_value, mode: active_mode, options: theme_options }
-                    },
-                    toolbar: rsx! {
-                        SegmentGroup { active: mode_index, mode: active_mode,
-                            SegmentButton { index: 0, mode: active_mode, "MD" }
-                            SegmentButton { index: 1, mode: active_mode, "iOS" }
-                        }
-                    },
+                    }
+                },
+                end_button: rsx! {
+                    Select { value: theme_value, mode: active_mode, options: theme_options }
+                },
+                toolbar: rsx! {
+                    SegmentGroup { active: mode_index, mode: active_mode,
+                        SegmentButton { index: 0, mode: active_mode, "MD" }
+                        SegmentButton { index: 1, mode: active_mode, "iOS" }
+                    }
+                },
+            }
+            Sheet {
+                is_open: selector_open,
+                placement: SheetPlacement::Left,
+                mode: active_mode,
+                class: "playground-selector-sheet",
+                div { class: "playground-sidebar-header",
+                    h2 { "g3_ui" }
+                    div { class: "subtitle", "{count} demos" }
                 }
-                Sheet {
-                    is_open: selector_open,
-                    placement: SheetPlacement::Left,
-                    mode: active_mode,
-                    class: "playground-selector-sheet",
-                    div { class: "playground-sidebar-header",
-                        h2 { "g3_ui" }
-                        div { class: "subtitle", "{count} demos" }
-                    }
-                    PlaygroundNav {
-                        demos: demos.clone(),
-                        selected_index,
-                        selector_open,
-                    }
+                PlaygroundNav {
+                    demos: demos.clone(),
+                    selected_index,
+                    selector_open,
                 }
-                main { class: "playground-main",
-                    p { class: "playground-description", "{selected.descriptor.description}" }
-                    div { class: "playground-stage",
-                        div {
-                            key: "{active_mode.as_str()}-{active_theme.as_str()}-{selected.descriptor.name}",
-                            "data-g3-mode": active_mode.as_str(),
-                            "data-playground-theme": active_theme.as_str(),
-                            g3_ui::G3ThemeProvider { mode: active_mode,
-                                RenderSelectedDemo {
-                                    key: "{active_mode.as_str()}-{active_theme.as_str()}-{selected.descriptor.name}",
-                                    demo: selected,
-                                    mode: active_mode,
-                                    theme: active_theme,
-                                }
+            }
+            main { class: "playground-main",
+                p { class: "playground-description", "{selected.descriptor.description}" }
+                div { class: "playground-stage",
+                    div {
+                        key: "{active_mode.as_str()}-{active_theme.label()}-{selected.descriptor.name}",
+                        "data-g3-mode": active_mode.as_str(),
+                        g3_ui::G3ThemeProvider { mode: active_mode, theme: active_theme.to_theme(),
+                            RenderSelectedDemo {
+                                key: "{active_mode.as_str()}-{active_theme.label()}-{selected.descriptor.name}",
+                                demo: selected,
+                                mode: active_mode,
+                                theme: active_theme,
                             }
                         }
                     }
-                    g3_ui::AccordionGroup { value: source_value, class: "source-panel",
-                        g3_ui::AccordionItem {
-                            value: "source".to_string(),
-                            label: "Source".to_string(),
-                            Code {
-                                src: SourceCode::new(Language::Rust, selected_source.clone()),
-                                theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
-                            }
+                }
+                g3_ui::AccordionGroup { value: source_value, class: "source-panel",
+                    g3_ui::AccordionItem {
+                        value: "source".to_string(),
+                        label: "Source".to_string(),
+                        Code {
+                            src: SourceCode::new(Language::Rust, selected_source.clone()),
+                            theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
                         }
                     }
                 }

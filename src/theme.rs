@@ -221,9 +221,10 @@ pub fn init_auto_mode() {
 }
 
 /// Class applied to a root element while g3_ui's stylesheet is still loading.
-/// Pair with [`use_css_preload_guard`] and [`G3PreloadStyle`]: add this class
-/// to the root's class list while the returned signal is `true`.
-pub const CSS_PRELOAD_CLASS: &str = "g3-preload";
+/// Internal to `AppWrapper` - pair with [`use_css_preload_guard`] and
+/// [`G3PreloadStyle`], adding this class to the root's class list while the
+/// returned signal is `true`.
+pub(crate) const CSS_PRELOAD_CLASS: &str = "g3-preload";
 
 const CSS_PRELOAD_POLL_SCRIPT: &str = r#"
 let tries = 0;
@@ -240,11 +241,10 @@ tick();
 "#;
 
 /// Tracks whether g3_ui.css (attached at runtime via `document::Link`) has
-/// finished loading. Any root that renders overlays (sheets, modals) before
-/// this resolves should hold [`CSS_PRELOAD_CLASS`] on itself so the paired
-/// [`G3PreloadStyle`] guard can hide it - otherwise those overlays render
-/// unstyled for however many frames the stylesheet takes to land.
-pub fn use_css_preload_guard() -> Signal<bool> {
+/// finished loading. Internal to `AppWrapper`, which is the only supported
+/// way consumers should attach g3_ui's stylesheet and get this protection -
+/// not something consumers need to call themselves.
+pub(crate) fn use_css_preload_guard() -> Signal<bool> {
     let mut preloading = use_signal(|| true);
     use_effect(move || {
         spawn(async move {
@@ -259,10 +259,9 @@ pub fn use_css_preload_guard() -> Signal<bool> {
 /// Inline (network-free) style that hides [`CSS_PRELOAD_CLASS`] roots and
 /// kills their transitions. Must be inline rather than living in g3_ui.css
 /// itself, since that external stylesheet is exactly what hasn't loaded yet
-/// during the window this guard needs to cover. Render this once per root
-/// that uses [`use_css_preload_guard`].
+/// during the window this guard needs to cover. Rendered once by `AppWrapper`.
 #[component]
-pub fn G3PreloadStyle() -> Element {
+pub(crate) fn G3PreloadStyle() -> Element {
     rsx! {
         document::Style {
             r#".g3-preload, .g3-preload * {{ transition: none !important; }} .g3-preload {{ visibility: hidden !important; }}"#

@@ -1,7 +1,7 @@
 //! Navbar component - persistent base layout for bottom-tab style app navigation.
 
 use super::navbar_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+use crate::theme::{ComponentMode, Theme, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Trophy};
@@ -11,6 +11,12 @@ use dx_route_transitions::ROUTE_TRANSITION_BASE_CLASS;
 #[component]
 pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMode>) -> Element {
     let mode = use_component_mode(mode);
+    // Like AppWrapper: `[data-g3-mode]` sets its own default color vars, which
+    // beat an *inherited* theme value on any element carrying the attribute -
+    // including this one, when Navbar is nested inside an already-themed
+    // AppWrapper. Re-apply the ambient theme (if any) via inline style so
+    // nesting doesn't silently reset the app's theme back to mode defaults.
+    let theme_style = try_use_context::<Theme>().unwrap_or_default().to_style_attr();
 
     let navbar_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::NAVBAR_BASE, s::NAVBAR_IOS),
@@ -21,7 +27,12 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
     let navbar_cls = merge_classes(navbar_cls, class.as_deref());
 
     rsx! {
-        div { class: navbar_cls, "data-g3-mode": mode.as_str(), {children} }
+        div {
+            class: navbar_cls,
+            style: theme_style,
+            "data-g3-mode": mode.as_str(),
+            {children}
+        }
     }
 }
 

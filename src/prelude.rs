@@ -1,8 +1,8 @@
 //! g3_ui prelude - import all public symbols in one line.
 
 pub use crate::theme::{
-    CSS_PRELOAD_CLASS, ComponentMode, G3Mode, G3PreloadStyle, G3Theme, G3ThemeProvider, Theme,
-    get_mode, init_auto_mode, merge_classes, set_mode, use_component_mode, use_css_preload_guard,
+    ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
+    merge_classes, set_mode, use_component_mode,
 };
 pub use dioxus::prelude::*;
 

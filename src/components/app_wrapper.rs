@@ -3,8 +3,8 @@
 use super::shell_styles as s;
 use crate::UI_CSS;
 use crate::theme::{
-    ComponentMode, G3Mode, G3PreloadStyle, Theme, merge_classes, use_component_mode,
-    use_css_preload_guard,
+    CSS_PRELOAD_CLASS, ComponentMode, G3Mode, G3PreloadStyle, Theme, merge_classes,
+    use_component_mode, use_css_preload_guard,
 };
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
@@ -16,11 +16,28 @@ pub fn AppWrapper(
     class: Option<String>,
     mode: Option<ComponentMode>,
     theme: Option<Theme>,
+    /// Whether to apply the mobile app-shell layout (`flex flex-col h-dvh
+    /// overflow-hidden` + mode class). Defaults to `true`. Set to `false` for
+    /// a root that provides its own top-level layout (e.g. a desktop page
+    /// that should scroll normally) and only wants `AppWrapper` for theme
+    /// tokens, the stylesheet link, and the first-paint guard.
+    layout: Option<bool>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let theme_style = theme.as_ref().map(Theme::to_style_attr).unwrap_or_default();
+    // Nested AppWrapper (a device-frame demo inside a themed page, for
+    // instance) shouldn't lose its ambient theme just because it wasn't
+    // re-specified: fall back to whatever Theme an outer AppWrapper already
+    // provided before reaching for the library default. This has to resolve
+    // to a concrete Theme either way (not fall through to an empty inline
+    // style) - `[data-g3-mode]` sets its own default color vars, and those
+    // beat an *inherited* value on any element that carries the attribute,
+    // which every AppWrapper does.
+    let effective_theme = theme
+        .or_else(|| try_use_context::<Theme>())
+        .unwrap_or_default();
+    let theme_style = effective_theme.to_style_attr();
     provide_context(G3Mode { mode });
-    provide_context(theme.unwrap_or_default());
+    provide_context(effective_theme);
 
     // The stylesheet is attached at runtime (below), so on first load the DOM is
     // painted before it applies. Without this, overlays (sheets, modals) would
@@ -30,12 +47,16 @@ pub fn AppWrapper(
     // during this exact window - until the stylesheet is confirmed applied.
     let preloading = use_css_preload_guard();
 
-    let mut shell_cls = match mode {
-        ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
-        ComponentMode::Md => format!("{} {}", s::SHELL_BASE, s::SHELL_MD),
+    let mut shell_cls = if layout.unwrap_or(true) {
+        match mode {
+            ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
+            ComponentMode::Md => format!("{} {}", s::SHELL_BASE, s::SHELL_MD),
+        }
+    } else {
+        String::new()
     };
     if preloading() {
-        shell_cls = format!("{shell_cls} {}", s::SHELL_PRELOAD);
+        shell_cls = format!("{shell_cls} {CSS_PRELOAD_CLASS}");
     }
     #[cfg(feature = "transitions")]
     let shell_cls = merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS));
