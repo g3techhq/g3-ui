@@ -32,10 +32,8 @@ pub struct RefresherState {
 // moving *down*, so normal scrolling in every other direction is untouched.
 // Only the final "past threshold" decision is sent back to Rust.
 const REFRESHER_DRAG_SCRIPT: &str = r#"
-const LOG = (...a) => console.log("[g3-refresher __ROOT_ID__]", ...a);
 const root = document.getElementById("__ROOT_ID__");
 const label = document.getElementById("__LABEL_ID__");
-LOG("script ran; root found:", !!root);
 if (root) {
     const THRESHOLD = __THRESHOLD__;
     const ELASTIC = __ELASTIC__;
@@ -76,11 +74,7 @@ if (root) {
         }
     };
 
-    const onDown = (y, src) => {
-        const sp = scrollParent();
-        LOG(src + " down y=" + Math.round(y), "gateOk=" + gateOk(), "atTop=" + atTop(),
-            "scrollParent=" + (sp ? sp.className : "none"),
-            "dataset=", JSON.stringify(root.dataset));
+    const onDown = (y) => {
         if (!gateOk() || !atTop()) return;
         dragging = true;
         engaged = false;
@@ -88,7 +82,7 @@ if (root) {
     };
 
     // `e` is optional (touch path passes it so we can preventDefault the scroll).
-    const onMove = (y, e, src) => {
+    const onMove = (y, e) => {
         if (!dragging) return;
         const dy = y - startY;
         if (dy <= 0) {
@@ -101,7 +95,6 @@ if (root) {
         if (!engaged) {
             if (!atTop()) return;
             engaged = true;
-            LOG(src + " engaged, cancelable=" + (e ? e.cancelable : "n/a"));
         }
         // Non-passive touchmove: this is what actually stops the page scrolling.
         if (e && e.cancelable) e.preventDefault();
@@ -109,17 +102,15 @@ if (root) {
         setPull(dist);
     };
 
-    const onEnd = (src) => {
+    const onEnd = () => {
         if (!dragging) return;
         dragging = false;
-        LOG(src + " end; engaged=" + engaged + " pull=" + Math.round(pull) + " threshold=" + THRESHOLD);
         if (!engaged) return;
         engaged = false;
         if (pull >= THRESHOLD && root.dataset.hasRefresh === "true") {
             // Hand off to the Rust `refreshing` state. Clear the pull var so the
             // content settles flush again once refreshing ends; while refreshing
             // the indicator is driven by the `data-state="refreshing"` rules.
-            LOG("triggering refresh");
             root.style.setProperty("--g3-refresher-pull", "0px");
             root.style.setProperty("--g3-refresher-progress", "1");
             root.setAttribute("data-state", "refreshing");
@@ -132,14 +123,13 @@ if (root) {
 
     // Mouse (desktop) rides pointer events; touch uses touch events so the
     // touchmove listener can be non-passive and cancel the scroll.
-    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientY, "mouse"); });
-    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientY, null, "mouse"); });
-    root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") onEnd("mouse"); });
-    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientY, "touch"); }, { passive: true });
-    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientY, e, "touch"); }, { passive: false });
-    root.addEventListener("touchend", () => onEnd("touch"));
-    root.addEventListener("touchcancel", () => onEnd("touch"));
-    LOG("listeners attached");
+    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientY); });
+    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientY, null); });
+    root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") onEnd(); });
+    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientY); }, { passive: true });
+    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientY, e); }, { passive: false });
+    root.addEventListener("touchend", () => onEnd());
+    root.addEventListener("touchcancel", () => onEnd());
 }
 "#;
 
