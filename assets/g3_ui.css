@@ -558,7 +558,10 @@ body.g3-overlay-scroll-locked {
     left: 4px;
     width: calc((100% - 8px) / var(--g3-segment-count, 3));
     border-radius: 7px;
-    background: var(--ion-toolbar-segment-background-checked, var(--color-card));
+    background: var(
+        --ion-toolbar-segment-background-checked,
+        color-mix(in srgb, white 12%, var(--color-card))
+    );
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
     transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
     transition: transform var(--transition-normal) var(--transition-ios), width var(--transition-normal) var(--transition-ios);
