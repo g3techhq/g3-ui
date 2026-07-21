@@ -20,6 +20,10 @@ fn HeaderToolbarContextProvider(children: Element) -> Element {
 #[component]
 pub fn Header(
     title: String,
+    /// Small element (e.g. an icon) rendered inline right after the title
+    /// text — for a status indicator that belongs with the title itself
+    /// rather than off in the end-button slot.
+    title_icon: Option<Element>,
     start_button: Option<Element>,
     end_button: Option<Element>,
     toolbar: Option<Element>,
@@ -41,7 +45,14 @@ pub fn Header(
                         {start}
                     }
                 }
-                h1 { class: s::HEADER_TITLE, "{title}" }
+                h1 { class: s::HEADER_TITLE,
+                    "{title}"
+                    if let Some(icon) = title_icon {
+                        span { style: "display: inline-flex; vertical-align: middle; margin-left: 6px;",
+                            {icon}
+                        }
+                    }
+                }
                 div { class: s::HEADER_END_SLOT,
                     if let Some(end) = end_button {
                         {end}

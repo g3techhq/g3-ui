@@ -543,7 +543,7 @@ body.g3-overlay-scroll-locked {
     justify-content: center;
     background: var(
         --ion-toolbar-segment-background,
-        var(--g3-segment-ios-background, rgba(60, 60, 67, 0.065))
+        var(--g3-segment-ios-background, color-mix(in srgb, var(--color-text) 7%, transparent))
     );
     border-radius: 9px;
     padding: 2px;
@@ -1907,6 +1907,7 @@ textarea.g3-field {
     display: flex;
     flex-direction: column;
     background: var(--color-bg);
+    color: var(--color-text);
     overflow: hidden;
     height: 100dvh;
 }
