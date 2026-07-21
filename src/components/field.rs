@@ -21,6 +21,19 @@ pub fn Field(
     placeholder: Option<String>,
     class: Option<String>,
     mode: Option<ComponentMode>,
+    /// Renders a `<textarea>` instead of a single-line `<input>` — same
+    /// label/value/debounce/validation wiring, for reviews/comments/notes
+    /// that need more than one line. `#[props(extends=input)]`
+    /// `attributes` aren't forwarded in this mode since they're typed for
+    /// `input`, not `textarea`.
+    multiline: Option<bool>,
+    /// Visible row count when `multiline` is set. Defaults to 3.
+    rows: Option<u32>,
+    /// Trailing slot rendered inside the field's own box (e.g. a filter
+    /// icon button) — vertically centered, overlaid on the input's right
+    /// edge. The input gains right padding automatically so typed text
+    /// never runs under it.
+    end: Option<Element>,
 ) -> Element {
     let mut is_focused = use_signal(|| false);
     let mut modified = use_signal(|| false);
@@ -77,15 +90,79 @@ pub fn Field(
         true
     };
 
+    let input_style = if end.is_some() {
+        "width: stretch; padding-right: 2.75rem;"
+    } else {
+        "width: stretch;"
+    };
+
     rsx! {
         div { class: "relative w-full",
-            label { r#for,
-                div { class: "text-sm font-medium mb-1", "{label}" }
+            if !label.is_empty() {
+                label { r#for,
+                    div { class: "g3-field-label", "{label}" }
+                }
             }
+            div { class: "relative",
+            if multiline.unwrap_or(false) {
+                textarea {
+                    id,
+                    class: field_cls,
+                    style: input_style,
+                    rows: rows.unwrap_or(3),
+                    onfocus: move |_| {
+                        is_focused.set(true);
+                    },
+                    onblur: move |_| {
+                        is_focused.set(false);
+                    },
+                    oninput: move |event: Event<FormData>| {
+                        let new_value = event.value();
+                        if !check_validity(new_value.clone()) {
+                            return;
+                        }
+                        value.set(new_value);
+                        modified.set(true);
+                        if let Some(oninput) = oninput {
+                            oninput.call(event.clone());
+                        }
+                        if let Some(d) = debounce {
+                            let generation = debounce_generation
+                                .with_mut(|generation| {
+                                    *generation += 1;
+                                    *generation
+                                });
+                            let ev = event;
+                            spawn(async move {
+                                dioxus_sdk_time::sleep(std::time::Duration::from_millis(d as u64)).await;
+                                if debounce_generation() != generation {
+                                    return;
+                                }
+                                if let Some(onchange) = onchange {
+                                    onchange.call(ev);
+                                }
+                            });
+                        }
+                    },
+                    onchange: move |event| {
+                        if debounce.is_some() {
+                            return;
+                        }
+                        if let Some(onchange) = onchange {
+                            onchange.call(event);
+                        }
+                    },
+                    value: &combo_value()[..combo_value().len() - 1],
+                    minlength,
+                    maxlength,
+                    placeholder,
+                    disabled,
+                }
+            } else {
             input {
                 id,
                 class: field_cls,
-                style: "width: stretch;",
+                style: input_style,
                 onfocus: move |_| {
                     is_focused.set(true);
                 },
@@ -138,6 +215,15 @@ pub fn Field(
                 r#type,
                 ..attributes,
             }
+            }
+            if let Some(end) = end {
+                div {
+                    class: "absolute",
+                    style: "right: 0.5rem; top: 50%; transform: translateY(-50%); display: flex; align-items: center;",
+                    {end}
+                }
+            }
+            }
         }
     }
 }
@@ -149,6 +235,7 @@ pub fn FieldPlaygroundDemo() -> Element {
     let placeholder = use_signal(|| "Club name".to_string());
     let disabled = use_signal(|| false);
     let numeric = use_signal(|| false);
+    let multiline = use_signal(|| false);
 
     rsx! {
         crate::PlaygroundDemoFrame {
@@ -157,6 +244,7 @@ pub fn FieldPlaygroundDemo() -> Element {
                 crate::Field { label: "Placeholder".to_string(), value: placeholder }
                 crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
                 crate::Checkbox { checked: numeric, label: "Number type".to_string() }
+                crate::Checkbox { checked: multiline, label: "Multiline".to_string() }
             },
             Field {
                 label: label(),
@@ -164,6 +252,7 @@ pub fn FieldPlaygroundDemo() -> Element {
                 placeholder: placeholder(),
                 disabled: disabled(),
                 r#type: if numeric() { "number" } else { "text" },
+                multiline: multiline(),
             }
         }
     }
@@ -173,4 +262,43 @@ crate::g3_playground! {
     description: "Text input with optional validation limits and debounce.",
     demo: FieldPlaygroundDemo,
     source: "src/components/field.rs",
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::G3ThemeProvider;
+
+    fn render(app: fn() -> Element) {
+        let mut dom = VirtualDom::new(app);
+        dom.rebuild_in_place();
+    }
+
+    #[component]
+    fn FieldSmokeApp() -> Element {
+        let single_line = use_signal(String::new);
+        let multiline_value = use_signal(String::new);
+
+        rsx! {
+            G3ThemeProvider { mode: ComponentMode::Ios,
+                Field { label: "Title", value: single_line }
+                Field { label: "Review", value: multiline_value, multiline: true, rows: 4 }
+            }
+        }
+    }
+
+    #[test]
+    fn field_family_renders() {
+        render(FieldSmokeApp);
+    }
+
+    #[test]
+    fn multiline_renders_a_textarea_reusing_field_styling() {
+        let source = include_str!("field.rs");
+        assert!(source.contains("if multiline.unwrap_or(false) {"));
+        assert!(source.contains("textarea {"));
+        assert!(source.contains("class: field_cls,"));
+        let stylesheet = include_str!("../../assets/g3_ui.css");
+        assert!(stylesheet.contains("textarea.g3-field"));
+    }
 }

@@ -227,8 +227,15 @@ body.g3-overlay-scroll-locked {
     padding: 0;
 }
 
+.g3-btn-danger {
+    background: transparent;
+    color: var(--color-danger);
+    padding: 0;
+}
+
 .g3-btn-ios.g3-btn-clear,
-.g3-btn-ios.g3-btn-outline {
+.g3-btn-ios.g3-btn-outline,
+.g3-btn-ios.g3-btn-danger {
     font-weight: 600;
 }
 
@@ -309,7 +316,8 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-btn-outline:disabled,
-.g3-btn-clear:disabled {
+.g3-btn-clear:disabled,
+.g3-btn-danger:disabled {
     color: var(--color-label-secondary);
     border-color: var(--color-card-border);
 }
@@ -580,6 +588,9 @@ body.g3-overlay-scroll-locked {
     color: var(--color-label-secondary);
     transition: color 100ms linear, opacity 100ms linear;
     -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .g3-segment-btn-ios[data-state="on"] {
     border-left-color: transparent;
@@ -645,6 +656,9 @@ body.g3-overlay-scroll-locked {
     color: var(--color-label-secondary);
     transition: color 0.15s linear 0s, opacity 0.15s linear 0s;
     -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .g3-segment-btn-md[data-state="on"] {
     color: var(--color-focused);
@@ -674,8 +688,12 @@ body.g3-overlay-scroll-locked {
 }
 .g3-segment-toolbar.g3-segment-ios .g3-segment-btn-ios {
     min-height: 28px;
+    min-width: 0;
     margin: 0;
     line-height: 28px;
+}
+.g3-segment-toolbar.g3-segment-md .g3-segment-btn-md {
+    min-width: 0;
 }
 .g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios {
     margin: 2px;
@@ -1209,6 +1227,10 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-sheet-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem 1.5rem 1.5rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: none;
@@ -1558,6 +1580,10 @@ body.g3-overlay-scroll-locked {
 
 .g3-modal-overlay {
     --g3-modal-duration: 220ms;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(0, 0, 0, 0.7);
     animation: g3-modal-backdrop-in var(--g3-modal-duration) ease-out both;
 }
 .g3-modal {
@@ -1714,11 +1740,26 @@ body.g3-overlay-scroll-locked {
 }
 /* -- Field -- */
 
+.g3-field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-label-secondary);
+    margin-bottom: 0.25rem;
+}
+
 .g3-field {
     box-sizing: border-box;
     width: 100%;
     color: var(--color-text);
     outline: none;
+}
+
+textarea.g3-field {
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.4;
 }
 
 /* iOS field */
@@ -1876,6 +1917,21 @@ body.g3-overlay-scroll-locked {
 
 .g3-shell-md {
     background: var(--color-bg);
+}
+
+/* Opt-in: disable text selection/highlighting across the whole shell, so
+   drag gestures (reorder, swipe, star-row scrubbing) don't leave a stray
+   text selection behind. Form controls are exempted so typing/editing
+   still works normally. */
+.g3-no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+.g3-no-select input,
+.g3-no-select textarea {
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 .g3-body {
@@ -2060,7 +2116,11 @@ body.g3-overlay-scroll-locked {
     font: inherit;
     font-size: 0.875rem;
     font-weight: 500;
-    line-height: 1;
+    /* `line-height: 1` sat exactly at the font's em-box, which combined
+       with `.g3-chip-label`'s `overflow: hidden` clipped descenders
+       (g, y, p, q, j) — 1.4 leaves enough room without visibly growing
+       the pill, since `min-height` on this element anchors its size. */
+    line-height: 1.4;
     cursor: pointer;
     white-space: nowrap;
     transition: background var(--transition-fast) var(--transition-md),
@@ -2608,6 +2668,47 @@ body.g3-overlay-scroll-locked {
     flex: 0 0 auto;
     color: var(--color-label-secondary);
     fill: none;
+}
+
+/* `Item`'s own `checked` prop — a self-contained indicator (not a reuse of
+   `.g3-checkbox`, which carries its own grid layout/padding meant for a
+   standalone control) so any row, including swipeable ones, can act as a
+   checkbox without a second nested interactive element. */
+.g3-item-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    border-radius: 50%;
+    border: 2px solid var(--color-card-border);
+    background: var(--color-card);
+    color: var(--color-card);
+    transition: border-color var(--transition-normal) var(--transition-md),
+                background var(--transition-normal) var(--transition-md);
+}
+
+.g3-item-check-mark {
+    width: 12px;
+    height: 7px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0;
+    transform: translateY(-1px) rotate(-45deg) scale(0.8);
+    transition: opacity var(--transition-fast) var(--transition-md),
+                transform var(--transition-fast) var(--transition-md);
+}
+
+.g3-item-check.checked {
+    border-color: var(--color-focused);
+    background: var(--color-focused);
+}
+
+.g3-item-check.checked .g3-item-check-mark {
+    opacity: 1;
+    transform: translateY(-1px) rotate(-45deg) scale(1);
 }
 
 .g3-item-divider {

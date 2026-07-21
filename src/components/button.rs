@@ -12,6 +12,10 @@ pub enum ButtonStyle {
     Outline,
     Clear,
     Neutral,
+    /// Destructive action (delete, remove, sign out) — same weight as
+    /// `Clear` (text-only, no fill/border) but tinted with the theme's
+    /// danger color instead of the accent color.
+    Danger,
 }
 
 /// Button size.
@@ -47,6 +51,7 @@ pub fn Button(
         ButtonStyle::Outline => s::OUTLINE,
         ButtonStyle::Clear => s::CLEAR,
         ButtonStyle::Neutral => s::NEUTRAL,
+        ButtonStyle::Danger => s::DANGER,
     };
 
     let size_cls = match size.unwrap_or_default() {

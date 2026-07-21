@@ -15,6 +15,7 @@ pub const SOLID: &str = "g3-btn-solid";
 pub const OUTLINE: &str = "g3-btn-outline";
 pub const CLEAR: &str = "g3-btn-clear";
 pub const NEUTRAL: &str = "g3-btn-neutral";
+pub const DANGER: &str = "g3-btn-danger";
 
 // ── Sizes ─────────────────────────────────────────────
 pub const SM: &str = "g3-btn-sm";
@@ -30,6 +31,7 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("OUTLINE", OUTLINE),
         ("CLEAR", CLEAR),
         ("NEUTRAL", NEUTRAL),
+        ("DANGER", DANGER),
         ("SM", SM),
         ("MD_SIZE", MD_SIZE),
         ("LG", LG),

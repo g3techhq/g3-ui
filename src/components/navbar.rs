@@ -16,7 +16,9 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
     // including this one, when Navbar is nested inside an already-themed
     // AppWrapper. Re-apply the ambient theme (if any) via inline style so
     // nesting doesn't silently reset the app's theme back to mode defaults.
-    let theme_style = try_use_context::<Theme>().unwrap_or_default().to_style_attr();
+    let theme_style = try_use_context::<Theme>()
+        .unwrap_or_default()
+        .to_style_attr();
 
     let navbar_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::NAVBAR_BASE, s::NAVBAR_IOS),

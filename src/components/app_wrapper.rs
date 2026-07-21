@@ -22,6 +22,12 @@ pub fn AppWrapper(
     /// that should scroll normally) and only wants `AppWrapper` for theme
     /// tokens, the stylesheet link, and the first-paint guard.
     layout: Option<bool>,
+    /// Disable text selection/highlighting across the whole app shell
+    /// (`input`/`textarea` are exempted so typing still works). Useful for
+    /// apps with drag gestures (reorder, swipe, scrubbing) where an
+    /// accidental text selection during a drag is visually distracting.
+    /// Defaults to `false`.
+    disable_text_selection: Option<bool>,
 ) -> Element {
     let mode = use_component_mode(mode);
     // Nested AppWrapper (a device-frame demo inside a themed page, for
@@ -57,6 +63,9 @@ pub fn AppWrapper(
     };
     if preloading() {
         shell_cls = format!("{shell_cls} {CSS_PRELOAD_CLASS}");
+    }
+    if disable_text_selection.unwrap_or(false) {
+        shell_cls = format!("{shell_cls} {}", s::SHELL_NO_SELECT);
     }
     #[cfg(feature = "transitions")]
     let shell_cls = merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS));

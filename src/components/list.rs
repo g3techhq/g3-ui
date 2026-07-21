@@ -263,6 +263,13 @@ pub fn Item(
     detail: Option<ItemDetail>,
     start: Option<Element>,
     end: Option<Element>,
+    /// When `Some`, renders a checkbox-style indicator in the end slot
+    /// (taking over from `end`/`detail`) instead of a custom `end` element
+    /// or chevron — the row itself is the toggle, driven by the caller's
+    /// `onclick`, rather than nesting a second interactive control inside
+    /// the row (which `Checkbox` can't do without becoming a button inside
+    /// a button when the row also needs to be tappable).
+    checked: Option<bool>,
     overline: Option<String>,
     label: Option<String>,
     description: Option<String>,
@@ -285,8 +292,9 @@ pub fn Item(
         ComponentMode::Md => s::ITEM_MD,
     };
     let interactive = !matches!(kind, ItemKind::Static) || onclick.is_some();
-    let show_detail = matches!(detail, ItemDetail::Show)
-        || (matches!(detail, ItemDetail::Auto) && interactive && mode == ComponentMode::Ios);
+    let show_detail = checked.is_none()
+        && (matches!(detail, ItemDetail::Show)
+            || (matches!(detail, ItemDetail::Auto) && interactive && mode == ComponentMode::Ios));
     let cls = merge_classes(
         format!(
             "{} {mode_cls} {} {} {} {}",
@@ -299,6 +307,19 @@ pub fn Item(
         class.as_deref(),
     );
     let aria_disabled = disabled.then(|| "true".to_string());
+    let role = checked.map(|_| "checkbox");
+    let aria_checked = checked.map(|value| value.to_string());
+    let end = if let Some(checked) = checked {
+        Some(rsx! {
+            span {
+                class: if checked { "g3-item-check checked" } else { "g3-item-check" },
+                aria_hidden: "true",
+                span { class: "g3-item-check-mark" }
+            }
+        })
+    } else {
+        end
+    };
     match kind {
         ItemKind::Link(href) if !disabled => {
             rsx! {
@@ -379,6 +400,8 @@ pub fn Item(
                         class: cls,
                         r#type: "button",
                         disabled,
+                        role,
+                        aria_checked,
                         onclick: move |event| {
                             if let Some(onclick) = onclick {
                                 onclick.call(event);
@@ -524,6 +547,14 @@ pub fn SwipeItem(
     let mut dragging = use_signal(|| false);
     let mut long_press_generation = use_signal(|| 0_u64);
     let mut dismiss_phase = use_signal(|| DismissPhase::Idle);
+    // A pointerdown+move+up sequence that actually dragged still fires a
+    // synthetic click on release (standard DOM behavior — browsers don't
+    // suppress click after a drag on their own). Without this, swiping a
+    // row and releasing fires the row's own `onclick` (e.g. "open detail")
+    // right on top of the swipe gesture. Disable pointer-events on the
+    // content briefly after a real drag so that ghost click has no target.
+    let mut suppress_click = use_signal(|| false);
+    let mut click_suppress_generation = use_signal(|| 0_u64);
     let on_drag_move = on_drag;
     let on_long_press_down = on_long_press;
     let on_drag_up = on_drag;
@@ -556,6 +587,7 @@ pub fn SwipeItem(
                 dragging.set(true);
                 start_x.set(event.client_coordinates().x);
                 start_y.set(event.client_coordinates().y);
+                click_suppress_generation.with_mut(|value| *value += 1);
                 let generation = long_press_generation
                     .with_mut(|value| {
                         *value += 1;
@@ -578,6 +610,7 @@ pub fn SwipeItem(
                 let dy = event.client_coordinates().y - start_y();
                 if should_cancel_long_press(dx, dy) {
                     long_press_generation.with_mut(|value| *value += 1);
+                    suppress_click.set(true);
                 }
                 let next = swipe_offset_for_behavior(
                     dx,
@@ -668,6 +701,18 @@ pub fn SwipeItem(
                         }
                     }
                 }
+                if suppress_click() {
+                    let generation = click_suppress_generation.with_mut(|value| {
+                        *value += 1;
+                        *value
+                    });
+                    spawn(async move {
+                        dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
+                        if click_suppress_generation() == generation {
+                            suppress_click.set(false);
+                        }
+                    });
+                }
             },
             onpointercancel: move |_| {
                 if dismiss_phase() != DismissPhase::Idle {
@@ -676,6 +721,7 @@ pub fn SwipeItem(
                 dragging.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 offset.set(0.0);
+                suppress_click.set(false);
             },
             onpointerleave: move |_| {
                 if dismiss_phase() != DismissPhase::Idle {
@@ -711,7 +757,11 @@ pub fn SwipeItem(
                     {end_actions}
                 }
             }
-            div { class: s::SWIPE_CONTENT, {children} }
+            div {
+                class: s::SWIPE_CONTENT,
+                style: if suppress_click() { "pointer-events: none;" } else { "" },
+                {children}
+            }
         }
     }
 }
