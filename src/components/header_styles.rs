@@ -6,6 +6,7 @@ pub const HEADER_IOS: &str = "g3-header-ios";
 pub const HEADER_MD: &str = "g3-header-md";
 pub const HEADER_ROW: &str = "g3-header-row";
 pub const HEADER_TITLE: &str = "g3-header-title";
+pub const HEADER_TITLE_TEXT: &str = "g3-header-title-text";
 pub const HEADER_SLOT: &str = "g3-header-slot";
 pub const HEADER_START_SLOT: &str = "g3-header-slot g3-header-start-slot";
 pub const HEADER_END_SLOT: &str = "g3-header-slot g3-header-end-slot";
@@ -18,6 +19,7 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("HEADER_MD", HEADER_MD),
         ("HEADER_ROW", HEADER_ROW),
         ("HEADER_TITLE", HEADER_TITLE),
+        ("HEADER_TITLE_TEXT", HEADER_TITLE_TEXT),
         ("HEADER_START_SLOT", HEADER_START_SLOT),
         ("HEADER_END_SLOT", HEADER_END_SLOT),
         ("TOOLBAR", TOOLBAR),

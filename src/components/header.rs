@@ -46,11 +46,9 @@ pub fn Header(
                     }
                 }
                 h1 { class: s::HEADER_TITLE,
-                    "{title}"
+                    span { class: s::HEADER_TITLE_TEXT, "{title}" }
                     if let Some(icon) = title_icon {
-                        span { style: "display: inline-flex; vertical-align: middle; margin-left: 6px;",
-                            {icon}
-                        }
+                        {icon}
                     }
                 }
                 div { class: s::HEADER_END_SLOT,

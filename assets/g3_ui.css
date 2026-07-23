@@ -1836,9 +1836,16 @@ textarea.g3-field {
 .g3-header-title {
     grid-column: 2;
     justify-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-width: 0;
     max-width: min(220px, calc(100vw - 7rem));
     margin: 0;
+}
+.g3-header-title-text {
+    min-width: 0;
     overflow: hidden;
     text-align: center;
     text-overflow: ellipsis;
