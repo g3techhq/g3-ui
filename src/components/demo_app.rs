@@ -2,7 +2,7 @@
 //! Kitchen-sink reference app for the playground gallery.
 //!
 //! This is a component-owned playground demo (like every other component), but instead
-//! of exercising a single component it wires the whole library together into a mobile
+//! of exercising a single component it wires the whole library together into a responsive
 //! app shell so the gallery has a "kitchen sink" reference to open first.
 
 #[cfg(feature = "playground")]
@@ -692,7 +692,7 @@ fn ActivityScreen() -> Element {
 
 crate::g3_playground! {
     name: "Demo App",
-    description: "A complete mobile app shell that composes every g3_ui component together.",
+    description: "A complete responsive app shell that composes every g3_ui component together.",
     demo: DemoAppPlaygroundDemo,
     source: "src/components/demo_app.rs",
 }

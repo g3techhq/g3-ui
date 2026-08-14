@@ -22,6 +22,9 @@ pub const SM: &str = "g3-btn-sm";
 pub const MD_SIZE: &str = "g3-btn-md-size";
 pub const LG: &str = "g3-btn-lg";
 
+// ── Badge overlay ─────────────────────────────────────
+pub const BADGE: &str = "g3-btn-badge";
+
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("BASE", BASE),
@@ -35,5 +38,6 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("SM", SM),
         ("MD_SIZE", MD_SIZE),
         ("LG", LG),
+        ("BADGE", BADGE),
     ]
 }

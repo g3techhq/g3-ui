@@ -2,8 +2,8 @@
 
 Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](https://ionicframework.com/).
 
-`g3-ui` is a flat, `G3`-prefixed component library for building mobile-shaped apps (bottom-tab
-navigation, sheets, cards, swipeable lists) that compile to web (WASM), desktop (Wry), and native
+`g3-ui` is a flat, `G3`-prefixed component library for building responsive apps (bottom-tab
+navigation that becomes a desktop rail, sheets, cards, swipeable lists) that compile to web (WASM), desktop (Wry), and native
 mobile targets through Dioxus. Every interactive component ships with iOS/Material Design (MD)
 adaptive styling, CSS-variable theming, and WAI-ARIA attributes out of the box. The Rust crate name
 is `g3_ui`.
@@ -154,6 +154,18 @@ class for push transitions.
 
 Without the feature, `g3-ui` does not depend on `dx-route-transitions` and does not emit
 route-transition marker classes.
+
+## Responsive App Shell
+
+`G3AppWrapper` measures its own available width with a CSS container query. At `48rem` and wider,
+the same `G3Navbar` tree automatically moves `G3NavbarTabBar` from the bottom edge to a compact left
+navigation rail. `G3Header` keeps its start, title, end, and optional segmented-toolbar slots across
+both layouts, while desktop spacing and scrollbars are applied automatically. No resize listener or
+duplicate desktop navigation state is required.
+
+Because the query follows the shell rather than the browser viewport, a narrow embedded app remains
+in its mobile layout even when it is displayed inside a wide desktop page. Override
+`--g3-navbar-rail-width` on `G3Navbar` if an application needs a wider desktop rail.
 
 ## Playground
 

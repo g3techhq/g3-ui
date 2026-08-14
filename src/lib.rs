@@ -849,6 +849,21 @@ mod tests {
         assert!(stylesheet.contains(".g3-navbar-tab-bar"));
         assert!(stylesheet.contains(".g3-navbar-tab-selected"));
     }
+
+    #[test]
+    fn app_shell_navigation_adapts_to_desktop_without_duplicate_state() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let navbar_source = include_str!("components/navbar.rs");
+
+        assert!(stylesheet.contains("container-name: g3-app-shell"));
+        assert!(stylesheet.contains("@container g3-app-shell (min-width: 48rem)"));
+        assert!(stylesheet.contains("--g3-navbar-rail-width: 5.25rem"));
+        assert!(stylesheet.contains("grid-row: 1 / -1"));
+        assert!(stylesheet.contains(".g3-header .g3-header-toolbar"));
+        assert!(stylesheet.contains("scrollbar-width: thin"));
+        assert!(navbar_source.contains("aria_label: aria_label.unwrap_or_else"));
+        assert!(navbar_source.contains("aria_label: label.clone()"));
+    }
     #[test]
     fn transitions_feature_is_optional_and_drives_shell_and_body_markers() {
         let cargo = include_str!("../Cargo.toml");
@@ -929,7 +944,7 @@ mod tests {
 
     #[test]
     fn component_colors_reference_theme_tokens_not_literals() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3_ui.css").replace("\r\n", "\n");
 
         // Previously hardcoded component colors that ignored custom themes.
         for literal in [
@@ -998,7 +1013,9 @@ mod tests {
         assert!(stylesheet.contains(".g3-segment-standalone .g3-segment-btn-ios"));
         assert!(stylesheet.contains("min-width: 0"));
         assert!(stylesheet.contains(".g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios"));
-        assert!(stylesheet.contains("--g3-segment-ios-background, rgba(60, 60, 67, 0.065)"));
+        assert!(stylesheet.contains(
+            "--g3-segment-ios-background, color-mix(in srgb, var(--color-text) 7%, transparent)"
+        ));
         assert!(stylesheet.contains("transform 320ms cubic-bezier(0.4, 0, 0.2, 1)"));
     }
 
@@ -1199,7 +1216,7 @@ mod tests {
 
     #[test]
     fn ios_segment_buttons_do_not_use_sibling_border_separators_or_press_flash() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3_ui.css").replace("\r\n", "\n");
 
         assert!(!stylesheet.contains(".g3-segment-btn-ios + .g3-segment-btn-ios"));
         assert!(!stylesheet.contains(".g3-segment-btn-ios:active"));
@@ -1561,11 +1578,17 @@ mod tests {
     #[test]
     fn swipe_items_draw_parent_list_dividers_between_swipe_rows() {
         let stylesheet = include_str!("../assets/g3_ui.css");
+        let swipe_content_block = stylesheet
+            .split(".g3-swipe-content {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing swipe content style block");
 
         assert!(stylesheet.contains(".g3-list[data-lines=\"inset\"] > .g3-swipe-item"));
         assert!(stylesheet.contains(".g3-list[data-lines=\"full\"] > .g3-swipe-item"));
         assert!(stylesheet.contains(".g3-list[data-lines=\"none\"] > .g3-swipe-item::after"));
         assert!(stylesheet.contains("pointer-events: none"));
+        assert!(swipe_content_block.contains("background: var(--color-card)"));
     }
 
     #[test]

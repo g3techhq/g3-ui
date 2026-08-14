@@ -124,6 +124,7 @@ body.g3-overlay-scroll-locked {
 /* -- Button -- */
 
 .g3-btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -136,6 +137,25 @@ body.g3-overlay-scroll-locked {
                 --btn-g1 var(--transition-normal) var(--transition-md),
                 --btn-g2 var(--transition-normal) var(--transition-md),
                 --btn-g3 var(--transition-normal) var(--transition-md);
+}
+
+.g3-btn-badge {
+    position: absolute;
+    top: -0.25rem;
+    right: -0.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--color-focused);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
 }
 
 .g3-btn-content {
@@ -243,10 +263,16 @@ body.g3-overlay-scroll-locked {
     border-width: 1px;
 }
 
+/* Theme tokens, not literal white: a hardcoded light button reads as a bright
+   slab in a dark theme, which is what made these look out of place. */
 .g3-btn-neutral {
-    background: white;
-    color: #1f1f1f;
-    border: 1px solid #747775;
+    background: var(--color-card);
+    color: var(--color-text);
+    border: 1px solid var(--color-card-border);
+}
+
+.g3-btn-neutral:hover:not(:disabled) {
+    background: var(--color-control);
 }
 
 /* -- Button Sizes -- */
@@ -1101,13 +1127,13 @@ body.g3-overlay-scroll-locked {
 .g3-card-ios.g3-card-inset {
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
-    background: var(--color-card);
+    background: var(--color-card-inset);
 }
 
 .g3-card-md.g3-card-inset {
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    background: var(--color-card);
+    background: var(--color-card-inset);
 }
 
 .g3-card-inset.selected {
@@ -1914,6 +1940,8 @@ textarea.g3-field {
 
 .g3-app-shell {
     isolation: isolate;
+    container-name: g3-app-shell;
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     background: var(--color-bg);
@@ -2456,19 +2484,22 @@ textarea.g3-field {
 
 /* Inset lists share the card surface treatment per platform, with row
    separators inside the elevated container. */
+/* Inset means "a surface distinct from the one behind it". Sheets and modals
+   are themselves --color-card, so resolving inset to the same token made the
+   block invisible against its own container. */
 .g3-list-inset {
     overflow: hidden;
-    background: var(--color-card);
+    background: var(--color-card-inset);
 }
 
 .g3-list-ios.g3-list-inset {
-    border: 0;
+    border: 1px solid var(--color-card-border);
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
 }
 
 .g3-list-md.g3-list-inset {
-    border: 0;
+    border: 1px solid var(--color-card-border);
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
 }
@@ -2787,6 +2818,7 @@ textarea.g3-field {
 .g3-swipe-content {
     position: relative;
     z-index: 1;
+    background: var(--color-card);
     transform: translate3d(var(--g3-swipe-offset, 0px), 0, 0);
     transition: transform var(--transition-normal) var(--transition-md), opacity 140ms ease;
     will-change: transform;
@@ -3354,4 +3386,222 @@ textarea.g3-field {
     line-height: 1rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* -- Responsive desktop shell --
+
+   Query the shell's own width instead of the browser viewport. This lets the
+   same component tree adapt automatically while embedded/narrow app shells
+   continue to render with mobile chrome inside a wide desktop page. */
+@container g3-app-shell (min-width: 48rem) {
+    .g3-navbar {
+        --g3-navbar-rail-width: 4rem;
+        display: grid;
+        grid-template-columns: var(--g3-navbar-rail-width) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        width: 100%;
+        /* The base class sets overflow-hidden for the mobile layout, which
+           would clip the rail's hover labels where they extend over the page.
+           Scrolling is owned by .g3-body-content, so the shell can stay
+           visible here. */
+        overflow: visible;
+    }
+
+    .g3-navbar > .g3-header {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .g3-navbar > .g3-body {
+        grid-column: 2;
+        grid-row: 2;
+        width: auto;
+    }
+
+    .g3-navbar > .g3-navbar-tab-bar {
+        position: relative;
+        z-index: 20;
+        grid-column: 1;
+        grid-row: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-auto-rows: max-content;
+        align-content: start;
+        align-items: center;
+        justify-items: center;
+        gap: 0.375rem;
+        min-height: 0;
+        padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+        /* Both axes must stay visible. `overflow-y: auto` makes overflow-x
+           compute to auto as well, which turns the rail into a clipping
+           context and hides the hover labels behind the page content. */
+        overflow: visible;
+        border-top: 0;
+        border-right: 1px solid var(--color-card-border);
+        background: var(--color-card);
+        box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+    }
+
+    .g3-navbar-ios .g3-navbar-tab-bar,
+    .g3-navbar-md .g3-navbar-tab-bar {
+        padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+        background: var(--color-card);
+        box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    .g3-navbar-tab {
+        flex: 0 0 auto;
+        display: grid;
+        width: 2.5rem;
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        grid-template-rows: 1fr;
+        overflow: visible;
+        border-radius: 50%;
+        background: var(--color-control);
+        transition: border-radius var(--transition-normal) var(--transition-md),
+                    background var(--transition-normal) var(--transition-md),
+                    color var(--transition-normal) var(--transition-md);
+    }
+
+    .g3-navbar-md .g3-navbar-tab {
+        min-height: 2.5rem;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    .g3-navbar-tab::before {
+        inset: 0;
+        border-radius: inherit;
+    }
+
+    .g3-navbar-tab:hover:not(:disabled)::before,
+    .g3-navbar-tab:active:not(:disabled)::before {
+        opacity: 1;
+    }
+
+    .g3-navbar-tab-selected,
+    .g3-navbar-md .g3-navbar-tab-selected {
+        border-radius: 1rem;
+        background: color-mix(in srgb, var(--color-focused) 14%, var(--color-card));
+    }
+
+    .g3-navbar .g3-navbar-tab-selected::after {
+        content: "";
+        position: absolute;
+        top: 0.5rem;
+        right: auto;
+        bottom: 0.5rem;
+        left: -0.5rem;
+        width: 3px;
+        height: auto;
+        border-radius: 0 999px 999px 0;
+        background: currentColor;
+    }
+
+    .g3-navbar-tab-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .g3-navbar-tab-label {
+        position: absolute;
+        top: 50%;
+        left: calc(100% + 0.75rem);
+        z-index: 30;
+        width: max-content;
+        max-width: 12rem;
+        padding: 0.375rem 0.625rem;
+        overflow: hidden;
+        border: 1px solid var(--color-card-border);
+        border-radius: 0.375rem;
+        background: var(--color-card);
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) 42%, transparent);
+        color: var(--color-text);
+        font-size: 0.75rem;
+        line-height: 1rem;
+        text-overflow: ellipsis;
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-0.25rem, -50%);
+        transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+        pointer-events: none;
+    }
+
+    .g3-navbar-tab:hover .g3-navbar-tab-label,
+    .g3-navbar-tab:focus-visible .g3-navbar-tab-label {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(0, -50%);
+    }
+
+    .g3-header {
+        position: relative;
+        top: auto;
+    }
+
+    .g3-header-ios {
+        padding-top: 0;
+    }
+
+    .g3-header .g3-header-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        min-height: 4rem;
+        padding: 0 1rem;
+    }
+
+    .g3-header .g3-header-title {
+        justify-self: start;
+        max-width: 100%;
+    }
+
+    .g3-header .g3-header-title-text {
+        text-align: left;
+    }
+
+    .g3-header .g3-header-toolbar {
+        justify-content: flex-start;
+        min-height: 3rem;
+        padding: 0 1rem 0.75rem;
+    }
+
+    .g3-header-toolbar .g3-segment-toolbar.g3-segment-ios,
+    .g3-header-toolbar .g3-segment-toolbar.g3-segment-md {
+        width: min(100%, 30rem);
+        max-width: 30rem;
+        margin-inline: 0;
+    }
+
+    .g3-body-content {
+        --g3-body-padding: clamp(1.5rem, 3vw, 2.5rem);
+    }
+
+    .g3-body-content[data-padding="false"],
+    .g3-body-content-no-padding {
+        --g3-body-padding: 0;
+    }
+
+    .g3-app-shell .g3-body-content,
+    .g3-app-shell .overflow-x-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-card-border) transparent;
+    }
+
+    .g3-app-shell .g3-body-content::-webkit-scrollbar,
+    .g3-app-shell .overflow-x-scroll::-webkit-scrollbar {
+        display: block;
+        width: 0.625rem;
+        height: 0.625rem;
+    }
+
+    .g3-app-shell .g3-body-content::-webkit-scrollbar-thumb,
+    .g3-app-shell .overflow-x-scroll::-webkit-scrollbar-thumb {
+        border: 0.1875rem solid transparent;
+        border-radius: 999px;
+        background: var(--color-card-border);
+        background-clip: padding-box;
+    }
 }

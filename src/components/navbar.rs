@@ -1,4 +1,4 @@
-//! Navbar component - persistent base layout for bottom-tab style app navigation.
+//! Responsive persistent navigation: bottom tabs on compact shells and a desktop rail on wide ones.
 
 use super::navbar_styles as s;
 use crate::theme::{ComponentMode, Theme, merge_classes, use_component_mode};
@@ -39,11 +39,16 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
 }
 
 #[component]
-pub fn NavbarTabBar(class: Option<String>, children: Element) -> Element {
+pub fn NavbarTabBar(
+    class: Option<String>,
+    aria_label: Option<String>,
+    children: Element,
+) -> Element {
     rsx! {
         nav {
             class: merge_classes(s::TAB_BAR, class.as_deref()),
             role: "tablist",
+            aria_label: aria_label.unwrap_or_else(|| "Primary navigation".to_string()),
             {children}
         }
     }
@@ -68,8 +73,10 @@ pub fn NavbarTab(
             class: merge_classes(format!("{} {selected_cls} {disabled_cls}", s::TAB), class.as_deref()),
             r#type: "button",
             role: "tab",
+            aria_label: label.clone(),
             disabled,
             aria_selected: selected.to_string(),
+            title: label.clone(),
             onclick: move |event| {
                 if disabled {
                     return;
@@ -135,7 +142,7 @@ pub fn NavbarPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Navbar",
-    description: "Persistent navigation layout that owns the base transition layer.",
+    description: "Responsive bottom tabs that become a desktop navigation rail.",
     demo: NavbarPlaygroundDemo,
     source: "src/components/navbar.rs",
 }

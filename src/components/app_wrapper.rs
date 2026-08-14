@@ -16,7 +16,7 @@ pub fn AppWrapper(
     class: Option<String>,
     mode: Option<ComponentMode>,
     theme: Option<Theme>,
-    /// Whether to apply the mobile app-shell layout (`flex flex-col h-dvh
+    /// Whether to apply the responsive app-shell layout (`flex flex-col h-dvh
     /// overflow-hidden` + mode class). Defaults to `true`. Set to `false` for
     /// a root that provides its own top-level layout (e.g. a desktop page
     /// that should scroll normally) and only wants `AppWrapper` for theme

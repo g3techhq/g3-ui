@@ -37,6 +37,10 @@ pub fn Button(
     class: Option<String>,
     mode: Option<ComponentMode>,
     start: Option<Element>,
+    /// Small counter overlay in the button's top-right corner (e.g. active
+    /// filter count). Hidden entirely when `None` or `Some(0)` — callers can
+    /// pass a raw count without special-casing zero.
+    badge: Option<u32>,
     onclick: Callback<Event<MouseData>>,
     children: Element,
 ) -> Element {
@@ -71,6 +75,7 @@ pub fn Button(
         format!("{} {mode_cls} {style_cls} {size_cls} {expand_cls}", s::BASE),
         class.as_deref(),
     );
+    let badge_count = badge.filter(|count| *count > 0);
 
     rsx! {
         button {
@@ -89,6 +94,9 @@ pub fn Button(
                 }
             } else {
                 div { class: "g3-btn-content", {children} }
+            }
+            if let Some(count) = badge_count {
+                span { class: s::BADGE, "{count}" }
             }
         }
     }
