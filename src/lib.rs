@@ -771,6 +771,7 @@ mod tests {
         assert!(stylesheet.contains(".g3-card-inset"));
         assert!(stylesheet.contains(".g3-list-inset"));
         assert!(stylesheet.contains(".g3-item"));
+        assert!(stylesheet.contains(".g3-list-inset .g3-item:not(.g3-item-selected)"));
         assert!(!stylesheet.contains(".g3-settings-group-inset"));
     }
 

@@ -74,6 +74,20 @@ if (root) {
         }
     };
 
+    // The drag script mutates the label outside Dioxus. Restore it ourselves
+    // once the caller's controlled `refreshing` prop settles, because a very
+    // fast refresh can batch true -> false without a virtual-DOM text patch.
+    const settleAfterRefresh = () => {
+        if (root.dataset.refreshing === "true") {
+            if (label) label.textContent = "Refreshing";
+            setTimeout(settleAfterRefresh, 100);
+            return;
+        }
+        root.setAttribute("data-state", "idle");
+        root.style.setProperty("--g3-refresher-progress", "0");
+        if (label) label.textContent = "Pull to refresh";
+    };
+
     const onDown = (y) => {
         if (!gateOk() || !atTop()) return;
         dragging = true;
@@ -116,6 +130,7 @@ if (root) {
             root.setAttribute("data-state", "refreshing");
             if (label) label.textContent = "Refreshing";
             dioxus.send(true);
+            setTimeout(settleAfterRefresh, 100);
         } else {
             setPull(0);
         }
@@ -284,6 +299,8 @@ mod tests {
         let source = include_str!("refresher.rs");
         assert!(source.contains("dioxus.send(true)"));
         assert!(source.contains("root.dataset.hasRefresh === \"true\""));
+        assert!(source.contains("setTimeout(settleAfterRefresh, 100)"));
+        assert!(source.contains("label.textContent = \"Pull to refresh\""));
     }
 
     #[component]

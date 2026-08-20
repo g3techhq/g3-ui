@@ -2529,6 +2529,13 @@ textarea.g3-field {
     font: inherit;
 }
 
+/* Let inset lists expose their deliberately contrasted container tint. Rows
+   used to repaint themselves with --color-card, which made an action list
+   inside a sheet indistinguishable from the sheet behind it. */
+.g3-list-inset .g3-item:not(.g3-item-selected) {
+    background: transparent;
+}
+
 .g3-list[data-lines="full"] .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
     border-bottom: 1px solid var(--color-card-border);
 }
