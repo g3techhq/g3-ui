@@ -269,4 +269,17 @@ mod tests {
         assert!(source.contains("duration_ms.unwrap_or(3000)"));
         assert!(!source.contains("document::eval"));
     }
+
+    #[test]
+    fn toast_close_button_owns_the_trailing_column_without_an_action() {
+        let stylesheet = include_str!("../../assets/g3_ui.css");
+        let close = stylesheet
+            .split(".g3-toast-close {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing toast close style");
+
+        assert!(close.contains("grid-column: 4"));
+        assert!(close.contains("justify-self: end"));
+    }
 }

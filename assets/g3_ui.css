@@ -1119,7 +1119,7 @@ body.g3-overlay-scroll-locked {
 
 .g3-card-inset {
     border: 0;
-    background: var(--color-card-inset);
+    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
     padding: 0.75rem;
     margin-bottom: 0.5rem;
 }
@@ -1127,13 +1127,13 @@ body.g3-overlay-scroll-locked {
 .g3-card-ios.g3-card-inset {
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
-    background: var(--color-card-inset);
+    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
 .g3-card-md.g3-card-inset {
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    background: var(--color-card-inset);
+    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
 .g3-card-inset.selected {
@@ -2484,22 +2484,25 @@ textarea.g3-field {
 
 /* Inset lists share the card surface treatment per platform, with row
    separators inside the elevated container. */
-/* Inset means "a surface distinct from the one behind it". Sheets and modals
-   are themselves --color-card, so resolving inset to the same token made the
-   block invisible against its own container. */
+/* Inset means "a surface distinct from the one behind it".
+   --color-card-inset is not enough on its own: several themes set it within a
+   few units of --color-card, and sheets and modals *are* --color-card, so an
+   inset block inside one was invisible. Deriving the tint from --color-text
+   guarantees separation in either direction — it lightens on dark themes and
+   darkens on light ones. */
 .g3-list-inset {
     overflow: hidden;
-    background: var(--color-card-inset);
+    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
 .g3-list-ios.g3-list-inset {
-    border: 1px solid var(--color-card-border);
+    border: 0;
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
 }
 
 .g3-list-md.g3-list-inset {
-    border: 1px solid var(--color-card-border);
+    border: 0;
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
 }
@@ -2980,6 +2983,7 @@ textarea.g3-field {
 }
 
 .g3-toast-message {
+    grid-column: 2;
     min-width: 0;
     font-size: 0.9375rem;
     line-height: 1.25rem;
@@ -2987,10 +2991,13 @@ textarea.g3-field {
 
 .g3-toast-action {
     display: inline-flex;
+    grid-column: 3;
 }
 
 .g3-toast-close {
     display: inline-grid;
+    grid-column: 4;
+    justify-self: end;
     width: 2rem;
     height: 2rem;
     place-items: center;

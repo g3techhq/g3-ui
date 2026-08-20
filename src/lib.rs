@@ -733,9 +733,10 @@ mod tests {
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing neutral button style block");
-        assert!(neutral_block.contains("background: white"));
-        assert!(neutral_block.contains("color: #1f1f1f"));
-        assert!(neutral_block.contains("border: 1px solid #747775"));
+        assert!(neutral_block.contains("background: var(--color-card)"));
+        assert!(neutral_block.contains("color: var(--color-text)"));
+        assert!(neutral_block.contains("border: 1px solid var(--color-card-border)"));
+        assert!(!neutral_block.contains("background: white"));
 
         let neutral_button_block = stylesheet
             .split(".g3-btn.g3-btn-neutral")
@@ -857,7 +858,7 @@ mod tests {
 
         assert!(stylesheet.contains("container-name: g3-app-shell"));
         assert!(stylesheet.contains("@container g3-app-shell (min-width: 48rem)"));
-        assert!(stylesheet.contains("--g3-navbar-rail-width: 5.25rem"));
+        assert!(stylesheet.contains("--g3-navbar-rail-width: 4rem"));
         assert!(stylesheet.contains("grid-row: 1 / -1"));
         assert!(stylesheet.contains(".g3-header .g3-header-toolbar"));
         assert!(stylesheet.contains("scrollbar-width: thin"));
