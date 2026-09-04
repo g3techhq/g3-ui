@@ -8,6 +8,7 @@ pub const TAB_BAR: &str = "g3-navbar-tab-bar";
 pub const TAB: &str = "g3-navbar-tab";
 pub const TAB_SELECTED: &str = "g3-navbar-tab-selected";
 pub const TAB_DISABLED: &str = "g3-navbar-tab-disabled";
+pub const TAB_DESKTOP_BOTTOM: &str = "g3-navbar-tab-desktop-bottom";
 pub const TAB_ICON: &str = "g3-navbar-tab-icon";
 pub const TAB_LABEL: &str = "g3-navbar-tab-label";
 
@@ -20,6 +21,7 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("TAB", TAB),
         ("TAB_SELECTED", TAB_SELECTED),
         ("TAB_DISABLED", TAB_DISABLED),
+        ("TAB_DESKTOP_BOTTOM", TAB_DESKTOP_BOTTOM),
         ("TAB_ICON", TAB_ICON),
         ("TAB_LABEL", TAB_LABEL),
     ]

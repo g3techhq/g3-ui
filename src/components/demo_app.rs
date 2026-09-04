@@ -163,6 +163,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                         crate::NavbarTab {
                             label: "Profile".to_string(),
                             selected: tab() == 2,
+                            desktop_placement: crate::NavbarTabDesktopPlacement::Bottom,
                             icon: rsx! {
                                 CircleUserRound { size: 20, class: "fill-none" }
                             },
@@ -220,7 +221,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                 // Left side-menu opened from the header hamburger button.
                 crate::Sheet {
                     is_open: menu_open,
-                    placement: crate::SheetPlacement::Left,
+                    placement: crate::SheetPlacement::Left(crate::SideSheetType::Overlay),
                     div { class: "g3-demo-menu",
                         div { class: "g3-demo-menu-head",
                             crate::Avatar { fallback: "MW" }

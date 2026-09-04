@@ -1,12 +1,20 @@
 #![warn(missing_docs)]
 //! g3_ui - reusable UI component library.
 
-use manganis::Asset;
 use manganis::asset;
+use manganis::{Asset, AssetOptions};
 
-/// The component stylesheet. `G3AppWrapper` links this for you; attach it
-/// yourself only if the app manages its own `document::Link` tags.
-pub static UI_CSS: Asset = asset!("/assets/g3_ui.css");
+/// The component stylesheet, linked into the document head at build time so the
+/// browser blocks first paint on it the same way it does for a hand-written
+/// `<link>`. That is what keeps an app from flashing unstyled: a stylesheet a
+/// WASM app only links once it renders arrives too late for that guarantee.
+///
+/// Attach it yourself only if your build does not process manganis assets into
+/// the head, or if the app manages its own `document::Link` tags.
+pub static UI_CSS: Asset = asset!(
+    "/assets/g3_ui.css",
+    AssetOptions::css().with_static_head(true)
+);
 
 mod components;
 mod descriptor;
@@ -34,15 +42,17 @@ pub use components::{
 
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
-    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, RightSlot, Select, SelectOption, Sheet,
-    SheetButton, SheetPlacement,
+    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement, RightSlot,
+    Select, SelectOption, Sheet, SheetButton, SheetPlacement, SideSheetType,
 };
 
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
     FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
-    NavbarTab as G3NavbarTab, NavbarTabBar as G3NavbarTabBar, Select as G3Select, Sheet as G3Sheet,
+    NavbarTab as G3NavbarTab, NavbarTabBar as G3NavbarTabBar,
+    NavbarTabDesktopPlacement as G3NavbarTabDesktopPlacement, Select as G3Select, Sheet as G3Sheet,
     SheetButton as G3SheetButton, SheetPlacement as G3SheetPlacement,
+    SideSheetType as G3SideSheetType,
 };
 
 pub use components::{AppWrapper, Body, Header};
@@ -59,7 +69,7 @@ pub mod prelude;
 /// Re-export theme utilities.
 pub use theme::{
     ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
-    merge_classes, set_mode, use_component_mode,
+    merge_classes, set_mode, use_ambient_theme, use_component_mode,
 };
 
 #[cfg(test)]
@@ -336,7 +346,7 @@ mod tests {
         assert!(stylesheet.contains("transform: translate3d(20px, -50%, 0)"));
         assert!(stylesheet.contains("right: 1rem;"));
         assert!(stylesheet.contains(".g3-list .g3-item-row:last-child .g3-item::after"));
-        assert!(stylesheet.contains("backface-visibility: hidden"));
+        assert!(stylesheet.contains(".g3-swipe-actions[aria-hidden=\"true\"]"));
         assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-sheet-content"));
         assert!(playground_stylesheet.contains("overflow-y: auto"));
         assert!(stylesheet.contains(".g3-checkbox:active:not(:disabled)"));
@@ -499,14 +509,19 @@ mod tests {
         assert!(fab_source.contains("s::FAB_CONTAINER"));
         assert!(fab_source.contains("fab: rsx!"));
         assert!(stylesheet.contains(".g3-fab-container"));
-        assert!(sheet_source.contains("let has_handle = placement == SheetPlacement::Bottom"));
+        assert!(
+            sheet_source.contains("let has_handle = matches!(placement, SheetPlacement::Bottom)")
+        );
         assert!(stylesheet.contains("overscroll-behavior: contain"));
         assert!(stylesheet.contains(".g3-select-sheet.g3-sheet-bottom .g3-sheet-content"));
         assert!(modal_source.contains("onclick: move |_| open.set(false)"));
         assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"]"));
         assert!(stylesheet.contains("pointer-events: none"));
         assert!(playground_stylesheet.contains("justify-items: center"));
-        assert!(playground_stylesheet.contains("calc((100dvh - 180px) * 390 / 844)"));
+        assert!(playground_stylesheet.contains("width: min(390px, 100%)"));
+        assert!(
+            playground_stylesheet.contains(".playground-viewport-card .playground-controls-pane")
+        );
         assert!(playground_stylesheet.contains("touch-action: pan-y"));
         assert!(playground_source.contains("g3_ui::List"));
         assert!(!playground_source.contains("nav-button"));
@@ -774,8 +789,24 @@ mod tests {
         assert!(stylesheet.contains(".g3-card-inset"));
         assert!(stylesheet.contains(".g3-list-inset"));
         assert!(stylesheet.contains(".g3-item"));
-        assert!(stylesheet.contains(".g3-list-inset .g3-item:not(.g3-item-selected)"));
+        assert!(!stylesheet.contains(".g3-list-inset .g3-item:not(.g3-item-selected)"));
         assert!(!stylesheet.contains(".g3-settings-group-inset"));
+    }
+
+    #[test]
+    fn inset_lists_keep_the_standard_item_surface() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let inset_block = stylesheet
+            .split(".g3-list-inset {")
+            .nth(1)
+            .expect("missing inset list style block")
+            .split('}')
+            .next()
+            .expect("missing end of inset list style block");
+
+        assert!(inset_block.contains("overflow: hidden"));
+        assert!(!inset_block.contains("background:"));
+        assert!(stylesheet.contains("background: var(--color-card);"));
     }
 
     #[test]
@@ -833,9 +864,11 @@ mod tests {
             "Navbar",
             "NavbarTab",
             "NavbarTabBar",
+            "NavbarTabDesktopPlacement",
             "G3Navbar",
             "G3NavbarTab",
             "G3NavbarTabBar",
+            "G3NavbarTabDesktopPlacement",
         ] {
             assert!(
                 public_source.contains(symbol),
@@ -863,8 +896,31 @@ mod tests {
         assert!(stylesheet.contains("container-name: g3-app-shell"));
         assert!(stylesheet.contains("@container g3-app-shell (min-width: 48rem)"));
         assert!(stylesheet.contains("--g3-navbar-rail-width: 4rem"));
+        assert!(stylesheet.contains(".g3-app-shell .g3-navbar"));
         assert!(stylesheet.contains("grid-row: 1 / -1"));
+        assert!(stylesheet.contains(".g3-navbar-tab-desktop-bottom"));
+        assert!(navbar_source.contains("NavbarTabDesktopPlacement"));
         assert!(stylesheet.contains(".g3-header .g3-header-toolbar"));
+        assert!(stylesheet.contains(".g3-header-with-toolbar"));
+        // A Material tab indicator underlines the header itself, so it stays
+        // flush with the bottom edge at every shell width - both in the two-row
+        // wide layout and inline in the single-row one. The bottom inset that
+        // remains is iOS's, whose pill sits deliberately clear of the edge.
+        assert!(
+            stylesheet
+                .contains(".g3-header-md .g3-header-toolbar {\n        padding-bottom: 0;\n    }")
+        );
+        assert!(stylesheet.contains(
+            ".g3-header-md.g3-header-with-toolbar > .g3-header-toolbar {\n        align-self: stretch;"
+        ));
+        assert!(stylesheet.contains(".g3-header .g3-header-toolbar {\n        justify-content"));
+        assert!(stylesheet.contains(".g3-sheet-bottom.g3-sheet-open"));
+        assert!(stylesheet.contains("width: min(36rem, calc(100% - 3rem))"));
+        assert!(stylesheet.contains("width: min(30rem, calc(100% - 4rem))"));
+        assert!(stylesheet.contains(".g3-select-sheet .g3-select-option"));
+        assert!(stylesheet.contains(".g3-select-btn-md[aria-expanded=\"true\"] .g3-select-icon"));
+        assert!(stylesheet.contains(".g3-toast-middle[data-state=\"open\"]"));
+        assert!(stylesheet.contains("translate3d(-50%, -50%, 0)"));
         assert!(stylesheet.contains("scrollbar-width: thin"));
         assert!(navbar_source.contains("aria_label: aria_label.unwrap_or_else"));
         assert!(navbar_source.contains("aria_label: label.clone()"));
@@ -886,9 +942,27 @@ mod tests {
     #[test]
     fn app_wrapper_bundles_library_stylesheet() {
         let source = include_str!("components/app_wrapper.rs");
+        let lib_source = include_str!("lib.rs");
+        let theme_source = include_str!("theme.rs");
+        let stylesheet = include_str!("../assets/g3_ui.css");
 
-        assert!(source.contains("UI_CSS"));
-        assert!(source.contains("document::Link"));
+        // The stylesheet reaches the document head at build time, so AppWrapper
+        // no longer links it at runtime and no longer references the asset.
+        assert!(!source.contains("UI_CSS"));
+        assert!(!source.contains("document::Link"));
+
+        // Unstyled-flash protection is the browser's job: `with_static_head`
+        // puts the <link> in the document head at build time, so first paint
+        // blocks on the stylesheet exactly as it would for a hand-written tag.
+        // The old approach - hide the shell, poll from JS for a sentinel custom
+        // property, then unhide - could never unhide if the round trip stalled,
+        // and its `transition: none !important` took every animation with it.
+        assert!(lib_source.contains("AssetOptions::css().with_static_head(true)"));
+        assert!(!theme_source.contains("CSS_PRELOAD"));
+        assert!(!theme_source.contains("G3PreloadStyle"));
+        assert!(!source.contains("preloading"));
+        assert!(!stylesheet.contains("g3-preload"));
+        assert!(!stylesheet.contains("--g3-css-loaded"));
     }
 
     #[test]
@@ -912,8 +986,39 @@ mod tests {
     fn app_wrapper_falls_back_to_an_ambient_theme_for_nested_wrappers() {
         let source = include_str!("components/app_wrapper.rs");
 
-        assert!(source.contains("try_use_context::<Theme>"));
+        assert!(source.contains("use_ancestor_context::<Signal<Theme>>()"));
         assert!(source.contains("layout: Option<bool>"));
+    }
+
+    #[test]
+    fn mode_and_theme_context_reach_components_that_are_already_mounted() {
+        let theme_source = include_str!("theme.rs");
+        let app_wrapper_source = include_str!("components/app_wrapper.rs");
+        let navbar_source = include_str!("components/navbar.rs");
+
+        // `try_use_context` is a hook: it caches the context on a component's
+        // first render, which pins that component to whichever mode/theme was
+        // in effect when it mounted. Every ambient read has to go through
+        // `try_consume_context` instead.
+        assert!(!theme_source.contains("try_use_context::<"));
+        assert!(!app_wrapper_source.contains("try_use_context::<"));
+        assert!(!navbar_source.contains("try_use_context::<"));
+        assert!(theme_source.contains("try_consume_context::<G3Mode>()"));
+        assert!(theme_source.contains("try_consume_context::<Signal<Theme>>()"));
+
+        // Signals in context, so that switching mode or theme re-renders a
+        // component even when none of its own props changed - which is exactly
+        // the case for a playground demo rendered with no arguments.
+        assert!(theme_source.contains("pub mode: Signal<ComponentMode>"));
+        assert!(theme_source.contains("fn use_context_signal"));
+        assert!(theme_source.contains("pub fn use_ambient_theme"));
+        assert!(app_wrapper_source.contains("use_context_signal(effective_theme)"));
+        // A component that provides context must resolve its own inherited value
+        // from an ancestor, or it reads its own published value back forever.
+        assert!(app_wrapper_source.contains("use_ancestor_context::<G3Mode>()"));
+        assert!(theme_source.contains("pub(crate) fn use_ancestor_context"));
+        assert!(theme_source.contains("use_hook(try_consume_context::<T>)"));
+        assert!(navbar_source.contains("use_ambient_theme()"));
     }
     #[test]
     fn focused_theme_color_drives_tint_styles() {
@@ -1197,11 +1302,63 @@ mod tests {
         let stylesheet = include_str!("../assets/g3_ui.css");
         let sheet_source = include_str!("components/sheet.rs");
         let modal_source = include_str!("components/modal.rs");
+        let overlay_scroll_source = include_str!("components/overlay_scroll.rs");
+        let descriptor_source = include_str!("descriptor.rs");
 
         assert!(sheet_source.contains(r#"use_lock_body_scroll(is_open);"#));
         assert!(modal_source.contains(r#"use_lock_body_scroll(open);"#));
         assert!(stylesheet.contains("body.g3-overlay-scroll-locked"));
         assert!(stylesheet.contains("overscroll-behavior: none"));
+        assert!(stylesheet.contains(
+            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open)"
+        ));
+        assert!(!stylesheet.contains(
+            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-push.g3-sheet-open)"
+        ));
+        assert!(stylesheet.contains("overflow: auto"));
+        let body_lock_block = stylesheet
+            .split("body.g3-overlay-scroll-locked {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing body scroll lock style block");
+        assert!(!body_lock_block.contains("touch-action: none"));
+        assert!(overlay_scroll_source.contains("DisableBodyScrollLock"));
+        assert!(overlay_scroll_source.contains("try_consume_context"));
+        assert!(descriptor_source.contains("disable_body_scroll_lock_for_subtree"));
+    }
+
+    #[test]
+    fn sheet_backdrops_dim_and_dismiss_without_utility_class_state() {
+        let stylesheet = include_str!("../assets/g3_ui.css");
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
+        let sheet_source = include_str!("components/sheet.rs");
+
+        assert!(stylesheet.contains(".g3-sheet-backdrop-open"));
+        assert!(stylesheet.contains("pointer-events: auto !important"));
+        assert!(stylesheet.contains("background-color: rgba(0, 0, 0, 0.5) !important"));
+        let backdrop_block = stylesheet
+            .split(".g3-sheet-backdrop {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing sheet backdrop block");
+        assert!(backdrop_block.contains("width: 100%"));
+        assert!(backdrop_block.contains("height: 100%"));
+        assert!(sheet_source.contains("aria_label: \"Close sheet\""));
+        assert!(sheet_source.contains("onpointerdown: move |_| is_open.set(false)"));
+        assert!(sheet_source.contains("onclick: move |_| is_open.set(false)"));
+        assert!(!sheet_source.contains("g3-sheet-backdrop-closed pointer-events-none"));
+        assert!(playground_stylesheet.contains(".g3-sheet-backdrop-open:not(.g3-sheet-reveal)"));
+        assert!(playground_stylesheet.contains("position: absolute !important"));
+        assert!(playground_stylesheet.contains("inset: 0 !important"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-bottom {"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-left {"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-right {"));
+        assert!(
+            playground_stylesheet.contains(".g3-playground-preview .g3-sheet.g3-sheet-bottom {")
+        );
+        assert!(!playground_stylesheet.contains(".g3-playground-preview .g3-sheet-bottom {"));
+        assert!(!stylesheet.contains("box-shadow: -12px 0 36px"));
+        assert!(!stylesheet.contains("box-shadow: 12px 0 36px"));
     }
 
     #[test]
@@ -1314,26 +1471,89 @@ mod tests {
     }
 
     #[test]
-    fn sheets_support_bottom_and_side_placements_without_changing_default() {
+    fn sheets_support_bottom_and_ionic_side_behaviors_without_changing_default() {
         let sheet_source = include_str!("components/sheet.rs");
         let sheet_styles = include_str!("components/sheet_styles.rs");
         let stylesheet = include_str!("../assets/g3_ui.css");
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
+        let prelude_source = include_str!("prelude.rs");
         let public_source = include_str!("lib.rs")
             .split("#[cfg(test)]")
             .next()
             .expect("library source should have a public section");
 
-        assert!(public_source.contains("SheetPlacement"));
+        for symbol in ["SheetPlacement", "SideSheetType", "G3SideSheetType"] {
+            assert!(
+                public_source.contains(symbol),
+                "{symbol} missing from exports"
+            );
+            assert!(
+                prelude_source.contains(symbol),
+                "{symbol} missing from prelude"
+            );
+        }
+        assert!(sheet_source.contains("pub enum SideSheetType"));
+        assert!(sheet_source.contains("Overlay"));
+        assert!(sheet_source.contains("Push"));
+        assert!(sheet_source.contains("Reveal"));
+        assert!(sheet_source.contains("Menu"));
         assert!(sheet_source.contains("pub enum SheetPlacement"));
+        assert!(sheet_source.contains("Left(SideSheetType)"));
+        assert!(sheet_source.contains("Right(SideSheetType)"));
         assert!(sheet_source.contains("placement: Option<SheetPlacement>"));
         assert!(sheet_source.contains("unwrap_or_default()"));
         assert!(sheet_styles.contains("SHEET_BOTTOM"));
         assert!(sheet_styles.contains("SHEET_LEFT"));
         assert!(sheet_styles.contains("SHEET_RIGHT"));
+        assert!(sheet_styles.contains("SHEET_OVERLAY"));
+        assert!(sheet_styles.contains("SHEET_PUSH"));
+        assert!(sheet_styles.contains("SHEET_REVEAL"));
+        assert!(sheet_styles.contains("SHEET_MENU"));
         assert!(stylesheet.contains(".g3-sheet-bottom"));
         assert!(stylesheet.contains(".g3-sheet-left"));
         assert!(stylesheet.contains(".g3-sheet-right"));
+        assert!(stylesheet.contains(".g3-sheet-push"));
+        assert!(stylesheet.contains(".g3-sheet-reveal"));
+        assert!(stylesheet.contains(".g3-sheet-menu"));
+        assert!(stylesheet.contains(":has(> .g3-sheet-left"));
+        assert!(stylesheet.contains(".g3-sheet-left.g3-sheet-reveal.g3-sheet-open"));
+        assert!(stylesheet.contains("box-shadow: -12px 0 32px var(--color-shadow)"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-left.g3-sheet-push.g3-sheet-open"));
+        assert!(stylesheet.contains("box-shadow: 8px 0 28px var(--color-shadow)"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-side.g3-sheet-menu {"));
+        assert!(stylesheet.contains("border-radius: 0"));
+        // Menu rails separate themselves from a flush page with a hairline edge
+        // plus a soft shadow rather than sitting shadowless against it.
+        assert!(stylesheet.contains(
+            ".g3-sheet.g3-sheet-left.g3-sheet-menu {\n    box-shadow: 1px 0 0 var(--color-card-border)"
+        ));
+        assert!(stylesheet.contains(
+            ".g3-sheet.g3-sheet-right.g3-sheet-menu {\n    box-shadow: -1px 0 0 var(--color-card-border)"
+        ));
+        assert!(!stylesheet.contains("box-shadow: none !important"));
+        assert!(stylesheet.contains(
+            ".g3-sheet-backdrop.g3-sheet-push {\n    background-color: rgba(0, 0, 0, 0.5)"
+        ));
+        assert!(
+            !stylesheet
+                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-menu.g3-sheet-backdrop-open")
+        );
+        assert!(
+            !stylesheet
+                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-push.g3-sheet-backdrop-open")
+        );
+        assert!(sheet_source.contains("if !is_menu"));
+        assert!(sheet_source.contains("if is_menu { \"navigation\" } else { \"dialog\" }"));
+        assert!(stylesheet.contains("width: calc(100% - var(--g3-side-sheet-width))"));
+        assert!(stylesheet.contains("margin-left: var(--g3-side-sheet-width)"));
+        assert!(stylesheet.contains("margin-right: var(--g3-side-sheet-width)"));
         assert!(stylesheet.contains(".g3-sheet-handle-wrap-ios"));
+        assert!(sheet_source.contains("crate::SegmentButton { index: 0, \"Overlay\" }"));
+        assert!(sheet_source.contains("crate::SegmentButton { index: 1, \"Push\" }"));
+        assert!(sheet_source.contains("crate::SegmentButton { index: 2, \"Reveal\" }"));
+        assert!(sheet_source.contains("crate::SegmentButton { index: 3, \"Menu\" }"));
+        assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-item"));
+        assert!(playground_stylesheet.contains("justify-self: center"));
     }
 
     #[test]
@@ -1398,6 +1618,7 @@ mod tests {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let playground_root = crate_root.join("playground/src");
         let playground_main = std::fs::read_to_string(playground_root.join("main.rs")).unwrap();
+        let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let components_mod = include_str!("components/mod.rs");
         let button_source = include_str!("components/button.rs");
 
@@ -1409,6 +1630,46 @@ mod tests {
         assert!(!playground_main.contains("auto_spec"));
         assert!(!playground_main.contains("auto_specs"));
         assert!(playground_main.contains("component_playground_demos"));
+        assert!(playground_main.contains("PlaygroundViewport::Mobile"));
+        assert!(playground_main.contains("PlaygroundViewport::Desktop"));
+        // Shell width joined the header beside the design-language toggle, and
+        // the side-by-side comparison mode and its banner are gone with it.
+        assert!(!playground_main.contains("PlaygroundViewport::Compare"));
+        assert!(!playground_main.contains("playground-viewport-bar"));
+        assert!(!playground_stylesheet.contains("playground-compare-grid"));
+        assert!(playground_main.contains("class: \"playground-header-toggles\""));
+        assert!(playground_stylesheet.contains(".playground-header-toggles"));
+        // The shell-width label survives only as an accessible name; the header
+        // toggle already says which width is showing, so the chip is gone.
+        assert!(playground_main.contains("Compact desktop"));
+        assert!(!playground_main.contains("playground-viewport-card-badge"));
+        assert!(!playground_stylesheet.contains("playground-viewport-card-badge"));
+        // The component drawer is a rail on wide shells and a dismissible
+        // overlay once the playground page itself is phone width.
+        assert!(playground_main.contains("placement: SheetPlacement::Left(selector_side_type)"));
+        assert!(playground_main.contains("g3_ui::SideSheetType::Overlay"));
+        assert!(playground_main.contains("g3_ui::SideSheetType::Menu"));
+        assert!(playground_main.contains("fn use_compact_shell()"));
+        assert!(playground_main.contains("(max-width: 760px)"));
+        assert!(playground_main.contains("window.matchMedia"));
+        // Both stylesheets reach the head at build time. Loading one at runtime
+        // and the other statically left the device frame unstyled until boot.
+        assert!(playground_main.contains("AssetOptions::css().with_static_head(true)"));
+        assert!(!playground_main.contains("document::Link"));
+        assert!(playground_main.contains("selector_open.toggle()"));
+        // Picking a demo leaves a wide-shell rail open and only dismisses the
+        // phone-width overlay that would otherwise cover the new selection.
+        assert!(playground_main.contains("dismiss_on_select: compact_shell()"));
+        assert!(playground_main.contains("if dismiss_on_select {"));
+        assert!(
+            playground_stylesheet
+                .contains(".playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open")
+        );
+        assert!(playground_stylesheet.contains("width: calc(100% - var(--g3-side-sheet-width))"));
+        assert!(playground_stylesheet.contains("margin-left: var(--g3-side-sheet-width)"));
+        assert!(
+            !playground_stylesheet.contains(".playground-root > .g3-sheet-backdrop.g3-sheet-menu")
+        );
         assert!(components_mod.contains("button::PLAYGROUND"));
         let descriptor_source = include_str!("descriptor.rs");
         assert!(button_source.contains("crate::g3_playground!"));
@@ -1417,6 +1678,20 @@ mod tests {
         assert!(descriptor_source.contains("pub fn PlaygroundDemoFrame"));
         assert!(descriptor_source.contains("rsx! { $demo {} }"));
         assert!(!descriptor_source.contains("$demo()"));
+        // Controls sit above the preview by DOM order, so no `order` rule has
+        // to re-sort them and tab order matches the visual layout.
+        let controls_at = descriptor_source
+            .find("playground-controls-pane")
+            .expect("controls pane missing from the demo frame");
+        let preview_at = descriptor_source
+            .find("class: preview_cls")
+            .expect("preview missing from the demo frame");
+        assert!(controls_at < preview_at);
+        assert!(!playground_stylesheet.contains("order: -1"));
+        // A five-way segment group has to fit a phone-width column without
+        // pushing the pane's grid track past the card.
+        assert!(playground_stylesheet.contains("grid-template-columns: minmax(0, 1fr)"));
+        assert!(playground_stylesheet.contains(".playground-controls-pane .g3-segment-btn-md"));
         assert!(!playground_main.contains("PhoneFrame { {rendered_demo} }"));
         assert!(!components_mod.contains("fn render_button_demo"));
         assert!(!components_mod.contains("ComponentCategory"));

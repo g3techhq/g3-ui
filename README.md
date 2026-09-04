@@ -160,17 +160,59 @@ route-transition marker classes.
 `G3AppWrapper` measures its own available width with a CSS container query. At `48rem` and wider,
 the same `G3Navbar` tree automatically moves `G3NavbarTabBar` from the bottom edge to a compact left
 navigation rail. `G3Header` keeps its start, title, end, and optional segmented-toolbar slots across
-both layouts, while desktop spacing and scrollbars are applied automatically. No resize listener or
-duplicate desktop navigation state is required.
+both layouts. Compact desktop headers retain a roomy second toolbar row; at `64rem` the toolbar moves
+inline with the title and actions. Desktop spacing and scrollbars are applied automatically. Bottom
+sheets become compact floating sheets, select options use a desktop-friendly aligned menu, and modal
+dialogs gain a more comfortable desktop width. Toasts also collapse to a readable centred snackbar
+instead of spanning the screen. No resize listener or duplicate responsive state is required.
 
 Because the query follows the shell rather than the browser viewport, a narrow embedded app remains
 in its mobile layout even when it is displayed inside a wide desktop page. Override
 `--g3-navbar-rail-width` on `G3Navbar` if an application needs a wider desktop rail.
 
+Secondary destinations such as profile or settings can stay at the end of the mobile tab bar while
+moving to the bottom of the desktop rail:
+
+```rust,ignore
+G3NavbarTab {
+    label: "Profile".to_string(),
+    desktop_placement: G3NavbarTabDesktopPlacement::Bottom,
+    // icon, selected, and onclick omitted
+}
+```
+
+The placement only changes the wide rail. Compact bottom tabs retain their declared order.
+
+## Side Sheets
+
+Side sheets support Ionic-style overlay, push, reveal, and persistent menu behavior on either edge.
+The edge owns its behavior in `G3SheetPlacement`, so invalid bottom-sheet/type combinations cannot
+be constructed:
+
+```rust,ignore
+G3Sheet {
+    is_open: menu_open,
+    placement: G3SheetPlacement::Left(G3SideSheetType::Menu),
+    // menu content
+}
+```
+
+`Overlay` moves the sheet above the page, `Push` moves both the sheet and page beneath a dismissible
+scrim, and `Reveal` keeps the sheet stationary while the page moves away. `Menu` is always a square,
+flat navigation rail and resizes the page into the remaining width, without clipping or disabling
+page scrolling and without rendering a dismiss scrim. An app-owned hamburger button should toggle
+its `is_open` signal.
+
+For `Push`, `Reveal`, and `Menu`, render the sheet and one root page element as direct children of
+`G3AppWrapper`; this mirrors Ionic's menu/content sibling structure. `Reveal` casts the moving page's
+shadow back onto the exposed sheet.
+
 ## Playground
 
 An interactive component gallery lives in `playground/` inside this repository. It renders every
-registered component with live controls so you can preview iOS/MD styling side by side.
+registered component with live controls. Use the MD/iOS mode switch alongside the Mobile, Desktop,
+and Compare viewport controls to inspect the same component tree in compact- and wide-shell frames.
+The Demo App opens first and shows the complete responsive shell in phone and small-desktop frames.
 
 ```powershell
 cd playground

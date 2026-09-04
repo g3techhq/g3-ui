@@ -31,11 +31,13 @@ pub fn Header(
     mode: Option<ComponentMode>,
 ) -> Element {
     let mode = use_component_mode(mode);
+    let has_toolbar = toolbar.is_some();
 
     let header_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::HEADER_BASE, s::HEADER_IOS),
         ComponentMode::Md => format!("{} {}", s::HEADER_BASE, s::HEADER_MD),
     };
+    let header_cls = merge_classes(header_cls, has_toolbar.then_some(s::HEADER_WITH_TOOLBAR));
 
     rsx! {
         header { class: merge_classes(format!("{header_cls} relative"), class.as_deref()),

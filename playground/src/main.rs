@@ -1,4 +1,4 @@
-//! g3_ui playground - component-owned demos rendered in mobile context.
+//! g3_ui playground - component-owned demos rendered in responsive device contexts.
 
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
@@ -6,9 +6,19 @@ use g3_ui::{
     AppWrapper, ComponentMode, ComponentPlaygroundDemo, G3Theme, SegmentButton, SegmentGroup,
     Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
 };
-use manganis::asset;
+use manganis::{AssetOptions, asset};
 
-const PLAYGROUND_CSS: Asset = asset!("/assets/playground.css");
+// Head-linked at build time, like g3_ui.css. Loading it at runtime instead left
+// a window where the library stylesheet had applied but this one had not, so the
+// device frame rendered unstyled until the app booted.
+//
+// The build collects the asset from the macro rather than from a use site, so
+// nothing in the code references this constant.
+#[allow(dead_code)]
+const PLAYGROUND_CSS: Asset = asset!(
+    "/assets/playground.css",
+    AssetOptions::css().with_static_head(true)
+);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum PlaygroundTheme {
@@ -109,6 +119,63 @@ impl PlaygroundTheme {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PlaygroundViewport {
+    Mobile,
+    Desktop,
+}
+
+impl PlaygroundViewport {
+    fn from_index(index: usize) -> Self {
+        match index {
+            1 => Self::Desktop,
+            _ => Self::Mobile,
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Mobile => "mobile",
+            Self::Desktop => "desktop",
+        }
+    }
+}
+
+/// Width at which the playground chrome itself becomes a phone layout. Kept in
+/// sync with the `max-width: 760px` block in `playground.css`.
+const COMPACT_SHELL_QUERY: &str = "(max-width: 760px)";
+
+// Some embedded webviews resize their viewport without ever firing the media
+// query's own `change`, so this watches `resize` too and dedupes in JS - only a
+// real crossing of the breakpoint costs a message and a re-render.
+const COMPACT_SHELL_SCRIPT: &str = r#"
+const query = window.matchMedia("__QUERY__");
+let last = null;
+const publish = () => {
+    if (query.matches === last) return;
+    last = query.matches;
+    dioxus.send(last);
+};
+publish();
+query.addEventListener("change", publish);
+window.addEventListener("resize", publish);
+"#;
+
+/// Tracks whether the playground page - not the simulated device inside it -
+/// is rendering at phone width. A persistent `Menu` rail has no room to reserve
+/// on a phone, so the component drawer switches to `Overlay` there.
+fn use_compact_shell() -> Signal<bool> {
+    let mut compact = use_signal(|| false);
+    use_future(move || async move {
+        let script = COMPACT_SHELL_SCRIPT.replace("__QUERY__", COMPACT_SHELL_QUERY);
+        let mut eval = document::eval(&script);
+        while let Ok(matches) = eval.recv::<bool>().await {
+            compact.set(matches);
+        }
+    });
+    compact
+}
+
 fn main() {
     g3_ui::init_auto_mode();
     dioxus::launch(App);
@@ -117,16 +184,18 @@ fn main() {
 #[component]
 fn App() -> Element {
     rsx! {
-        document::Link { rel: "stylesheet", href: PLAYGROUND_CSS }
         Playground {}
     }
 }
 
 #[component]
 fn Playground() -> Element {
+    // Component demos scope their overlays to the simulated device so opening
+    // one never freezes this outer playground page.
     let demos = component_playground_demos();
     let selected_index = use_signal(|| 0_usize);
     let mode_index = use_signal(|| 0_usize);
+    let viewport_index = use_signal(|| 0_usize);
     let mut selector_open = use_signal(|| false);
     let source_value = use_signal(Vec::<String>::new);
     let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
@@ -141,6 +210,22 @@ fn Playground() -> Element {
         ComponentMode::Md
     };
     let active_theme = PlaygroundTheme::from_value(&theme_value());
+    let active_viewport = PlaygroundViewport::from_index(viewport_index());
+    // A phone-width playground has no room for a rail beside the page, so the
+    // component drawer becomes a dismissible overlay there.
+    let compact_shell = use_compact_shell();
+    let selector_side_type = if compact_shell() {
+        g3_ui::SideSheetType::Overlay
+    } else {
+        g3_ui::SideSheetType::Menu
+    };
+    // Crossing into phone width turns an open rail into a full page overlay,
+    // so collapse the drawer instead of trapping the page behind a backdrop.
+    use_effect(move || {
+        if compact_shell() {
+            selector_open.set(false);
+        }
+    });
     g3_ui::set_mode(active_mode);
 
     let selected_source = playground_demo_source(selected.source);
@@ -157,37 +242,72 @@ fn Playground() -> Element {
             mode: active_mode,
             class: "playground-root",
             layout: false,
-            g3_ui::Header {
-                title: selected.descriptor.name.to_string(),
-                mode: active_mode,
-                class: "playground-header",
-                start_button: rsx! {
-                    g3_ui::Button {
-                        style: g3_ui::ButtonStyle::Clear,
-                        size: g3_ui::ButtonSize::Sm,
-                        aria_label: "Open component menu".to_string(),
-                        class: "playground-menu-button",
-                        onclick: move |_| selector_open.set(true),
-                        span { class: "playground-menu-icon", aria_hidden: "true",
-                            span {}
-                            span {}
-                            span {}
+            div { class: "playground-page",
+                g3_ui::Header {
+                    title: selected.descriptor.name.to_string(),
+                    mode: active_mode,
+                    class: "playground-header",
+                    start_button: rsx! {
+                        g3_ui::Button {
+                            style: g3_ui::ButtonStyle::Clear,
+                            size: g3_ui::ButtonSize::Sm,
+                            aria_label: "Toggle component menu".to_string(),
+                            class: "playground-menu-button",
+                            onclick: move |_| selector_open.toggle(),
+                            span { class: "playground-menu-icon", aria_hidden: "true",
+                                span {}
+                                span {}
+                                span {}
+                            }
+                        }
+                    },
+                    end_button: rsx! {
+                        Select { value: theme_value, mode: active_mode, options: theme_options }
+                    },
+                    // Design language and shell width are both global settings
+                    // that outlive the selected demo, so they sit together in
+                    // the header rather than costing every page a banner.
+                    toolbar: rsx! {
+                        div { class: "playground-header-toggles",
+                            SegmentGroup { active: mode_index, mode: active_mode,
+                                SegmentButton { index: 0, mode: active_mode, "MD" }
+                                SegmentButton { index: 1, mode: active_mode, "iOS" }
+                            }
+                            SegmentGroup { active: viewport_index, mode: active_mode,
+                                SegmentButton { index: 0, mode: active_mode, "Mobile" }
+                                SegmentButton { index: 1, mode: active_mode, "Desktop" }
+                            }
+                        }
+                    },
+                }
+                main { class: "playground-main",
+                    p { class: "playground-description", "{selected.descriptor.description}" }
+                    div {
+                        class: "playground-stage",
+                        "data-playground-viewport": active_viewport.as_str(),
+                        PlaygroundViewportDemo {
+                            key: "{active_viewport.as_str()}-{active_mode.as_str()}-{active_theme.label()}-{selected.descriptor.name}",
+                            demo: selected,
+                            mode: active_mode,
+                            theme: active_theme,
+                            viewport: active_viewport,
                         }
                     }
-                },
-                end_button: rsx! {
-                    Select { value: theme_value, mode: active_mode, options: theme_options }
-                },
-                toolbar: rsx! {
-                    SegmentGroup { active: mode_index, mode: active_mode,
-                        SegmentButton { index: 0, mode: active_mode, "MD" }
-                        SegmentButton { index: 1, mode: active_mode, "iOS" }
+                    g3_ui::AccordionGroup { value: source_value, class: "source-panel",
+                        g3_ui::AccordionItem {
+                            value: "source".to_string(),
+                            label: "Source".to_string(),
+                            Code {
+                                src: SourceCode::new(Language::Rust, selected_source.clone()),
+                                theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                            }
+                        }
                     }
-                },
+                }
             }
             Sheet {
                 is_open: selector_open,
-                placement: SheetPlacement::Left,
+                placement: SheetPlacement::Left(selector_side_type),
                 mode: active_mode,
                 class: "playground-selector-sheet",
                 div { class: "playground-sidebar-header",
@@ -198,33 +318,39 @@ fn Playground() -> Element {
                     demos: demos.clone(),
                     selected_index,
                     selector_open,
+                    // A rail sits beside the demo, so it stays put while you
+                    // browse. A phone-width overlay covers what you just
+                    // picked, so it gets out of the way instead.
+                    dismiss_on_select: compact_shell(),
                 }
             }
-            main { class: "playground-main",
-                p { class: "playground-description", "{selected.descriptor.description}" }
-                div { class: "playground-stage",
-                    div {
-                        key: "{active_mode.as_str()}-{active_theme.label()}-{selected.descriptor.name}",
-                        "data-g3-mode": active_mode.as_str(),
-                        g3_ui::G3ThemeProvider { mode: active_mode, theme: active_theme.to_theme(),
-                            RenderSelectedDemo {
-                                key: "{active_mode.as_str()}-{active_theme.label()}-{selected.descriptor.name}",
-                                demo: selected,
-                                mode: active_mode,
-                                theme: active_theme,
-                            }
-                        }
-                    }
-                }
-                g3_ui::AccordionGroup { value: source_value, class: "source-panel",
-                    g3_ui::AccordionItem {
-                        value: "source".to_string(),
-                        label: "Source".to_string(),
-                        Code {
-                            src: SourceCode::new(Language::Rust, selected_source.clone()),
-                            theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
-                        }
-                    }
+        }
+    }
+}
+
+#[component]
+fn PlaygroundViewportDemo(
+    demo: ComponentPlaygroundDemo,
+    mode: ComponentMode,
+    theme: PlaygroundTheme,
+    viewport: PlaygroundViewport,
+) -> Element {
+    // The header toggle already names the shell width, so the card only needs
+    // the label for assistive tech.
+    let label = match viewport {
+        PlaygroundViewport::Desktop => "Compact desktop",
+        PlaygroundViewport::Mobile => "Mobile",
+    };
+
+    rsx! {
+        section {
+            class: "playground-viewport-card playground-viewport-{viewport.as_str()}",
+            aria_label: format!("{label} component preview"),
+            div {
+                class: "playground-viewport-demo",
+                "data-g3-mode": mode.as_str(),
+                g3_ui::G3ThemeProvider { mode, theme: theme.to_theme(),
+                    RenderSelectedDemo { demo, mode, theme }
                 }
             }
         }
@@ -270,6 +396,7 @@ fn PlaygroundNav(
     demos: Vec<ComponentPlaygroundDemo>,
     mut selected_index: Signal<usize>,
     mut selector_open: Signal<bool>,
+    dismiss_on_select: bool,
 ) -> Element {
     rsx! {
         g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
@@ -279,6 +406,7 @@ fn PlaygroundNav(
                     idx,
                     selected_index,
                     selector_open,
+                    dismiss_on_select,
                 }
             }
         }
@@ -301,6 +429,7 @@ fn ComponentNavButton(
     idx: usize,
     mut selected_index: Signal<usize>,
     mut selector_open: Signal<bool>,
+    dismiss_on_select: bool,
 ) -> Element {
     let is_selected = selected_index() == idx;
 
@@ -311,7 +440,9 @@ fn ComponentNavButton(
             label: demo.descriptor.name.to_string(),
             onclick: move |_| {
                 selected_index.set(idx);
-                selector_open.set(false);
+                if dismiss_on_select {
+                    selector_open.set(false);
+                }
             },
         }
     }
@@ -319,7 +450,15 @@ fn ComponentNavButton(
 
 #[cfg(test)]
 mod tests {
-    use super::playground_demo_source;
+    use super::{PlaygroundViewport, playground_demo_source};
+
+    #[test]
+    fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
+        assert_eq!(PlaygroundViewport::from_index(0).as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::from_index(1).as_str(), "desktop");
+        // Anything past the two shell widths falls back to mobile.
+        assert_eq!(PlaygroundViewport::from_index(2).as_str(), "mobile");
+    }
 
     #[test]
     fn source_panel_extracts_only_playground_demo_function() {
