@@ -1,6 +1,7 @@
 //! AppWrapper component - root shell for the entire app layout.
 
 use super::shell_styles as s;
+use crate::UI_CSS;
 use crate::theme::{
     ComponentMode, G3Mode, Theme, get_mode, merge_classes, use_ancestor_context, use_context_signal,
 };
@@ -79,11 +80,23 @@ pub fn AppWrapper(
         }
     };
 
+    // `with_static_head` puts this in the document head for web builds, which
+    // is what blocks first paint and prevents a flash of unstyled content.
+    // Desktop and mobile bundles do not collect statically-headed assets at
+    // all, though - only ones something links at runtime - so this tag is what
+    // gets the stylesheet into those builds. On web it resolves to the same URL
+    // the head already loaded, so it costs a cache hit and nothing else.
     #[cfg(feature = "transitions")]
-    return rsx! { RouteTransitionProvider { {shell} } };
+    return rsx! {
+        document::Link { rel: "stylesheet", href: UI_CSS }
+        RouteTransitionProvider { {shell} }
+    };
 
     #[cfg(not(feature = "transitions"))]
-    shell
+    rsx! {
+        document::Link { rel: "stylesheet", href: UI_CSS }
+        {shell}
+    }
 }
 #[cfg(feature = "playground")]
 #[component]
