@@ -9,8 +9,9 @@ use manganis::{Asset, AssetOptions};
 /// `<link>`. That is what keeps an app from flashing unstyled: a stylesheet a
 /// WASM app only links once it renders arrives too late for that guarantee.
 ///
-/// Attach it yourself only if your build does not process manganis assets into
-/// the head, or if the app manages its own `document::Link` tags.
+/// `AppWrapper` also links it at runtime. That is not redundant: desktop and
+/// mobile bundles only collect assets something links at runtime, so the head
+/// entry alone never reaches them. On web both resolve to the same URL.
 pub static UI_CSS: Asset = asset!(
     "/assets/g3_ui.css",
     AssetOptions::css().with_static_head(true)
@@ -946,10 +947,11 @@ mod tests {
         let theme_source = include_str!("theme.rs");
         let stylesheet = include_str!("../assets/g3_ui.css");
 
-        // The stylesheet reaches the document head at build time, so AppWrapper
-        // no longer links it at runtime and no longer references the asset.
-        assert!(!source.contains("UI_CSS"));
-        assert!(!source.contains("document::Link"));
+        // Web builds get the stylesheet from the document head, but desktop and
+        // mobile bundles only collect assets something links at runtime, so
+        // AppWrapper has to keep linking it as well.
+        assert!(source.contains("UI_CSS"));
+        assert!(source.contains("document::Link"));
 
         // Unstyled-flash protection is the browser's job: `with_static_head`
         // puts the <link> in the document head at build time, so first paint
