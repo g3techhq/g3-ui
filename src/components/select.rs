@@ -1,4 +1,4 @@
-//! Select component - dropdown picker using bottom sheet.
+//! Select component - dropdown picker using a responsive sheet interface.
 
 use super::Sheet;
 use super::select_styles as s;
@@ -75,7 +75,7 @@ pub fn Select(
             disabled: disabled.unwrap_or_default(),
             onclick: move |_| is_open.set(true),
             span { class: s::SELECT_VALUE, "{value()}" }
-            ChevronDown { class: "fill-gray ml-1 shrink-0", size: 16 }
+            ChevronDown { class: format!("{} fill-gray ml-1 shrink-0", s::SELECT_ICON), size: 16 }
         }
         Sheet {
             is_open,
@@ -162,7 +162,7 @@ pub fn SelectPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Select",
-    description: "Button-triggered picker backed by a sheet.",
+    description: "Button-triggered picker backed by a responsive sheet.",
     demo: SelectPlaygroundDemo,
     source: "src/components/select.rs",
 }

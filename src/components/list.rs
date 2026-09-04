@@ -1055,9 +1055,72 @@ mod tests {
     #[test]
     fn swipe_actions_are_hidden_from_keyboard_when_closed() {
         let source = include_str!("list.rs");
+        let stylesheet = include_str!("../../assets/g3_ui.css");
         assert!(source.contains("start_actions_hidden"));
         assert!(source.contains("inert: start_actions_inert"));
         assert!(source.contains("aria_hidden: start_actions_hidden.to_string()"));
+        assert!(
+            stylesheet
+                .contains(".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;")
+        );
+    }
+
+    #[test]
+    fn dismiss_actions_use_a_stable_layer_beneath_an_opaque_item() {
+        let stylesheet = include_str!("../../assets/g3_ui.css");
+
+        assert!(stylesheet.contains(
+            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions {\n    width: 100%;"
+        ));
+        let swipe_item = stylesheet
+            .split(".g3-swipe-item {")
+            .nth(1)
+            .expect("missing swipe item block")
+            .split('}')
+            .next()
+            .expect("missing end of swipe item block");
+        let swipe_content = stylesheet
+            .split(".g3-swipe-content {")
+            .nth(1)
+            .expect("missing swipe content block")
+            .split('}')
+            .next()
+            .expect("missing end of swipe content block");
+        let swipe_actions = stylesheet
+            .split(".g3-swipe-actions {")
+            .nth(1)
+            .expect("missing swipe actions block")
+            .split('}')
+            .next()
+            .expect("missing end of swipe actions block");
+
+        assert!(swipe_item.contains("background: var(--color-card);"));
+        assert!(!swipe_actions.contains("transform:"));
+        assert!(swipe_content.contains("overflow: hidden;"));
+        assert!(swipe_content.contains("background: var(--color-card);"));
+        assert!(!swipe_content.contains("contain: paint;"));
+        assert!(!swipe_content.contains("backface-visibility: hidden;"));
+
+        // The transformed content composites separately from the action colours
+        // beneath it, so on a fractionally-tall row the action colour rasterizes
+        // through as a hairline at the row's edge. Only the last row shows it,
+        // because every other row's 1px divider happens to cover that strip.
+        assert!(swipe_content.contains("box-shadow: 0 1px 0 var(--g3-swipe-edge)"));
+        assert!(swipe_content.contains("0 -1px 0 var(--g3-swipe-edge)"));
+        assert!(swipe_content.contains("--g3-swipe-edge: var(--color-card);"));
+        assert!(stylesheet.contains(".g3-swipe-content:has(.g3-item-selected)"));
+        // The guard has to sit outside the content box to absorb the rounding,
+        // so it must not add height: the row clips it.
+        assert!(swipe_item.contains("overflow: hidden;"));
+
+        // A released row reports itself closed immediately, but the content
+        // still takes a full transition to slide back over the actions. The
+        // hide has to wait for that, or the action colour snaps away and the
+        // row animates home across bare card. Opening stays instant.
+        assert!(swipe_actions.contains("transition: visibility 0s linear 0s;"));
+        assert!(stylesheet.contains(
+            ".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;\n    transition-delay: var(--transition-normal);"
+        ));
     }
 
     #[test]

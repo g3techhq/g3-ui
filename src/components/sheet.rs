@@ -4,6 +4,8 @@ use super::overlay_scroll::use_lock_body_scroll;
 use super::sheet_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+#[cfg(feature = "playground")]
+use dioxus_icons::lucide::Menu;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 const SHEET_DISMISS_DISTANCE: f64 = 96.0;
@@ -67,16 +69,34 @@ if (dialog && handle && handle.dataset.g3SheetDragBound !== "true") {
 }
 "#;
 
-/// Which edge a sheet slides in from.
+/// How a side sheet interacts with the app content beside it.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SideSheetType {
+    /// Slide above the app content without moving it.
+    #[default]
+    Overlay,
+    /// Slide in while moving the app content by the same distance.
+    Push,
+    /// Stay beneath the app content while the content moves away to reveal it.
+    Reveal,
+    /// Reserve space beside the complete app page as persistent navigation.
+    Menu,
+}
+
+/// Which edge a sheet uses and, for side sheets, how it affects app content.
+///
+/// `Push`, `Reveal`, and `Menu` side sheets should be direct children of
+/// `AppWrapper`, beside one root content element, matching Ionic's
+/// menu/content structure.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SheetPlacement {
     /// Rises from the bottom - the standard mobile action sheet.
     #[default]
     Bottom,
     /// Slides in from the leading edge, as a navigation drawer does.
-    Left,
+    Left(SideSheetType),
     /// Slides in from the trailing edge, for inspectors and filters.
-    Right,
+    Right(SideSheetType),
 }
 
 #[component]
@@ -97,14 +117,24 @@ pub fn Sheet(
         ComponentMode::Ios => s::SHEET_IOS,
         ComponentMode::Md => s::SHEET_MD,
     };
-    let placement_cls = match placement {
-        SheetPlacement::Bottom => s::SHEET_BOTTOM,
-        SheetPlacement::Left => s::SHEET_LEFT,
-        SheetPlacement::Right => s::SHEET_RIGHT,
+    let (placement_cls, side_type_cls) = match placement {
+        SheetPlacement::Bottom => (s::SHEET_BOTTOM, ""),
+        SheetPlacement::Left(side_type) => (s::SHEET_LEFT, side_sheet_type_class(side_type)),
+        SheetPlacement::Right(side_type) => (s::SHEET_RIGHT, side_sheet_type_class(side_type)),
     };
 
-    let sheet_cls = format!("{} {mode_cls} {placement_cls}", s::SHEET);
-    let has_handle = placement == SheetPlacement::Bottom;
+    let side_cls = (!side_type_cls.is_empty())
+        .then_some(s::SHEET_SIDE)
+        .unwrap_or_default();
+    let is_menu = matches!(
+        placement,
+        SheetPlacement::Left(SideSheetType::Menu) | SheetPlacement::Right(SideSheetType::Menu)
+    );
+    let sheet_cls = format!(
+        "{} {mode_cls} {placement_cls} {side_cls} {side_type_cls}",
+        s::SHEET
+    );
+    let has_handle = matches!(placement, SheetPlacement::Bottom);
     let dialog_id = format!("g3-sheet-{instance_id}");
     let handle_id = format!("g3-sheet-handle-{instance_id}");
     let mut ever_opened = use_signal(|| false);
@@ -156,12 +186,12 @@ pub fn Sheet(
     let visual_open = is_open_now && presented_open();
 
     let backdrop_cls = format!(
-        "{} {}",
+        "{} {} {placement_cls} {side_cls} {side_type_cls}",
         s::BACKDROP,
         if visual_open {
             "g3-sheet-backdrop-open"
         } else {
-            "g3-sheet-backdrop-closed pointer-events-none"
+            "g3-sheet-backdrop-closed"
         }
     );
     let state_cls = if visual_open {
@@ -171,17 +201,25 @@ pub fn Sheet(
     };
 
     rsx! {
-        button {
-            r#type: "button",
-            aria_label: "Sheet backdrop",
-            class: format!("{backdrop_cls} appearance-none border-0 p-0"),
-            onclick: move |_| is_open.set(false),
+        if !is_menu {
+            button {
+                r#type: "button",
+                aria_label: "Close sheet",
+                aria_hidden: (!is_open_now).to_string(),
+                tabindex: if is_open_now { "0" } else { "-1" },
+                class: backdrop_cls,
+                // Pointer-down makes touch and mouse dismissal immediate even
+                // when a surrounding shell is suppressing scroll gestures. Keep
+                // click as the keyboard activation path for the native button.
+                onpointerdown: move |_| is_open.set(false),
+                onclick: move |_| is_open.set(false),
+            }
         }
         div {
             id: dialog_id,
-            role: "dialog",
-            aria_modal: "true",
-            aria_label: "Sheet",
+            role: if is_menu { "navigation" } else { "dialog" },
+            aria_modal: (!is_menu).to_string(),
+            aria_label: if is_menu { "Menu" } else { "Sheet" },
             aria_hidden: (!is_open_now).to_string(),
             inert: (!is_open_now).then(|| "".to_string()),
             class: merge_classes(format!("{sheet_cls} {state_cls}"), class.as_deref()),
@@ -198,18 +236,34 @@ pub fn Sheet(
         }
     }
 }
+
+fn side_sheet_type_class(side_type: SideSheetType) -> &'static str {
+    match side_type {
+        SideSheetType::Overlay => s::SHEET_OVERLAY,
+        SideSheetType::Push => s::SHEET_PUSH,
+        SideSheetType::Reveal => s::SHEET_REVEAL,
+        SideSheetType::Menu => s::SHEET_MENU,
+    }
+}
 #[cfg(feature = "playground")]
 #[component]
 pub fn SheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
     let placement_index = use_signal(|| 0_usize);
+    let side_type_index = use_signal(|| 0_usize);
+    let side_type = match side_type_index() {
+        1 => SideSheetType::Push,
+        2 => SideSheetType::Reveal,
+        3 => SideSheetType::Menu,
+        _ => SideSheetType::Overlay,
+    };
     let placement = match placement_index() {
-        1 => SheetPlacement::Left,
-        2 => SheetPlacement::Right,
+        1 => SheetPlacement::Left(side_type),
+        2 => SheetPlacement::Right(side_type),
         _ => SheetPlacement::Bottom,
     };
     rsx! {
-        crate::PlaygroundDemoFrame {
+        crate::PlaygroundDemoFrame { app: false,
             controls: rsx! {
                 div {
                     span { "Placement" }
@@ -219,17 +273,53 @@ pub fn SheetPlaygroundDemo() -> Element {
                         crate::SegmentButton { index: 2, "Right" }
                     }
                 }
+                if placement_index() != 0 {
+                    div {
+                        span { "Side type" }
+                        crate::SegmentGroup { active: side_type_index,
+                            crate::SegmentButton { index: 0, "Overlay" }
+                            crate::SegmentButton { index: 1, "Push" }
+                            crate::SegmentButton { index: 2, "Reveal" }
+                            crate::SegmentButton { index: 3, "Menu" }
+                        }
+                    }
+                }
                 crate::Checkbox { checked: open, label: "Open".to_string() }
             },
-            crate::Button { onclick: move |_| open.set(true), "Open sheet" }
-            Sheet { is_open: open, placement,
-                crate::List { inset: true, lines: crate::ListLines::None,
-                    crate::Item {
-                        label: "Round settings",
-                        description: "Use the handle or backdrop to close.",
+            crate::AppWrapper { class: "g3-playground-device-app",
+                div { class: "g3-sheet-demo-content-root",
+                    crate::Header {
+                        title: "Side sheets",
+                        start_button: rsx! {
+                            crate::Button {
+                                style: crate::ButtonStyle::Clear,
+                                size: crate::ButtonSize::Sm,
+                                aria_label: "Toggle menu".to_string(),
+                                onclick: move |_| open.toggle(),
+                                Menu { size: 22, class: "fill-none" }
+                            }
+                        },
                     }
-                    crate::Item { label: "Tee time", metadata: "9:40" }
-                    crate::Item { label: "Players", metadata: "4" }
+                    crate::Body { has_footer_space: false,
+                        crate::Card { title: "Round settings",
+                            "Push moves this page. Menu preserves its complete layout beside a desktop rail."
+                        }
+                        crate::Button { onclick: move |_| open.set(true), "Open sheet" }
+                    }
+                }
+                Sheet { is_open: open, placement, class: "g3-sheet-demo-surface",
+                    div { class: "g3-sheet-demo-menu",
+                        div { class: "g3-sheet-demo-menu-header",
+                            span { class: "g3-sheet-demo-menu-eyebrow", "Fairway" }
+                            strong { "Round menu" }
+                            span { "Choose a destination. Wide menus close from the header toggle." }
+                        }
+                        crate::List { lines: crate::ListLines::Full,
+                            crate::Item { label: "Scorecard", metadata: "12 / 18" }
+                            crate::Item { label: "Players", metadata: "4" }
+                            crate::Item { label: "Round settings" }
+                        }
+                    }
                 }
             }
         }
@@ -237,7 +327,7 @@ pub fn SheetPlaygroundDemo() -> Element {
 }
 crate::g3_playground! {
     name: "Sheet",
-    description: "Bottom and side sheet with backdrop dismissal.",
+    description: "Bottom sheet plus overlay, push, reveal, and persistent menu side sheets.",
     demo: SheetPlaygroundDemo,
     source: "src/components/sheet.rs",
 }

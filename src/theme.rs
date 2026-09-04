@@ -154,10 +154,53 @@ impl Theme {
 }
 
 /// Runtime mode context for g3_ui components.
+///
+/// Carries a signal rather than a plain `ComponentMode` so that switching mode
+/// at runtime actually reaches components that are already on screen. A plain
+/// value in context is read once and never re-read: Dioxus skips re-rendering a
+/// component whose props are unchanged, and a context read is not a
+/// subscription. Reading the signal in [`use_component_mode`] subscribes the
+/// reading component, so a mode change re-renders it even though nothing was
+/// passed to it.
 #[derive(Clone, Copy, PartialEq)]
 pub struct G3Mode {
     /// The platform styling mode in effect for this subtree.
-    pub mode: ComponentMode,
+    pub mode: Signal<ComponentMode>,
+}
+
+/// Keep one signal per provider scope and push the latest value into it.
+///
+/// `peek` deliberately avoids subscribing the provider to its own signal, which
+/// would otherwise re-render it every time it published a change.
+pub(crate) fn use_context_signal<T: PartialEq + Clone + 'static>(value: T) -> Signal<T> {
+    let mut signal = use_signal(|| value.clone());
+    if *signal.peek() != value {
+        signal.set(value);
+    }
+    signal
+}
+
+/// Read the ambient [`Theme`], if a provider or `AppWrapper` set one.
+///
+/// Subscribes the calling component to theme changes, for the same reason
+/// [`G3Mode`] holds a signal. Only for components that do not themselves
+/// provide a theme - see [`use_ancestor_context`] for the ones that do.
+pub fn use_ambient_theme() -> Option<Theme> {
+    try_consume_context::<Signal<Theme>>().map(|theme| theme())
+}
+
+/// Resolve a context value from an *ancestor*, ignoring whatever this component
+/// provides itself.
+///
+/// `try_consume_context` searches the current scope first. A component that both
+/// consumes and re-provides - `AppWrapper` inheriting an outer theme and then
+/// publishing it to its own subtree - would therefore read its own value back on
+/// every render after the first, pinning it to whatever was ambient at mount.
+/// Resolving the ancestor once via `use_hook` sidesteps that: signal identity
+/// upstream is stable, so holding the handle is safe, and reading through it
+/// each render still subscribes to changes.
+pub(crate) fn use_ancestor_context<T: Clone + 'static>() -> Option<T> {
+    use_hook(try_consume_context::<T>)
 }
 
 thread_local! {
@@ -229,10 +272,13 @@ pub fn merge_classes(base: impl AsRef<str>, class: Option<&str>) -> String {
 }
 
 /// Resolve the current component mode from an explicit prop, mode context, or global mode.
+///
+/// Uses `try_consume_context` rather than `try_use_context`: the latter is a
+/// hook that caches on first render, which would pin a component to whichever
+/// mode was in effect when it mounted.
 pub fn use_component_mode(mode: Option<ComponentMode>) -> ComponentMode {
-    let mode_context = try_use_context::<G3Mode>();
-    mode.or_else(|| mode_context.map(|context| context.mode))
-        .unwrap_or_else(get_mode)
+    let mode_context = try_consume_context::<G3Mode>().map(|context| (context.mode)());
+    mode.or(mode_context).unwrap_or_else(get_mode)
 }
 
 #[component]
@@ -241,9 +287,10 @@ pub fn G3ThemeProvider(
     theme: Option<Theme>,
     children: Element,
 ) -> Element {
-    let mode = mode.unwrap_or_else(get_mode);
+    let mode = use_context_signal(mode.unwrap_or_else(get_mode));
+    let theme = use_context_signal(theme.unwrap_or_default());
     provide_context(G3Mode { mode });
-    provide_context(theme.unwrap_or_default());
+    provide_context(theme);
 
     rsx! {
         {children}
@@ -253,55 +300,6 @@ pub fn G3ThemeProvider(
 /// Initialize the global mode based on compile-time platform detection.
 pub fn init_auto_mode() {
     set_mode(detect_platform_mode());
-}
-
-/// Class applied to a root element while g3_ui's stylesheet is still loading.
-/// Internal to `AppWrapper` - pair with [`use_css_preload_guard`] and
-/// [`G3PreloadStyle`], adding this class to the root's class list while the
-/// returned signal is `true`.
-pub(crate) const CSS_PRELOAD_CLASS: &str = "g3-preload";
-
-const CSS_PRELOAD_POLL_SCRIPT: &str = r#"
-let tries = 0;
-const ready = () => getComputedStyle(document.documentElement)
-    .getPropertyValue("--g3-css-loaded").trim() === "1";
-const tick = () => {
-    if (ready() || tries++ > 300) {
-        requestAnimationFrame(() => dioxus.send(true));
-    } else {
-        requestAnimationFrame(tick);
-    }
-};
-tick();
-"#;
-
-/// Tracks whether g3_ui.css (attached at runtime via `document::Link`) has
-/// finished loading. Internal to `AppWrapper`, which is the only supported
-/// way consumers should attach g3_ui's stylesheet and get this protection -
-/// not something consumers need to call themselves.
-pub(crate) fn use_css_preload_guard() -> Signal<bool> {
-    let mut preloading = use_signal(|| true);
-    use_effect(move || {
-        spawn(async move {
-            let mut eval = document::eval(CSS_PRELOAD_POLL_SCRIPT);
-            let _ = eval.recv::<bool>().await;
-            preloading.set(false);
-        });
-    });
-    preloading
-}
-
-/// Inline (network-free) style that hides [`CSS_PRELOAD_CLASS`] roots and
-/// kills their transitions. Must be inline rather than living in g3_ui.css
-/// itself, since that external stylesheet is exactly what hasn't loaded yet
-/// during the window this guard needs to cover. Rendered once by `AppWrapper`.
-#[component]
-pub(crate) fn G3PreloadStyle() -> Element {
-    rsx! {
-        document::Style {
-            r#".g3-preload, .g3-preload * {{ transition: none !important; }} .g3-preload {{ visibility: hidden !important; }}"#
-        }
-    }
 }
 
 impl ComponentMode {

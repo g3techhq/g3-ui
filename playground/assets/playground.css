@@ -9,7 +9,12 @@ body,
   min-height: 100%;
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #eef2f4;
+  /* Only ever seen while the WASM boots: the stylesheets are head-linked, so
+     the page is painted before there is anything to paint on it, and
+     `.playground-root` covers the viewport with the theme background as soon as
+     the app renders. White keeps that window indistinguishable from the
+     browser's own blank page rather than flashing a colour of its own. */
+  background: #ffffff;
   color: var(--color-text, #17202a);
 }
 
@@ -21,13 +26,28 @@ textarea {
 }
 
 .playground-root {
+  --g3-side-sheet-width: min(18rem, 72vw);
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: block;
   /* Colors come from the g3_ui::Theme passed to AppWrapper (see main.rs
      PlaygroundTheme::to_theme) - not from a theme attribute selector. */
   background: var(--color-bg, #eef2f4);
   color: var(--color-text, #17202a);
+}
+
+.playground-page {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--color-bg, #eef2f4);
+  color: var(--color-text, #17202a);
+  overflow: hidden;
+  translate: 0 0;
+  transition: translate var(--transition-normal, 0.25s) var(--transition-md, ease-out),
+    width var(--transition-normal, 0.25s) var(--transition-md, ease-out),
+    margin-left var(--transition-normal, 0.25s) var(--transition-md, ease-out);
 }
 
 .playground-title-block {
@@ -154,36 +174,83 @@ textarea {
 }
 
 .playground-main {
-  width: min(1180px, 100%);
+  width: min(1400px, 100%);
+  height: 100%;
   min-width: 0;
   margin: 0 auto;
   padding: 24px 20px 32px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-auto-rows: max-content;
+  align-content: start;
   gap: 18px;
+  overflow: auto;
+}
+
+/* Design language and shell width are both global, so they share the header
+   toolbar as two equal halves instead of a banner above every demo. */
+.playground-header-toggles {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.playground-header-toggles .g3-segment-standalone {
+  margin-top: 0;
+}
+
+.playground-header-toggles .g3-segment-btn-md,
+.playground-header-toggles .g3-segment-btn-ios {
+  min-width: 0;
+  padding-inline: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 .playground-stage {
+  width: 100%;
   min-height: 0;
   display: grid;
   place-items: center;
+  overflow: visible;
+  padding: 2px 0 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-card-border, #d5dde3) transparent;
 }
 
-.playground-stage > [data-g3-mode] {
-  width: min(820px, 100%);
-}
-
-.playground-stage > [data-g3-mode] > .g3-playground-demo-stack {
-  width: min(820px, 100%);
+.playground-viewport-card {
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 390px);
+  justify-items: center;
+  gap: 10px;
+}
+
+.playground-viewport-mobile {
+  width: 390px;
+  max-width: 100%;
+}
+
+.playground-viewport-desktop {
+  width: 50rem;
+}
+
+.playground-viewport-demo {
+  width: 100%;
+}
+
+.playground-viewport-demo > .g3-playground-demo-stack {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
   justify-items: center;
   gap: 24px;
 }
 
-.playground-selector-sheet {
-  width: min(20rem, 82vw);
+.playground-viewport-card .playground-controls-pane {
+  width: 100%;
 }
 
 .playground-selector-sheet .g3-sheet-content {
@@ -213,13 +280,22 @@ textarea {
 }
 
 .playground-nav {
-  padding: 12px;
+  padding: 8px 0 16px;
+}
+
+.playground-selector-sheet .g3-item {
+  padding-inline: 18px;
+  background: transparent;
+}
+
+.playground-selector-sheet .g3-item-selected {
+  background: color-mix(in srgb, var(--color-focused, #2563eb) 10%, transparent);
 }
 
 .g3-playground-preview {
   position: relative;
-  width: min(390px, 100%, calc((100dvh - 180px) * 390 / 844));
-  max-height: min(844px, calc(100dvh - 180px));
+  width: min(390px, 100%);
+  max-height: none;
   aspect-ratio: 390 / 844;
   display: block;
   padding: 0;
@@ -229,6 +305,15 @@ textarea {
   border-radius: 40px;
   background: var(--color-bg, #f5f5f5);
   box-shadow: 0 22px 60px var(--color-shadow, rgba(24, 36, 48, 0.26));
+}
+
+.playground-viewport-desktop .g3-playground-preview {
+  width: 50rem;
+  max-height: none;
+  aspect-ratio: 10 / 7;
+  border-width: 6px;
+  border-radius: 22px;
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--color-shadow, rgba(24, 36, 48, 0.26)) 82%, transparent);
 }
 
 .g3-playground-preview .g3-playground-device-app,
@@ -263,15 +348,32 @@ textarea {
 
 .g3-playground-preview .g3-sheet-backdrop,
 .g3-playground-preview .g3-modal-overlay {
-  position: absolute;
-  inset: 0;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Demo backdrops belong to the simulated app, not to the surrounding
+   playground. Keep the whole preview as a reliable dismiss target. */
+.g3-playground-preview .g3-sheet-backdrop-open {
+  opacity: 1;
+  pointer-events: auto !important;
+}
+
+.g3-playground-preview .g3-sheet-backdrop-open:not(.g3-sheet-reveal) {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.g3-playground-preview .g3-sheet-backdrop-open.g3-sheet-push {
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
 .g3-playground-preview .g3-sheet.g3-sheet-closed {
   visibility: hidden;
 }
 
-.g3-playground-preview .g3-sheet-bottom {
+.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-bottom {
   top: auto;
   left: 0;
   right: 0;
@@ -279,17 +381,16 @@ textarea {
   max-height: 52%;
 }
 
-.g3-playground-preview .g3-sheet-bottom .g3-sheet-content {
+.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-bottom .g3-sheet-content {
   max-height: 100%;
 }
 
-.g3-playground-preview .g3-sheet-left,
-.g3-playground-preview .g3-sheet-right {
-  width: 68%;
+.playground-viewport-mobile .g3-playground-preview .g3-app-shell {
+  --g3-side-sheet-width: 68cqw;
 }
 
-.g3-playground-preview .g3-sheet-left .g3-sheet-content,
-.g3-playground-preview .g3-sheet-right .g3-sheet-content {
+.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-left .g3-sheet-content,
+.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-right .g3-sheet-content {
   max-height: 100%;
 }
 
@@ -297,15 +398,41 @@ textarea {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
-  width: min(320px, calc(100% - 2rem)) !important;
   transform: translate(-50%, -50%) scale(1);
 }
 
+.playground-viewport-mobile .g3-playground-preview .g3-modal {
+  width: min(320px, calc(100% - 2rem)) !important;
+}
+
+/* Controls lead the demo stack in DOM order, so nothing here reorders them.
+   The explicit column keeps a wide control - a five-way segment group, say -
+   from sizing the track to its max-content and spilling out of the card. */
 .playground-controls-pane {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 12px;
-  order: -1;
+  padding: 14px;
+  border: 1px solid var(--color-card-border, #d5dde3);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-card, #ffffff) 88%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-shadow, rgba(24, 36, 48, 0.16)) 24%, transparent);
+}
+
+/* These are playground chrome, not a sample of the component's own type scale.
+   Trimming them lets a five-way group (Toast's colors) sit on one line in a
+   phone-width column instead of ellipsing every label. */
+.playground-controls-pane .g3-segment-btn-md {
+  min-height: 40px;
+  padding-inline: 6px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.playground-controls-pane .g3-segment-btn-ios {
+  padding-inline: 6px;
+  font-size: 12px;
 }
 
 .g3-playground-spinner-box {
@@ -325,7 +452,9 @@ textarea {
 }
 
 .source-panel {
-  max-width: 1080px;
+  width: min(1080px, 100%);
+  max-width: 100%;
+  justify-self: center;
 }
 
 .source-panel .g3-accordion-content {
@@ -345,6 +474,73 @@ textarea {
 }
 
 
+/* AppWrapper is layout-less at the playground root, so this mirrors Menu's
+   component layout contract for the site drawer at every viewport width. */
+.playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+  > .playground-page {
+  width: calc(100% - var(--g3-side-sheet-width));
+  margin-left: var(--g3-side-sheet-width);
+}
+
+/* The drawer keeps the shared Menu edge treatment; only the radius is
+   flattened against the page. */
+.playground-root > .playground-selector-sheet.g3-sheet-side.g3-sheet-menu {
+  border-radius: 0;
+}
+
+@media (min-width: 64rem) {
+  .playground-header {
+    display: grid;
+    grid-template-columns: auto minmax(12rem, 1fr) minmax(16rem, 24rem) minmax(0, 1fr) auto;
+    grid-template-rows: minmax(4rem, auto);
+    align-items: center;
+    column-gap: 0.75rem;
+    min-height: 4rem;
+    padding: 0 1.25rem;
+  }
+
+  .playground-header > .g3-header-row {
+    display: contents;
+  }
+
+  .playground-header .g3-header-start-slot {
+    grid-column: 1;
+  }
+
+  .playground-header .g3-header-title {
+    grid-column: 2;
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .playground-header .g3-header-title-text {
+    text-align: left;
+  }
+
+  .playground-header > .g3-header-toolbar {
+    grid-column: 3;
+    align-self: center;
+    min-height: 0;
+    padding: 0.5rem 0;
+  }
+
+  /* Match the library: Material tab indicators sit on the header's bottom edge,
+     so the toolbar and the toggles inside it fill the header row. */
+  .playground-header.g3-header-md > .g3-header-toolbar {
+    align-self: stretch;
+    align-items: stretch;
+    padding: 0;
+  }
+
+  .playground-header.g3-header-md .playground-header-toggles {
+    align-items: stretch;
+  }
+
+  .playground-header .g3-header-end-slot {
+    grid-column: 5;
+  }
+}
+
 @media (max-width: 760px) {
   .playground-header-row {
     padding: 12px;
@@ -363,16 +559,21 @@ textarea {
     padding: 14px 10px 24px;
   }
 
-  .playground-stage > [data-g3-mode] > .g3-playground-demo-stack {
+  .playground-viewport-demo > .g3-playground-demo-stack {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .playground-controls-pane {
-    order: -1;
+  .playground-stage[data-playground-viewport="desktop"] {
+    place-items: start;
+    overflow-x: auto;
   }
 
   .g3-playground-preview {
     width: min(390px, calc(100vw - 20px));
+  }
+
+  .playground-viewport-desktop .g3-playground-preview {
+    width: 50rem;
   }
 
   .source-panel {

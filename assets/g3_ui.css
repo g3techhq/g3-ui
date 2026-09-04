@@ -73,10 +73,6 @@
     --transition-fast: 0.15s;
     --transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
     --transition-md: ease-out;
-
-    /* Sentinel so AppWrapper can detect that this (runtime-attached) stylesheet
-       has actually applied before it drops the `g3-preload` transition guard. */
-    --g3-css-loaded: 1;
 }
 
 [data-g3-mode="ios"] {
@@ -109,12 +105,17 @@
 body.g3-overlay-scroll-locked {
     overflow: hidden;
     overscroll-behavior: none;
-    touch-action: none;
 }
 
-/* The `.g3-preload` guard itself (see theme::G3PreloadStyle) is inlined via
-   document::Style rather than defined here, since this file is exactly what
-   hasn't loaded yet during the window the guard needs to cover. */
+/* A menu is persistent page chrome rather than a modal surface, so it must
+   not freeze document scrolling. Keep the lock if another open sheet or modal
+   still needs it. */
+body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):not(
+        :has(.g3-sheet.g3-sheet-open:not(.g3-sheet-menu), .g3-modal-overlay[data-state="open"])
+    ) {
+    overflow: auto;
+    overscroll-behavior: auto;
+}
 
 *::-webkit-scrollbar {
     display: none;
@@ -558,6 +559,64 @@ body.g3-overlay-scroll-locked {
     gap: 0.5rem;
     font-size: 1.0625rem;
     font-weight: 600;
+}
+
+.g3-sheet-demo-content-root {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--color-bg);
+}
+
+.g3-sheet-demo-surface .g3-sheet-content {
+    padding: 0;
+}
+
+.g3-sheet-demo-surface.g3-sheet-side .g3-sheet-content {
+    height: 100%;
+}
+
+.g3-sheet-demo-menu {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-card);
+}
+
+.g3-sheet-demo-surface.g3-sheet-side .g3-sheet-demo-menu {
+    min-height: 100%;
+}
+
+.g3-sheet-demo-menu-header {
+    display: grid;
+    gap: 0.25rem;
+    padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem 1rem;
+    border-bottom: 1px solid var(--color-card-border);
+}
+
+.g3-sheet-demo-menu-header strong {
+    color: var(--color-text);
+    font-size: 1.125rem;
+}
+
+.g3-sheet-demo-menu-header > span:last-child {
+    color: var(--color-text-secondary);
+    font-size: 0.8125rem;
+    line-height: 1.35;
+}
+
+.g3-sheet-demo-menu-eyebrow {
+    color: var(--color-focused);
+    font-size: 0.6875rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.g3-sheet-demo-menu .g3-item {
+    background: transparent;
 }
 
 /* -- Segment / Tab Bar -- */
@@ -1217,8 +1276,11 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-sheet-backdrop {
+    display: block;
     position: fixed;
     inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 80;
     margin: 0;
     padding: 0;
@@ -1227,19 +1289,19 @@ body.g3-overlay-scroll-locked {
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.5) !important;
     transition: opacity var(--transition-normal) var(--transition-md);
     will-change: opacity;
 }
 
 .g3-sheet-backdrop-open {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto !important;
 }
 
 .g3-sheet-backdrop-closed {
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none !important;
 }
 
 .g3-sheet.g3-sheet-closed {
@@ -1266,13 +1328,13 @@ body.g3-overlay-scroll-locked {
     -ms-overflow-style: none;
 }
 
-.g3-sheet-bottom .g3-sheet-content {
+.g3-sheet.g3-sheet-bottom .g3-sheet-content {
     min-height: 0;
     max-height: min(50dvh, 26rem);
 }
 
-.g3-sheet-left .g3-sheet-content,
-.g3-sheet-right .g3-sheet-content {
+.g3-sheet.g3-sheet-left .g3-sheet-content,
+.g3-sheet.g3-sheet-right .g3-sheet-content {
     height: 100%;
     max-height: 100dvh;
 }
@@ -1283,45 +1345,124 @@ body.g3-overlay-scroll-locked {
     height: 0;
 }
 
-.g3-sheet-bottom {
+.g3-sheet.g3-sheet-bottom {
     right: 0;
     bottom: 0;
     left: 0;
 }
 
-.g3-sheet-left {
+.g3-sheet.g3-sheet-left {
     top: 0;
     bottom: 0;
     left: 0;
-    width: min(18rem, 72vw);
+    width: var(--g3-side-sheet-width, min(18rem, 72vw));
 }
 
-.g3-sheet-right {
+.g3-sheet.g3-sheet-right {
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(18rem, 72vw);
+    width: var(--g3-side-sheet-width, min(18rem, 72vw));
 }
 
-.g3-sheet-bottom.g3-sheet-closed {
+.g3-sheet.g3-sheet-bottom.g3-sheet-closed {
     transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
 }
 
-.g3-sheet-left.g3-sheet-closed {
+.g3-sheet.g3-sheet-left.g3-sheet-closed {
     transform: translateX(calc(-100% - 2rem));
 }
 
-.g3-sheet-right.g3-sheet-closed {
+.g3-sheet.g3-sheet-right.g3-sheet-closed {
     transform: translateX(calc(100% + 2rem));
 }
 
-.g3-sheet-bottom.g3-sheet-open {
+.g3-sheet.g3-sheet-bottom.g3-sheet-open {
     transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
 }
 
-.g3-sheet-left.g3-sheet-open,
-.g3-sheet-right.g3-sheet-open {
+.g3-sheet.g3-sheet-left.g3-sheet-open,
+.g3-sheet.g3-sheet-right.g3-sheet-open {
     transform: translate3d(0, 0, 0);
+}
+
+/* Ionic-style side sheet behaviors. Overlay moves only the sheet. Push moves
+   the sheet and content together. Reveal keeps the sheet under the content and
+   moves only the content. Menu persistently reserves space beside the complete
+   page. Push/reveal/menu require the side sheet and one root content element
+   to be direct AppWrapper children. */
+.g3-sheet-side.g3-sheet-reveal.g3-sheet-closed,
+.g3-sheet-side.g3-sheet-reveal.g3-sheet-open {
+    transform: translate3d(0, 0, 0);
+}
+
+.g3-sheet-ios.g3-sheet-side {
+    background: var(--color-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.g3-sheet-ios.g3-sheet-side.g3-sheet-reveal {
+    box-shadow: none;
+}
+
+.g3-sheet-side.g3-sheet-reveal {
+    z-index: 0;
+}
+
+.g3-sheet-backdrop.g3-sheet-side {
+    cursor: pointer;
+}
+
+.g3-sheet-backdrop.g3-sheet-push {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Reveal keeps the menu underneath the page. Its transparent dismiss target
+   covers only the shifted page, leaving the revealed menu interactive. */
+.g3-sheet-backdrop.g3-sheet-reveal {
+    background-color: transparent !important;
+    z-index: 0;
+}
+
+.g3-app-shell:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    position: relative;
+    z-index: 1;
+    translate: 0 0;
+    box-shadow: none;
+    transition: translate var(--transition-normal) var(--transition-md),
+        box-shadow var(--transition-normal) var(--transition-md);
+}
+
+.g3-app-shell:has(> .g3-sheet-left:is(.g3-sheet-push, .g3-sheet-reveal).g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    translate: var(--g3-side-sheet-width) 0;
+}
+
+.g3-app-shell:has(> .g3-sheet-right:is(.g3-sheet-push, .g3-sheet-reveal).g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    translate: calc(var(--g3-side-sheet-width) * -1) 0;
+}
+
+/* Reveal keeps the menu stationary beneath the page, so the page is the
+   elevated surface. Its directional shadow falls back onto the exposed menu. */
+.g3-app-shell:has(> .g3-sheet-left.g3-sheet-reveal.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    box-shadow: -12px 0 32px var(--color-shadow), -2px 0 8px var(--color-shadow);
+}
+
+.g3-app-shell:has(> .g3-sheet-right.g3-sheet-reveal.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    box-shadow: 12px 0 32px var(--color-shadow), 2px 0 8px var(--color-shadow);
+}
+
+/* The reveal page stays visually above the stationary menu, but does not
+   consume pointer input while open. Clicks outside the menu fall through to
+   the full-shell backdrop button and dismiss it. */
+.g3-app-shell:has(> .g3-sheet-reveal.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    pointer-events: none;
 }
 
 /* iOS sheet */
@@ -1387,6 +1528,68 @@ body.g3-overlay-scroll-locked {
 
 .g3-sheet-md.g3-sheet-right {
     border-radius: 4px 0 0 4px;
+}
+
+/* Compact push menus sit above a dimmed page while moving it, so the menu
+   keeps an edge shadow. Wide-shell push menus become flat navigation rails in
+   the responsive container query below. Reveal never elevates the menu. */
+.g3-sheet.g3-sheet-left.g3-sheet-push.g3-sheet-open {
+    box-shadow: 8px 0 28px var(--color-shadow), 2px 0 8px var(--color-shadow);
+}
+
+.g3-sheet.g3-sheet-right.g3-sheet-push.g3-sheet-open {
+    box-shadow: -8px 0 28px var(--color-shadow), -2px 0 8px var(--color-shadow);
+}
+
+.g3-sheet.g3-sheet-side.g3-sheet-reveal {
+    box-shadow: none;
+}
+
+/* Menu is a persistent navigation layout at every shell width. Unlike Push,
+   it never renders a dismiss backdrop or moves part of the page off-screen;
+   the page reflows into the remaining width instead. Because the page sits
+   flush beside it - header included - the rail carries its own hairline edge
+   and a soft shadow so the seam stays readable on same-coloured surfaces. */
+.g3-sheet.g3-sheet-side.g3-sheet-menu {
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.g3-sheet.g3-sheet-left.g3-sheet-menu {
+    box-shadow: 1px 0 0 var(--color-card-border),
+        4px 0 16px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+}
+
+.g3-sheet.g3-sheet-right.g3-sheet-menu {
+    box-shadow: -1px 0 0 var(--color-card-border),
+        -4px 0 16px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+}
+
+.g3-app-shell:has(> .g3-sheet-side.g3-sheet-menu)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+    transition: width var(--transition-normal) var(--transition-md),
+        margin-left var(--transition-normal) var(--transition-md),
+        margin-right var(--transition-normal) var(--transition-md);
+}
+
+.g3-app-shell:has(> .g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)),
+.g3-app-shell:has(> .g3-sheet-right.g3-sheet-menu.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    width: calc(100% - var(--g3-side-sheet-width));
+}
+
+.g3-app-shell:has(> .g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    margin-left: var(--g3-side-sheet-width);
+}
+
+.g3-app-shell:has(> .g3-sheet-right.g3-sheet-menu.g3-sheet-open)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
+    margin-right: var(--g3-side-sheet-width);
 }
 /* -- Spinner -- */
 
@@ -1730,6 +1933,12 @@ body.g3-overlay-scroll-locked {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.g3-select-icon {
+    transition: transform var(--transition-normal) var(--transition-md);
+}
+.g3-select-btn-md[aria-expanded="true"] .g3-select-icon {
+    transform: rotate(180deg);
+}
 .g3-select-btn:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -1939,6 +2148,7 @@ textarea.g3-field {
 /* -- Body / App Shell -- */
 
 .g3-app-shell {
+    --g3-side-sheet-width: min(18rem, 72cqw);
     isolation: isolate;
     container-name: g3-app-shell;
     container-type: inline-size;
@@ -2482,17 +2692,10 @@ textarea.g3-field {
     user-select: none;
 }
 
-/* Inset lists share the card surface treatment per platform, with row
-   separators inside the elevated container. */
-/* Inset means "a surface distinct from the one behind it".
-   --color-card-inset is not enough on its own: several themes set it within a
-   few units of --color-card, and sheets and modals *are* --color-card, so an
-   inset block inside one was invisible. Deriving the tint from --color-text
-   guarantees separation in either direction — it lightens on dark themes and
-   darkens on light ones. */
+/* Inset lists keep the normal item surface while clipping it to the
+   platform-specific rounded container. */
 .g3-list-inset {
     overflow: hidden;
-    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
 .g3-list-ios.g3-list-inset {
@@ -2527,13 +2730,6 @@ textarea.g3-field {
     text-align: left;
     text-decoration: none;
     font: inherit;
-}
-
-/* Let inset lists expose their deliberately contrasted container tint. Rows
-   used to repaint themselves with --color-card, which made an action list
-   inside a sheet indistinguishable from the sheet behind it. */
-.g3-list-inset .g3-item:not(.g3-item-selected) {
-    background: transparent;
 }
 
 .g3-list[data-lines="full"] .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
@@ -2781,7 +2977,7 @@ textarea.g3-field {
     max-height: var(--g3-swipe-row-max-height, 7.5rem);
     overflow: hidden;
     isolation: isolate;
-    background: var(--color-bg-secondary);
+    background: var(--color-card);
     touch-action: pan-y;
     transition: max-height 180ms var(--transition-md), margin 180ms var(--transition-md), opacity 140ms ease;
 }
@@ -2793,7 +2989,21 @@ textarea.g3-field {
     display: flex;
     overflow: hidden;
     width: var(--g3-swipe-action-width, 88px);
-    transform: translateZ(0);
+    visibility: visible;
+    transition: visibility 0s linear 0s;
+}
+
+/* Closed actions sit beneath a composited content layer. Keep them out of the
+   paint tree until a swipe exposes them so subpixel edges cannot bleed through.
+
+   The row reports itself closed the moment the drag is released, but the
+   content still needs a full transition to slide back over the actions. Hiding
+   on that signal alone would snap the action colour away and leave the row
+   travelling across bare card. Delaying only the hide - opening stays instant -
+   keeps the colour underneath until the content has covered it. */
+.g3-swipe-actions[aria-hidden="true"] {
+    visibility: hidden;
+    transition-delay: var(--transition-normal);
 }
 
 .g3-swipe-actions-start {
@@ -2826,14 +3036,30 @@ textarea.g3-field {
 }
 
 .g3-swipe-content {
+    --g3-swipe-edge: var(--color-card);
     position: relative;
     z-index: 1;
+    overflow: hidden;
     background: var(--color-card);
     transform: translate3d(var(--g3-swipe-offset, 0px), 0, 0);
     transition: transform var(--transition-normal) var(--transition-md), opacity 140ms ease;
     will-change: transform;
-    backface-visibility: hidden;
-    contain: paint;
+    /* The content carries the drag transform, so it rasterizes on its own
+       compositing layer while the action colours paint in the row's layer
+       underneath. Row heights come from text metrics and land on fractional
+       pixels, so the two layers round to different device pixels and the action
+       colour bleeds through as a hairline along the row's edge. Rows other than
+       the last hide this behind their 1px divider, which is why only the bottom
+       row shows it. These guards paint the row's own colour just outside the
+       content box - in the content's layer, so they travel with the drag and
+       only ever cover the part the content still occupies. `overflow: hidden`
+       on the row clips them, so they cost no height. */
+    box-shadow: 0 1px 0 var(--g3-swipe-edge), 0 -1px 0 var(--g3-swipe-edge);
+}
+
+/* Keep the guard the same colour as the row it is guarding. */
+.g3-swipe-content:has(.g3-item-selected) {
+    --g3-swipe-edge: color-mix(in srgb, var(--color-focused) 8%, var(--color-card));
 }
 
 .g3-swipe-item[data-state="exiting"] .g3-swipe-content {
@@ -2884,6 +3110,11 @@ textarea.g3-field {
     .g3-swipe-item,
     .g3-swipe-content {
         transition: none;
+    }
+
+    /* Nothing is sliding back, so the actions have nothing to wait for. */
+    .g3-swipe-actions[aria-hidden="true"] {
+        transition-delay: 0s;
     }
 }
 /* -- Toast, accordion, and refresher -- */
@@ -3408,7 +3639,11 @@ textarea.g3-field {
    same component tree adapt automatically while embedded/narrow app shells
    continue to render with mobile chrome inside a wide desktop page. */
 @container g3-app-shell (min-width: 48rem) {
-    .g3-navbar {
+    /* The transitions feature adds .route-transition-base to Navbar and its
+       stylesheet intentionally loads after this one. The extra shell
+       specificity keeps that generic transition layout from resetting the
+       responsive rail back to display:flex. */
+    .g3-app-shell .g3-navbar {
         --g3-navbar-rail-width: 4rem;
         display: grid;
         grid-template-columns: var(--g3-navbar-rail-width) minmax(0, 1fr);
@@ -3437,12 +3672,9 @@ textarea.g3-field {
         z-index: 20;
         grid-column: 1;
         grid-row: 1 / -1;
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-auto-rows: max-content;
-        align-content: start;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-items: center;
         gap: 0.375rem;
         min-height: 0;
         padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
@@ -3454,6 +3686,19 @@ textarea.g3-field {
         border-right: 1px solid var(--color-card-border);
         background: var(--color-card);
         box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+    }
+
+    /* A flexible rail spacer groups marked account/settings destinations at
+       the bottom while unmarked primary destinations remain at the top. */
+    .g3-navbar > .g3-navbar-tab-bar::before {
+        content: "";
+        order: 1;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .g3-navbar-tab-desktop-bottom {
+        order: 2;
     }
 
     .g3-navbar-ios .g3-navbar-tab-bar,
@@ -3582,11 +3827,102 @@ textarea.g3-field {
         padding: 0 1rem 0.75rem;
     }
 
+    /* A Material toolbar is a tab strip, and its active indicator reads as an
+       underline of the header itself - so it stays flush with the header's
+       bottom edge at every width, exactly as it does on a compact shell. The
+       inset above is for iOS, whose pill sits deliberately clear of the edge. */
+    .g3-header-md .g3-header-toolbar {
+        padding-bottom: 0;
+    }
+
     .g3-header-toolbar .g3-segment-toolbar.g3-segment-ios,
     .g3-header-toolbar .g3-segment-toolbar.g3-segment-md {
         width: min(100%, 30rem);
         max-width: 30rem;
         margin-inline: 0;
+    }
+
+    /* Bottom sheets stay recognisably sheet-like on a wide shell, but no
+       longer span the full display. This mirrors Ionic's compact tablet and
+       desktop overlay treatment while preserving the same component state. */
+    .g3-sheet.g3-sheet-bottom {
+        right: auto;
+        bottom: 1.5rem;
+        left: 50%;
+        width: min(36rem, calc(100% - 3rem));
+    }
+
+    .g3-sheet.g3-sheet-bottom.g3-sheet-open {
+        transform: translate3d(-50%, var(--g3-sheet-drag-y, 0px), 0);
+    }
+
+    .g3-sheet.g3-sheet-bottom.g3-sheet-closed {
+        transform: translate3d(-50%, calc(100% + 4.5rem), 0);
+    }
+
+    .g3-sheet-ios.g3-sheet-bottom,
+    .g3-sheet-md.g3-sheet-bottom {
+        border-radius: 1rem;
+        box-shadow: 0 18px 54px color-mix(in srgb, var(--color-shadow) 68%, transparent);
+    }
+
+    .g3-sheet-md.g3-sheet-bottom {
+        border-radius: 0.75rem;
+    }
+
+    .g3-sheet.g3-sheet-bottom .g3-sheet-content,
+    .g3-select-sheet.g3-sheet-bottom .g3-sheet-content {
+        max-height: min(70dvh, 30rem);
+        padding-bottom: 1rem;
+    }
+
+    .g3-select-sheet .g3-select-option {
+        padding-inline: 1.25rem;
+        text-align: left;
+    }
+
+    /* Alert-width dialogs read as cramped on desktop. Keep confirmations
+       compact while giving generic modal content enough room to breathe. */
+    .g3-modal-card {
+        width: min(30rem, calc(100% - 4rem));
+        max-height: calc(100dvh - 4rem);
+        gap: 1.125rem;
+    }
+
+    .g3-modal-ios {
+        padding: 1.75rem;
+        border-radius: 1rem;
+    }
+
+    .g3-modal-md {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+    }
+
+    .g3-modal-title {
+        font-size: 1.25rem;
+    }
+
+    /* Toasts use a readable snackbar width on desktop instead of stretching
+       between both viewport gutters. Preserve each vertical position while
+       centring the component on the inline axis. */
+    .g3-toast {
+        right: auto;
+        left: 50%;
+        width: min(30rem, calc(100% - 3rem));
+        transform: translate3d(-50%, 0.5rem, 0) scale(0.98);
+    }
+
+    .g3-toast[data-state="open"] {
+        transform: translate3d(-50%, 0, 0) scale(1);
+    }
+
+    .g3-toast-middle {
+        transform: translate3d(-50%, calc(-50% + 0.5rem), 0) scale(0.98);
+    }
+
+    .g3-toast-middle[data-state="open"] {
+        transform: translate3d(-50%, -50%, 0) scale(1);
     }
 
     .g3-body-content {
@@ -3617,5 +3953,53 @@ textarea.g3-field {
         border-radius: 999px;
         background: var(--color-card-border);
         background-clip: padding-box;
+    }
+}
+
+/* A header only becomes a single-row desktop toolbar once the shell itself is
+   wide enough for a readable title, controls, and end actions. Keeping compact
+   desktop shells on the two-row treatment avoids truncating every title and
+   gives iOS segmented controls a deliberate bottom inset. */
+@container g3-app-shell (min-width: 64rem) {
+    .g3-header-with-toolbar {
+        display: grid;
+        grid-template-columns: auto minmax(8rem, 1fr) minmax(16rem, 30rem) minmax(0, 1fr) auto;
+        grid-template-rows: minmax(4rem, auto);
+        align-items: center;
+        column-gap: 0.75rem;
+        min-height: 4rem;
+        padding: 0 1rem;
+    }
+
+    .g3-header-with-toolbar > .g3-header-row {
+        display: contents;
+    }
+
+    .g3-header-with-toolbar .g3-header-start-slot {
+        grid-column: 1;
+    }
+
+    .g3-header-with-toolbar .g3-header-title {
+        grid-column: 2;
+    }
+
+    .g3-header-with-toolbar .g3-header-end-slot {
+        grid-column: 5;
+    }
+
+    .g3-header-with-toolbar > .g3-header-toolbar {
+        grid-column: 3;
+        align-self: center;
+        min-height: 0;
+        padding: 0.5rem 0;
+    }
+
+    /* Inline in a single row, a Material tab strip still has to reach the
+       header's bottom edge for its indicator to land there, so it fills the row
+       rather than sitting centred in it. */
+    .g3-header-md.g3-header-with-toolbar > .g3-header-toolbar {
+        align-self: stretch;
+        align-items: stretch;
+        padding: 0;
     }
 }

@@ -53,6 +53,9 @@ pub fn PlaygroundDemoFrame(
     center: Option<bool>,
     class: Option<String>,
 ) -> Element {
+    // Overlays in a demo are contained by the simulated device. Locking the
+    // document body here would incorrectly freeze the playground around it.
+    crate::components::overlay_scroll::disable_body_scroll_lock_for_subtree();
     let preview_cls = crate::theme::merge_classes("g3-playground-preview", class.as_deref());
     let mode = crate::theme::use_component_mode(None);
     let body_cls = if center.unwrap_or(true) {
@@ -63,6 +66,11 @@ pub fn PlaygroundDemoFrame(
 
     rsx! {
         div { class: "g3-playground-demo-stack",
+            // Controls lead the stack so you set the case up before looking at
+            // the preview, and so tab order follows what you see.
+            if let Some(controls) = controls {
+                div { class: "playground-controls-pane", {controls} }
+            }
             div { class: preview_cls,
                 if app.unwrap_or(true) {
                     crate::components::AppWrapper { mode, class: "g3-playground-device-app",
@@ -71,9 +79,6 @@ pub fn PlaygroundDemoFrame(
                 } else {
                     div { class: "g3-playground-raw-surface", {children} }
                 }
-            }
-            if let Some(controls) = controls {
-                div { class: "playground-controls-pane", {controls} }
             }
         }
     }
