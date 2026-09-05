@@ -1,6 +1,5 @@
 //! Style constants for Fab (floating action button) component.
 #![allow(dead_code)]
-
 pub const FAB_CONTAINER: &str = "g3-fab-container";
 pub const FAB_VERTICAL_TOP: &str = "g3-fab-vertical-top";
 pub const FAB_VERTICAL_CENTER: &str = "g3-fab-vertical-center";
@@ -21,7 +20,6 @@ pub const FAB_LIST_TOP: &str = "g3-fab-list-top";
 pub const FAB_LIST_BOTTOM: &str = "g3-fab-list-bottom";
 pub const FAB_LIST_START: &str = "g3-fab-list-start";
 pub const FAB_LIST_END: &str = "g3-fab-list-end";
-
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("FAB_CONTAINER", FAB_CONTAINER),

@@ -1,17 +1,14 @@
 //! Segment control with iOS and Android styling.
-
 use super::header::HeaderToolbarContext;
 use super::segment_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::{core::DynamicNode, prelude::*};
-
 #[derive(Clone)]
 struct SegmentGroupContext {
     active: Signal<usize>,
     on_change: Option<Callback<usize>>,
     defer_active: bool,
 }
-
 #[component]
 pub fn SegmentGroup(
     active: Signal<usize>,
@@ -24,18 +21,15 @@ pub fn SegmentGroup(
     let mode = use_component_mode(mode);
     let segment_count = count_segment_children(&children);
     let in_toolbar = try_consume_context::<HeaderToolbarContext>().is_some();
-
     provide_context(SegmentGroupContext {
         active,
         on_change,
         defer_active: defer_active.unwrap_or(false),
     });
-
     let segment_cls = match mode {
         ComponentMode::Ios => s::SEGMENT_IOS,
         ComponentMode::Md => s::SEGMENT_MD,
     };
-
     rsx! {
         div {
             class: merge_classes(
@@ -49,14 +43,12 @@ pub fn SegmentGroup(
         }
     }
 }
-
 fn count_segment_children(children: &Element) -> usize {
     children
         .as_ref()
         .map(|node| count_dynamic_components(&node.dynamic_nodes).max(1))
         .unwrap_or(1)
 }
-
 fn count_dynamic_components(nodes: &[DynamicNode]) -> usize {
     nodes
         .iter()
@@ -82,12 +74,10 @@ pub fn SegmentButton(
     let mut context = use_context::<SegmentGroupContext>();
     let disabled = disabled.unwrap_or(false);
     let selected = (context.active)() == index;
-
     let btn_cls = match mode {
         ComponentMode::Ios => s::SEGMENT_BTN_IOS,
         ComponentMode::Md => s::SEGMENT_BTN_MD,
     };
-
     rsx! {
         button {
             class: merge_classes(btn_cls, class.as_deref()),
@@ -118,7 +108,6 @@ pub fn SegmentPlaygroundDemo() -> Element {
     let toolbar_active = use_signal(|| 0_usize);
     let standalone_active = use_signal(|| 0_usize);
     let playground_mode = crate::use_component_mode(None);
-
     rsx! {
         crate::PlaygroundDemoFrame { app: false, center: false,
             crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",

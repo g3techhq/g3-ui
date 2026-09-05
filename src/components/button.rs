@@ -1,9 +1,7 @@
 //! Button component with iOS/Android mode support.
-
 use super::button_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
-
 /// Visual variant of the button.
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ButtonStyle {
@@ -23,7 +21,6 @@ pub enum ButtonStyle {
     /// danger color instead of the accent color.
     Danger,
 }
-
 /// Button size.
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ButtonSize {
@@ -35,7 +32,6 @@ pub enum ButtonSize {
     /// Prominent, for a full-width primary call to action.
     Lg,
 }
-
 #[component]
 pub fn Button(
     style: Option<ButtonStyle>,
@@ -58,7 +54,6 @@ pub fn Button(
         ComponentMode::Ios => s::IOS,
         ComponentMode::Md => s::MD,
     };
-
     let style_cls = match style.unwrap_or_default() {
         ButtonStyle::Solid => s::SOLID,
         ButtonStyle::Outline => s::OUTLINE,
@@ -66,26 +61,22 @@ pub fn Button(
         ButtonStyle::Neutral => s::NEUTRAL,
         ButtonStyle::Danger => s::DANGER,
     };
-
     let size_cls = match size.unwrap_or_default() {
         ButtonSize::Sm => s::SM,
         ButtonSize::Md => s::MD_SIZE,
         ButtonSize::Lg => s::LG,
     };
-
     let expand_cls = if expand.unwrap_or(false) {
         "w-full"
     } else {
         ""
     };
     let is_disabled = disabled.unwrap_or(false);
-
     let cls = merge_classes(
         format!("{} {mode_cls} {style_cls} {size_cls} {expand_cls}", s::BASE),
         class.as_deref(),
     );
     let badge_count = badge.filter(|count| *count > 0);
-
     rsx! {
         button {
             class: cls,
@@ -110,7 +101,6 @@ pub fn Button(
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn ButtonPlaygroundDemo() -> Element {
@@ -130,11 +120,11 @@ pub fn ButtonPlaygroundDemo() -> Element {
         2 => ButtonSize::Lg,
         _ => ButtonSize::Md,
     };
-
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Label".to_string(), value: label }
+                crate::Field { label: "Label"
+                            .to_string(), value: label }
                 div {
                     span { "Style" }
                     crate::SegmentGroup { active: style_index,
@@ -152,7 +142,8 @@ pub fn ButtonPlaygroundDemo() -> Element {
                         crate::SegmentButton { index: 2, "Lg" }
                     }
                 }
-                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: disabled, label: "Disabled"
+                            .to_string() }
                 crate::Checkbox { checked: expand, label: "Expand".to_string() }
             },
             Button {
@@ -160,7 +151,8 @@ pub fn ButtonPlaygroundDemo() -> Element {
                 size,
                 disabled: disabled(),
                 expand: expand(),
-                onclick: |_| {},
+                onclick: |
+                        _ | {},
                 "{label()}"
             }
         }
@@ -172,7 +164,6 @@ crate::g3_playground! {
     demo: ButtonPlaygroundDemo,
     source: "src/components/button.rs",
 }
-
 #[cfg(test)]
 mod tests {
     #[test]

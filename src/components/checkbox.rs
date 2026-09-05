@@ -1,12 +1,9 @@
 //! Checkbox component with Ionic-style label placement.
-
 use super::checkbox_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
-
 static NEXT_CHECKBOX_ID: AtomicU64 = AtomicU64::new(1);
-
 /// Where a checkbox, radio, or toggle sits relative to its label.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum ControlLabelPlacement {
@@ -21,7 +18,6 @@ pub enum ControlLabelPlacement {
     /// Label above the control, for narrow layouts and long labels.
     Stacked,
 }
-
 impl ControlLabelPlacement {
     pub(crate) fn class(self) -> &'static str {
         match self {
@@ -32,7 +28,6 @@ impl ControlLabelPlacement {
         }
     }
 }
-
 #[component]
 pub fn Checkbox(
     mut checked: Signal<bool>,
@@ -94,7 +89,6 @@ pub fn Checkbox(
         is_checked.to_string()
     };
     let aria_describedby = describedby(&hint, &error, &hint_id, &error_id);
-
     rsx! {
         button {
             class: cls,
@@ -128,17 +122,14 @@ pub fn Checkbox(
         }
     }
 }
-
 fn next_checkbox_id() -> String {
     let id = NEXT_CHECKBOX_ID.fetch_add(1, Ordering::Relaxed);
     format!("g3-checkbox-{id}")
 }
-
 fn checkbox_base_id(id: Option<String>, fallback_id: &str) -> String {
     id.filter(|value| !value.is_empty())
         .unwrap_or_else(|| fallback_id.to_string())
 }
-
 fn describedby(
     hint: &Option<String>,
     error: &Option<String>,
@@ -154,14 +145,12 @@ fn describedby(
     }
     (!ids.is_empty()).then(|| ids.join(" "))
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn CheckboxPlaygroundDemo() -> Element {
     let checked = use_signal(|| true);
     let disabled = use_signal(|| false);
     let mut indeterminate = use_signal(|| false);
-
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
@@ -194,28 +183,23 @@ pub fn CheckboxPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Checkbox",
     description: "Controlled checkbox with Ionic-style label placement.",
     demo: CheckboxPlaygroundDemo,
     source: "src/components/checkbox.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::G3ThemeProvider;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[component]
     fn CheckboxSmokeApp() -> Element {
         let checked = use_signal(|| false);
-
         rsx! {
             G3ThemeProvider { mode: ComponentMode::Ios,
                 Checkbox {
@@ -227,25 +211,21 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn checkbox_renders() {
         render(CheckboxSmokeApp);
     }
-
     #[test]
     fn checkbox_base_id_prefers_explicit_id() {
         assert_eq!(
             checkbox_base_id(Some("terms-opt-in".to_string()), "g3-checkbox-99"),
-            "terms-opt-in"
+            "terms-opt-in",
         );
     }
-
     #[test]
     fn checkbox_generated_fallback_ids_are_distinct_and_label_independent() {
         let first = next_checkbox_id();
         let second = next_checkbox_id();
-
         assert_ne!(first, second);
         assert_eq!(checkbox_base_id(None, &first), first);
         assert_eq!(checkbox_base_id(None, &second), second);

@@ -1,5 +1,4 @@
-//! Flat component module for g3_ui.
-
+//! Flat component module for g3-ui.
 mod accordion;
 mod accordion_styles;
 mod app_wrapper;
@@ -50,7 +49,7 @@ mod toast;
 mod toast_styles;
 mod toggle;
 mod toggle_styles;
-
+use crate::ComponentDescriptor;
 pub use accordion::*;
 pub use app_wrapper::*;
 pub use body::*;
@@ -76,9 +75,6 @@ pub use sheet_button::*;
 pub use spinner::*;
 pub use toast::*;
 pub use toggle::*;
-
-use crate::ComponentDescriptor;
-
 pub fn component_descriptors() -> Vec<ComponentDescriptor> {
     vec![
         demo_app::DESCRIPTOR,
@@ -107,7 +103,6 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
         app_wrapper::DESCRIPTOR,
     ]
 }
-
 #[cfg(feature = "playground")]
 pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
     vec![

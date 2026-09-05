@@ -1,11 +1,9 @@
 //! Select component - dropdown picker using a responsive sheet interface.
-
 use super::Sheet;
 use super::select_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronDown;
-
 /// One option in a `G3Select`. Construct with `SelectOption::new`, then
 /// optionally give it display text that differs from its value.
 #[derive(Clone, PartialEq)]
@@ -13,7 +11,6 @@ pub struct SelectOption {
     option_value: String,
     text: Option<String>,
 }
-
 impl From<&str> for SelectOption {
     fn from(value: &str) -> Self {
         Self {
@@ -22,7 +19,6 @@ impl From<&str> for SelectOption {
         }
     }
 }
-
 impl From<String> for SelectOption {
     fn from(value: String) -> Self {
         Self {
@@ -31,7 +27,6 @@ impl From<String> for SelectOption {
         }
     }
 }
-
 impl From<(&str, &str)> for SelectOption {
     fn from(value: (&str, &str)) -> Self {
         Self {
@@ -40,7 +35,6 @@ impl From<(&str, &str)> for SelectOption {
         }
     }
 }
-
 impl From<(String, String)> for SelectOption {
     fn from(value: (String, String)) -> Self {
         Self {
@@ -49,7 +43,6 @@ impl From<(String, String)> for SelectOption {
         }
     }
 }
-
 #[component]
 pub fn Select(
     value: Signal<String>,
@@ -65,17 +58,20 @@ pub fn Select(
         ComponentMode::Ios => s::SELECT_BTN_IOS,
         ComponentMode::Md => s::SELECT_BTN_MD,
     };
-
     rsx! {
         button {
-            class: merge_classes(format!("{} {mode_cls}", s::SELECT_BTN), class.as_deref()),
+            class: merge_classes(format!("{} {mode_cls}", s::SELECT_BTN), class
+                    .as_deref()),
             r#type: "button",
             aria_haspopup: "listbox",
             aria_expanded: is_open().to_string(),
             disabled: disabled.unwrap_or_default(),
             onclick: move |_| is_open.set(true),
             span { class: s::SELECT_VALUE, "{value()}" }
-            ChevronDown { class: format!("{} fill-gray ml-1 shrink-0", s::SELECT_ICON), size: 16 }
+            ChevronDown {
+                class: format!("{} fill-gray ml-1 shrink-0", s::SELECT_ICON),
+                size: 16,
+            }
         }
         Sheet {
             is_open,
@@ -83,7 +79,7 @@ pub fn Select(
             class: s::SELECT_SHEET,
             draggable: false,
             div { class: "flex flex-col w-full", role: "listbox",
-                for (index , option) in options.into_iter().enumerate() {
+                for (index, option) in options.into_iter().enumerate() {
                     SelectOptionComponent {
                         value,
                         is_open,
@@ -97,7 +93,6 @@ pub fn Select(
         }
     }
 }
-
 #[component]
 fn SelectOptionComponent(
     mut value: Signal<String>,
@@ -109,7 +104,6 @@ fn SelectOptionComponent(
 ) -> Element {
     let is_selected = value() == option_value;
     let option_cls = merge_classes(s::OPTION, is_selected.then_some(s::OPTION_SELECTED));
-
     rsx! {
         if !is_first {
             div {

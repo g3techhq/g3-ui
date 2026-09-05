@@ -1,9 +1,7 @@
 #![warn(missing_docs)]
-//! g3_ui - reusable UI component library.
-
+//! g3-ui - reusable UI component library.
 use manganis::asset;
 use manganis::{Asset, AssetOptions};
-
 /// The component stylesheet, linked into the document head at build time so the
 /// browser blocks first paint on it the same way it does for a hand-written
 /// `<link>`. That is what keeps an app from flashing unstyled: a stylesheet a
@@ -13,14 +11,12 @@ use manganis::{Asset, AssetOptions};
 /// mobile bundles only collect assets something links at runtime, so the head
 /// entry alone never reaches them. On web both resolve to the same URL.
 pub static UI_CSS: Asset = asset!(
-    "/assets/g3_ui.css",
+    "/assets/g3-ui.css",
     AssetOptions::css().with_static_head(true)
 );
-
 mod components;
 mod descriptor;
 mod theme;
-
 pub use components::{
     AccordionGroup, AccordionItem, Avatar, AvatarSize, Badge, Button, ButtonSize, ButtonStyle,
     Checkbox, Chip, ControlLabelPlacement, Field, InfoButton, Item, ItemDetail, ItemDivider,
@@ -29,7 +25,6 @@ pub use components::{
     SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState, Toast, ToastPosition, Toggle,
     ToggleSize,
 };
-
 pub use components::{
     AccordionGroup as G3AccordionGroup, AccordionItem as G3AccordionItem, Avatar as G3Avatar,
     Badge as G3Badge, Button as G3Button, Checkbox as G3Checkbox, Chip as G3Chip,
@@ -40,13 +35,13 @@ pub use components::{
     Spinner as G3Spinner, SwipeAction as G3SwipeAction, SwipeItem as G3SwipeItem, Toast as G3Toast,
     Toggle as G3Toggle, ToggleSize as G3ToggleSize,
 };
-
+pub use components::{AppWrapper, Body, Header};
+pub use components::{AppWrapper as G3AppWrapper, Body as G3Body, Header as G3Header};
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
     FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement, RightSlot,
     Select, SelectOption, Sheet, SheetButton, SheetPlacement, SideSheetType,
 };
-
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
     FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
@@ -55,42 +50,30 @@ pub use components::{
     SheetButton as G3SheetButton, SheetPlacement as G3SheetPlacement,
     SideSheetType as G3SideSheetType,
 };
-
-pub use components::{AppWrapper, Body, Header};
-
-pub use components::{AppWrapper as G3AppWrapper, Body as G3Body, Header as G3Header};
-
 pub use descriptor::{ComponentDescriptor, component_descriptors};
 #[cfg(feature = "playground")]
 pub use descriptor::{ComponentPlaygroundDemo, PlaygroundDemoFrame, component_playground_demos};
-
 /// Re-export the prelude for convenience.
 pub mod prelude;
-
 /// Re-export theme utilities.
 pub use theme::{
     ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
     merge_classes, set_mode, use_ambient_theme, use_component_mode,
 };
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use dioxus::prelude::*;
-
     const SEGMENT_SOURCE: &str = include_str!("components/segment.rs");
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[component]
     fn PrimitiveSmokeApp() -> Element {
         let checked = use_signal(|| false);
         let active = use_signal(|| 0_usize);
         let field_value = use_signal(String::new);
-
         rsx! {
             G3ThemeProvider { mode: ComponentMode::Ios,
                 G3Button { onclick: |_| {}, "Button" }
@@ -119,13 +102,11 @@ mod tests {
             }
         }
     }
-
     #[component]
     fn CompositeSmokeApp() -> Element {
         let sheet_open = use_signal(|| false);
         let modal_open = use_signal(|| false);
         let select_value = use_signal(|| "One".to_string());
-
         rsx! {
             G3Card { title: "Card", "Body" }
             G3Card {
@@ -156,7 +137,8 @@ mod tests {
                     onclick: |_| {},
                 }
                 G3Item {
-                    kind: ItemKind::Link("https://example.com".to_string()),
+                    kind: ItemKind::Link("https://example.com"
+                                .to_string()),
                     label: "Link",
                 }
             }
@@ -167,14 +149,14 @@ mod tests {
                 }
             }
             G3FabContainer {
-                main_button: rsx! { "Open" },
+                main_button: rsx! { "Open"
+                            },
                 list_buttons: rsx! {
                     G3FabButton { onclick: |_| {}, size: FabSize::Small, "A" }
                 },
             }
         }
     }
-
     #[component]
     fn LayoutSmokeApp() -> Element {
         rsx! {
@@ -198,17 +180,14 @@ mod tests {
             G3Skeleton { shape: SkeletonShape::Row }
         }
     }
-
     #[test]
     fn primitives_render() {
         render(PrimitiveSmokeApp);
     }
-
     #[test]
     fn composites_render() {
         render(CompositeSmokeApp);
     }
-
     #[test]
     fn layouts_render() {
         render(LayoutSmokeApp);
@@ -217,17 +196,14 @@ mod tests {
     fn mobile_primitive_aliases_render() {
         render(MobilePrimitiveAliasSmokeApp);
     }
-
     #[test]
     fn playground_source_include_uses_explicit_manifest_relative_paths() {
         let descriptor_source = include_str!("descriptor.rs");
-
         let primitives_source = include_str!("components/primitives.rs");
-
         assert!(descriptor_source.contains("source: $source:literal"));
         assert!(
             descriptor_source
-                .contains("include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/\", $source))")
+                .contains("include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/\", $source))",),
         );
         assert!(primitives_source.contains("source: \"src/components/primitives.rs\""));
         assert!(!descriptor_source.contains("include_str!(file!())"));
@@ -242,7 +218,6 @@ mod tests {
             .next()
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
-
         assert!(crate_root.join("src/components/primitives.rs").exists());
         assert!(
             crate_root
@@ -276,7 +251,6 @@ mod tests {
             );
         }
     }
-
     #[test]
     fn checkbox_is_public_registered_and_accessible() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -289,7 +263,6 @@ mod tests {
         let checkbox_source =
             std::fs::read_to_string(crate_root.join("src/components/checkbox.rs"))
                 .unwrap_or_default();
-
         assert!(crate_root.join("src/components/checkbox.rs").exists());
         assert!(
             crate_root
@@ -305,7 +278,6 @@ mod tests {
         assert!(checkbox_source.contains("aria_checked"));
         assert!(checkbox_source.contains("indeterminate"));
     }
-
     #[test]
     fn radio_group_is_public_registered_and_accessible() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -317,7 +289,6 @@ mod tests {
             .expect("library source should have a public section");
         let radio_source =
             std::fs::read_to_string(crate_root.join("src/components/radio.rs")).unwrap_or_default();
-
         assert!(crate_root.join("src/components/radio.rs").exists());
         assert!(crate_root.join("src/components/radio_styles.rs").exists());
         assert!(components_mod.contains("mod radio;"));
@@ -338,17 +309,16 @@ mod tests {
         assert!(!radio_source.contains("let tab_index = if is_disabled"));
         assert!(!radio_source.contains("group_has_selection"));
     }
-
     #[test]
     fn mobile_polish_regressions_are_guarded_in_css() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         assert!(stylesheet.contains(".g3-switch-ios.checked .g3-switch-thumb-ios"));
         assert!(stylesheet.contains("transform: translate3d(20px, -50%, 0)"));
         assert!(stylesheet.contains("right: 1rem;"));
         assert!(stylesheet.contains(".g3-list .g3-item-row:last-child .g3-item::after"));
         assert!(stylesheet.contains(".g3-swipe-actions[aria-hidden=\"true\"]"));
-        assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-sheet-content"));
+        assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-sheet-content"),);
         assert!(playground_stylesheet.contains("overflow-y: auto"));
         assert!(stylesheet.contains(".g3-checkbox:active:not(:disabled)"));
         assert!(stylesheet.contains("padding: 0.625rem 0.75rem"));
@@ -364,8 +334,7 @@ mod tests {
             .next()
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         for component in ["accordion", "refresher", "toast"] {
             assert!(
                 crate_root
@@ -375,12 +344,11 @@ mod tests {
             assert!(
                 crate_root
                     .join(format!("src/components/{component}_styles.rs"))
-                    .exists()
+                    .exists(),
             );
             assert!(components_mod.contains(&format!("mod {component};")));
             assert!(components_mod.contains(&format!("{component}::DESCRIPTOR")));
         }
-
         for symbol in [
             "AccordionGroup",
             "AccordionItem",
@@ -402,7 +370,6 @@ mod tests {
                 "{symbol} missing from prelude"
             );
         }
-
         assert!(stylesheet.contains("--g3-refresher-pull"));
         let toast_source = include_str!("components/toast.rs");
         assert!(stylesheet.contains(".g3-toast"));
@@ -423,8 +390,7 @@ mod tests {
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
         let list_source =
             std::fs::read_to_string(crate_root.join("src/components/list.rs")).unwrap_or_default();
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(crate_root.join("src/components/list.rs").exists());
         assert!(crate_root.join("src/components/list_styles.rs").exists());
         assert!(components_mod.contains("mod list;"));
@@ -467,7 +433,7 @@ mod tests {
     #[test]
     fn followup_mobile_polish_contracts_are_enforced() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let playground_source =
             std::fs::read_to_string(crate_root.join("playground/src/main.rs")).unwrap();
@@ -479,7 +445,6 @@ mod tests {
         let fab_source = include_str!("components/fab.rs");
         let sheet_source = include_str!("components/sheet.rs");
         let modal_source = include_str!("components/modal.rs");
-
         assert!(toast_source.contains("s::TIMER"));
         assert!(toast_styles.contains("g3-toast-timer"));
         assert!(stylesheet.contains(".g3-toast-timer"));
@@ -491,7 +456,7 @@ mod tests {
         assert!(stylesheet.contains(".g3-accordion-panel[data-state=\"closed\"]"));
         assert!(stylesheet.contains("user-select: none"));
         assert!(stylesheet.contains("-webkit-user-select: none"));
-        assert!(stylesheet.contains(".g3-list > .g3-swipe-item:last-child .g3-item::after"));
+        assert!(stylesheet.contains(".g3-list > .g3-swipe-item:last-child .g3-item::after"),);
         assert!(list_source.contains("DEFAULT_ACTIVATE_ACTION_WIDTH"));
         assert!(list_source.contains("DEFAULT_DISMISS_ACTION_WIDTH"));
         assert!(list_source.contains("action_width_for_behavior"));
@@ -499,7 +464,7 @@ mod tests {
         assert!(list_source.contains("crate::Checkbox { checked: inset"));
         assert!(list_source.contains("crate::SegmentGroup { active: lines_index"));
         assert!(stylesheet.contains(":has(+ .g3-item-divider)"));
-        assert!(stylesheet.contains(".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions"));
+        assert!(stylesheet.contains(".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions"),);
         assert!(stylesheet.contains("transition-duration: 560ms"));
         assert!(stylesheet.contains(".g3-navbar-md .g3-navbar-tab-selected"));
         assert!(stylesheet.contains(".g3-navbar {"));
@@ -511,17 +476,17 @@ mod tests {
         assert!(fab_source.contains("fab: rsx!"));
         assert!(stylesheet.contains(".g3-fab-container"));
         assert!(
-            sheet_source.contains("let has_handle = matches!(placement, SheetPlacement::Bottom)")
+            sheet_source.contains("let has_handle = matches!(placement, SheetPlacement::Bottom)"),
         );
         assert!(stylesheet.contains("overscroll-behavior: contain"));
-        assert!(stylesheet.contains(".g3-select-sheet.g3-sheet-bottom .g3-sheet-content"));
+        assert!(stylesheet.contains(".g3-select-sheet.g3-sheet-bottom .g3-sheet-content"),);
         assert!(modal_source.contains("onclick: move |_| open.set(false)"));
         assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"]"));
         assert!(stylesheet.contains("pointer-events: none"));
         assert!(playground_stylesheet.contains("justify-items: center"));
         assert!(playground_stylesheet.contains("width: min(390px, 100%)"));
         assert!(
-            playground_stylesheet.contains(".playground-viewport-card .playground-controls-pane")
+            playground_stylesheet.contains(".playground-viewport-card .playground-controls-pane"),
         );
         assert!(playground_stylesheet.contains("touch-action: pan-y"));
         assert!(playground_source.contains("g3_ui::List"));
@@ -536,11 +501,10 @@ mod tests {
         assert!(line_source.contains("g3-line-demo-surface-horizontal"));
         assert!(stylesheet.contains(".g3-line-demo-surface-horizontal"));
     }
-
     #[test]
     fn playground_has_no_component_clone_controls() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let button_source = include_str!("components/button.rs");
         let field_source = include_str!("components/field.rs");
@@ -560,7 +524,6 @@ mod tests {
             .map(|entry| std::fs::read_to_string(entry.path()).unwrap())
             .collect::<Vec<_>>()
             .join("\n");
-
         for forbidden in [
             "g3-playground-control",
             "g3-playground-check",
@@ -570,10 +533,9 @@ mod tests {
             assert!(!component_sources.contains(forbidden), "found {forbidden}");
             assert!(
                 !playground_stylesheet.contains(forbidden),
-                "stylesheet still defines {forbidden}"
+                "stylesheet still defines {forbidden}",
             );
         }
-
         assert!(button_source.contains("crate::Field"));
         assert!(field_source.contains("crate::Field"));
         assert!(toggle_source.contains("crate::Checkbox"));
@@ -596,8 +558,8 @@ mod tests {
         assert!(list_source.contains("DISMISS_EXIT_MS: u64 = 560"));
         assert!(stylesheet.contains("transition-duration: 560ms"));
         assert!(stylesheet.contains(
-            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions-end .g3-swipe-action"
-        ));
+            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions-end .g3-swipe-action",
+        ),);
         assert!(stylesheet.contains("justify-content: flex-end"));
         assert!(sheet_source.contains("crate::List"));
         assert!(stylesheet.contains(".g3-sheet-handle-wrap-ios"));
@@ -617,7 +579,6 @@ mod tests {
             .next()
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
-
         assert!(!crate_root.join("src/components/settings_group.rs").exists());
         assert!(
             !crate_root
@@ -637,14 +598,13 @@ mod tests {
             );
             assert!(
                 !prelude_source.contains(symbol),
-                "{symbol} should not be in prelude"
+                "{symbol} should not be in prelude",
             );
         }
     }
-
     #[test]
     fn mobile_primitive_styles_use_shared_theme_tokens() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         for selector in [
             ".g3-badge",
             ".g3-avatar",
@@ -662,18 +622,15 @@ mod tests {
     #[test]
     fn mobile_primitives_keep_accessible_defaults() {
         let primitives_source = include_str!("components/primitives.rs");
-
         assert!(primitives_source.contains("unwrap_or(100.0)"));
         assert!(primitives_source.contains("let label = alt"));
         assert!(primitives_source.contains("or_else(|| fallback.clone())"));
         assert!(primitives_source.contains("unwrap_or_else(|| \"Avatar\".to_string())"));
         assert!(primitives_source.contains("aria_label: label"));
     }
-
     #[test]
     fn mobile_primitive_motion_respects_reduced_motion() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains("@media (prefers-reduced-motion: reduce)"));
         assert!(stylesheet.contains(".g3-progress-indeterminate .g3-progress-fill"));
         assert!(stylesheet.contains(".g3-skeleton"));
@@ -681,8 +638,7 @@ mod tests {
     }
     #[test]
     fn button_styles_leave_layout_spacing_to_the_caller() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         for selector in [
             ".g3-btn-outline",
             ".g3-btn-clear",
@@ -697,36 +653,31 @@ mod tests {
                 .unwrap_or_else(|| panic!("missing {selector} style block"));
             assert!(
                 !block.contains("margin:"),
-                "{selector} should not add outside margins"
+                "{selector} should not add outside margins",
             );
         }
-
         assert!(stylesheet.contains(".g3-btn-neutral"));
         assert!(stylesheet.contains(".g3-btn-content-start"));
     }
-
     #[test]
     fn select_trigger_keeps_placeholder_on_one_line() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let select_block = stylesheet
             .split(".g3-select-btn")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing select button style block");
-
         assert!(select_block.contains("white-space: nowrap"));
         assert!(select_block.contains("line-height: 1"));
     }
     #[test]
     fn buttons_have_obvious_disabled_state() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let disabled_block = stylesheet
             .split(".g3-btn:disabled")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing disabled button style block");
-
         assert!(disabled_block.contains("opacity: 0.45"));
         assert!(disabled_block.contains("cursor: not-allowed"));
         assert!(disabled_block.contains("filter: grayscale"));
@@ -734,11 +685,9 @@ mod tests {
         assert!(stylesheet.contains(".g3-btn:disabled:hover"));
         assert!(stylesheet.contains(".g3-btn:disabled:active"));
     }
-
     #[test]
     fn provider_buttons_match_google_typography_and_alignment() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains("font-family: \"G3 Provider Roboto\""));
         let provider_font = stylesheet
             .split("@font-face")
@@ -746,7 +695,6 @@ mod tests {
             .and_then(|rest| rest.split('}').next())
             .expect("missing provider font face");
         assert!(provider_font.contains("font-weight: 500"));
-
         let neutral_block = stylesheet
             .split(".g3-btn-neutral")
             .nth(1)
@@ -756,14 +704,12 @@ mod tests {
         assert!(neutral_block.contains("color: var(--color-text)"));
         assert!(neutral_block.contains("border: 1px solid var(--color-card-border)"));
         assert!(!neutral_block.contains("background: white"));
-
         let neutral_button_block = stylesheet
             .split(".g3-btn.g3-btn-neutral")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing neutral button typography block");
         assert!(neutral_button_block.contains("font-weight: 500"));
-
         let content_block = stylesheet
             .split(".g3-btn-content-start")
             .nth(1)
@@ -771,7 +717,6 @@ mod tests {
             .expect("missing start-content style block");
         assert!(content_block.contains("justify-content: center"));
         assert!(content_block.contains("position: relative"));
-
         let start_block = stylesheet
             .split(".g3-btn-start {")
             .nth(1)
@@ -780,11 +725,9 @@ mod tests {
         assert!(start_block.contains("left: 0.75rem"));
         assert!(start_block.contains("position: absolute"));
     }
-
     #[test]
     fn layout_surfaces_have_material_contracts() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains("border-radius: 0.25rem"));
         assert!(stylesheet.contains(".g3-card-control"));
         assert!(stylesheet.contains(".g3-card-inset"));
@@ -793,10 +736,9 @@ mod tests {
         assert!(!stylesheet.contains(".g3-list-inset .g3-item:not(.g3-item-selected)"));
         assert!(!stylesheet.contains(".g3-settings-group-inset"));
     }
-
     #[test]
     fn inset_lists_keep_the_standard_item_surface() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let inset_block = stylesheet
             .split(".g3-list-inset {")
             .nth(1)
@@ -804,22 +746,18 @@ mod tests {
             .split('}')
             .next()
             .expect("missing end of inset list style block");
-
         assert!(inset_block.contains("overflow: hidden"));
         assert!(!inset_block.contains("background:"));
         assert!(stylesheet.contains("background: var(--color-card);"));
     }
-
     #[test]
     fn component_source_tree_is_flat() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
-
         assert!(crate_root.join("components").is_dir());
         assert!(!crate_root.join("atoms").exists());
         assert!(!crate_root.join("molecules").exists());
         assert!(!crate_root.join("organisms").exists());
     }
-
     #[test]
     fn settings_card_is_not_a_public_component() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -830,7 +768,6 @@ mod tests {
             .split("#[cfg(test)]")
             .next()
             .expect("library source should have a public section");
-
         assert!(!crate_root.join("src/components/settings_card.rs").exists());
         assert!(
             !crate_root
@@ -841,7 +778,6 @@ mod tests {
         assert!(!public_source.contains("SettingsCard"));
         assert!(!public_source.contains("G3SettingsCard"));
     }
-
     #[test]
     fn navbar_is_public_layout_component_and_owns_transition_base_marker() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -855,7 +791,6 @@ mod tests {
             .expect("library source should have a public section");
         let navbar_source = std::fs::read_to_string(crate_root.join("src/components/navbar.rs"))
             .unwrap_or_default();
-
         assert!(crate_root.join("src/components/navbar.rs").exists());
         assert!(crate_root.join("src/components/navbar_styles.rs").exists());
         assert!(components_mod.contains("mod navbar;"));
@@ -881,19 +816,17 @@ mod tests {
             );
         }
         assert!(navbar_source.contains("#[cfg(feature = \"transitions\")]"));
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(navbar_source.contains("ROUTE_TRANSITION_BASE_CLASS"));
         assert!(navbar_source.contains("pub fn NavbarTabBar"));
         assert!(navbar_source.contains("role: \"tab\""));
         assert!(stylesheet.contains(".g3-navbar-tab-bar"));
         assert!(stylesheet.contains(".g3-navbar-tab-selected"));
     }
-
     #[test]
     fn app_shell_navigation_adapts_to_desktop_without_duplicate_state() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let navbar_source = include_str!("components/navbar.rs");
-
         assert!(stylesheet.contains("container-name: g3-app-shell"));
         assert!(stylesheet.contains("@container g3-app-shell (min-width: 48rem)"));
         assert!(stylesheet.contains("--g3-navbar-rail-width: 4rem"));
@@ -903,23 +836,22 @@ mod tests {
         assert!(navbar_source.contains("NavbarTabDesktopPlacement"));
         assert!(stylesheet.contains(".g3-header .g3-header-toolbar"));
         assert!(stylesheet.contains(".g3-header-with-toolbar"));
-        // A Material tab indicator underlines the header itself, so it stays
-        // flush with the bottom edge at every shell width - both in the two-row
-        // wide layout and inline in the single-row one. The bottom inset that
-        // remains is iOS's, whose pill sits deliberately clear of the edge.
         assert!(
             stylesheet
-                .contains(".g3-header-md .g3-header-toolbar {\n        padding-bottom: 0;\n    }")
+                .contains(".g3-header-md .g3-header-toolbar {\n        padding-bottom: 0;\n    }",),
         );
-        assert!(stylesheet.contains(
-            ".g3-header-md.g3-header-with-toolbar > .g3-header-toolbar {\n        align-self: stretch;"
-        ));
-        assert!(stylesheet.contains(".g3-header .g3-header-toolbar {\n        justify-content"));
+        assert!(
+            stylesheet
+                .contains(
+                    ".g3-header-md.g3-header-with-toolbar > .g3-header-toolbar {\n        align-self: stretch;",
+                ),
+        );
+        assert!(stylesheet.contains(".g3-header .g3-header-toolbar {\n        justify-content"),);
         assert!(stylesheet.contains(".g3-sheet-bottom.g3-sheet-open"));
         assert!(stylesheet.contains("width: min(36rem, calc(100% - 3rem))"));
         assert!(stylesheet.contains("width: min(30rem, calc(100% - 4rem))"));
         assert!(stylesheet.contains(".g3-select-sheet .g3-select-option"));
-        assert!(stylesheet.contains(".g3-select-btn-md[aria-expanded=\"true\"] .g3-select-icon"));
+        assert!(stylesheet.contains(".g3-select-btn-md[aria-expanded=\"true\"] .g3-select-icon"),);
         assert!(stylesheet.contains(".g3-toast-middle[data-state=\"open\"]"));
         assert!(stylesheet.contains("translate3d(-50%, -50%, 0)"));
         assert!(stylesheet.contains("scrollbar-width: thin"));
@@ -932,9 +864,8 @@ mod tests {
         let app_wrapper_source = include_str!("components/app_wrapper.rs");
         let body_source = include_str!("components/body.rs");
         let body_styles = include_str!("components/body_styles.rs");
-
-        assert!(cargo.contains("transitions = [\"dep:dx-route-transitions\"]"));
-        assert!(cargo.contains("dx-route-transitions = { version = \"0.1.0\", optional = true }"));
+        assert!(cargo.contains("transitions = [\"dep:g3-route-transitions\"]"));
+        assert!(cargo.contains("g3-route-transitions = { version = \"0.1.0\", optional = true }",),);
         assert!(!body_styles.contains("route-transition-segment"));
         assert!(app_wrapper_source.contains("RouteTransitionProvider"));
         assert!(app_wrapper_source.contains("ROUTE_TRANSITION_COVER_CLASS"));
@@ -945,20 +876,9 @@ mod tests {
         let source = include_str!("components/app_wrapper.rs");
         let lib_source = include_str!("lib.rs");
         let theme_source = include_str!("theme.rs");
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
-        // Web builds get the stylesheet from the document head, but desktop and
-        // mobile bundles only collect assets something links at runtime, so
-        // AppWrapper has to keep linking it as well.
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(source.contains("UI_CSS"));
         assert!(source.contains("document::Link"));
-
-        // Unstyled-flash protection is the browser's job: `with_static_head`
-        // puts the <link> in the document head at build time, so first paint
-        // blocks on the stylesheet exactly as it would for a hand-written tag.
-        // The old approach - hide the shell, poll from JS for a sentinel custom
-        // property, then unhide - could never unhide if the round trip stalled,
-        // and its `transition: none !important` took every animation with it.
         assert!(lib_source.contains("AssetOptions::css().with_static_head(true)"));
         assert!(!theme_source.contains("CSS_PRELOAD"));
         assert!(!theme_source.contains("G3PreloadStyle"));
@@ -966,57 +886,39 @@ mod tests {
         assert!(!stylesheet.contains("g3-preload"));
         assert!(!stylesheet.contains("--g3-css-loaded"));
     }
-
     #[test]
     fn theme_defaults_are_configurable_without_mode() {
         let theme = Theme::default_light().with_focused("#22c55e");
-
         assert_eq!(theme.focused, "#22c55e");
         assert_eq!(theme.bg, "#f8f8f8");
     }
-
     #[test]
     fn app_wrapper_accepts_custom_theme_tokens() {
         let source = include_str!("components/app_wrapper.rs");
-
         assert!(source.contains("theme: Option<Theme>"));
         assert!(source.contains("effective_theme.to_style_attr()"));
         assert!(!source.contains("G3Theme { mode }"));
     }
-
     #[test]
     fn app_wrapper_falls_back_to_an_ambient_theme_for_nested_wrappers() {
         let source = include_str!("components/app_wrapper.rs");
-
         assert!(source.contains("use_ancestor_context::<Signal<Theme>>()"));
         assert!(source.contains("layout: Option<bool>"));
     }
-
     #[test]
     fn mode_and_theme_context_reach_components_that_are_already_mounted() {
         let theme_source = include_str!("theme.rs");
         let app_wrapper_source = include_str!("components/app_wrapper.rs");
         let navbar_source = include_str!("components/navbar.rs");
-
-        // `try_use_context` is a hook: it caches the context on a component's
-        // first render, which pins that component to whichever mode/theme was
-        // in effect when it mounted. Every ambient read has to go through
-        // `try_consume_context` instead.
         assert!(!theme_source.contains("try_use_context::<"));
         assert!(!app_wrapper_source.contains("try_use_context::<"));
         assert!(!navbar_source.contains("try_use_context::<"));
         assert!(theme_source.contains("try_consume_context::<G3Mode>()"));
         assert!(theme_source.contains("try_consume_context::<Signal<Theme>>()"));
-
-        // Signals in context, so that switching mode or theme re-renders a
-        // component even when none of its own props changed - which is exactly
-        // the case for a playground demo rendered with no arguments.
         assert!(theme_source.contains("pub mode: Signal<ComponentMode>"));
         assert!(theme_source.contains("fn use_context_signal"));
         assert!(theme_source.contains("pub fn use_ambient_theme"));
         assert!(app_wrapper_source.contains("use_context_signal(effective_theme)"));
-        // A component that provides context must resolve its own inherited value
-        // from an ancestor, or it reads its own published value back forever.
         assert!(app_wrapper_source.contains("use_ancestor_context::<G3Mode>()"));
         assert!(theme_source.contains("pub(crate) fn use_ancestor_context"));
         assert!(theme_source.contains("use_hook(try_consume_context::<T>)"));
@@ -1024,27 +926,21 @@ mod tests {
     }
     #[test]
     fn focused_theme_color_drives_tint_styles() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(!stylesheet.contains("rgba(0, 122, 255"));
         assert!(stylesheet.contains("color-mix(in srgb, var(--color-focused) 8%"));
         assert!(stylesheet.contains("color-mix(in srgb, var(--color-focused) 20%"));
     }
-
     #[test]
     fn color_scheme_follows_theme_not_mode() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let theme_source = include_str!("theme.rs");
-
-        // The baseline lives on :root and is emitted by every theme's inline style;
-        // mode selectors must not force a scheme (that broke dark themes in iOS mode).
         let ios_mode_block = stylesheet
             .split("[data-g3-mode=\"ios\"]")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing iOS mode block");
         assert!(!ios_mode_block.contains("color-scheme"));
-
         let root_block = stylesheet
             .split(":root {")
             .nth(1)
@@ -1053,51 +949,44 @@ mod tests {
         assert!(root_block.contains("color-scheme: light"));
         assert!(theme_source.contains("color-scheme: {}"));
     }
-
     #[test]
     fn component_colors_reference_theme_tokens_not_literals() {
-        let stylesheet = include_str!("../assets/g3_ui.css").replace("\r\n", "\n");
-
-        // Previously hardcoded component colors that ignored custom themes.
+        let stylesheet = include_str!("../assets/g3-ui.css").replace("\r\n", "\n");
         for literal in [
-            "#e9e9eb",                   // iOS switch off-track
-            "#f7f7f7",                   // iOS card pressed
-            "#4b5563",                   // message-text muted
-            "#15803d",                   // message-text success
-            "#dc2626",                   // message-text danger
-            "#b45309",                   // message-text warning
-            "#374151",                   // status-pill text
-            "#e5e7eb",                   // status-pill outline
-            "#c7c7cc",                   // iOS sheet handle
-            "rgba(255, 255, 255, 0.94)", // iOS sheet surface
-            "rgba(255,255,255,0.85)",    // translucent FAB surface
+            "#e9e9eb",
+            "#f7f7f7",
+            "#4b5563",
+            "#15803d",
+            "#dc2626",
+            "#b45309",
+            "#374151",
+            "#e5e7eb",
+            "#c7c7cc",
+            "rgba(255, 255, 255, 0.94)",
+            "rgba(255,255,255,0.85)",
         ] {
             assert!(
                 !stylesheet.contains(literal),
-                "{literal} should be replaced with a theme token"
+                "{literal} should be replaced with a theme token",
             );
         }
-
-        // Semantic message utilities now inherit the theme's semantic palette.
         assert!(
             stylesheet
-                .contains(".g3-message-text-subtle {\n    color: var(--color-label-secondary);")
+                .contains(".g3-message-text-subtle {\n    color: var(--color-label-secondary);",),
         );
         assert!(
-            stylesheet.contains(".g3-message-text-success {\n    color: var(--color-success);")
+            stylesheet.contains(".g3-message-text-success {\n    color: var(--color-success);"),
         );
-        assert!(stylesheet.contains(".g3-message-text-danger {\n    color: var(--color-danger);"));
+        assert!(stylesheet.contains(".g3-message-text-danger {\n    color: var(--color-danger);"),);
         assert!(
-            stylesheet.contains(".g3-message-text-warning {\n    color: var(--color-warning);")
+            stylesheet.contains(".g3-message-text-warning {\n    color: var(--color-warning);"),
         );
-        // Translucent iOS surfaces adapt to the theme's card color.
-        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 94%, transparent)"));
-        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 85%, transparent)"));
+        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 94%, transparent)"),);
+        assert!(stylesheet.contains("color-mix(in srgb, var(--color-card) 85%, transparent)"),);
     }
     #[test]
     fn segments_follow_ionic_mode_contracts() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let ios_button_block = stylesheet
             .split(".g3-segment-btn-ios {")
             .nth(1)
@@ -1105,7 +994,6 @@ mod tests {
             .expect("missing iOS segment button style block");
         assert!(ios_button_block.contains("min-height: 28px"));
         assert!(ios_button_block.contains("font-size: 13px"));
-
         let md_button_block = stylesheet
             .split(".g3-segment-btn-md {")
             .nth(1)
@@ -1124,80 +1012,70 @@ mod tests {
         assert!(stylesheet.contains(".g3-segment-standalone .g3-segment-btn-md"));
         assert!(stylesheet.contains(".g3-segment-standalone .g3-segment-btn-ios"));
         assert!(stylesheet.contains("min-width: 0"));
-        assert!(stylesheet.contains(".g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios"));
+        assert!(stylesheet.contains(".g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios"),);
         assert!(stylesheet.contains(
-            "--g3-segment-ios-background, color-mix(in srgb, var(--color-text) 7%, transparent)"
-        ));
+            "--g3-segment-ios-background, color-mix(in srgb, var(--color-text) 7%, transparent)",
+        ),);
         assert!(stylesheet.contains("transform 320ms cubic-bezier(0.4, 0, 0.2, 1)"));
     }
-
     #[test]
     fn closed_sheets_do_not_paint_offscreen_shadows() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let sheet_source = include_str!("components/sheet.rs");
-
         assert!(sheet_source.contains("STATE_CLOSED"));
         assert!(sheet_source.contains("let mut ever_opened = use_signal(|| false);"));
         assert!(sheet_source.contains("let mut presented_open = use_signal(|| false);"));
         assert!(sheet_source.contains("requestAnimationFrame(() => dioxus.send(true))"));
         assert!(sheet_source.contains("if !is_open_now && !ever_opened()"));
         assert!(sheet_source.contains("return rsx! {};"));
-        assert!(sheet_source.contains("let visual_open = is_open_now && presented_open();"));
+        assert!(sheet_source.contains("let visual_open = is_open_now && presented_open();"),);
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-closed"));
         assert!(stylesheet.contains("box-shadow: none"));
     }
-
     #[test]
     fn header_slots_own_top_bar_edge_spacing() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains(".g3-header-row"));
         assert!(
-            stylesheet.contains("grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr)")
+            stylesheet.contains("grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr)",),
         );
         assert!(stylesheet.contains(".g3-header-start-slot"));
         assert!(stylesheet.contains(".g3-header-end-slot"));
         assert!(stylesheet.contains("padding: 0 0.5rem"));
     }
-
     #[test]
     fn header_toolbar_and_ios_scrollbar_contracts_are_mobile_clean() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let header_source = include_str!("components/header.rs");
-
         let ios_header_block = stylesheet
             .split(".g3-header-ios")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing iOS header block");
         assert!(ios_header_block.contains("background: var(--color-card)"));
-
         let md_toolbar_block = stylesheet
             .split(".g3-header-md .g3-header-toolbar")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing MD header toolbar block");
         assert!(md_toolbar_block.contains("padding: 0"));
-
         assert!(stylesheet.contains(".g3-header-ios .g3-header-slot .g3-btn"));
         assert!(stylesheet.contains(".g3-app-shell .g3-body-content"));
-        assert!(stylesheet.contains(".g3-app-shell .g3-body-content::-webkit-scrollbar"));
+        assert!(stylesheet.contains(".g3-app-shell .g3-body-content::-webkit-scrollbar"),);
         assert!(stylesheet.contains("scrollbar-width: none"));
         assert!(stylesheet.contains(".g3-shell-md .g3-body-content"));
         assert!(stylesheet.contains("-ms-overflow-style: none"));
         assert!(header_source.contains("HeaderToolbarContext"));
         assert!(header_source.contains("provide_context(HeaderToolbarContext)"));
-        assert!(SEGMENT_SOURCE.contains("try_consume_context::<HeaderToolbarContext>()"));
+        assert!(SEGMENT_SOURCE.contains("try_consume_context::<HeaderToolbarContext>()"),);
         assert!(!SEGMENT_SOURCE.contains("toolbar: Option<bool>"));
         assert!(!SEGMENT_SOURCE.contains("toolbar.unwrap_or"));
     }
-
     #[test]
     fn body_padding_can_be_disabled_without_custom_classes() {
         let body_source = include_str!("components/body.rs");
         let body_styles = include_str!("components/body_styles.rs");
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(body_source.contains("padding: Option<bool>"));
         assert!(body_source.contains("padding.unwrap_or(true)"));
         assert!(body_source.contains("--g3-body-padding"));
@@ -1208,15 +1086,12 @@ mod tests {
         assert!(stylesheet.contains("padding: var(--g3-body-padding, 1.5rem)"));
         assert!(stylesheet.contains("--g3-body-padding: 0"));
     }
-
     #[test]
     fn body_loading_uses_the_centered_shared_spinner() {
         let source = include_str!("components/body.rs");
-
         assert!(source.contains("Spinner { center: true }"));
         assert!(!source.contains("ResourceLoading"));
     }
-
     #[test]
     fn resource_helpers_and_timeout_are_not_public_g3_ui_api() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -1227,7 +1102,6 @@ mod tests {
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
         let util_source =
             std::fs::read_to_string(crate_root.join("src/util/mod.rs")).unwrap_or_default();
-
         for symbol in [
             "ResourceLoading",
             "ResourceError",
@@ -1242,34 +1116,29 @@ mod tests {
             );
             assert!(
                 !prelude_source.contains(symbol),
-                "{symbol} is still in the prelude"
+                "{symbol} is still in the prelude",
             );
             assert!(
                 !util_source.contains(symbol),
                 "{symbol} is still in util exports"
             );
         }
-
         assert!(!crate_root.join("src/util/resource_view.rs").exists());
         assert!(!crate_root.join("src/util/timeout.rs").exists());
     }
-
     #[test]
     fn spinner_has_centering_option_for_resource_fallbacks() {
         let source = include_str!("components/spinner.rs");
         let styles = include_str!("components/spinner_styles.rs");
-
         assert!(source.contains("center: Option<bool>"));
         assert!(source.contains("if center.unwrap_or(false)"));
         assert!(styles.contains("CENTERED"));
         assert!(styles.contains("g3-spinner-centered"));
-        assert!(include_str!("../assets/g3_ui.css").contains(".g3-spinner-centered"));
+        assert!(include_str!("../assets/g3-ui.css").contains(".g3-spinner-centered"));
     }
-
     #[test]
     fn sheets_hide_scrollbars_without_skipping_close_animation() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let closed_block = stylesheet
             .split(".g3-sheet.g3-sheet-closed")
             .nth(1)
@@ -1283,40 +1152,37 @@ mod tests {
         assert!(stylesheet.contains(".g3-sheet-content"));
         assert!(stylesheet.contains("scrollbar-width: none"));
     }
-
     #[test]
     fn sheets_keep_side_open_selectors_distinct_from_closed_content_rules() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains(".g3-sheet-bottom.g3-sheet-open"));
         assert!(stylesheet.contains(".g3-sheet-left.g3-sheet-open,"));
         assert!(stylesheet.contains(".g3-sheet-right.g3-sheet-open"));
         assert!(!stylesheet.contains(".g3-sheet.g3-sheet-closed .g3-sheet-content"));
-        assert!(!stylesheet.contains(".g3-sheet-right.g3-sheet.g3-sheet-closed .g3-sheet-content"));
+        assert!(!stylesheet.contains(".g3-sheet-right.g3-sheet.g3-sheet-closed .g3-sheet-content"),);
         assert!(
             !stylesheet.contains(
-                ".g3-sheet-left.g3-sheet-open,\n.g3-sheet-right.g3-sheet.g3-sheet-closed"
-            )
+                ".g3-sheet-left.g3-sheet-open,\n.g3-sheet-right.g3-sheet.g3-sheet-closed",
+            ),
         );
     }
     #[test]
     fn overlays_lock_background_scroll_while_open() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let sheet_source = include_str!("components/sheet.rs");
         let modal_source = include_str!("components/modal.rs");
         let overlay_scroll_source = include_str!("components/overlay_scroll.rs");
         let descriptor_source = include_str!("descriptor.rs");
-
         assert!(sheet_source.contains(r#"use_lock_body_scroll(is_open);"#));
         assert!(modal_source.contains(r#"use_lock_body_scroll(open);"#));
         assert!(stylesheet.contains("body.g3-overlay-scroll-locked"));
         assert!(stylesheet.contains("overscroll-behavior: none"));
         assert!(stylesheet.contains(
-            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open)"
-        ));
+            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open)",
+        ),);
         assert!(!stylesheet.contains(
-            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-push.g3-sheet-open)"
-        ));
+            "body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-push.g3-sheet-open)",
+        ),);
         assert!(stylesheet.contains("overflow: auto"));
         let body_lock_block = stylesheet
             .split("body.g3-overlay-scroll-locked {")
@@ -1328,13 +1194,11 @@ mod tests {
         assert!(overlay_scroll_source.contains("try_consume_context"));
         assert!(descriptor_source.contains("disable_body_scroll_lock_for_subtree"));
     }
-
     #[test]
     fn sheet_backdrops_dim_and_dismiss_without_utility_class_state() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let sheet_source = include_str!("components/sheet.rs");
-
         assert!(stylesheet.contains(".g3-sheet-backdrop-open"));
         assert!(stylesheet.contains("pointer-events: auto !important"));
         assert!(stylesheet.contains("background-color: rgba(0, 0, 0, 0.5) !important"));
@@ -1349,24 +1213,22 @@ mod tests {
         assert!(sheet_source.contains("onpointerdown: move |_| is_open.set(false)"));
         assert!(sheet_source.contains("onclick: move |_| is_open.set(false)"));
         assert!(!sheet_source.contains("g3-sheet-backdrop-closed pointer-events-none"));
-        assert!(playground_stylesheet.contains(".g3-sheet-backdrop-open:not(.g3-sheet-reveal)"));
+        assert!(playground_stylesheet.contains(".g3-sheet-backdrop-open:not(.g3-sheet-reveal)"),);
         assert!(playground_stylesheet.contains("position: absolute !important"));
         assert!(playground_stylesheet.contains("inset: 0 !important"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-bottom {"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-left {"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-right {"));
         assert!(
-            playground_stylesheet.contains(".g3-playground-preview .g3-sheet.g3-sheet-bottom {")
+            playground_stylesheet.contains(".g3-playground-preview .g3-sheet.g3-sheet-bottom {"),
         );
-        assert!(!playground_stylesheet.contains(".g3-playground-preview .g3-sheet-bottom {"));
+        assert!(!playground_stylesheet.contains(".g3-playground-preview .g3-sheet-bottom {"),);
         assert!(!stylesheet.contains("box-shadow: -12px 0 36px"));
         assert!(!stylesheet.contains("box-shadow: 12px 0 36px"));
     }
-
     #[test]
     fn select_sheet_drag_is_limited_to_the_handle() {
         let sheet_source = include_str!("components/sheet.rs");
-
         assert!(sheet_source.contains("draggable: Option<bool>"));
         assert!(sheet_source.contains("let is_draggable = draggable.unwrap_or(true);"));
         assert!(sheet_source.contains("if !(is_open() && is_draggable && has_handle)"));
@@ -1377,47 +1239,36 @@ mod tests {
         assert!(sheet_source.contains("inert: (!is_open_now).then"));
         assert!(include_str!("components/select.rs").contains("draggable: false"));
     }
-
     #[test]
     fn ios_segment_buttons_do_not_use_sibling_border_separators_or_press_flash() {
-        let stylesheet = include_str!("../assets/g3_ui.css").replace("\r\n", "\n");
-
+        let stylesheet = include_str!("../assets/g3-ui.css").replace("\r\n", "\n");
         assert!(!stylesheet.contains(".g3-segment-btn-ios + .g3-segment-btn-ios"));
         assert!(!stylesheet.contains(".g3-segment-btn-ios:active"));
         assert!(stylesheet.contains(".g3-segment-btn-ios {\n"));
         assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
     }
-
     #[test]
     fn playground_menu_button_suppresses_global_button_press_fill() {
         let stylesheet = include_str!("../playground/assets/playground.css");
-
         assert!(stylesheet.contains(".playground-menu-button:active"));
         assert!(stylesheet.contains("background: transparent"));
         assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
     }
-
     #[test]
     fn toast_color_is_shown_by_a_status_dot_and_surface_tint() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let toast_source = include_str!("components/toast.rs");
-
-        // The colour signal is a leading status dot plus a faint surface tint —
-        // not the old coloured outline / left accent bar. Matches the card
-        // treatment shared by items, cards and the accordion.
         assert!(
-            !stylesheet.contains("border-inline-start: 6px solid var(--g3-toast-accent-color)")
+            !stylesheet.contains("border-inline-start: 6px solid var(--g3-toast-accent-color)"),
         );
         assert!(toast_source.contains("s::INDICATOR"));
         assert!(stylesheet.contains(".g3-toast-indicator"));
         assert!(stylesheet.contains("background: var(--g3-toast-accent-color)"));
-        assert!(stylesheet.contains("--g3-toast-surface: color-mix(in srgb, var(--color-success)"));
+        assert!(stylesheet.contains("--g3-toast-surface: color-mix(in srgb, var(--color-success)"),);
     }
-
     #[test]
     fn toast_has_distinct_ios_and_md_treatments() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let ios = stylesheet
             .split(".g3-toast-ios {")
             .nth(1)
@@ -1428,26 +1279,21 @@ mod tests {
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing .g3-toast-md block");
-
-        // iOS is a frosted, translucent pill; MD is an opaque elevated slab.
         assert!(ios.contains("backdrop-filter"));
         assert!(ios.contains("border-radius: 0.875rem"));
         assert!(!md.contains("backdrop-filter"));
         assert!(md.contains("border-radius: 4px"));
         assert!(md.contains("border: 0"));
     }
-
     #[test]
     fn checkbox_single_line_rows_center_label_and_control() {
         let checkbox_source = include_str!("components/checkbox.rs");
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let control_block = stylesheet
             .split(".g3-checkbox-control {")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing checkbox control block");
-
         assert!(checkbox_source.contains("g3-checkbox-single-line"));
         assert!(stylesheet.contains(".g3-checkbox-single-line"));
         assert!(stylesheet.contains("align-items: center"));
@@ -1461,29 +1307,25 @@ mod tests {
         assert!(stylesheet.contains("line-height: 22px;"));
         assert!(stylesheet.contains("transform: translateY(1px);"));
     }
-
     #[test]
     fn confirm_modal_playground_controls_use_shared_fields_only() {
         let source = include_str!("components/confirm_modal.rs");
-
         assert!(source.contains("crate::Field"));
         assert!(!source.contains("g3-playground-control"));
         assert!(!source.contains("g3-playground-input"));
         assert!(!source.contains("g3-playground-field"));
     }
-
     #[test]
     fn sheets_support_bottom_and_ionic_side_behaviors_without_changing_default() {
         let sheet_source = include_str!("components/sheet.rs");
         let sheet_styles = include_str!("components/sheet_styles.rs");
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let prelude_source = include_str!("prelude.rs");
         let public_source = include_str!("lib.rs")
             .split("#[cfg(test)]")
             .next()
             .expect("library source should have a public section");
-
         for symbol in ["SheetPlacement", "SideSheetType", "G3SideSheetType"] {
             assert!(
                 public_source.contains(symbol),
@@ -1520,32 +1362,36 @@ mod tests {
         assert!(stylesheet.contains(":has(> .g3-sheet-left"));
         assert!(stylesheet.contains(".g3-sheet-left.g3-sheet-reveal.g3-sheet-open"));
         assert!(stylesheet.contains("box-shadow: -12px 0 32px var(--color-shadow)"));
-        assert!(stylesheet.contains(".g3-sheet.g3-sheet-left.g3-sheet-push.g3-sheet-open"));
+        assert!(stylesheet.contains(".g3-sheet.g3-sheet-left.g3-sheet-push.g3-sheet-open"),);
         assert!(stylesheet.contains("box-shadow: 8px 0 28px var(--color-shadow)"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-side.g3-sheet-menu {"));
         assert!(stylesheet.contains("border-radius: 0"));
-        // Menu rails separate themselves from a flush page with a hairline edge
-        // plus a soft shadow rather than sitting shadowless against it.
-        assert!(stylesheet.contains(
-            ".g3-sheet.g3-sheet-left.g3-sheet-menu {\n    box-shadow: 1px 0 0 var(--color-card-border)"
-        ));
-        assert!(stylesheet.contains(
-            ".g3-sheet.g3-sheet-right.g3-sheet-menu {\n    box-shadow: -1px 0 0 var(--color-card-border)"
-        ));
+        assert!(
+            stylesheet
+                .contains(
+                    ".g3-sheet.g3-sheet-left.g3-sheet-menu {\n    box-shadow: 1px 0 0 var(--color-card-border)",
+                ),
+        );
+        assert!(
+            stylesheet
+                .contains(
+                    ".g3-sheet.g3-sheet-right.g3-sheet-menu {\n    box-shadow: -1px 0 0 var(--color-card-border)",
+                ),
+        );
         assert!(!stylesheet.contains("box-shadow: none !important"));
         assert!(stylesheet.contains(
-            ".g3-sheet-backdrop.g3-sheet-push {\n    background-color: rgba(0, 0, 0, 0.5)"
-        ));
+            ".g3-sheet-backdrop.g3-sheet-push {\n    background-color: rgba(0, 0, 0, 0.5)",
+        ),);
         assert!(
             !stylesheet
-                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-menu.g3-sheet-backdrop-open")
+                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-menu.g3-sheet-backdrop-open",),
         );
         assert!(
             !stylesheet
-                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-push.g3-sheet-backdrop-open")
+                .contains(".g3-sheet-backdrop.g3-sheet-side.g3-sheet-push.g3-sheet-backdrop-open",),
         );
         assert!(sheet_source.contains("if !is_menu"));
-        assert!(sheet_source.contains("if is_menu { \"navigation\" } else { \"dialog\" }"));
+        assert!(sheet_source.contains("if is_menu { \"navigation\" } else { \"dialog\" }"),);
         assert!(stylesheet.contains("width: calc(100% - var(--g3-side-sheet-width))"));
         assert!(stylesheet.contains("margin-left: var(--g3-side-sheet-width)"));
         assert!(stylesheet.contains("margin-right: var(--g3-side-sheet-width)"));
@@ -1557,7 +1403,6 @@ mod tests {
         assert!(playground_stylesheet.contains(".playground-selector-sheet .g3-item"));
         assert!(playground_stylesheet.contains("justify-self: center"));
     }
-
     #[test]
     fn route_sheet_page_is_not_public_component_api() {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -1567,7 +1412,6 @@ mod tests {
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
         let descriptor_source = include_str!("descriptor.rs");
-
         assert!(!public_source.contains("SheetPage"));
         assert!(!public_source.contains("G3SheetPage"));
         assert!(!public_source.contains("RouteSheetSurface"));
@@ -1585,10 +1429,9 @@ mod tests {
                 .exists()
         );
     }
-
     #[test]
     fn sheet_backdrops_can_cover_the_full_app_shell() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let body_block = stylesheet
             .split(".g3-body {")
             .nth(1)
@@ -1599,17 +1442,14 @@ mod tests {
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing sheet backdrop style block");
-
         assert!(!body_block.contains("isolation: isolate"));
         assert!(backdrop_block.contains("position: fixed"));
         assert!(backdrop_block.contains("inset: 0"));
         assert!(backdrop_block.contains("z-index"));
     }
-
     #[test]
     fn shared_message_text_styles_are_component_owned() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(stylesheet.contains(".g3-message-text"));
         assert!(stylesheet.contains(".g3-message-text-success"));
         assert!(stylesheet.contains(".g3-message-text-danger"));
@@ -1623,7 +1463,6 @@ mod tests {
         let playground_stylesheet = include_str!("../playground/assets/playground.css");
         let components_mod = include_str!("components/mod.rs");
         let button_source = include_str!("components/button.rs");
-
         assert!(
             !playground_root
                 .join("playground_gen/spec_generator.rs")
@@ -1634,43 +1473,33 @@ mod tests {
         assert!(playground_main.contains("component_playground_demos"));
         assert!(playground_main.contains("PlaygroundViewport::Mobile"));
         assert!(playground_main.contains("PlaygroundViewport::Desktop"));
-        // Shell width joined the header beside the design-language toggle, and
-        // the side-by-side comparison mode and its banner are gone with it.
         assert!(!playground_main.contains("PlaygroundViewport::Compare"));
         assert!(!playground_main.contains("playground-viewport-bar"));
         assert!(!playground_stylesheet.contains("playground-compare-grid"));
         assert!(playground_main.contains("class: \"playground-header-toggles\""));
         assert!(playground_stylesheet.contains(".playground-header-toggles"));
-        // The shell-width label survives only as an accessible name; the header
-        // toggle already says which width is showing, so the chip is gone.
         assert!(playground_main.contains("Compact desktop"));
         assert!(!playground_main.contains("playground-viewport-card-badge"));
         assert!(!playground_stylesheet.contains("playground-viewport-card-badge"));
-        // The component drawer is a rail on wide shells and a dismissible
-        // overlay once the playground page itself is phone width.
-        assert!(playground_main.contains("placement: SheetPlacement::Left(selector_side_type)"));
+        assert!(playground_main.contains("placement: SheetPlacement::Left(selector_side_type)"),);
         assert!(playground_main.contains("g3_ui::SideSheetType::Overlay"));
         assert!(playground_main.contains("g3_ui::SideSheetType::Menu"));
         assert!(playground_main.contains("fn use_compact_shell()"));
         assert!(playground_main.contains("(max-width: 760px)"));
         assert!(playground_main.contains("window.matchMedia"));
-        // Both stylesheets reach the head at build time. Loading one at runtime
-        // and the other statically left the device frame unstyled until boot.
         assert!(playground_main.contains("AssetOptions::css().with_static_head(true)"));
         assert!(!playground_main.contains("document::Link"));
         assert!(playground_main.contains("selector_open.toggle()"));
-        // Picking a demo leaves a wide-shell rail open and only dismisses the
-        // phone-width overlay that would otherwise cover the new selection.
         assert!(playground_main.contains("dismiss_on_select: compact_shell()"));
         assert!(playground_main.contains("if dismiss_on_select {"));
         assert!(
             playground_stylesheet
-                .contains(".playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open")
+                .contains(".playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open",),
         );
-        assert!(playground_stylesheet.contains("width: calc(100% - var(--g3-side-sheet-width))"));
-        assert!(playground_stylesheet.contains("margin-left: var(--g3-side-sheet-width)"));
+        assert!(playground_stylesheet.contains("width: calc(100% - var(--g3-side-sheet-width))"),);
+        assert!(playground_stylesheet.contains("margin-left: var(--g3-side-sheet-width)"),);
         assert!(
-            !playground_stylesheet.contains(".playground-root > .g3-sheet-backdrop.g3-sheet-menu")
+            !playground_stylesheet.contains(".playground-root > .g3-sheet-backdrop.g3-sheet-menu"),
         );
         assert!(components_mod.contains("button::PLAYGROUND"));
         let descriptor_source = include_str!("descriptor.rs");
@@ -1680,8 +1509,6 @@ mod tests {
         assert!(descriptor_source.contains("pub fn PlaygroundDemoFrame"));
         assert!(descriptor_source.contains("rsx! { $demo {} }"));
         assert!(!descriptor_source.contains("$demo()"));
-        // Controls sit above the preview by DOM order, so no `order` rule has
-        // to re-sort them and tab order matches the visual layout.
         let controls_at = descriptor_source
             .find("playground-controls-pane")
             .expect("controls pane missing from the demo frame");
@@ -1690,10 +1517,8 @@ mod tests {
             .expect("preview missing from the demo frame");
         assert!(controls_at < preview_at);
         assert!(!playground_stylesheet.contains("order: -1"));
-        // A five-way segment group has to fit a phone-width column without
-        // pushing the pane's grid track past the card.
         assert!(playground_stylesheet.contains("grid-template-columns: minmax(0, 1fr)"));
-        assert!(playground_stylesheet.contains(".playground-controls-pane .g3-segment-btn-md"));
+        assert!(playground_stylesheet.contains(".playground-controls-pane .g3-segment-btn-md"),);
         assert!(!playground_main.contains("PhoneFrame { {rendered_demo} }"));
         assert!(!components_mod.contains("fn render_button_demo"));
         assert!(!components_mod.contains("ComponentCategory"));
@@ -1710,7 +1535,6 @@ mod tests {
             .next()
             .expect("library source should have a public section");
         let prelude_source = std::fs::read_to_string(crate_root.join("src/prelude.rs")).unwrap();
-
         assert!(!SEGMENT_SOURCE.contains("pub fn SegmentPanel"));
         assert!(!SEGMENT_SOURCE.contains("render: Callback"));
         assert!(!SEGMENT_SOURCE.contains("render.call"));
@@ -1719,7 +1543,6 @@ mod tests {
         assert!(!prelude_source.contains("SegmentPanel"));
         assert!(!prelude_source.contains("G3SegmentPanel"));
     }
-
     #[test]
     fn segment_group_is_not_route_or_transition_aware() {
         assert!(!SEGMENT_SOURCE.contains("SegmentRouteTarget"));
@@ -1736,19 +1559,17 @@ mod tests {
         assert!(SEGMENT_SOURCE.contains("if !context.defer_active"));
         assert!(SEGMENT_SOURCE.contains("(context.active).set(index)"));
     }
-
     #[test]
     fn segments_expose_indicator_and_child_view_contracts() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let segment_styles = include_str!("components/segment_styles.rs");
-
         assert!(SEGMENT_SOURCE.contains("\"data-active\""));
         assert!(stylesheet.contains(".g3-segment-md::after"));
         assert!(stylesheet.contains(".g3-segment-ios::before"));
         assert!(stylesheet.contains("--g3-segment-count"));
         assert!(stylesheet.contains("--g3-segment-active"));
         assert!(
-            stylesheet.contains("transform: translateX(calc(var(--g3-segment-active, 0) * 100%))")
+            stylesheet.contains("transform: translateX(calc(var(--g3-segment-active, 0) * 100%))",),
         );
         assert!(!SEGMENT_SOURCE.contains("s::VIEWPORT"));
         assert!(!segment_styles.contains("VIEWPORT"));
@@ -1760,7 +1581,6 @@ mod tests {
         assert!(!stylesheet.contains("g3-segment-slide-left"));
         assert!(!stylesheet.contains("g3-segment-slide-right"));
     }
-
     #[test]
     fn segment_on_change_observes_previous_active_index() {
         let callback_index = SEGMENT_SOURCE
@@ -1769,28 +1589,23 @@ mod tests {
         let active_set_index = SEGMENT_SOURCE
             .find("(context.active).set(index)")
             .expect("missing segment active mutation");
-
         assert!(
             callback_index < active_set_index,
-            "segment on_change must run before active changes so callers can compute slide direction"
+            "segment on_change must run before active changes so callers can compute slide direction",
         );
     }
-
     #[test]
     fn segment_group_does_not_own_child_panel_layout() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(!stylesheet.contains(".g3-segment-viewport"));
         assert!(!stylesheet.contains(".g3-segment-view"));
         assert!(!stylesheet.contains(".g3-segment-view-exiting"));
-        assert!(!SEGMENT_SOURCE.contains("{children}\n            }\n        }\n    }\n}"));
+        assert!(!SEGMENT_SOURCE.contains("{children}\n            }\n        }\n    }\n}"),);
     }
-
     #[test]
     fn modal_card_owns_fixed_centering_and_exit_motion() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let modal_source = include_str!("components/modal.rs");
-
         let card_block = stylesheet
             .split(".g3-modal-card")
             .nth(1)
@@ -1798,40 +1613,33 @@ mod tests {
             .split('}')
             .next()
             .expect("missing modal card declaration block");
-
         assert!(card_block.contains("position: fixed"));
         assert!(card_block.contains("top: 50%"));
         assert!(card_block.contains("left: 50%"));
         assert!(stylesheet.contains(".g3-modal[data-state=\"closed\"]"));
         assert!(stylesheet.contains("@keyframes g3-modal-out"));
-        assert!(!modal_source.contains("top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"));
+        assert!(!modal_source.contains("top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"),);
     }
-
     #[test]
     fn modal_close_motion_follows_overlay_closed_state() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
-        assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"] .g3-modal"));
+        let stylesheet = include_str!("../assets/g3-ui.css");
+        assert!(stylesheet.contains(".g3-modal-overlay[data-state=\"closed\"] .g3-modal"),);
         assert!(stylesheet.contains("g3-modal-out var(--g3-modal-duration)"));
         assert!(stylesheet.contains("--g3-modal-duration: 220ms"));
         assert!(!stylesheet.contains("--g3-modal-debug-duration: 600ms"));
         assert!(stylesheet.contains("calc(-50% + 2rem)"));
     }
-
     #[test]
     fn segment_panel_edge_clipping_styles_are_removed() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(!stylesheet.contains(".g3-body-content > .g3-segment-viewport"));
         assert!(!stylesheet.contains("width: calc(100% + 3rem)"));
         assert!(!stylesheet.contains("width: calc(100% + 20rem)"));
         assert!(!stylesheet.contains("width: calc(100% + 40rem)"));
     }
-
     #[test]
     fn segments_use_custom_properties_for_animated_any_count_indicators() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         assert!(!SEGMENT_SOURCE.contains("count: Option<usize>"));
         assert!(SEGMENT_SOURCE.contains("count_segment_children"));
         assert!(SEGMENT_SOURCE.contains("count_dynamic_components"));
@@ -1839,15 +1647,13 @@ mod tests {
         assert!(SEGMENT_SOURCE.contains("--g3-segment-count"));
         assert!(SEGMENT_SOURCE.contains("--g3-segment-active"));
         assert!(stylesheet.contains("width: calc(100% / var(--g3-segment-count, 3))"));
-        assert!(stylesheet.contains("width: calc((100% - 8px) / var(--g3-segment-count, 3))"));
-
+        assert!(stylesheet.contains("width: calc((100% - 8px) / var(--g3-segment-count, 3))"),);
         assert!(
-            stylesheet.contains("transform: translateX(calc(var(--g3-segment-active, 0) * 100%))")
+            stylesheet.contains("transform: translateX(calc(var(--g3-segment-active, 0) * 100%))",),
         );
         assert!(!stylesheet.contains(":nth-child(5):last-child"));
         assert!(!stylesheet.contains("translateX(400%)"));
     }
-
     #[test]
     fn segment_demo_shows_toolbar_context_and_body_card() {
         assert!(SEGMENT_SOURCE.contains("crate::Header"));
@@ -1856,27 +1662,23 @@ mod tests {
         assert!(SEGMENT_SOURCE.contains("crate::Card { title: \"Standalone\""));
         assert!(!SEGMENT_SOURCE.contains("label: \"Toolbar\""));
     }
-
     #[test]
     fn swipe_items_draw_parent_list_dividers_between_swipe_rows() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
+        let stylesheet = include_str!("../assets/g3-ui.css");
         let swipe_content_block = stylesheet
             .split(".g3-swipe-content {")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing swipe content style block");
-
         assert!(stylesheet.contains(".g3-list[data-lines=\"inset\"] > .g3-swipe-item"));
         assert!(stylesheet.contains(".g3-list[data-lines=\"full\"] > .g3-swipe-item"));
-        assert!(stylesheet.contains(".g3-list[data-lines=\"none\"] > .g3-swipe-item::after"));
+        assert!(stylesheet.contains(".g3-list[data-lines=\"none\"] > .g3-swipe-item::after"),);
         assert!(stylesheet.contains("pointer-events: none"));
         assert!(swipe_content_block.contains("background: var(--color-card)"));
     }
-
     #[test]
     fn grouped_surfaces_share_ionic_platform_elevation_contract() {
-        let stylesheet = include_str!("../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../assets/g3-ui.css");
         for (selector, label) in [
             (".g3-card-ios {", "iOS card"),
             (".g3-list-ios.g3-list-inset {", "iOS inset list"),
@@ -1889,21 +1691,19 @@ mod tests {
                 .split('}')
                 .next()
                 .unwrap_or_else(|| panic!("missing {label} declaration block"));
-
             assert!(
                 block.contains("border-radius: 8px"),
-                "{label} radius differs from card"
+                "{label} radius differs from card",
             );
             assert!(
                 block.contains("box-shadow: var(--g3-shadow-ios-card)"),
-                "{label} shadow differs from card"
+                "{label} shadow differs from card",
             );
             assert!(
                 block.contains("border: 0"),
-                "{label} should not use a colored border"
+                "{label} should not use a colored border",
             );
         }
-
         for (selector, label) in [
             (".g3-card-md {", "MD card"),
             (".g3-list-md.g3-list-inset {", "MD inset list"),
@@ -1916,14 +1716,13 @@ mod tests {
                 .split('}')
                 .next()
                 .unwrap_or_else(|| panic!("missing {label} declaration block"));
-
             assert!(
                 block.contains("border-radius: 4px"),
-                "{label} radius differs from card"
+                "{label} radius differs from card",
             );
             assert!(
                 block.contains("box-shadow: var(--g3-shadow-md-elevation-1)"),
-                "{label} shadow differs from card"
+                "{label} shadow differs from card",
             );
         }
     }
@@ -1932,7 +1731,6 @@ mod tests {
         let crate_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let cargo = std::fs::read_to_string(crate_root.join("Cargo.toml")).unwrap();
         let field_source = include_str!("components/field.rs");
-
         assert!(cargo.contains("dioxus-sdk-time"));
         assert!(field_source.contains("dioxus_sdk_time::sleep"));
         assert!(!field_source.contains("gloo_timers"));

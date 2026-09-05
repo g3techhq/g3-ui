@@ -1,15 +1,11 @@
 //! Pull-to-refresh wrapper component.
-
 use super::refresher_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
-
 pub const DEFAULT_REFRESH_THRESHOLD: f64 = 48.0;
 pub const REFRESH_ELASTIC_FACTOR: f64 = 0.42;
-
 static REFRESHER_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
-
 /// Live state of a pull-to-refresh gesture, handed to the refresher's
 /// render callback so a custom indicator can follow the pull.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -23,21 +19,6 @@ pub struct RefresherState {
     /// until the refresh completes.
     pub refreshing: bool,
 }
-
-// The pull gesture is tracked in JS, attached directly to the refresher DOM
-// node — the same approach the Sheet uses for drag-to-dismiss. This fixes the
-// "snaps straight back / does nothing" bug: the enclosing scroll container was
-// claiming the vertical drag before the pull was ever visible.
-//
-// The key detail is *how* we stop that scroll. Setting `touch-action: none`
-// mid-gesture is too late (the browser has already committed to scrolling), and
-// `preventDefault()` on a pointer event does not cancel scrolling at all. The
-// only thing that reliably halts an in-progress touch scroll is
-// `preventDefault()` on a **non-passive `touchmove`** listener — so touch uses
-// that, while the mouse path (desktop dev) rides pointer events. We only
-// preventDefault while the scroll container is at the top and the finger is
-// moving *down*, so normal scrolling in every other direction is untouched.
-// Only the final "past threshold" decision is sent back to Rust.
 const REFRESHER_DRAG_SCRIPT: &str = r#"
 const root = document.getElementById("__ROOT_ID__");
 const label = document.getElementById("__LABEL_ID__");
@@ -154,7 +135,6 @@ if (root) {
     root.addEventListener("touchcancel", () => onEnd());
 }
 "#;
-
 #[component]
 pub fn Refresher(
     refreshing: Option<bool>,
@@ -176,13 +156,9 @@ pub fn Refresher(
         ComponentMode::Ios => s::REFRESHER_IOS,
         ComponentMode::Md => s::REFRESHER_MD,
     };
-
     let instance_id = use_hook(|| REFRESHER_INSTANCE_ID.fetch_add(1, Ordering::Relaxed));
     let root_id = format!("g3-refresher-{instance_id}");
     let label_id = format!("g3-refresher-label-{instance_id}");
-
-    // Attach the pointer/drag listeners once the node exists, then relay the
-    // "past threshold on release" signal back to the caller's refresh handler.
     {
         let root_id = root_id.clone();
         let label_id = label_id.clone();
@@ -202,36 +178,31 @@ pub fn Refresher(
             });
         });
     }
-
-    // While refreshing, the indicator + content offset are driven purely by the
-    // `data-state="refreshing"` CSS rules, so Rust owns only the discrete state
-    // and the JS owns the live pull. Rust never renders `--g3-refresher-pull`
-    // into the style attribute, which keeps it from clobbering the value the
-    // drag script is writing inline mid-gesture.
     let state = if refreshing { "refreshing" } else { "idle" };
-
     rsx! {
         div {
             id: root_id,
             class: merge_classes(format!("{} {mode_cls}", s::REFRESHER), class.as_deref()),
             "data-state": state,
-            "data-can-refresh": can_refresh.to_string(),
+            "data-can-refresh": can_refresh
+                    .to_string(),
             "data-refreshing": refreshing.to_string(),
             "data-disabled": disabled.to_string(),
             "data-has-refresh": has_refresh.to_string(),
             div { class: s::INDICATOR, role: "status", aria_live: "polite",
                 span { class: s::SPINNER, aria_hidden: "true" }
-                span {
-                    id: label_id,
-                    class: s::LABEL,
-                    if refreshing { "Refreshing" } else { "Pull to refresh" }
+                span { id: label_id, class: s::LABEL,
+                    if refreshing {
+                        "Refreshing"
+                    } else {
+                        "Pull to refresh"
+                    }
                 }
             }
             div { class: s::CONTENT, {children} }
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn RefresherPlaygroundDemo() -> Element {
@@ -254,7 +225,8 @@ pub fn RefresherPlaygroundDemo() -> Element {
                         description: "Pull down to simulate refresh".to_string(),
                     }
                     crate::Item {
-                        label: "Skins".to_string(),
+                        label: "Skins"
+                                .to_string(),
                         metadata: "$12".to_string(),
                     }
                 }
@@ -262,45 +234,34 @@ pub fn RefresherPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Refresher",
     description: "Pull-to-refresh container with thresholded mobile gestures.",
     demo: RefresherPlaygroundDemo,
     source: "src/components/refresher.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::G3ThemeProvider;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[test]
     fn refresher_gates_on_scroll_top_and_can_refresh() {
         let source = include_str!("refresher.rs");
-        // The gesture must only engage when the caller allows it and the scroll
-        // container is already at the top.
         assert!(source.contains("can_refresh.unwrap_or(false)"));
         assert!(source.contains("root.dataset.canRefresh === \"true\""));
         assert!(source.contains("sp.scrollTop <= 0"));
     }
-
     #[test]
     fn refresher_takes_over_the_touch_gesture() {
         let source = include_str!("refresher.rs");
-        // Stopping an in-progress touch scroll requires a *non-passive*
-        // `touchmove` listener that calls `preventDefault()`. Pointer-event
-        // preventDefault (and mid-gesture `touch-action`) do not cancel scroll.
         assert!(source.contains("\"touchmove\""));
         assert!(source.contains("{ passive: false }"));
         assert!(source.contains("e.preventDefault()"));
     }
-
     #[test]
     fn refresher_hands_off_to_rust_refreshing_state() {
         let source = include_str!("refresher.rs");
@@ -309,7 +270,6 @@ mod tests {
         assert!(source.contains("setTimeout(settleAfterRefresh, 100)"));
         assert!(source.contains("label.textContent = \"Pull to refresh\""));
     }
-
     #[component]
     fn RefresherSmokeApp() -> Element {
         rsx! {
@@ -320,7 +280,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn refresher_renders() {
         render(RefresherSmokeApp);

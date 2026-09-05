@@ -1,10 +1,8 @@
 //! SheetButton component - info button that opens a sheet with description.
-
 use super::InfoButton;
 use super::Sheet;
 use crate::theme::ComponentMode;
 use dioxus::prelude::*;
-
 #[component]
 pub fn SheetButton(
     description: String,
@@ -12,7 +10,6 @@ pub fn SheetButton(
     mode: Option<ComponentMode>,
 ) -> Element {
     let mut is_open = use_signal(|| false);
-
     rsx! {
         InfoButton {
             onclick: move |event: Event<MouseData>| {

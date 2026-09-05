@@ -1,9 +1,7 @@
 //! ConfirmModal component - confirmation dialog with platform styling.
-
 use super::button_styles;
 use crate::theme::{ComponentMode, use_component_mode};
 use dioxus::prelude::*;
-
 #[component]
 pub fn ConfirmModal(
     mut open: Signal<bool>,
@@ -24,15 +22,14 @@ pub fn ConfirmModal(
         "{} {button_mode_cls} {} {} g3-modal-button g3-modal-cancel",
         button_styles::BASE,
         button_styles::OUTLINE,
-        button_styles::MD_SIZE
+        button_styles::MD_SIZE,
     );
     let confirm_cls = format!(
         "{} {button_mode_cls} {} {} g3-modal-button g3-modal-confirm",
         button_styles::BASE,
         button_styles::SOLID,
-        button_styles::MD_SIZE
+        button_styles::MD_SIZE,
     );
-
     rsx! {
         crate::components::Modal {
             open,

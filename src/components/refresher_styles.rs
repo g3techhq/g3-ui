@@ -1,6 +1,5 @@
 //! Style constants for Refresher.
 #![allow(dead_code)]
-
 pub const REFRESHER: &str = "g3-refresher";
 pub const REFRESHER_IOS: &str = "g3-refresher-ios";
 pub const REFRESHER_MD: &str = "g3-refresher-md";

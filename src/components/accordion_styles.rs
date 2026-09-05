@@ -1,6 +1,5 @@
 //! Style constants for Accordion.
 #![allow(dead_code)]
-
 pub const GROUP: &str = "g3-accordion-group";
 pub const GROUP_IOS: &str = "g3-accordion-group-ios";
 pub const GROUP_MD: &str = "g3-accordion-group-md";

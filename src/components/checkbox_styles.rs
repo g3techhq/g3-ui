@@ -1,6 +1,5 @@
 //! Style constants for Checkbox.
 #![allow(dead_code)]
-
 pub const CHECKBOX: &str = "g3-checkbox";
 pub const CHECKBOX_IOS: &str = "g3-checkbox-ios";
 pub const CHECKBOX_MD: &str = "g3-checkbox-md";

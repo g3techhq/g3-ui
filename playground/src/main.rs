@@ -1,5 +1,4 @@
-//! g3_ui playground - component-owned demos rendered in responsive device contexts.
-
+//! g3-ui playground - component-owned demos rendered in responsive device contexts.
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
 use g3_ui::{
@@ -7,19 +6,11 @@ use g3_ui::{
     Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
 };
 use manganis::{AssetOptions, asset};
-
-// Head-linked at build time, like g3_ui.css. Loading it at runtime instead left
-// a window where the library stylesheet had applied but this one had not, so the
-// device frame rendered unstyled until the app booted.
-//
-// The build collects the asset from the macro rather than from a use site, so
-// nothing in the code references this constant.
 #[allow(dead_code)]
 const PLAYGROUND_CSS: Asset = asset!(
     "/assets/playground.css",
     AssetOptions::css().with_static_head(true)
 );
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum PlaygroundTheme {
     Blue,
@@ -27,7 +18,6 @@ pub enum PlaygroundTheme {
     Night,
     Forest,
 }
-
 impl PlaygroundTheme {
     fn from_value(value: &str) -> Self {
         match value {
@@ -37,7 +27,6 @@ impl PlaygroundTheme {
             _ => Self::Blue,
         }
     }
-
     fn label(self) -> &'static str {
         match self {
             Self::Blue => "Blue",
@@ -46,11 +35,9 @@ impl PlaygroundTheme {
             Self::Forest => "Forest",
         }
     }
-
     fn all() -> [Self; 4] {
         [Self::Blue, Self::Green, Self::Night, Self::Forest]
     }
-
     /// Real `g3_ui::Theme` for this brand - fed straight into `AppWrapper`'s
     /// `theme` prop, the same way any consumer of the library themes its app.
     fn to_theme(self) -> G3Theme {
@@ -118,13 +105,11 @@ impl PlaygroundTheme {
         }
     }
 }
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum PlaygroundViewport {
     Mobile,
     Desktop,
 }
-
 impl PlaygroundViewport {
     fn from_index(index: usize) -> Self {
         match index {
@@ -132,7 +117,6 @@ impl PlaygroundViewport {
             _ => Self::Mobile,
         }
     }
-
     fn as_str(self) -> &'static str {
         match self {
             Self::Mobile => "mobile",
@@ -140,14 +124,9 @@ impl PlaygroundViewport {
         }
     }
 }
-
 /// Width at which the playground chrome itself becomes a phone layout. Kept in
 /// sync with the `max-width: 760px` block in `playground.css`.
 const COMPACT_SHELL_QUERY: &str = "(max-width: 760px)";
-
-// Some embedded webviews resize their viewport without ever firing the media
-// query's own `change`, so this watches `resize` too and dedupes in JS - only a
-// real crossing of the breakpoint costs a message and a re-render.
 const COMPACT_SHELL_SCRIPT: &str = r#"
 const query = window.matchMedia("__QUERY__");
 let last = null;
@@ -160,7 +139,6 @@ publish();
 query.addEventListener("change", publish);
 window.addEventListener("resize", publish);
 "#;
-
 /// Tracks whether the playground page - not the simulated device inside it -
 /// is rendering at phone width. A persistent `Menu` rail has no room to reserve
 /// on a phone, so the component drawer switches to `Overlay` there.
@@ -175,23 +153,18 @@ fn use_compact_shell() -> Signal<bool> {
     });
     compact
 }
-
 fn main() {
     g3_ui::init_auto_mode();
     dioxus::launch(App);
 }
-
 #[component]
 fn App() -> Element {
     rsx! {
         Playground {}
     }
 }
-
 #[component]
 fn Playground() -> Element {
-    // Component demos scope their overlays to the simulated device so opening
-    // one never freezes this outer playground page.
     let demos = component_playground_demos();
     let selected_index = use_signal(|| 0_usize);
     let mode_index = use_signal(|| 0_usize);
@@ -211,31 +184,24 @@ fn Playground() -> Element {
     };
     let active_theme = PlaygroundTheme::from_value(&theme_value());
     let active_viewport = PlaygroundViewport::from_index(viewport_index());
-    // A phone-width playground has no room for a rail beside the page, so the
-    // component drawer becomes a dismissible overlay there.
     let compact_shell = use_compact_shell();
     let selector_side_type = if compact_shell() {
         g3_ui::SideSheetType::Overlay
     } else {
         g3_ui::SideSheetType::Menu
     };
-    // Crossing into phone width turns an open rail into a full page overlay,
-    // so collapse the drawer instead of trapping the page behind a backdrop.
     use_effect(move || {
         if compact_shell() {
             selector_open.set(false);
         }
     });
     g3_ui::set_mode(active_mode);
-
     let selected_source = playground_demo_source(selected.source);
-
     let theme_options = PlaygroundTheme::all()
         .iter()
         .copied()
         .map(|theme| SelectOption::from((theme.label(), theme.label())))
         .collect::<Vec<_>>();
-
     rsx! {
         AppWrapper {
             theme: active_theme.to_theme(),
@@ -264,9 +230,6 @@ fn Playground() -> Element {
                     end_button: rsx! {
                         Select { value: theme_value, mode: active_mode, options: theme_options }
                     },
-                    // Design language and shell width are both global settings
-                    // that outlive the selected demo, so they sit together in
-                    // the header rather than costing every page a banner.
                     toolbar: rsx! {
                         div { class: "playground-header-toggles",
                             SegmentGroup { active: mode_index, mode: active_mode,
@@ -318,16 +281,12 @@ fn Playground() -> Element {
                     demos: demos.clone(),
                     selected_index,
                     selector_open,
-                    // A rail sits beside the demo, so it stays put while you
-                    // browse. A phone-width overlay covers what you just
-                    // picked, so it gets out of the way instead.
                     dismiss_on_select: compact_shell(),
                 }
             }
         }
     }
 }
-
 #[component]
 fn PlaygroundViewportDemo(
     demo: ComponentPlaygroundDemo,
@@ -335,13 +294,10 @@ fn PlaygroundViewportDemo(
     theme: PlaygroundTheme,
     viewport: PlaygroundViewport,
 ) -> Element {
-    // The header toggle already names the shell width, so the card only needs
-    // the label for assistive tech.
     let label = match viewport {
         PlaygroundViewport::Desktop => "Compact desktop",
         PlaygroundViewport::Mobile => "Mobile",
     };
-
     rsx! {
         section {
             class: "playground-viewport-card playground-viewport-{viewport.as_str()}",
@@ -349,14 +305,14 @@ fn PlaygroundViewportDemo(
             div {
                 class: "playground-viewport-demo",
                 "data-g3-mode": mode.as_str(),
-                g3_ui::G3ThemeProvider { mode, theme: theme.to_theme(),
+                g3_ui::G3ThemeProvider { mode, theme: theme
+                            .to_theme(),
                     RenderSelectedDemo { demo, mode, theme }
                 }
             }
         }
     }
 }
-
 fn playground_demo_source(source: &str) -> String {
     let Some(marker_index) = source.find("PlaygroundDemo") else {
         return source.trim().to_string();
@@ -373,7 +329,6 @@ fn playground_demo_source(source: &str) -> String {
     else {
         return source[start..].trim().to_string();
     };
-
     let mut depth = 0_i32;
     for (index, ch) in source[open_brace..].char_indices() {
         match ch {
@@ -388,7 +343,6 @@ fn playground_demo_source(source: &str) -> String {
             _ => {}
         }
     }
-
     source[start..].trim().to_string()
 }
 #[component]
@@ -400,7 +354,7 @@ fn PlaygroundNav(
 ) -> Element {
     rsx! {
         g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
-            for (idx , demo) in demos.iter().copied().enumerate() {
+            for (idx, demo) in demos.iter().copied().enumerate() {
                 ComponentNavButton {
                     demo,
                     idx,
@@ -412,7 +366,6 @@ fn PlaygroundNav(
         }
     }
 }
-
 #[component]
 fn RenderSelectedDemo(
     demo: ComponentPlaygroundDemo,
@@ -422,7 +375,6 @@ fn RenderSelectedDemo(
     let _ = (mode, theme);
     (demo.render)()
 }
-
 #[component]
 fn ComponentNavButton(
     demo: ComponentPlaygroundDemo,
@@ -432,7 +384,6 @@ fn ComponentNavButton(
     dismiss_on_select: bool,
 ) -> Element {
     let is_selected = selected_index() == idx;
-
     rsx! {
         g3_ui::Item {
             kind: g3_ui::ItemKind::Button,
@@ -447,19 +398,15 @@ fn ComponentNavButton(
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::{PlaygroundViewport, playground_demo_source};
-
     #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
         assert_eq!(PlaygroundViewport::from_index(0).as_str(), "mobile");
         assert_eq!(PlaygroundViewport::from_index(1).as_str(), "desktop");
-        // Anything past the two shell widths falls back to mobile.
         assert_eq!(PlaygroundViewport::from_index(2).as_str(), "mobile");
     }
-
     #[test]
     fn source_panel_extracts_only_playground_demo_function() {
         let source = r#"
@@ -470,9 +417,7 @@ pub fn ButtonPlaygroundDemo() -> Element {
 }
 crate::g3_playground! { name: "Button" }
 "#;
-
         let extracted = playground_demo_source(source);
-
         assert!(extracted.contains("pub fn ButtonPlaygroundDemo"));
         assert!(extracted.contains("Button"));
         assert!(!extracted.contains("fn helper"));

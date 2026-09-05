@@ -1,36 +1,27 @@
 //! Accordion components for expandable mobile content groups.
-
 use super::accordion_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronDown;
 use std::sync::atomic::{AtomicU64, Ordering};
-
 static NEXT_ACCORDION_GROUP_ID: AtomicU64 = AtomicU64::new(1);
-
 #[derive(Clone)]
 struct AccordionGroupContext {
     value: Signal<Vec<String>>,
-    // Held as a Signal (not a plain bool) so an already-mounted item — which may
-    // be memoized and never re-read the context — still sees the current value
-    // when `multiple` is toggled reactively.
     multiple: Signal<bool>,
     on_change: Option<Callback<Vec<String>>>,
     id_prefix: String,
 }
-
 fn next_accordion_group_id() -> String {
     format!(
         "g3-accordion-{}",
         NEXT_ACCORDION_GROUP_ID.fetch_add(1, Ordering::Relaxed)
     )
 }
-
 fn accordion_group_id(id: Option<String>, generated_id: &str) -> String {
     id.filter(|value| !value.trim().is_empty())
         .unwrap_or_else(|| generated_id.to_string())
 }
-
 pub fn accordion_panel_id(group_id: &str, value: &str) -> String {
     let slug: String = value
         .chars()
@@ -46,7 +37,6 @@ pub fn accordion_panel_id(group_id: &str, value: &str) -> String {
     let slug = if slug.is_empty() { "item" } else { slug };
     format!("{group_id}-panel-{slug}")
 }
-
 fn next_accordion_values(current: &[String], item_value: &str, multiple: bool) -> Vec<String> {
     let is_open = current.iter().any(|value| value == item_value);
     if is_open {
@@ -63,7 +53,6 @@ fn next_accordion_values(current: &[String], item_value: &str, multiple: bool) -
         vec![item_value.to_string()]
     }
 }
-
 #[component]
 pub fn AccordionGroup(
     value: Option<Signal<Vec<String>>>,
@@ -88,7 +77,6 @@ pub fn AccordionGroup(
     };
     let multiple_value = multiple.unwrap_or(false);
     let mut multiple = use_signal(|| multiple_value);
-    // Keep the shared signal in sync with the reactive prop.
     if *multiple.peek() != multiple_value {
         multiple.set(multiple_value);
     }
@@ -98,7 +86,6 @@ pub fn AccordionGroup(
         on_change,
         id_prefix: id_prefix.clone(),
     });
-
     rsx! {
         div {
             id: id_prefix,
@@ -108,7 +95,6 @@ pub fn AccordionGroup(
         }
     }
 }
-
 #[component]
 pub fn AccordionItem(
     value: String,
@@ -125,7 +111,6 @@ pub fn AccordionItem(
     let panel_id = accordion_panel_id(&context.id_prefix, &value);
     let button_id = format!("{panel_id}-button");
     let state = if expanded { "open" } else { "closed" };
-
     rsx! {
         div {
             class: merge_classes(
@@ -175,13 +160,13 @@ pub fn AccordionItem(
                 "data-state": state,
                 aria_hidden: (!expanded).to_string(),
                 aria_labelledby: button_id,
-                inert: (!expanded).then(|| "".to_string()),
+                inert: (! expanded)
+                        .then(|| "".to_string()),
                 div { class: s::CONTENT, {children} }
             }
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn AccordionPlaygroundDemo() -> Element {
@@ -210,24 +195,20 @@ pub fn AccordionPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Accordion",
     description: "Expandable mobile content sections with grouped state.",
     demo: AccordionPlaygroundDemo,
     source: "src/components/accordion.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::G3ThemeProvider;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[test]
     fn next_values_support_single_and_multiple_modes() {
         assert_eq!(
@@ -236,39 +217,36 @@ mod tests {
         );
         assert_eq!(
             next_accordion_values(&["a".to_string()], "b", false),
-            vec!["b".to_string()]
+            vec!["b".to_string()],
         );
         assert_eq!(
             next_accordion_values(&["a".to_string()], "b", true),
-            vec!["a".to_string(), "b".to_string()]
+            vec!["a".to_string(), "b".to_string()],
         );
         assert!(next_accordion_values(&["a".to_string()], "a", true).is_empty());
     }
-
     #[test]
     fn panel_ids_are_group_scoped_and_dom_safe() {
         assert_eq!(
             accordion_panel_id("g3-accordion-1", "Round Setup"),
-            "g3-accordion-1-panel-round-setup"
+            "g3-accordion-1-panel-round-setup",
         );
         assert_eq!(
             accordion_panel_id("g3-accordion-1", "!!!"),
-            "g3-accordion-1-panel-item"
+            "g3-accordion-1-panel-item",
         );
     }
-
     #[test]
     fn accordion_group_ids_can_be_explicit_or_generated() {
         assert_eq!(
             accordion_group_id(Some("custom".to_string()), "generated"),
-            "custom"
+            "custom",
         );
         assert_eq!(
             accordion_group_id(Some("".to_string()), "generated"),
             "generated"
         );
     }
-
     #[component]
     fn AccordionSmokeApp() -> Element {
         let value = use_signal(|| vec!["one".to_string()]);
@@ -280,7 +258,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn accordion_renders() {
         render(AccordionSmokeApp);

@@ -1,9 +1,7 @@
 //! Line (divider/separator) component.
-
 use super::line_styles as s;
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
-
 /// Orientation of the line separator.
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum LineOrientation {
@@ -13,7 +11,6 @@ pub enum LineOrientation {
     /// A rule running top to bottom, separating side-by-side content.
     Vertical,
 }
-
 #[component]
 pub fn Line(
     orientation: Option<LineOrientation>,
@@ -29,7 +26,6 @@ pub fn Line(
         LineOrientation::Vertical => s::LINE_V,
     };
     let margins_cls = margins.unwrap_or(false).then_some(s::LINE_MARGINS);
-
     let cls = merge_classes(
         merge_classes(format!("{} {base_cls}", s::LINE), margins_cls),
         class.as_deref(),
@@ -38,7 +34,6 @@ pub fn Line(
         LineOrientation::Horizontal => "horizontal",
         LineOrientation::Vertical => "vertical",
     };
-
     rsx! {
         hr { class: cls, role: "separator", aria_orientation }
     }

@@ -1,17 +1,17 @@
-# g3_ui Mobile Kit Design
+# g3-ui Mobile Kit Design
 
 Date: 2026-07-05
 
 ## Context
 
-`g3_ui` is a mobile-first Dioxus component library inspired by Ionic. It already covers the Greenside Partee needs, but it is missing several primitives expected in a general mobile app component library. The approved direction is a cohesive mobile kit: ship the requested components plus a small set of simple mobile essentials, with an Ionic-style list/item family and gesture-capable swipe rows. Full virtualization/recycling is intentionally out of scope for this pass.
+`g3-ui` is a mobile-first Dioxus component library inspired by Ionic. It already covers the Greenside Partee needs, but it is missing several primitives expected in a general mobile app component library. The approved direction is a cohesive mobile kit: ship the requested components plus a small set of simple mobile essentials, with an Ionic-style list/item family and gesture-capable swipe rows. Full virtualization/recycling is intentionally out of scope for this pass.
 
 ## Goals
 
 - Add the requested components: Checkbox, List/Item, Refresher, Radio, Toast, and Accordion.
 - Add small mobile essentials that fit the same surface: Badge, Avatar, Chip, Searchbar, Skeleton, and Progress.
 - Make `G3List` / `G3Item` strong enough for the user's next project, including long press, start/end swipe actions, elastic partial swipes, and full-swipe callbacks.
-- Follow the existing `g3_ui` structure: flat files in `src/components/`, co-located `*_styles.rs`, public `G3*` aliases, descriptors, playground demos, smoke/API tests, and shared CSS in `assets/g3_ui.css`.
+- Follow the existing `g3-ui` structure: flat files in `src/components/`, co-located `*_styles.rs`, public `G3*` aliases, descriptors, playground demos, smoke/API tests, and shared CSS in `assets/g3-ui.css`.
 - Keep the implementation Dioxus-native and portable across web, desktop, and mobile. No `document::eval()` patterns.
 
 ## Non-Goals
@@ -72,7 +72,7 @@ The list family should preserve an upgrade path to virtualization later by keepi
 
 ## API Shape
 
-All public components use the existing `g3_ui` style:
+All public components use the existing `g3-ui` style:
 
 - Public names are prefixed aliases such as `G3List`, while internal component names can remain concise (`List`).
 - Props are typed Rust values, with enums for variants and placement.
@@ -94,7 +94,7 @@ Expected shared enums include:
 
 ## Styling
 
-Each component gets a co-located style file with class constants, while visual rules land in `assets/g3_ui.css`.
+Each component gets a co-located style file with class constants, while visual rules land in `assets/g3-ui.css`.
 
 The CSS should:
 

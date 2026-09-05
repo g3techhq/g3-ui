@@ -1,12 +1,10 @@
-//! Global mode and theme system for g3_ui.
+//! Global mode and theme system for g3-ui.
 //!
 //! Modes control platform styling (iOS vs Material Design). Themes control CSS
 //! custom-property tokens and are fully configurable by consumer crates.
-
 use cfg_if::cfg_if;
 use dioxus::prelude::*;
 use std::cell::Cell;
-
 /// Platform styling mode - mirrors Ionic's `mode` attribute.
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum ComponentMode {
@@ -16,8 +14,7 @@ pub enum ComponentMode {
     /// iOS styling: pill shapes, spring animations, subtle shadows
     Ios,
 }
-
-/// CSS custom-property theme tokens for g3_ui components.
+/// CSS custom-property theme tokens for g3-ui components.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Theme {
     /// Accent color: focus rings, selected segments, active toggles, links.
@@ -62,13 +59,11 @@ pub struct Theme {
     /// they match the rest of the theme.
     pub color_scheme: String,
 }
-
 impl Default for Theme {
     fn default() -> Self {
         Self::default_light()
     }
 }
-
 impl Theme {
     /// The built-in light theme: iOS system colors on a near-white ground.
     pub fn default_light() -> Self {
@@ -92,7 +87,6 @@ impl Theme {
             color_scheme: "light".into(),
         }
     }
-
     /// The built-in dark theme. Not a mechanical inversion of
     /// [`Theme::default_light`] - contrast and accent brightness are tuned
     /// separately for a dark ground.
@@ -117,7 +111,6 @@ impl Theme {
             color_scheme: "dark".into(),
         }
     }
-
     /// Return this theme with a different accent color. The common way to
     /// brand an app is to start from a default theme and override this one
     /// token.
@@ -125,7 +118,6 @@ impl Theme {
         self.focused = focused.into();
         self
     }
-
     /// Render every token as a CSS custom-property declaration, suitable for
     /// an inline `style` attribute. `AppWrapper` applies this to the shell
     /// root, which is how the tokens reach the stylesheet.
@@ -152,8 +144,7 @@ impl Theme {
         )
     }
 }
-
-/// Runtime mode context for g3_ui components.
+/// Runtime mode context for g3-ui components.
 ///
 /// Carries a signal rather than a plain `ComponentMode` so that switching mode
 /// at runtime actually reaches components that are already on screen. A plain
@@ -167,7 +158,6 @@ pub struct G3Mode {
     /// The platform styling mode in effect for this subtree.
     pub mode: Signal<ComponentMode>,
 }
-
 /// Keep one signal per provider scope and push the latest value into it.
 ///
 /// `peek` deliberately avoids subscribing the provider to its own signal, which
@@ -179,7 +169,6 @@ pub(crate) fn use_context_signal<T: PartialEq + Clone + 'static>(value: T) -> Si
     }
     signal
 }
-
 /// Read the ambient [`Theme`], if a provider or `AppWrapper` set one.
 ///
 /// Subscribes the calling component to theme changes, for the same reason
@@ -188,7 +177,6 @@ pub(crate) fn use_context_signal<T: PartialEq + Clone + 'static>(value: T) -> Si
 pub fn use_ambient_theme() -> Option<Theme> {
     try_consume_context::<Signal<Theme>>().map(|theme| theme())
 }
-
 /// Resolve a context value from an *ancestor*, ignoring whatever this component
 /// provides itself.
 ///
@@ -202,17 +190,14 @@ pub fn use_ambient_theme() -> Option<Theme> {
 pub(crate) fn use_ancestor_context<T: Clone + 'static>() -> Option<T> {
     use_hook(try_consume_context::<T>)
 }
-
 thread_local! {
     static GLOBAL_MODE: Cell<Option<ComponentMode>> = const { Cell::new(None) };
 }
-
 /// Set the global styling mode. Typically called once at app init
 /// based on `cfg(target_os)`.
 pub fn set_mode(mode: ComponentMode) {
     GLOBAL_MODE.with(|m| m.set(Some(mode)));
 }
-
 /// Get the current global mode. Used by components when no per-component
 /// `mode` prop is provided.
 pub fn get_mode() -> ComponentMode {
@@ -220,49 +205,36 @@ pub fn get_mode() -> ComponentMode {
         .with(|m| m.get())
         .unwrap_or_else(detect_platform_mode)
 }
-
 /// Detect the best platform styling mode for the current build/runtime.
 pub fn detect_platform_mode() -> ComponentMode {
     cfg_if! {
-        if #[cfg(target_os = "ios")] {
-            ComponentMode::Ios
-        } else if #[cfg(target_os = "android")] {
-            ComponentMode::Md
-        } else if #[cfg(target_arch = "wasm32")] {
-            detect_web_mode()
-        } else {
-            ComponentMode::Md
-        }
+        if #[cfg(target_os = "ios")] { ComponentMode::Ios } else if #[cfg(target_os =
+        "android")] { ComponentMode::Md } else if #[cfg(target_arch = "wasm32")] {
+        detect_web_mode() } else { ComponentMode::Md }
     }
 }
-
 #[cfg(target_arch = "wasm32")]
 fn detect_web_mode() -> ComponentMode {
     let Some(window) = web_sys::window() else {
         return ComponentMode::Md;
     };
-
     let navigator = window.navigator();
     let user_agent = navigator.user_agent().unwrap_or_default().to_lowercase();
     let platform = navigator.platform().unwrap_or_default().to_lowercase();
     let max_touch_points = navigator.max_touch_points();
-
     let is_iphone_or_ipod = user_agent.contains("iphone") || user_agent.contains("ipod");
     let is_ipad = user_agent.contains("ipad")
         || (platform.contains("mac") && max_touch_points > 1 && user_agent.contains("safari"));
-
     if is_iphone_or_ipod || is_ipad {
         ComponentMode::Ios
     } else {
         ComponentMode::Md
     }
 }
-
 /// Merge a required component class list with an optional per-instance override.
 pub fn merge_classes(base: impl AsRef<str>, class: Option<&str>) -> String {
     let base = base.as_ref().trim();
     let class = class.unwrap_or_default().trim();
-
     match (base.is_empty(), class.is_empty()) {
         (true, true) => String::new(),
         (true, false) => class.to_string(),
@@ -270,7 +242,6 @@ pub fn merge_classes(base: impl AsRef<str>, class: Option<&str>) -> String {
         (false, false) => format!("{base} {class}"),
     }
 }
-
 /// Resolve the current component mode from an explicit prop, mode context, or global mode.
 ///
 /// Uses `try_consume_context` rather than `try_use_context`: the latter is a
@@ -280,7 +251,6 @@ pub fn use_component_mode(mode: Option<ComponentMode>) -> ComponentMode {
     let mode_context = try_consume_context::<G3Mode>().map(|context| (context.mode)());
     mode.or(mode_context).unwrap_or_else(get_mode)
 }
-
 #[component]
 pub fn G3ThemeProvider(
     mode: Option<ComponentMode>,
@@ -291,17 +261,14 @@ pub fn G3ThemeProvider(
     let theme = use_context_signal(theme.unwrap_or_default());
     provide_context(G3Mode { mode });
     provide_context(theme);
-
     rsx! {
         {children}
     }
 }
-
 /// Initialize the global mode based on compile-time platform detection.
 pub fn init_auto_mode() {
     set_mode(detect_platform_mode());
 }
-
 impl ComponentMode {
     /// The `data-g3-mode` attribute value the stylesheet keys on.
     pub fn as_str(self) -> &'static str {
@@ -311,6 +278,5 @@ impl ComponentMode {
         }
     }
 }
-
-/// Backward-compatible alias for earlier g3_ui naming.
+/// Backward-compatible alias for earlier g3-ui naming.
 pub type G3Theme = Theme;
