@@ -1,6 +1,5 @@
 //! Style constants for Radio.
 #![allow(dead_code)]
-
 pub const GROUP: &str = "g3-radio-group";
 pub const RADIO: &str = "g3-radio";
 pub const RADIO_IOS: &str = "g3-radio-ios";

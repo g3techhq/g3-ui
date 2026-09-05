@@ -1,9 +1,7 @@
 //! Compact mobile primitive components.
-
 use super::primitives_styles as s;
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
-
 /// Shared semantic color for status-oriented primitives.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum StatusColor {
@@ -19,7 +17,6 @@ pub enum StatusColor {
     /// An error or destructive state.
     Danger,
 }
-
 impl StatusColor {
     fn badge_class(self) -> &'static str {
         match self {
@@ -31,7 +28,6 @@ impl StatusColor {
         }
     }
 }
-
 /// Avatar size token.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum AvatarSize {
@@ -43,7 +39,6 @@ pub enum AvatarSize {
     /// Prominent, for profile headers.
     Lg,
 }
-
 impl AvatarSize {
     fn class(self) -> &'static str {
         match self {
@@ -53,7 +48,6 @@ impl AvatarSize {
         }
     }
 }
-
 /// Skeleton placeholder shape.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum SkeletonShape {
@@ -68,7 +62,6 @@ pub enum SkeletonShape {
     /// list row.
     Row,
 }
-
 impl SkeletonShape {
     fn class(self) -> &'static str {
         match self {
@@ -79,7 +72,6 @@ impl SkeletonShape {
         }
     }
 }
-
 /// Compact status badge.
 #[component]
 pub fn Badge(color: Option<StatusColor>, class: Option<String>, children: Element) -> Element {
@@ -88,12 +80,10 @@ pub fn Badge(color: Option<StatusColor>, class: Option<String>, children: Elemen
         format!("{} {}", s::BADGE, color.badge_class()),
         class.as_deref(),
     );
-
     rsx! {
         span { class: cls, {children} }
     }
 }
-
 /// Circular avatar with image or fallback text.
 #[component]
 pub fn Avatar(
@@ -110,7 +100,6 @@ pub fn Avatar(
     let image_alt = label.clone();
     let fallback = fallback.unwrap_or_default();
     let cls = merge_classes(format!("{} {}", s::AVATAR, size.class()), class.as_deref());
-
     rsx! {
         span { class: cls, role: "img", aria_label: label,
             if let Some(src) = src {
@@ -121,7 +110,6 @@ pub fn Avatar(
         }
     }
 }
-
 /// Tappable compact chip with optional start/end slots.
 #[component]
 pub fn Chip(
@@ -141,7 +129,6 @@ pub fn Chip(
         format!("{} {selected_cls} {disabled_cls}", s::CHIP),
         class.as_deref(),
     );
-
     rsx! {
         button {
             class: cls,
@@ -166,7 +153,6 @@ pub fn Chip(
         }
     }
 }
-
 /// Linear progress indicator. `None` value renders an indeterminate bar.
 #[component]
 pub fn Progress(value: Option<f64>, max: Option<f64>, class: Option<String>) -> Element {
@@ -183,7 +169,6 @@ pub fn Progress(value: Option<f64>, max: Option<f64>, class: Option<String>) -> 
         format!("{} {indeterminate_cls}", s::PROGRESS),
         class.as_deref(),
     );
-
     if let Some(value) = clamped_value {
         rsx! {
             div {
@@ -213,7 +198,6 @@ pub fn Progress(value: Option<f64>, max: Option<f64>, class: Option<String>) -> 
         }
     }
 }
-
 /// Non-interactive loading placeholder.
 #[component]
 pub fn Skeleton(shape: Option<SkeletonShape>, class: Option<String>) -> Element {
@@ -222,12 +206,10 @@ pub fn Skeleton(shape: Option<SkeletonShape>, class: Option<String>) -> Element 
         format!("{} {}", s::SKELETON, shape.class()),
         class.as_deref(),
     );
-
     rsx! {
         span { class: cls, aria_hidden: "true" }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn PrimitivesPlaygroundDemo() -> Element {
@@ -237,7 +219,6 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
         .parse::<f64>()
         .map(|value| value.clamp(0.0, 100.0) / 100.0)
         .unwrap_or(0.0);
-
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
@@ -266,7 +247,8 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
                     }
                     Chip {
                         selected: selected(),
-                        onclick: move |_| selected.toggle(),
+                        onclick: move |_| selected
+                                .toggle(),
                         start: rsx! {
                             span { "#" }
                         },
@@ -285,23 +267,19 @@ pub fn PrimitivesPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Primitives",
     description: "Compact mobile badges, avatars, chips, progress, and skeletons.",
     demo: PrimitivesPlaygroundDemo,
     source: "src/components/primitives.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[component]
     fn PrimitiveComponentsSmokeApp() -> Element {
         rsx! {
@@ -313,7 +291,6 @@ mod tests {
             Skeleton { shape: SkeletonShape::Row }
         }
     }
-
     #[test]
     fn mobile_primitives_render() {
         render(PrimitiveComponentsSmokeApp);

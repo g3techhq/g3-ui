@@ -1,5 +1,4 @@
 //! Sheet component - bottom and side sheet with drag-to-dismiss and platform styling.
-
 use super::overlay_scroll::use_lock_body_scroll;
 use super::sheet_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
@@ -7,22 +6,11 @@ use dioxus::prelude::*;
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::Menu;
 use std::sync::atomic::{AtomicU64, Ordering};
-
 const SHEET_DISMISS_DISTANCE: f64 = 96.0;
-
 static SHEET_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
-
-// Drag tracking runs entirely in JS (attached directly to the handle/dialog
-// DOM nodes) so per-frame pointer movement never has to round-trip through
-// Dioxus re-renders. Only the final dismiss/no-dismiss decision is sent back
-// to Rust. This also sidesteps a dioxus-interpreter-js quirk where clearing
-// the `style` attribute back to "" restores previously-set inline properties
-// instead of removing them, which left `--g3-sheet-drag-y` stuck after a
-// drag-to-dismiss and made the next open animate in short of fully open.
 const SHEET_PRESENT_SCRIPT: &str = r#"
 requestAnimationFrame(() => dioxus.send(true));
 "#;
-
 const SHEET_DRAG_SCRIPT: &str = r#"
 const dialog = document.getElementById("__DIALOG_ID__");
 const handle = document.getElementById("__HANDLE_ID__");
@@ -68,7 +56,6 @@ if (dialog && handle && handle.dataset.g3SheetDragBound !== "true") {
     handle.addEventListener("pointercancel", onEnd);
 }
 "#;
-
 /// How a side sheet interacts with the app content beside it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum SideSheetType {
@@ -82,7 +69,6 @@ pub enum SideSheetType {
     /// Reserve space beside the complete app page as persistent navigation.
     Menu,
 }
-
 /// Which edge a sheet uses and, for side sheets, how it affects app content.
 ///
 /// `Push`, `Reveal`, and `Menu` side sheets should be direct children of
@@ -98,7 +84,6 @@ pub enum SheetPlacement {
     /// Slides in from the trailing edge, for inspectors and filters.
     Right(SideSheetType),
 }
-
 #[component]
 pub fn Sheet(
     mut is_open: Signal<bool>,
@@ -112,7 +97,6 @@ pub fn Sheet(
     let placement = placement.unwrap_or_default();
     let is_draggable = draggable.unwrap_or(true);
     let instance_id = use_hook(|| SHEET_INSTANCE_ID.fetch_add(1, Ordering::Relaxed));
-
     let mode_cls = match mode {
         ComponentMode::Ios => s::SHEET_IOS,
         ComponentMode::Md => s::SHEET_MD,
@@ -122,7 +106,6 @@ pub fn Sheet(
         SheetPlacement::Left(side_type) => (s::SHEET_LEFT, side_sheet_type_class(side_type)),
         SheetPlacement::Right(side_type) => (s::SHEET_RIGHT, side_sheet_type_class(side_type)),
     };
-
     let side_cls = (!side_type_cls.is_empty())
         .then_some(s::SHEET_SIDE)
         .unwrap_or_default();
@@ -132,14 +115,13 @@ pub fn Sheet(
     );
     let sheet_cls = format!(
         "{} {mode_cls} {placement_cls} {side_cls} {side_type_cls}",
-        s::SHEET
+        s::SHEET,
     );
     let has_handle = matches!(placement, SheetPlacement::Bottom);
     let dialog_id = format!("g3-sheet-{instance_id}");
     let handle_id = format!("g3-sheet-handle-{instance_id}");
     let mut ever_opened = use_signal(|| false);
     let mut presented_open = use_signal(|| false);
-
     use_effect(move || {
         if !is_open() {
             presented_open.set(false);
@@ -157,7 +139,6 @@ pub fn Sheet(
             }
         });
     });
-
     {
         let dialog_id = dialog_id.clone();
         let handle_id = handle_id.clone();
@@ -177,14 +158,12 @@ pub fn Sheet(
             });
         });
     }
-
     use_lock_body_scroll(is_open);
     let is_open_now = is_open();
     if !is_open_now && !ever_opened() {
         return rsx! {};
     }
     let visual_open = is_open_now && presented_open();
-
     let backdrop_cls = format!(
         "{} {} {placement_cls} {side_cls} {side_type_cls}",
         s::BACKDROP,
@@ -192,14 +171,13 @@ pub fn Sheet(
             "g3-sheet-backdrop-open"
         } else {
             "g3-sheet-backdrop-closed"
-        }
+        },
     );
     let state_cls = if visual_open {
         s::STATE_OPEN
     } else {
         s::STATE_CLOSED
     };
-
     rsx! {
         if !is_menu {
             button {
@@ -208,9 +186,6 @@ pub fn Sheet(
                 aria_hidden: (!is_open_now).to_string(),
                 tabindex: if is_open_now { "0" } else { "-1" },
                 class: backdrop_cls,
-                // Pointer-down makes touch and mouse dismissal immediate even
-                // when a surrounding shell is suppressing scroll gestures. Keep
-                // click as the keyboard activation path for the native button.
                 onpointerdown: move |_| is_open.set(false),
                 onclick: move |_| is_open.set(false),
             }
@@ -220,7 +195,8 @@ pub fn Sheet(
             role: if is_menu { "navigation" } else { "dialog" },
             aria_modal: (!is_menu).to_string(),
             aria_label: if is_menu { "Menu" } else { "Sheet" },
-            aria_hidden: (!is_open_now).to_string(),
+            aria_hidden: (!
+                    is_open_now).to_string(),
             inert: (!is_open_now).then(|| "".to_string()),
             class: merge_classes(format!("{sheet_cls} {state_cls}"), class.as_deref()),
             if is_draggable && has_handle {
@@ -236,7 +212,6 @@ pub fn Sheet(
         }
     }
 }
-
 fn side_sheet_type_class(side_type: SideSheetType) -> &'static str {
     match side_type {
         SideSheetType::Overlay => s::SHEET_OVERLAY,
@@ -263,7 +238,8 @@ pub fn SheetPlaygroundDemo() -> Element {
         _ => SheetPlacement::Bottom,
     };
     rsx! {
-        crate::PlaygroundDemoFrame { app: false,
+        crate::PlaygroundDemoFrame {
+            app: false,
             controls: rsx! {
                 div {
                     span { "Placement" }
@@ -284,7 +260,8 @@ pub fn SheetPlaygroundDemo() -> Element {
                         }
                     }
                 }
-                crate::Checkbox { checked: open, label: "Open".to_string() }
+                crate::Checkbox { checked: open, label: "Open"
+                            .to_string() }
             },
             crate::AppWrapper { class: "g3-playground-device-app",
                 div { class: "g3-sheet-demo-content-root",
@@ -307,7 +284,10 @@ pub fn SheetPlaygroundDemo() -> Element {
                         crate::Button { onclick: move |_| open.set(true), "Open sheet" }
                     }
                 }
-                Sheet { is_open: open, placement, class: "g3-sheet-demo-surface",
+                Sheet {
+                    is_open: open,
+                    placement,
+                    class: "g3-sheet-demo-surface",
                     div { class: "g3-sheet-demo-menu",
                         div { class: "g3-sheet-demo-menu-header",
                             span { class: "g3-sheet-demo-menu-eyebrow", "Fairway" }

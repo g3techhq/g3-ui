@@ -16,16 +16,16 @@ dioxus = { version = "0.7.9", features = ["router"] }
 g3-ui = "0.1"
 ```
 
-Enable the optional route-transition integration when your app also uses `dx-route-transitions`:
+Enable the optional route-transition integration when your app also uses `g3-route-transitions`:
 
 ```toml
 [dependencies]
 g3-ui = { version = "0.1", features = ["transitions"] }
-dx-route-transitions = "0.1"
+g3-route-transitions = "0.1"
 ```
 
-The local checkout includes `.cargo/config.toml` to patch `dx-route-transitions` to the sibling
-`../dx_route_transitions` repo while developing both crates together.
+The local checkout includes `.cargo/config.toml` to patch `g3-route-transitions` to the sibling
+`../g3-route-transitions` repo while developing both crates together.
 
 ## Quick Start
 
@@ -147,12 +147,12 @@ rsx! {
 
 ## Route Transition Integration
 
-With the `transitions` feature enabled, `G3AppWrapper` loads the `dx-route-transitions` stylesheet
+With the `transitions` feature enabled, `G3AppWrapper` loads the `g3-route-transitions` stylesheet
 provider and marks the shell with the cover snapshot class. `G3Navbar` marks persistent tab/navigation
 layouts with the base snapshot class. `G3Body` marks its scrollable content with the segment snapshot
 class for push transitions.
 
-Without the feature, `g3-ui` does not depend on `dx-route-transitions` and does not emit
+Without the feature, `g3-ui` does not depend on `g3-route-transitions` and does not emit
 route-transition marker classes.
 
 ## Responsive App Shell

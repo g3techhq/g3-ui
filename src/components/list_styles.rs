@@ -1,11 +1,9 @@
 //! Style constants for List and Item components.
 #![allow(dead_code)]
-
 pub const LIST: &str = "g3-list";
 pub const LIST_IOS: &str = "g3-list-ios";
 pub const LIST_MD: &str = "g3-list-md";
 pub const LIST_INSET: &str = "g3-list-inset";
-
 pub const ITEM_ROW: &str = "g3-item-row";
 pub const ITEM: &str = "g3-item";
 pub const ITEM_IOS: &str = "g3-item-ios";
@@ -25,7 +23,6 @@ pub const ITEM_METADATA: &str = "g3-item-metadata";
 pub const ITEM_END: &str = "g3-item-end";
 pub const ITEM_DETAIL: &str = "g3-item-detail";
 pub const ITEM_DIVIDER: &str = "g3-item-divider";
-
 pub const SWIPE_ITEM: &str = "g3-swipe-item";
 pub const SWIPE_ACTIONS: &str = "g3-swipe-actions";
 pub const SWIPE_ACTIONS_START: &str = "g3-swipe-actions-start";

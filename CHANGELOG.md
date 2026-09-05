@@ -38,5 +38,5 @@ Initial release.
 - 25 mobile-first components with iOS and Material Design variants of each.
 - Configurable `Theme` of 17 CSS custom-property tokens, with built-in light
   and dark themes.
-- Optional `transitions` feature integrating `dx-route-transitions`.
+- Optional `transitions` feature integrating `g3-route-transitions`.
 - Safe-area insets and `prefers-reduced-motion` handled in the stylesheet.

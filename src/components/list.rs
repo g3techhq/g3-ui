@@ -1,11 +1,9 @@
 //! General mobile list, item, and swipe row components.
-
 use super::list_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronRight;
 use std::time::Duration;
-
 /// Which edge of a list row a swipe gesture belongs to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SwipeSide {
@@ -14,7 +12,6 @@ pub enum SwipeSide {
     /// The trailing edge - the conventional side for destructive actions.
     End,
 }
-
 /// What a swipe does once it passes the commit threshold.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum SwipeBehavior {
@@ -28,7 +25,6 @@ pub enum SwipeBehavior {
     /// Swiping past the threshold removes the row entirely.
     Dismiss,
 }
-
 pub const DEFAULT_SWIPE_ACTION_WIDTH: f64 = 88.0;
 pub const DEFAULT_ACTIVATE_ACTION_WIDTH: f64 = 136.0;
 pub const DEFAULT_DISMISS_ACTION_WIDTH: f64 = 104.0;
@@ -41,7 +37,6 @@ pub const DISMISS_EXIT_MS: u64 = 560;
 pub const DISMISS_COLLAPSE_MS: u64 = 180;
 pub const LONG_PRESS_MS: u64 = 500;
 pub const LONG_PRESS_CANCEL_DISTANCE: f64 = 8.0;
-
 pub fn elastic_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
     let limit = action_width.max(1.0);
     if raw_offset > limit {
@@ -52,11 +47,9 @@ pub fn elastic_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
         raw_offset
     }
 }
-
 pub fn should_full_swipe(offset: f64, action_width: f64) -> bool {
     offset.abs() >= action_width.max(1.0) + FULL_SWIPE_MARGIN
 }
-
 pub fn swipe_side(offset: f64) -> Option<SwipeSide> {
     if offset > 0.0 {
         Some(SwipeSide::Start)
@@ -66,15 +59,12 @@ pub fn swipe_side(offset: f64) -> Option<SwipeSide> {
         None
     }
 }
-
 pub fn swipe_ratio(offset: f64, action_width: f64) -> f64 {
     offset / action_width.max(1.0)
 }
-
 pub fn should_cancel_long_press(delta_x: f64, delta_y: f64) -> bool {
     delta_x.hypot(delta_y) > LONG_PRESS_CANCEL_DISTANCE
 }
-
 pub fn is_swipe_side_available(
     offset: f64,
     has_start_actions: bool,
@@ -86,11 +76,9 @@ pub fn is_swipe_side_available(
         None => false,
     }
 }
-
 pub fn reveal_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
     raw_offset.clamp(-action_width.max(1.0), action_width.max(1.0))
 }
-
 pub fn activate_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
     let limit = action_width.max(1.0);
     let sign = raw_offset.signum();
@@ -104,11 +92,9 @@ pub fn activate_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
         sign * (soften_start + remaining * (extra / (extra + remaining)))
     }
 }
-
 pub fn should_activate_swipe(offset: f64, action_width: f64) -> bool {
     offset.abs() >= action_width.max(1.0) * ACTIVATE_SWIPE_RATIO
 }
-
 pub fn swipe_offset_for_behavior(
     raw_offset: f64,
     action_width: f64,
@@ -125,7 +111,6 @@ pub fn swipe_offset_for_behavior(
         SwipeBehavior::Dismiss => elastic_swipe_offset(raw_offset, action_width),
     }
 }
-
 pub fn action_width_for_behavior(behavior: SwipeBehavior) -> f64 {
     match behavior {
         SwipeBehavior::Reveal => DEFAULT_SWIPE_ACTION_WIDTH,
@@ -133,7 +118,6 @@ pub fn action_width_for_behavior(behavior: SwipeBehavior) -> f64 {
         SwipeBehavior::Dismiss => DEFAULT_DISMISS_ACTION_WIDTH,
     }
 }
-
 #[allow(dead_code)]
 pub fn constrained_swipe_offset(
     raw_offset: f64,
@@ -149,7 +133,6 @@ pub fn constrained_swipe_offset(
         SwipeBehavior::Dismiss,
     )
 }
-
 fn swipe_state(offset: f64, action_width: f64, full: bool) -> Option<SwipeState> {
     swipe_side(offset).map(|side| SwipeState {
         side,
@@ -158,7 +141,6 @@ fn swipe_state(offset: f64, action_width: f64, full: bool) -> Option<SwipeState>
         full,
     })
 }
-
 fn settled_swipe_offset(offset: f64, action_width: f64) -> f64 {
     if offset.abs() > action_width.max(1.0) / 2.0 {
         match swipe_side(offset) {
@@ -170,14 +152,12 @@ fn settled_swipe_offset(offset: f64, action_width: f64) -> f64 {
         0.0
     }
 }
-
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum DismissPhase {
     Idle,
     Exiting,
     Collapsing,
 }
-
 impl DismissPhase {
     fn as_str(self) -> &'static str {
         match self {
@@ -187,7 +167,6 @@ impl DismissPhase {
         }
     }
 }
-
 /// How separators are drawn between list rows.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum ListLines {
@@ -200,7 +179,6 @@ pub enum ListLines {
     /// No separators.
     None,
 }
-
 impl ListLines {
     fn class(self) -> &'static str {
         match self {
@@ -210,7 +188,6 @@ impl ListLines {
         }
     }
 }
-
 /// What a list row behaves as, which determines its semantics and
 /// keyboard handling as well as its look.
 #[derive(Clone, PartialEq, Eq, Default)]
@@ -225,7 +202,6 @@ pub enum ItemKind {
     /// middle-click and open-in-new-tab.
     Link(String),
 }
-
 /// Whether a list row shows a trailing detail chevron.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum ItemDetail {
@@ -237,7 +213,6 @@ pub enum ItemDetail {
     /// Never show the trailing chevron.
     Hide,
 }
-
 /// Live state of an in-progress swipe, handed to swipe-action render
 /// callbacks so they can track the gesture.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -253,7 +228,6 @@ pub struct SwipeState {
     /// `Dismiss` would commit on release.
     pub full: bool,
 }
-
 #[component]
 pub fn List(
     inset: Option<bool>,
@@ -279,14 +253,14 @@ pub fn List(
     };
     rsx! {
         div {
-            class: merge_classes(format!("{} {mode_cls} {inset_cls}", s::LIST), class.as_deref()),
+            class: merge_classes(format!("{} {mode_cls} {inset_cls}", s::LIST), class
+                    .as_deref()),
             role: "list",
             "data-lines": lines,
             {children}
         }
     }
 }
-
 #[component]
 pub fn Item(
     kind: Option<ItemKind>,
@@ -335,7 +309,7 @@ pub fn Item(
             lines.map(ListLines::class).unwrap_or(""),
             if interactive { s::ITEM_BUTTON } else { "" },
             if selected { s::ITEM_SELECTED } else { "" },
-            if disabled { s::ITEM_DISABLED } else { "" }
+            if disabled { s::ITEM_DISABLED } else { "" },
         ),
         class.as_deref(),
     );
@@ -520,7 +494,6 @@ pub fn ItemDivider(class: Option<String>, children: Element) -> Element {
         }
     }
 }
-
 #[component]
 pub fn SwipeAction(
     side: SwipeSide,
@@ -543,7 +516,8 @@ pub fn SwipeAction(
     };
     rsx! {
         button {
-            class: merge_classes(format!("{} {variant}", s::SWIPE_ACTION), class.as_deref()),
+            class: merge_classes(format!("{} {variant}", s::SWIPE_ACTION), class
+                    .as_deref()),
             r#type: "button",
             "data-side": side,
             onclick: move |event| {
@@ -555,7 +529,6 @@ pub fn SwipeAction(
         }
     }
 }
-
 #[component]
 pub fn SwipeItem(
     start_actions: Option<Element>,
@@ -580,12 +553,6 @@ pub fn SwipeItem(
     let mut dragging = use_signal(|| false);
     let mut long_press_generation = use_signal(|| 0_u64);
     let mut dismiss_phase = use_signal(|| DismissPhase::Idle);
-    // A pointerdown+move+up sequence that actually dragged still fires a
-    // synthetic click on release (standard DOM behavior — browsers don't
-    // suppress click after a drag on their own). Without this, swiping a
-    // row and releasing fires the row's own `onclick` (e.g. "open detail")
-    // right on top of the swipe gesture. Disable pointer-events on the
-    // content briefly after a real drag so that ghost click has no target.
     let mut suppress_click = use_signal(|| false);
     let mut click_suppress_generation = use_signal(|| 0_u64);
     let on_drag_move = on_drag;
@@ -597,7 +564,6 @@ pub fn SwipeItem(
     let end_actions_hidden = offset() >= 0.0;
     let start_actions_inert = start_actions_hidden.then(|| "".to_string());
     let end_actions_inert = end_actions_hidden.then(|| "".to_string());
-
     rsx! {
         div {
             class: merge_classes(s::SWIPE_ITEM, class.as_deref()),
@@ -660,9 +626,10 @@ pub fn SwipeItem(
                     SwipeBehavior::Activate => should_activate_swipe(next, action_width),
                 };
                 if let Some(state) = swipe_state(next, action_width, active)
-                    && let Some(on_drag) = on_drag_move {
-                        on_drag.call(state);
-                    }
+                    && let Some(on_drag) = on_drag_move
+                {
+                    on_drag.call(state);
+                }
             },
             onpointerup: move |_| {
                 if disabled || dismiss_phase() != DismissPhase::Idle {
@@ -681,15 +648,15 @@ pub fn SwipeItem(
                                 current,
                                 has_start_actions,
                                 has_end_actions,
-                            )
-                            && let Some(state) = swipe_state(current, action_width, true) {
-                                if let Some(on_drag) = on_drag_up {
-                                    on_drag.call(state);
-                                }
-                                if let Some(on_swipe_action) = on_swipe_action_up {
-                                    on_swipe_action.call(state);
-                                }
+                            ) && let Some(state) = swipe_state(current, action_width, true)
+                        {
+                            if let Some(on_drag) = on_drag_up {
+                                on_drag.call(state);
                             }
+                            if let Some(on_swipe_action) = on_swipe_action_up {
+                                on_swipe_action.call(state);
+                            }
+                        }
                         offset.set(0.0);
                     }
                     SwipeBehavior::Dismiss => {
@@ -732,10 +699,11 @@ pub fn SwipeItem(
                     }
                 }
                 if suppress_click() {
-                    let generation = click_suppress_generation.with_mut(|value| {
-                        *value += 1;
-                        *value
-                    });
+                    let generation = click_suppress_generation
+                        .with_mut(|value| {
+                            *value += 1;
+                            *value
+                        });
                     spawn(async move {
                         dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
                         if click_suppress_generation() == generation {
@@ -795,7 +763,6 @@ pub fn SwipeItem(
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn ListPlaygroundDemo() -> Element {
@@ -923,69 +890,59 @@ crate::g3_playground! {
     demo: ListPlaygroundDemo,
     source: "src/components/list.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::G3ThemeProvider;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[test]
     fn elastic_swipe_offset_slows_after_action_width() {
         assert_eq!(elastic_swipe_offset(44.0, 88.0), 44.0);
         assert_eq!(elastic_swipe_offset(188.0, 88.0), 143.0);
         assert_eq!(elastic_swipe_offset(-188.0, 88.0), -143.0);
     }
-
     #[test]
     fn full_swipe_requires_action_width_plus_margin() {
         assert!(!should_full_swipe(117.0, 88.0));
         assert!(should_full_swipe(118.0, 88.0));
         assert!(should_full_swipe(-118.0, 88.0));
     }
-
     #[test]
     fn swipe_side_follows_offset_direction() {
         assert_eq!(swipe_side(12.0), Some(SwipeSide::Start));
         assert_eq!(swipe_side(-12.0), Some(SwipeSide::End));
         assert_eq!(swipe_side(0.0), None);
     }
-
     #[test]
     fn swipe_ratio_follows_action_width() {
         assert_eq!(swipe_ratio(44.0, 88.0), 0.5);
         assert_eq!(swipe_ratio(-88.0, 88.0), -1.0);
     }
-
     #[test]
     fn long_press_cancels_after_movement_threshold() {
         assert!(!should_cancel_long_press(4.0, 4.0));
         assert!(should_cancel_long_press(9.0, 0.0));
     }
-
     #[test]
     fn reveal_swipe_offsets_stop_at_action_width() {
         assert_eq!(
             swipe_offset_for_behavior(188.0, 88.0, true, true, SwipeBehavior::Reveal),
-            88.0
+            88.0,
         );
         assert_eq!(
             swipe_offset_for_behavior(-188.0, 88.0, true, true, SwipeBehavior::Reveal),
-            -88.0
+            -88.0,
         );
     }
-
     #[test]
     fn activate_swipe_offsets_slow_toward_limit() {
         let offset = swipe_offset_for_behavior(400.0, 88.0, true, true, SwipeBehavior::Activate);
         assert!(offset > 44.0);
         assert!(offset < 88.0);
     }
-
     #[test]
     fn activate_swipe_follows_farther_before_soft_limit() {
         assert_eq!(activate_swipe_offset(80.0, 136.0), 80.0);
@@ -996,30 +953,27 @@ mod tests {
         assert!(long_drag > 130.0);
         assert!(long_drag < 136.0);
     }
-
     #[test]
     fn dismiss_swipe_delays_callback_until_exit_and_gap_collapse() {
         let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../../assets/g3-ui.css");
         assert!(source.contains("DismissPhase::Exiting"));
         assert!(source.contains("DISMISS_EXIT_MS"));
         assert!(source.contains("DISMISS_COLLAPSE_MS"));
-        assert!(source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS))"));
+        assert!(source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS))",),);
         assert!(
-            source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS))")
+            source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS))",),
         );
         assert!(
             source
                 .find("offset.set(direction * DISMISS_SWIPE_OFFSET)")
                 .unwrap()
-                < source.find("on_full_swipe.call(state)").unwrap()
+                < source.find("on_full_swipe.call(state)").unwrap(),
         );
         assert!(stylesheet.contains(".g3-swipe-item[data-state=\"exiting\"]"));
         assert!(stylesheet.contains(".g3-swipe-item[data-state=\"collapsing\"]"));
         assert!(stylesheet.contains("max-height"));
     }
-
     #[test]
     fn activate_swipe_uses_early_threshold() {
         assert!(!should_activate_swipe(39.0, 88.0));
@@ -1032,46 +986,43 @@ mod tests {
         assert_eq!(constrained_swipe_offset(44.0, 88.0, true, false), 44.0);
         assert_eq!(constrained_swipe_offset(-44.0, 88.0, false, true), -44.0);
     }
-
     #[test]
     fn item_lines_can_defer_to_parent_list() {
         let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3_ui.css");
+        let stylesheet = include_str!("../../assets/g3-ui.css");
         assert!(source.contains("lines.map(ListLines::class).unwrap_or"));
         assert!(stylesheet.contains(".g3-list[data-lines=\"full\"] .g3-item"));
         assert!(stylesheet.contains(
-            ":not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none)"
-        ));
+            ":not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none)",
+        ),);
         assert!(
-            stylesheet.contains(".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item")
+            stylesheet
+                .contains(".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item",),
         );
         assert!(
             stylesheet.contains(
-                ".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item::after"
-            )
+                ".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item::after",
+            ),
         );
     }
-
     #[test]
     fn swipe_actions_are_hidden_from_keyboard_when_closed() {
         let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3_ui.css");
+        let stylesheet = include_str!("../../assets/g3-ui.css");
         assert!(source.contains("start_actions_hidden"));
         assert!(source.contains("inert: start_actions_inert"));
         assert!(source.contains("aria_hidden: start_actions_hidden.to_string()"));
         assert!(
             stylesheet
-                .contains(".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;")
+                .contains(".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;",),
         );
     }
-
     #[test]
     fn dismiss_actions_use_a_stable_layer_beneath_an_opaque_item() {
-        let stylesheet = include_str!("../../assets/g3_ui.css");
-
+        let stylesheet = include_str!("../../assets/g3-ui.css");
         assert!(stylesheet.contains(
-            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions {\n    width: 100%;"
-        ));
+            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions {\n    width: 100%;",
+        ),);
         let swipe_item = stylesheet
             .split(".g3-swipe-item {")
             .nth(1)
@@ -1093,51 +1044,38 @@ mod tests {
             .split('}')
             .next()
             .expect("missing end of swipe actions block");
-
         assert!(swipe_item.contains("background: var(--color-card);"));
         assert!(!swipe_actions.contains("transform:"));
         assert!(swipe_content.contains("overflow: hidden;"));
         assert!(swipe_content.contains("background: var(--color-card);"));
         assert!(!swipe_content.contains("contain: paint;"));
         assert!(!swipe_content.contains("backface-visibility: hidden;"));
-
-        // The transformed content composites separately from the action colours
-        // beneath it, so on a fractionally-tall row the action colour rasterizes
-        // through as a hairline at the row's edge. Only the last row shows it,
-        // because every other row's 1px divider happens to cover that strip.
         assert!(swipe_content.contains("box-shadow: 0 1px 0 var(--g3-swipe-edge)"));
         assert!(swipe_content.contains("0 -1px 0 var(--g3-swipe-edge)"));
         assert!(swipe_content.contains("--g3-swipe-edge: var(--color-card);"));
         assert!(stylesheet.contains(".g3-swipe-content:has(.g3-item-selected)"));
-        // The guard has to sit outside the content box to absorb the rounding,
-        // so it must not add height: the row clips it.
         assert!(swipe_item.contains("overflow: hidden;"));
-
-        // A released row reports itself closed immediately, but the content
-        // still takes a full transition to slide back over the actions. The
-        // hide has to wait for that, or the action colour snaps away and the
-        // row animates home across bare card. Opening stays instant.
         assert!(swipe_actions.contains("transition: visibility 0s linear 0s;"));
-        assert!(stylesheet.contains(
-            ".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;\n    transition-delay: var(--transition-normal);"
-        ));
+        assert!(
+            stylesheet
+                .contains(
+                    ".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;\n    transition-delay: var(--transition-normal);",
+                ),
+        );
     }
-
     #[test]
     fn item_controls_keep_native_roles() {
         let source = include_str!("list.rs");
         assert!(!source.contains("a { class: cls, href, role: \"listitem\""));
-        assert!(!source.contains("button { class: cls, r#type: \"button\", role: \"listitem\""));
+        assert!(!source.contains("button { class: cls, r#type: \"button\", role: \"listitem\""),);
         assert!(source.contains("div { class: s::ITEM_ROW, role: \"listitem\""));
     }
-
     #[test]
     fn default_item_with_onclick_promotes_to_button_semantics() {
         let source = include_str!("list.rs");
         assert!(source.contains("(ItemKind::Static, true) => ItemKind::Button"));
         assert!(source.contains("button { class: cls"));
     }
-
     #[test]
     fn disabled_links_drop_anchor_navigation() {
         let source = include_str!("list.rs");
@@ -1145,32 +1083,28 @@ mod tests {
         assert!(source.contains("ItemKind::Link(_)"));
         assert!(source.contains("role: \"link\", aria_disabled"));
     }
-
     #[test]
     fn full_swipe_requires_available_action_side() {
         let source = include_str!("list.rs");
         assert!(
-            source.contains("should_full_swipe(current, action_width) && is_swipe_side_available")
+            source.contains("should_full_swipe(current, action_width) && is_swipe_side_available",),
         );
         assert!(!is_swipe_side_available(44.0, false, true));
         assert!(is_swipe_side_available(-44.0, false, true));
     }
-
     #[test]
     fn pointer_leave_cleans_up_drag_state() {
         let source = include_str!("list.rs");
         assert!(source.contains("onpointerleave"));
         assert!(source.contains("if !dragging() { return; }"));
-        assert!(source.contains("offset.set(settled_swipe_offset(offset(), action_width))"));
+        assert!(source.contains("offset.set(settled_swipe_offset(offset(), action_width))"),);
     }
-
     #[test]
     fn settled_swipe_offset_opens_after_midpoint() {
         assert_eq!(settled_swipe_offset(45.0, 88.0), 88.0);
         assert_eq!(settled_swipe_offset(-45.0, 88.0), -88.0);
         assert_eq!(settled_swipe_offset(40.0, 88.0), 0.0);
     }
-
     #[component]
     fn ListSmokeApp() -> Element {
         rsx! {
@@ -1190,7 +1124,6 @@ mod tests {
             }
         }
     }
-
     #[test]
     fn list_family_renders() {
         render(ListSmokeApp);

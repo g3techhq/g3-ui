@@ -1,11 +1,9 @@
 //! Fab component - Floating Action Button with full Ionic parity.
 //! Supports: Fab container, FabButton, FabList.
-
 use super::fab_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
-
 /// Fab container vertical alignment
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum FabVertical {
@@ -17,7 +15,6 @@ pub enum FabVertical {
     /// Pin to the bottom - the usual placement for a primary action.
     Bottom,
 }
-
 /// Fab container horizontal alignment
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum FabHorizontal {
@@ -29,7 +26,6 @@ pub enum FabHorizontal {
     /// Pin to the trailing edge - the usual placement for a primary action.
     End,
 }
-
 /// FabList side relative to the main FabButton
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum FabListSide {
@@ -43,7 +39,6 @@ pub enum FabListSide {
     /// Expand toward the trailing edge.
     End,
 }
-
 /// Fab button size
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum FabSize {
@@ -53,12 +48,11 @@ pub enum FabSize {
     /// Reduced size, for the secondary buttons revealed by a `FabList`.
     Small,
 }
-
 /// Fab container - wraps buttons and lists, handles fixed positioning.
 #[component]
 pub fn Fab(
     children: Element,
-    #[props(extends=Input)] attributes: Vec<Attribute>,
+    #[props(extends = Input)] attributes: Vec<Attribute>,
     vertical: Option<FabVertical>,
     horizontal: Option<FabHorizontal>,
     edge: Option<bool>,
@@ -67,7 +61,6 @@ pub fn Fab(
     let vert = vertical.unwrap_or_default();
     let horiz = horizontal.unwrap_or_default();
     let is_edge = edge.unwrap_or(false);
-
     let vert_cls = match vert {
         FabVertical::Top => "top-0",
         FabVertical::Center => "top-[50%] -translate-y-[50%]",
@@ -83,27 +76,23 @@ pub fn Fab(
     } else {
         ""
     };
-
     let container_cls = merge_classes(
         format!("{} {vert_cls} {horiz_cls} {edge_cls}", s::FAB_CONTAINER),
         class.as_deref(),
     );
-
     let final_attributes: Vec<Attribute> = attributes
         .into_iter()
         .filter(|attr| attr.name as &str != "onclick")
         .collect();
-
     rsx! {
         div { class: container_cls, ..final_attributes, {children} }
     }
 }
-
 /// FabButton - the primary circular action button.
 #[component]
 pub fn FabButton(
     children: Element,
-    #[props(extends=Input)] attributes: Vec<Attribute>,
+    #[props(extends = Input)] attributes: Vec<Attribute>,
     activated: Option<bool>,
     close_icon: Option<Element>,
     size: Option<FabSize>,
@@ -120,29 +109,24 @@ pub fn FabButton(
     let is_small = size.unwrap_or_default() == FabSize::Small;
     let is_translucent = translucent.unwrap_or(false);
     let is_disabled = disabled.unwrap_or(false);
-
     let fab_cls = match mode {
         ComponentMode::Ios => s::FAB_IOS,
         ComponentMode::Md => s::FAB_MD,
     };
-
     let size_cls = if is_small { s::FAB_SMALL } else { "" };
     let translucent_cls = if is_translucent && mode == ComponentMode::Ios {
         s::FAB_TRANSLUCENT
     } else {
         ""
     };
-
     let btn_cls = merge_classes(
         format!("{} {fab_cls} {size_cls} {translucent_cls}", s::FAB),
         class.as_deref(),
     );
-
     let final_attributes: Vec<Attribute> = attributes
         .into_iter()
         .filter(|attr| attr.name as &str != "onclick")
         .collect();
-
     if let Some(ref href) = href {
         rsx! {
             a {
@@ -182,12 +166,11 @@ pub fn FabButton(
         }
     }
 }
-
 /// FabList - expandable list of secondary fab buttons.
 #[component]
 pub fn FabList(
     children: Element,
-    #[props(extends=Input)] attributes: Vec<Attribute>,
+    #[props(extends = Input)] attributes: Vec<Attribute>,
     activated: Option<bool>,
     side: Option<FabListSide>,
     class: Option<String>,
@@ -196,21 +179,17 @@ pub fn FabList(
     let mode = use_component_mode(mode);
     let is_activated = activated.unwrap_or(false);
     let side = side.unwrap_or_default();
-
     let list_cls = match mode {
         ComponentMode::Ios => s::FAB_LIST_IOS,
         ComponentMode::Md => s::FAB_LIST_MD,
     };
-
     let side_cls = match side {
         FabListSide::Top => s::FAB_LIST_TOP,
         FabListSide::Bottom => s::FAB_LIST_BOTTOM,
         FabListSide::Start => s::FAB_LIST_START,
         FabListSide::End => s::FAB_LIST_END,
     };
-
     let final_attributes: Vec<Attribute> = attributes.into_iter().collect();
-
     rsx! {
         div {
             class: merge_classes(
@@ -227,7 +206,6 @@ pub fn FabList(
         }
     }
 }
-
 /// Convenience component: Fab with integrated list.
 /// Wraps Fab + FabButton + FabList into a single component with activation toggle.
 #[component]
@@ -241,11 +219,9 @@ pub fn FabContainer(
     class: Option<String>,
 ) -> Element {
     let mut is_activated = use_signal(|| false);
-
     let toggle = Callback::new(move |_| {
         is_activated.with_mut(|active| *active = !*active);
     });
-
     rsx! {
         Fab {
             vertical,
@@ -292,7 +268,6 @@ pub fn FabPlaygroundDemo() -> Element {
         3 => FabListSide::End,
         _ => FabListSide::Top,
     };
-
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

@@ -1,6 +1,5 @@
 //! Style constants for Header component.
 #![allow(dead_code)]
-
 pub const HEADER_BASE: &str = "g3-header shadow-lg sticky top-0 z-10";
 pub const HEADER_IOS: &str = "g3-header-ios";
 pub const HEADER_MD: &str = "g3-header-md";
@@ -12,7 +11,6 @@ pub const HEADER_SLOT: &str = "g3-header-slot";
 pub const HEADER_START_SLOT: &str = "g3-header-slot g3-header-start-slot";
 pub const HEADER_END_SLOT: &str = "g3-header-slot g3-header-end-slot";
 pub const TOOLBAR: &str = "g3-header-toolbar";
-
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("HEADER_BASE", HEADER_BASE),

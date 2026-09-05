@@ -1,5 +1,4 @@
 //! AppWrapper component - root shell for the entire app layout.
-
 use super::shell_styles as s;
 use crate::UI_CSS;
 use crate::theme::{
@@ -7,8 +6,7 @@ use crate::theme::{
 };
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
-use dx_route_transitions::{ROUTE_TRANSITION_COVER_CLASS, RouteTransitionProvider};
-
+use g3_route_transitions::{ROUTE_TRANSITION_COVER_CLASS, RouteTransitionProvider};
 #[component]
 pub fn AppWrapper(
     children: Element,
@@ -28,25 +26,11 @@ pub fn AppWrapper(
     /// Defaults to `false`.
     disable_text_selection: Option<bool>,
 ) -> Element {
-    // AppWrapper both consumes and re-provides mode and theme, so it has to
-    // resolve them from an *ancestor* rather than with the ordinary context
-    // helpers - otherwise it reads back its own published value from its second
-    // render onward and never sees an outer change. Reading through the
-    // inherited signals still subscribes, so a live mode or theme switch
-    // re-renders this shell and everything under it.
     let inherited_mode = use_ancestor_context::<G3Mode>();
     let inherited_theme = use_ancestor_context::<Signal<Theme>>();
     let mode = mode
         .or_else(|| inherited_mode.map(|context| (context.mode)()))
         .unwrap_or_else(get_mode);
-    // Nested AppWrapper (a device-frame demo inside a themed page, for
-    // instance) shouldn't lose its ambient theme just because it wasn't
-    // re-specified: fall back to whatever Theme an outer AppWrapper already
-    // provided before reaching for the library default. This has to resolve
-    // to a concrete Theme either way (not fall through to an empty inline
-    // style) - `[data-g3-mode]` sets its own default color vars, and those
-    // beat an *inherited* value on any element that carries the attribute,
-    // which every AppWrapper does.
     let effective_theme = theme
         .or_else(|| inherited_theme.map(|theme| theme()))
         .unwrap_or_default();
@@ -55,7 +39,6 @@ pub fn AppWrapper(
         mode: use_context_signal(mode),
     });
     provide_context(use_context_signal(effective_theme));
-
     let mut shell_cls = if layout.unwrap_or(true) {
         match mode {
             ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
@@ -70,7 +53,6 @@ pub fn AppWrapper(
     #[cfg(feature = "transitions")]
     let shell_cls = merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS));
     let shell_cls = merge_classes(shell_cls, class.as_deref());
-
     let shell = rsx! {
         div {
             class: shell_cls,
@@ -79,19 +61,11 @@ pub fn AppWrapper(
             {children}
         }
     };
-
-    // `with_static_head` puts this in the document head for web builds, which
-    // is what blocks first paint and prevents a flash of unstyled content.
-    // Desktop and mobile bundles do not collect statically-headed assets at
-    // all, though - only ones something links at runtime - so this tag is what
-    // gets the stylesheet into those builds. On web it resolves to the same URL
-    // the head already loaded, so it costs a cache hit and nothing else.
     #[cfg(feature = "transitions")]
     return rsx! {
         document::Link { rel: "stylesheet", href: UI_CSS }
         RouteTransitionProvider { {shell} }
     };
-
     #[cfg(not(feature = "transitions"))]
     rsx! {
         document::Link { rel: "stylesheet", href: UI_CSS }
@@ -114,7 +88,6 @@ pub fn AppWrapperPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "AppWrapper",
     description: "Root app shell and mode provider.",

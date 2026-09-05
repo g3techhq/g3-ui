@@ -1,6 +1,5 @@
 //! Style constants for Sheet component.
 #![allow(dead_code)]
-
 pub const SHEET: &str = "g3-sheet";
 pub const SHEET_IOS: &str = "g3-sheet-ios";
 pub const SHEET_MD: &str = "g3-sheet-md";
@@ -17,13 +16,7 @@ pub const HANDLE_IOS: &str = "g3-sheet-handle-ios";
 pub const BACKDROP: &str = "g3-sheet-backdrop";
 pub const STATE_OPEN: &str = "g3-sheet-open";
 pub const STATE_CLOSED: &str = "g3-sheet-closed";
-// Plain custom class: padding/flex layout live in g3_ui.css's own
-// `.g3-sheet-content` rule (see Modal's `OVERLAY` for why — Tailwind
-// utilities referenced only in this crate's Rust source don't make it into
-// a consuming app's compiled CSS unless that app's Tailwind `@source` scan
-// happens to cover this crate too, which most don't).
 pub const CONTENT: &str = "g3-sheet-content";
-
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("SHEET", SHEET),

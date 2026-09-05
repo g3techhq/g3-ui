@@ -1,12 +1,10 @@
 //! Body component - scrollable page content with error/loading boundaries.
-
 use super::body_styles as s;
 use crate::components::Spinner;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
-use dx_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
-
+use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
 #[component]
 pub fn Body(
     children: Element,
@@ -17,12 +15,10 @@ pub fn Body(
     mode: Option<ComponentMode>,
 ) -> Element {
     let mode = use_component_mode(mode);
-
     let body_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::BODY_BASE, s::BODY_IOS),
         ComponentMode::Md => format!("{} {}", s::BODY_BASE, s::BODY_MD),
     };
-
     let padding_enabled = padding.unwrap_or(true);
     let body_content_cls = if padding_enabled {
         s::BODY_CONTENT.to_string()
@@ -35,12 +31,10 @@ pub fn Body(
         "--g3-body-padding: 0;"
     };
     let body_padding_state = padding_enabled.to_string();
-
     #[cfg(feature = "transitions")]
     let content_cls = merge_classes(body_content_cls, Some(ROUTE_TRANSITION_SEGMENT_CLASS));
     #[cfg(not(feature = "transitions"))]
     let content_cls = body_content_cls;
-
     rsx! {
         div { class: merge_classes(body_cls, class.as_deref()),
             div {
@@ -110,7 +104,6 @@ pub fn BodyPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Body",
     description: "Scrollable page body with loading and error boundaries.",

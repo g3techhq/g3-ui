@@ -1,6 +1,5 @@
 //! Style constants for Select component.
 #![allow(dead_code)]
-
 pub const SELECT_BTN: &str = "g3-select-btn";
 pub const SELECT_BTN_IOS: &str = "g3-select-btn-ios";
 pub const SELECT_BTN_MD: &str = "g3-select-btn-md";
@@ -10,7 +9,6 @@ pub const SELECT_SHEET: &str = "g3-select-sheet";
 pub const OPTION: &str = "g3-select-option";
 pub const OPTION_SELECTED: &str = "g3-select-option-selected";
 pub const SEPARATOR: &str = "g3-select-separator";
-
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("SELECT_BTN", SELECT_BTN),

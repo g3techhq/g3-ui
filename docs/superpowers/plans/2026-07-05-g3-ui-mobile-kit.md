@@ -1,12 +1,12 @@
-# g3_ui Mobile Kit Implementation Plan
+# g3-ui Mobile Kit Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add the approved mobile component kit to `g3_ui`: forms, list/item with swipe gestures, feedback components, disclosure components, and small mobile essentials.
+**Goal:** Add the approved mobile component kit to `g3-ui`: forms, list/item with swipe gestures, feedback components, disclosure components, and small mobile essentials.
 
-**Architecture:** Keep the existing flat `src/components/` architecture. Each component family gets a focused Rust file plus a sibling `*_styles.rs`, playground demo, descriptor, smoke/API tests, public exports, prelude exports, and CSS in `assets/g3_ui.css`. The list swipe behavior is split into pure math helpers plus Dioxus event handling so the risky gesture decisions are testable without a browser.
+**Architecture:** Keep the existing flat `src/components/` architecture. Each component family gets a focused Rust file plus a sibling `*_styles.rs`, playground demo, descriptor, smoke/API tests, public exports, prelude exports, and CSS in `assets/g3-ui.css`. The list swipe behavior is split into pure math helpers plus Dioxus event handling so the risky gesture decisions are testable without a browser.
 
-**Tech Stack:** Rust 2024, Dioxus 0.7.9, `dioxus-icons`, `dioxus-sdk-time`, Manganis assets, CSS custom properties, existing `g3_ui` theme/mode utilities.
+**Tech Stack:** Rust 2024, Dioxus 0.7.9, `dioxus-icons`, `dioxus-sdk-time`, Manganis assets, CSS custom properties, existing `g3-ui` theme/mode utilities.
 
 ---
 
@@ -27,7 +27,7 @@ The design covers several component families, but they belong to one crate relea
 - Modify `src/components/mod.rs` to register modules, exports, descriptors, and playground demos.
 - Modify `src/lib.rs` to export public symbols, aliases, and smoke/source contract tests.
 - Modify `src/prelude.rs` to re-export public symbols and aliases.
-- Modify `assets/g3_ui.css` to add mode-aware styles for the new components.
+- Modify `assets/g3-ui.css` to add mode-aware styles for the new components.
 
 ## Shared Verification Commands
 
@@ -50,7 +50,7 @@ Expected: all commands exit successfully. If a command fails because a prior tas
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing source contract tests**
 
@@ -83,7 +83,7 @@ fn mobile_primitives_are_public_and_registered() {
 
 #[test]
 fn mobile_primitive_styles_use_shared_theme_tokens() {
-    let stylesheet = include_str!("../assets/g3_ui.css");
+    let stylesheet = include_str!("../assets/g3-ui.css");
     for selector in [
         ".g3-badge", ".g3-avatar", ".g3-chip", ".g3-progress", ".g3-skeleton",
     ] {
@@ -370,7 +370,7 @@ Modify `src/prelude.rs` to export the same symbols and aliases.
 
 - [ ] **Step 6: Add CSS**
 
-Append this section to `assets/g3_ui.css`:
+Append this section to `assets/g3-ui.css`:
 
 ```css
 /* -- Mobile primitives -- */
@@ -481,7 +481,7 @@ git diff --check
 Expected: all pass. Commit:
 
 ```powershell
-git add src/components/primitives.rs src/components/primitives_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/primitives.rs src/components/primitives_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add mobile primitive components"
 ```
 
@@ -493,7 +493,7 @@ git commit -m "Add mobile primitive components"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -735,7 +735,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/checkbox.rs src/components/checkbox_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/checkbox.rs src/components/checkbox_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add checkbox component"
 ```
 
@@ -747,7 +747,7 @@ git commit -m "Add checkbox component"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -979,7 +979,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/radio.rs src/components/radio_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/radio.rs src/components/radio_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add radio components"
 ```
 
@@ -991,7 +991,7 @@ git commit -m "Add radio components"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing tests for public surface and CSS contracts**
 
@@ -1007,7 +1007,7 @@ fn list_family_is_public_registered_and_uses_swipe_contracts() {
         .next()
         .expect("library source should have a public section");
     let list_source = std::fs::read_to_string(crate_root.join("src/components/list.rs")).unwrap_or_default();
-    let stylesheet = include_str!("../assets/g3_ui.css");
+    let stylesheet = include_str!("../assets/g3-ui.css");
 
     assert!(crate_root.join("src/components/list.rs").exists());
     assert!(crate_root.join("src/components/list_styles.rs").exists());
@@ -1536,7 +1536,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/list.rs src/components/list_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/list.rs src/components/list_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add list and swipe item components"
 ```
 
@@ -1548,7 +1548,7 @@ git commit -m "Add list and swipe item components"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing test**
 
@@ -1730,7 +1730,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/searchbar.rs src/components/searchbar_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/searchbar.rs src/components/searchbar_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add searchbar component"
 ```
 
@@ -1742,7 +1742,7 @@ git commit -m "Add searchbar component"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing test**
 
@@ -1943,7 +1943,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/toast.rs src/components/toast_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/toast.rs src/components/toast_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add toast component"
 ```
 
@@ -1955,7 +1955,7 @@ git commit -m "Add toast component"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing tests**
 
@@ -2149,7 +2149,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/refresher.rs src/components/refresher_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/refresher.rs src/components/refresher_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add refresher component"
 ```
 
@@ -2161,7 +2161,7 @@ git commit -m "Add refresher component"
 - Modify: `src/components/mod.rs`
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 
 - [ ] **Step 1: Write failing test**
 
@@ -2376,7 +2376,7 @@ git diff --check
 Commit:
 
 ```powershell
-git add src/components/accordion.rs src/components/accordion_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3_ui.css
+git add src/components/accordion.rs src/components/accordion_styles.rs src/components/mod.rs src/lib.rs src/prelude.rs assets/g3-ui.css
 git commit -m "Add accordion components"
 ```
 
@@ -2386,7 +2386,7 @@ git commit -m "Add accordion components"
 - Modify: `src/lib.rs`
 - Modify: `src/prelude.rs`
 - Modify: `src/components/mod.rs`
-- Modify: `assets/g3_ui.css`
+- Modify: `assets/g3-ui.css`
 - Read: `playground/src/main.rs`
 
 - [ ] **Step 1: Add full surface smoke test**
@@ -2507,7 +2507,7 @@ Use the Browser plugin at a compact viewport such as `390x844`. Verify:
 If browser QA in Step 5 required edits, run the shared verification commands again, then commit the exact files changed by that QA pass:
 
 ```powershell
-git add src/lib.rs src/prelude.rs src/components/mod.rs assets/g3_ui.css
+git add src/lib.rs src/prelude.rs src/components/mod.rs assets/g3-ui.css
 git commit -m "Verify mobile kit integration"
 ```
 

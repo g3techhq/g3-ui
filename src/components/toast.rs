@@ -1,12 +1,10 @@
 //! Toast component for transient mobile feedback.
-
 use super::toast_styles as s;
 use crate::components::StatusColor;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
 use std::time::Duration;
-
 /// Where a toast appears on screen.
 #[derive(Clone, Copy, PartialEq, Eq, Default)]
 pub enum ToastPosition {
@@ -18,7 +16,6 @@ pub enum ToastPosition {
     #[default]
     Bottom,
 }
-
 impl ToastPosition {
     fn class(self) -> &'static str {
         match self {
@@ -28,7 +25,6 @@ impl ToastPosition {
         }
     }
 }
-
 fn color_class(color: StatusColor) -> &'static str {
     match color {
         StatusColor::Neutral => s::COLOR_NEUTRAL,
@@ -38,7 +34,6 @@ fn color_class(color: StatusColor) -> &'static str {
         StatusColor::Danger => s::COLOR_DANGER,
     }
 }
-
 #[component]
 pub fn Toast(
     mut open: Signal<bool>,
@@ -74,7 +69,6 @@ pub fn Toast(
     };
     let closed_inert = (!open()).then(|| "".to_string());
     let mut dismiss_generation = use_signal(|| 0_u64);
-
     use_effect(move || {
         let generation = dismiss_generation.with_mut(|value| {
             *value += 1;
@@ -96,7 +90,6 @@ pub fn Toast(
             }
         });
     });
-
     rsx! {
         div {
             class: merge_classes(
@@ -133,7 +126,6 @@ pub fn Toast(
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn ToastPlaygroundDemo() -> Element {
@@ -210,17 +202,14 @@ crate::g3_playground! {
     demo: ToastPlaygroundDemo,
     source: "src/components/toast.rs",
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::G3ThemeProvider;
-
     fn render(app: fn() -> Element) {
         let mut dom = VirtualDom::new(app);
         dom.rebuild_in_place();
     }
-
     #[component]
     fn ToastSmokeApp() -> Element {
         let open = use_signal(|| true);
@@ -228,19 +217,18 @@ mod tests {
             G3ThemeProvider { mode: ComponentMode::Ios,
                 Toast {
                     open,
-                    message: "Saved".to_string(),
+                    message: "Saved"
+                                .to_string(),
                     color: StatusColor::Success,
                     duration_ms: 0,
                 }
             }
         }
     }
-
     #[test]
     fn toast_renders() {
         render(ToastSmokeApp);
     }
-
     #[test]
     fn toast_uses_alert_role_for_urgent_colors() {
         assert_eq!(color_class(StatusColor::Danger), s::COLOR_DANGER);
@@ -248,21 +236,18 @@ mod tests {
         assert!(source.contains("StatusColor::Danger | StatusColor::Warning"));
         assert!(source.contains("aria_live"));
     }
-
     #[test]
     fn closed_toasts_are_not_keyboard_focusable() {
         let source = include_str!("toast.rs");
         assert!(source.contains("inert: closed_inert"));
         assert!(source.contains("disabled: !open()"));
     }
-
     #[test]
     fn toast_autodismiss_uses_generation_guard() {
         let source = include_str!("toast.rs");
         assert!(source.contains("dismiss_generation"));
         assert!(source.contains("dismiss_generation() == generation && open()"));
     }
-
     #[test]
     fn toast_autodismiss_uses_dioxus_sdk_time() {
         let source = include_str!("toast.rs")
@@ -273,16 +258,14 @@ mod tests {
         assert!(source.contains("duration_ms.unwrap_or(3000)"));
         assert!(!source.contains("document::eval"));
     }
-
     #[test]
     fn toast_close_button_owns_the_trailing_column_without_an_action() {
-        let stylesheet = include_str!("../../assets/g3_ui.css");
+        let stylesheet = include_str!("../../assets/g3-ui.css");
         let close = stylesheet
             .split(".g3-toast-close {")
             .nth(1)
             .and_then(|rest| rest.split('}').next())
             .expect("missing toast close style");
-
         assert!(close.contains("grid-column: 4"));
         assert!(close.contains("justify-self: end"));
     }

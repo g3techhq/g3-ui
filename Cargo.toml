@@ -18,7 +18,7 @@ path = "src/lib.rs"
 
 [features]
 playground = []
-transitions = ["dep:dx-route-transitions"]
+transitions = ["dep:g3-route-transitions"]
 
 [dependencies]
 dioxus = { version = "0.7.9", features = ["router"] }
@@ -26,7 +26,7 @@ dioxus-icons = "0.1.0"
 dioxus-sdk-time = "0.7.0"
 cfg-if = "1.0.0"
 manganis = "0.7.9"
-dx-route-transitions = { version = "0.1.0", optional = true }
+g3-route-transitions = { version = "0.1.0", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.102", features = ["Document", "DomTokenList", "HtmlElement", "Navigator", "Window"] }

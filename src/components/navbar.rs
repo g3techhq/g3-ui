@@ -1,13 +1,11 @@
 //! Responsive persistent navigation: bottom tabs on compact shells and a desktop rail on wide ones.
-
 use super::navbar_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_ambient_theme, use_component_mode};
 use dioxus::prelude::*;
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Trophy};
 #[cfg(feature = "transitions")]
-use dx_route_transitions::ROUTE_TRANSITION_BASE_CLASS;
-
+use g3_route_transitions::ROUTE_TRANSITION_BASE_CLASS;
 /// Where a tab belongs when the bottom tab bar becomes a desktop rail.
 ///
 /// This does not affect compact layouts: every tab remains in its declared
@@ -22,17 +20,10 @@ pub enum NavbarTabDesktopPlacement {
     /// Group the tab with secondary destinations at the bottom of the rail.
     Bottom,
 }
-
 #[component]
 pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMode>) -> Element {
     let mode = use_component_mode(mode);
-    // Like AppWrapper: `[data-g3-mode]` sets its own default color vars, which
-    // beat an *inherited* theme value on any element carrying the attribute -
-    // including this one, when Navbar is nested inside an already-themed
-    // AppWrapper. Re-apply the ambient theme (if any) via inline style so
-    // nesting doesn't silently reset the app's theme back to mode defaults.
     let theme_style = use_ambient_theme().unwrap_or_default().to_style_attr();
-
     let navbar_cls = match mode {
         ComponentMode::Ios => format!("{} {}", s::NAVBAR_BASE, s::NAVBAR_IOS),
         ComponentMode::Md => format!("{} {}", s::NAVBAR_BASE, s::NAVBAR_MD),
@@ -40,7 +31,6 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
     #[cfg(feature = "transitions")]
     let navbar_cls = merge_classes(navbar_cls, Some(ROUTE_TRANSITION_BASE_CLASS));
     let navbar_cls = merge_classes(navbar_cls, class.as_deref());
-
     rsx! {
         div {
             class: navbar_cls,
@@ -50,7 +40,6 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
         }
     }
 }
-
 #[component]
 pub fn NavbarTabBar(
     class: Option<String>,
@@ -66,7 +55,6 @@ pub fn NavbarTabBar(
         }
     }
 }
-
 #[component]
 pub fn NavbarTab(
     label: String,
@@ -86,7 +74,6 @@ pub fn NavbarTab(
         NavbarTabDesktopPlacement::Top => "",
         NavbarTabDesktopPlacement::Bottom => s::TAB_DESKTOP_BOTTOM,
     };
-
     rsx! {
         button {
             class: merge_classes(
@@ -116,7 +103,6 @@ pub fn NavbarTab(
         }
     }
 }
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn NavbarPlaygroundDemo() -> Element {
@@ -162,7 +148,6 @@ pub fn NavbarPlaygroundDemo() -> Element {
         }
     }
 }
-
 crate::g3_playground! {
     name: "Navbar",
     description: "Responsive bottom tabs that become a desktop navigation rail.",

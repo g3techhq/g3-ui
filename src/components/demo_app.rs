@@ -1,10 +1,9 @@
-//! A small end-to-end demo that composes the full g3_ui component set into one app.
+//! A small end-to-end demo that composes the full g3-ui component set into one app.
 //! Kitchen-sink reference app for the playground gallery.
 //!
 //! This is a component-owned playground demo (like every other component), but instead
 //! of exercising a single component it wires the whole library together into a responsive
 //! app shell so the gallery has a "kitchen sink" reference to open first.
-
 #[cfg(feature = "playground")]
 use dioxus::prelude::*;
 #[cfg(feature = "playground")]
@@ -12,20 +11,12 @@ use dioxus_icons::lucide::{
     Activity, Bell, CalendarDays, ChevronRight, CircleUserRound, Heart, House, LogOut, MapPin,
     Menu, Search, Settings, Star, Trophy, Zap,
 };
-
 #[cfg(feature = "playground")]
 #[component]
 pub fn DemoAppPlaygroundDemo() -> Element {
     let mode = crate::use_component_mode(None);
-
-    // Which bottom-tab screen is showing.
     let mut tab = use_signal(|| 0_usize);
-    // Header toolbar segment (Live / Upcoming) on the Rounds screen.
     let toolbar_segment = use_signal(|| 0_usize);
-
-    // Overlay + feedback state. Every overlay is rendered once at the app root
-    // (below) so its fixed/absolute backdrop resolves against the app frame and
-    // covers the header, instead of being clipped inside the scrolling body.
     let mut toast_open = use_signal(|| false);
     let mut menu_open = use_signal(|| false);
     let mut filter_sheet_open = use_signal(|| false);
@@ -33,17 +24,10 @@ pub fn DemoAppPlaygroundDemo() -> Element {
     let mut confirm_open = use_signal(|| false);
     let info_open = use_signal(|| false);
     let mut fab_open = use_signal(|| false);
-
-    // Refresher state on the Rounds screen.
     let refreshing = use_signal(|| false);
-
-    // Discover "More filters" bottom-sheet state — real toggles so the sheet
-    // shows what is selected and "Apply" has something to commit.
     let filter_nearby = use_signal(|| true);
     let filter_friends = use_signal(|| false);
     let filter_weekend = use_signal(|| false);
-
-    // Discover-screen form state.
     let accordion = use_signal(|| vec!["round".to_string()]);
     let course = use_signal(|| "Pebble Creek".to_string());
     let handicap = use_signal(|| "12".to_string());
@@ -51,54 +35,61 @@ pub fn DemoAppPlaygroundDemo() -> Element {
     let format_segment = use_signal(|| 0_usize);
     let walking = use_signal(|| true);
     let scoring = use_signal(|| "skins".to_string());
-
     let screen = match tab() {
-        1 => rsx! {
-            DiscoverScreen {
-                accordion,
-                course,
-                handicap,
-                tee,
-                format_segment,
-                walking,
-                scoring,
-                filter_sheet_open,
+        1 => {
+            rsx! {
+                DiscoverScreen {
+                    accordion,
+                    course,
+                    handicap,
+                    tee,
+                    format_segment,
+                    walking,
+                    scoring,
+                    filter_sheet_open,
+                }
             }
-        },
-        2 => rsx! {
-            ProfileScreen { leave_modal_open, confirm_open }
-        },
-        3 => rsx! {
-            ActivityScreen {}
-        },
-        _ => rsx! {
-            RoundsScreen {
-                toolbar_segment,
-                refreshing,
-                toast_open,
-                info_open,
+        }
+        2 => {
+            rsx! {
+                ProfileScreen { leave_modal_open, confirm_open }
             }
-        },
+        }
+        3 => {
+            rsx! {
+                ActivityScreen {}
+            }
+        }
+        _ => {
+            rsx! {
+                RoundsScreen {
+                    toolbar_segment,
+                    refreshing,
+                    toast_open,
+                    info_open,
+                }
+            }
+        }
     };
-
     let title = match tab() {
         1 => "Discover",
         2 => "Profile",
         3 => "Activity",
         _ => "Fairway",
     };
-
     rsx! {
         crate::PlaygroundDemoFrame { app: false,
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 crate::Navbar {
                     crate::Header {
-                        title: title.to_string(),
+                        title: title
+                                .to_string(),
                         start_button: rsx! {
                             crate::Button {
                                 style: crate::ButtonStyle::Clear,
                                 size: crate::ButtonSize::Sm,
-                                aria_label: "Open menu".to_string(),
+                                aria_label: "Open menu"
+                                        .to_string(),
                                 onclick: move |_| menu_open.set(true),
                                 Menu { size: 22, class: "fill-none" }
                             }
@@ -107,7 +98,8 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             crate::Button {
                                 style: crate::ButtonStyle::Clear,
                                 size: crate::ButtonSize::Sm,
-                                aria_label: "Notifications".to_string(),
+                                aria_label: "Notifications"
+                                        .to_string(),
                                 onclick: move |_| toast_open.set(true),
                                 Bell { size: 20, class: "fill-none" }
                             }
@@ -119,7 +111,6 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             }
                         }),
                     }
-
                     crate::Body {
                         has_footer_space: false,
                         fab: (tab() == 0).then_some(rsx! {
@@ -142,10 +133,10 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                         }),
                         {screen}
                     }
-
                     crate::NavbarTabBar {
                         crate::NavbarTab {
-                            label: "Rounds".to_string(),
+                            label: "Rounds"
+                                    .to_string(),
                             selected: tab() == 0,
                             icon: rsx! {
                                 House { size: 20, class: "fill-none" }
@@ -179,8 +170,6 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                         }
                     }
                 }
-
-                // Overlays live at the app root so they float above every screen.
                 crate::Toast {
                     open: toast_open,
                     message: "You have 3 new invites".to_string(),
@@ -195,7 +184,8 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                     actions: rsx! {
                         crate::Button {
                             style: crate::ButtonStyle::Clear,
-                            onclick: move |_| leave_modal_open.set(false),
+                            onclick: move |_| leave_modal_open
+                                    .set(false),
                             "Close"
                         }
                     },
@@ -215,10 +205,9 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                     title: "Leave this round?".to_string(),
                     description: rsx! { "Your scores are saved. You can rejoin any time." },
                     confirm_text: "Leave".to_string(),
-                    on_confirm: move |_| confirm_open.set(false),
+                    on_confirm: move |_| confirm_open
+                            .set(false),
                 }
-
-                // Left side-menu opened from the header hamburger button.
                 crate::Sheet {
                     is_open: menu_open,
                     placement: crate::SheetPlacement::Left(crate::SideSheetType::Overlay),
@@ -267,13 +256,12 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 start: rsx! {
                                     LogOut { size: 20, class: "fill-none" }
                                 },
-                                onclick: move |_| menu_open.set(false),
+                                onclick: move |_|
+                                        menu_open.set(false),
                             }
                         }
                     }
                 }
-
-                // Advanced filters bottom sheet (opened from the Discover screen).
                 crate::Sheet {
                     is_open: filter_sheet_open,
                     placement: crate::SheetPlacement::Bottom,
@@ -295,7 +283,8 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                     CircleUserRound { size: 20, class: "fill-none" }
                                 },
                                 label: "Friends only".to_string(),
-                                description: "Rounds with people you follow".to_string(),
+                                description: "Rounds with people you follow"
+                                        .to_string(),
                                 end: rsx! {
                                     crate::Toggle { checked: filter_friends }
                                 },
@@ -322,8 +311,6 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                         }
                     }
                 }
-
-                // Scoring explainer opened from the Live players info button.
                 crate::Sheet {
                     is_open: info_open,
                     placement: crate::SheetPlacement::Bottom,
@@ -359,7 +346,6 @@ pub fn DemoAppPlaygroundDemo() -> Element {
         }
     }
 }
-
 /// Tab 1 — a scrollable feed showcasing cards, lists, primitives, feedback + refresh.
 #[cfg(feature = "playground")]
 #[component]
@@ -372,7 +358,6 @@ fn RoundsScreen(
     let mut refreshing = refreshing;
     let mut info_open = info_open;
     let live = toolbar_segment() == 0;
-
     rsx! {
         crate::Refresher {
             refreshing: refreshing(),
@@ -384,7 +369,6 @@ fn RoundsScreen(
                     refreshing.set(false);
                 });
             },
-
             crate::Card {
                 title: "Today's round",
                 right_slot: crate::RightSlot::Text("Par 72".to_string()),
@@ -402,10 +386,10 @@ fn RoundsScreen(
                         "Match play"
                     }
                     crate::Chip { onclick: move |_| {}, "Skins" }
-                    crate::Chip { onclick: move |_| {}, "Walking" }
+                    crate::Chip { onclick: move |_|
+                                {}, "Walking" }
                 }
             }
-
             div { class: "g3-demo-section-head",
                 span { class: "g3-demo-section-title",
                     if live {
@@ -419,14 +403,14 @@ fn RoundsScreen(
                     aria_label: "About scoring".to_string(),
                 }
             }
-
             crate::List { inset: true, lines: crate::ListLines::Inset,
                 crate::Item {
                     start: rsx! {
                         crate::Avatar { fallback: "JD" }
                     },
                     label: "Jordan Diaz".to_string(),
-                    description: "3 under · leader".to_string(),
+                    description: "3 under · leader"
+                            .to_string(),
                     end: rsx! {
                         crate::Badge { color: crate::StatusColor::Success, "-3" }
                     },
@@ -447,7 +431,8 @@ fn RoundsScreen(
                     start: rsx! {
                         crate::Avatar { fallback: "AL" }
                     },
-                    label: "Alex Lin".to_string(),
+                    label: "Alex Lin"
+                            .to_string(),
                     description: "even".to_string(),
                     end: rsx! {
                         crate::Badge { "E" }
@@ -455,9 +440,7 @@ fn RoundsScreen(
                     detail: crate::ItemDetail::Show,
                 }
             }
-
             crate::Line { class: "g3-demo-separator" }
-
             div { class: "g3-demo-button-row",
                 crate::Button { onclick: move |_| toast_open.set(true), "Invite" }
                 crate::Button { style: crate::ButtonStyle::Outline, onclick: move |_| {}, "Share" }
@@ -465,7 +448,6 @@ fn RoundsScreen(
         }
     }
 }
-
 /// Tab 2 — a settings-style form built from disclosures, inputs and choice controls.
 #[cfg(feature = "playground")]
 #[component]
@@ -482,14 +464,14 @@ fn DiscoverScreen(
     let mut filter_sheet_open = filter_sheet_open;
     let notify_scores = use_signal(|| true);
     let notify_cheers = use_signal(|| false);
-
     rsx! {
         crate::AccordionGroup { value: accordion,
             crate::AccordionItem {
                 value: "round".to_string(),
                 label: "Round setup".to_string(),
                 description: "Course, handicap and tees".to_string(),
-                crate::Field { label: "Course".to_string(), value: course }
+                crate::Field { label: "Course"
+                            .to_string(), value: course }
                 crate::Field {
                     label: "Handicap".to_string(),
                     value: handicap,
@@ -507,7 +489,6 @@ fn DiscoverScreen(
                     ],
                 }
             }
-
             crate::AccordionItem {
                 value: "format".to_string(),
                 label: "Format".to_string(),
@@ -521,11 +502,13 @@ fn DiscoverScreen(
                     crate::RadioGroup { value: scoring,
                         crate::Radio {
                             value: "skins".to_string(),
-                            label: "Skins".to_string(),
+                            label: "Skins"
+                                    .to_string(),
                         }
                         crate::Radio {
                             value: "nassau".to_string(),
-                            label: "Nassau".to_string(),
+                            label: "Nassau"
+                                    .to_string(),
                         }
                         crate::Radio {
                             value: "none".to_string(),
@@ -535,9 +518,9 @@ fn DiscoverScreen(
                 }
                 crate::Checkbox { checked: walking, label: "Walking round".to_string() }
             }
-
             crate::AccordionItem {
-                value: "notify".to_string(),
+                value: "notify"
+                        .to_string(),
                 label: "Notifications".to_string(),
                 description: "Live scoring alerts".to_string(),
                 crate::List { lines: crate::ListLines::Full,
@@ -562,7 +545,6 @@ fn DiscoverScreen(
                 }
             }
         }
-
         div { class: "g3-demo-button-row",
             crate::Button {
                 style: crate::ButtonStyle::Neutral,
@@ -576,14 +558,12 @@ fn DiscoverScreen(
         }
     }
 }
-
 /// Tab 3 — an identity/summary screen with avatar, stats, links and a loading state.
 #[cfg(feature = "playground")]
 #[component]
 fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> Element {
     let mut leave_modal_open = leave_modal_open;
     let mut confirm_open = confirm_open;
-
     rsx! {
         crate::Card {
             div { class: "g3-demo-profile-head",
@@ -606,7 +586,6 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
                 }
             }
         }
-
         crate::List { inset: true,
             crate::Item {
                 start: rsx! {
@@ -615,14 +594,16 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
                 label: "Achievements".to_string(),
                 detail: crate::ItemDetail::Show,
                 kind: crate::ItemKind::Button,
-                onclick: move |_| leave_modal_open.set(true),
+                onclick: move |_|
+                        leave_modal_open.set(true),
             }
             crate::Item {
                 start: rsx! {
                     CalendarDays { size: 20, class: "fill-none" }
                 },
                 label: "Round history".to_string(),
-                metadata: "42".to_string(),
+                metadata: "42"
+                        .to_string(),
                 detail: crate::ItemDetail::Show,
                 kind: crate::ItemKind::Button,
                 onclick: move |_| leave_modal_open.set(true),
@@ -639,11 +620,9 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
                 onclick: move |_| {},
             }
         }
-
         div { class: "g3-demo-section-head",
             span { class: "g3-demo-section-title", "Syncing latest scores" }
         }
-
         crate::List { inset: true, lines: crate::ListLines::Inset,
             crate::Item {
                 start: rsx! {
@@ -670,7 +649,6 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
                 },
             }
         }
-
         div { class: "g3-demo-button-row",
             crate::Button {
                 style: crate::ButtonStyle::Outline,
@@ -681,7 +659,6 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
         }
     }
 }
-
 /// Tab 4 — a dedicated loading screen showcasing spinner + skeleton placeholders.
 #[cfg(feature = "playground")]
 #[component]
@@ -690,7 +667,6 @@ fn ActivityScreen() -> Element {
         crate::Spinner { center: true }
     }
 }
-
 crate::g3_playground! {
     name: "Demo App",
     description: "A complete responsive app shell that composes every g3_ui component together.",

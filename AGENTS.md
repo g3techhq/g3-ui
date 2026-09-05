@@ -1,13 +1,13 @@
-# g3_ui - Goals & Philosophies
+# g3-ui - Goals & Philosophies
 
-> Reference document for AI agents working on g3_ui.
+> Reference document for AI agents working on g3-ui.
 > Read this before making any changes to the crate.
 
 ---
 
 ## Identity
 
-g3_ui is the Dioxus component library for the Greenside Partee project. It uses a flat component taxonomy and borrows its design philosophy and component behavior from **Ionic Framework**.
+g3-ui is the Dioxus component library for the Greenside Partee project. It uses a flat component taxonomy and borrows its design philosophy and component behavior from **Ionic Framework**.
 
 ---
 
@@ -15,7 +15,7 @@ g3_ui is the Dioxus component library for the Greenside Partee project. It uses 
 
 ### 1. eq_ui - Code Structure & Architecture
 
-g3_ui adopts the following structural conventions from eq_ui:
+g3-ui adopts the following structural conventions from eq_ui:
 
 - **Flat Component Module**: Components live together in `src/components/`; metadata groups them as Components or Utilities.
 - **Co-located `_styles.rs`**: Each component file has a sibling `*_styles.rs` holding its Tailwind class constants. Shared tokens live in `theme.rs`.
@@ -28,10 +28,10 @@ g3_ui adopts the following structural conventions from eq_ui:
 
 ### 2. Ionic Framework - Design & Behavior
 
-g3_ui matches Ionic's component behaviors and design language:
+g3-ui matches Ionic's component behaviors and design language:
 
 - **Adaptive Styling**: Components have `ios` and `md` (Material Design) modes, selected once at init. The `mode` property is virtual (not reactive after init) - it sets which platform aesthetic to use and does not update at runtime. This is the clearest indicator of Ionic inspiration.
-- **CSS Variables Theming**: Ionic uses CSS custom properties as its entire theming system. g3_ui inherits this approach through eq_ui's CSS variable system.
+- **CSS Variables Theming**: Ionic uses CSS custom properties as its entire theming system. g3-ui inherits this approach through eq_ui's CSS variable system.
 - **Shadow Parts**: Where applicable, components expose CSS shadow parts for deep customization.
 - **Parallel Navigation**: Tabbed interfaces with independent navigation stacks per tab.
 - **Platform-Specific Visuals**: iOS (rounded, thin borders, subtle shadows) vs MD (Material Design, card elevation, box shadows).
@@ -103,7 +103,7 @@ Components must work across platforms:
   must not set `color-scheme`.
 - Two built-in presets today: `Theme::default_light()` and `Theme::default_dark()`. All `Theme`
   fields are public, so consumers build custom themes via struct-update syntax or `with_focused()`.
-  (`eq_ui` ships ~26 preset themes; g3_ui has not built out an equivalent preset library yet.)
+  (`eq_ui` ships ~26 preset themes; g3-ui has not built out an equivalent preset library yet.)
 
 ### ARIA & Accessibility
 - Full WAI-ARIA roles, attributes, and keyboard navigation on all interactive components.
@@ -113,7 +113,7 @@ Components must work across platforms:
 
 ---
 
-## What g3_ui Is NOT
+## What g3-ui Is NOT
 
 - **NOT a clone of eq_ui**: It is a new crate tailored for Greenside Partee.
 - **NOT platform-locked**: Works on web, desktop, mobile (Dioxus targets).

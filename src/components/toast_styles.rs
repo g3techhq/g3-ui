@@ -1,6 +1,5 @@
 //! Style constants for Toast.
 #![allow(dead_code)]
-
 pub const TOAST: &str = "g3-toast";
 pub const TOAST_IOS: &str = "g3-toast-ios";
 pub const TOAST_MD: &str = "g3-toast-md";
@@ -16,6 +15,5 @@ pub const INDICATOR: &str = "g3-toast-indicator";
 pub const MESSAGE: &str = "g3-toast-message";
 pub const ACTION: &str = "g3-toast-action";
 pub const CLOSE: &str = "g3-toast-close";
-
 pub const CLOSE_ICON: &str = "g3-toast-close-icon";
 pub const TIMER: &str = "g3-toast-timer";
