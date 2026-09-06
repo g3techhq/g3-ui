@@ -1,13 +1,14 @@
 //! Shared overlay scroll-lock helper.
-use dioxus::prelude::{Signal, provide_context, try_consume_context};
+use dioxus::prelude::{Signal, try_consume_context};
 #[cfg(target_arch = "wasm32")]
 use dioxus::prelude::{use_drop, use_effect};
 /// Playground previews contain overlays inside a device frame, so those
 /// overlays must not lock the real document surrounding the frame.
 #[derive(Clone, Copy)]
 struct DisableBodyScrollLock;
+#[cfg(feature = "playground")]
 pub(crate) fn disable_body_scroll_lock_for_subtree() {
-    provide_context(DisableBodyScrollLock);
+    dioxus::prelude::provide_context(DisableBodyScrollLock);
 }
 pub(crate) fn use_lock_body_scroll(locked: Signal<bool>) {
     let disabled = try_consume_context::<DisableBodyScrollLock>().is_some();

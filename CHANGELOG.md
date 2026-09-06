@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-09-06
+
+Initial release.
+
 - Fix the responsive `Navbar` rail layout when the `transitions` feature is enabled.
 - Add `NavbarTabDesktopPlacement` for grouping profile/settings tabs at the bottom of the desktop rail.
 - Place header toolbars inline with the title and actions on wide app shells.
@@ -30,11 +34,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Hold a swiped row's action colour underneath until the row has slid back over it. The row reported itself closed the instant the drag was released, which hid the actions immediately and left the row animating home across bare card.
 - Link the playground stylesheet into the head at build time. Loading it at runtime left a window where the library stylesheet had applied but the playground's had not, so the device frame rendered unstyled while the app booted. The page background during that window is white, so it reads as the browser's own blank page rather than a colour of its own.
 - Drop the compact-shell/wide-shell chips above each playground preview; the header toggle already names the width.
-
-## [0.1.0] - 2026-08-20
-
-Initial release.
-
 - 25 mobile-first components with iOS and Material Design variants of each.
 - Configurable `Theme` of 17 CSS custom-property tokens, with built-in light
   and dark themes.
