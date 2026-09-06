@@ -106,9 +106,11 @@ pub fn Sheet(
         SheetPlacement::Left(side_type) => (s::SHEET_LEFT, side_sheet_type_class(side_type)),
         SheetPlacement::Right(side_type) => (s::SHEET_RIGHT, side_sheet_type_class(side_type)),
     };
-    let side_cls = (!side_type_cls.is_empty())
-        .then_some(s::SHEET_SIDE)
-        .unwrap_or_default();
+    let side_cls = if side_type_cls.is_empty() {
+        ""
+    } else {
+        s::SHEET_SIDE
+    };
     let is_menu = matches!(
         placement,
         SheetPlacement::Left(SideSheetType::Menu) | SheetPlacement::Right(SideSheetType::Menu)
