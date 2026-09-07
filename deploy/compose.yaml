@@ -1,0 +1,27 @@
+services:
+  playground:
+    image: ghcr.io/g3techhq/g3-ui-playground:latest
+    container_name: g3-ui-playground
+    restart: unless-stopped
+    pull_policy: always
+    init: true
+    ports:
+      - "${G3_UI_PLAYGROUND_PORT:-8080}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --quiet
+        - --output-document=-
+        - http://127.0.0.1:8080/healthz
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

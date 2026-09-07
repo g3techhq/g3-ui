@@ -1,0 +1,9 @@
+.git
+.github
+.codex
+.superpowers
+.cargo
+**/target
+playground/dist
+docs
+target
