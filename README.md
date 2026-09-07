@@ -1,5 +1,11 @@
 # g3-ui
 
+[![CI](https://github.com/g3techhq/g3-ui/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/g3techhq/g3-ui/actions/workflows/ci.yml)
+[![Playground image](https://github.com/g3techhq/g3-ui/actions/workflows/publish-playground-image.yml/badge.svg?branch=main)](https://github.com/g3techhq/g3-ui/actions/workflows/publish-playground-image.yml)
+[![Crates.io](https://img.shields.io/crates/v/g3-ui.svg)](https://crates.io/crates/g3-ui)
+[![docs.rs](https://docs.rs/g3-ui/badge.svg)](https://docs.rs/g3-ui)
+[![License](https://img.shields.io/crates/l/g3-ui.svg)](#license)
+
 Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](https://ionicframework.com/).
 
 `g3-ui` is a flat, `G3`-prefixed component library for building responsive apps (bottom-tab
@@ -23,9 +29,6 @@ Enable the optional route-transition integration when your app also uses `g3-rou
 g3-ui = { version = "0.1", features = ["transitions"] }
 g3-route-transitions = "0.1"
 ```
-
-The local checkout includes `.cargo/config.toml` to patch `g3-route-transitions` to the sibling
-`../g3-route-transitions` repo while developing both crates together.
 
 ## Quick Start
 
@@ -214,6 +217,8 @@ registered component with live controls. Use the MD/iOS mode switch alongside th
 and Compare viewport controls to inspect the same component tree in compact- and wide-shell frames.
 The Demo App opens first and shows the complete responsive shell in phone and small-desktop frames.
 
+![g3-ui playground showing the responsive demo app in a mobile frame](docs/media/playground.png)
+
 ```powershell
 cd playground
 dx serve
@@ -224,6 +229,9 @@ To just type-check the playground without launching a dev server:
 ```powershell
 cargo check --manifest-path playground/Cargo.toml
 ```
+
+Production images are published to the GitHub Container Registry. See
+[`deploy/README.md`](deploy/README.md) for Portainer and Docker Compose instructions.
 
 ## License
 
