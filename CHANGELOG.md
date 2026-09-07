@@ -6,6 +6,91 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Every playground demo now has a stable `/components/:slug` URL, and a
+  `/transitions` showcase demonstrates route pushes, sheets, fades, segmented
+  filmstrips, and morphs with the actual g3-ui app components.
+- `AppWrapper::route_transition_root` lets documentation shells and other
+  non-navigating outer wrappers opt out of the cover snapshot while a nested
+  real app continues to use route transitions.
+- `ComponentMode` now derives `Debug`, `Eq`, and `Hash`. Without `Debug` a
+  consumer cannot print the mode or use it in `assert_eq!`, which makes an
+  app-level setting that stores the mode awkward to test.
+
+### Changed
+
+- **Breaking (CSS):** drop the Tailwind dependency. Components emitted plain
+  Tailwind utilities, so `assets/g3-ui.css` alone was never enough - a consumer
+  had to run Tailwind over g3-ui's own source to get working components, which
+  the README never said, and `fill-gray`/`text-focused` only ever existed in the
+  playground's `@theme`, so no consumer could get them at all. Every class is
+  now defined in `g3-ui.css` and namespaced `g3-`; the `info-btn*` and
+  `selected` classes are renamed `g3-info-btn*` and `g3-card-selected`. Link
+  `g3-ui.css` and nothing else.
+
+### Fixed
+
+- Ship the styles the playground asks for. `tailwind_output` wrote a stylesheet
+  that `[web.resource] style` linked as a bare `<link>` rather than a bundled
+  asset, so `dx bundle` never copied it: the deployed site requested
+  `/assets/tailwind.css`, nginx's `try_files` answered with `index.html`, and
+  `nosniff` made the browser refuse it. The playground had been running without
+  Tailwind the whole time, which is how the gap stayed invisible.
+- Restore `Fab` positioning. `fab.rs` hardcoded Tailwind classes instead of the
+  `g3-fab-vertical-*`/`g3-fab-horizontal-*` constants beside it, whose rules
+  already existed, so with no Tailwind the container got no offsets at all and
+  fell wherever flow put it.
+- Stop `Spinner` printing its screen-reader label on screen. The label used a
+  bare `sr-only` class that nothing defined, so "Loading" rendered as visible
+  text next to the spinner. `g3-sr-only` now hides it while keeping it in the
+  accessibility tree.
+- Keep the `Select` chevron from being squeezed by a long value; `shrink-0` was
+  a Tailwind class that never applied.
+- Stop the iOS `Header` from swallowing the overlays inside it. `.g3-header-ios`
+  carried a `backdrop-filter` over a fully opaque `--color-card` background, so
+  the blur was invisible but still made the header the containing block for
+  every `position: fixed` descendant. A `Select` in a header slot rendered its
+  sheet against the bottom of the header instead of the viewport. The other
+  translucent iOS surfaces keep their blur; they pair it with a `color-mix`
+  background and hold no fixed children.
+- Stop a push or reveal side sheet trapping the app shell's overlays. The
+  content beside such a sheet was given `translate: 0 0` whenever the sheet
+  merely existed, open or not, which made it the containing block for every
+  `Select` sheet, modal, and toast in the app. The closed state now leaves
+  `translate` unset; `none` interpolates as zero, so the push animation is
+  unchanged.
+- Paint a sheet that mounts open as open, instead of painting one closed frame
+  and animating it in. `presented_open` waited on a `requestAnimationFrame`
+  round trip regardless of the sheet's initial state, so a persistent `Menu`
+  rail slid in on every load and shifted the page beside it. A sheet that
+  mounts closed is unchanged and still animates when it is opened.
+- Open sheets without a round trip to JavaScript. The entrance was a CSS
+  transition, which only runs once its start value has been painted - never true
+  for a sheet inserted on open - so the component asked JS for a
+  `requestAnimationFrame` through `document::eval` and waited for the answer
+  before anything moved. That also meant a sheet opened in a background tab or a
+  minimised window, where frame callbacks are paused, stayed parked closed. The
+  entrance is now a keyframe animation, which needs no painted start value: it
+  runs on the frame the class lands. `SHEET_PRESENT_SCRIPT` and the present
+  signal are gone, leaving the drag handle as the component's only `eval`. The
+  exit is still a transition, which is sound because the open state has been
+  painted by then, and `reveal` side sheets - which do not move - are excluded.
+- Link the library stylesheet once on the web. `AppWrapper` linked it at runtime
+  as well as through `with_static_head(true)`, so a web build requested and
+  parsed `g3-ui.css` twice. The runtime link now applies only to desktop and
+  mobile, which have no build-time head to write into.
+- Keep the playground's sticky header pinned once a demo is taller than the
+  window. `.playground-root` set only `min-height`, so the `height: 100%` chain
+  below it resolved to `auto`: `.playground-main` never became the scroller,
+  the document scrolled instead, and the header - sticky inside the
+  `overflow: hidden` page rather than to the viewport - scrolled away with it.
+- Open the playground's component drawer with the page on a wide shell, where
+  it is a persistent `Menu` rail that reserves its own space. It is read from
+  the media query during the first render rather than a round trip later, so
+  the rail is laid out rather than animated in, and a phone - where the drawer
+  is a dismissible `Overlay` - never flashes it open.
+
 ## [0.1.0] - 2026-09-06
 
 Initial release.

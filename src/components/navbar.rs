@@ -121,7 +121,7 @@ pub fn NavbarPlaygroundDemo() -> Element {
                             label: "Games".to_string(),
                             selected: active() == 0,
                             icon: rsx! {
-                                Trophy { size: 20, class: "fill-none" }
+                                Trophy { size: 20 }
                             },
                             onclick: move |_| active.set(0),
                         }
@@ -129,7 +129,7 @@ pub fn NavbarPlaygroundDemo() -> Element {
                             label: "Tourneys".to_string(),
                             selected: active() == 1,
                             icon: rsx! {
-                                CalendarDays { size: 20, class: "fill-none" }
+                                CalendarDays { size: 20 }
                             },
                             onclick: move |_| active.set(1),
                         }
@@ -138,7 +138,7 @@ pub fn NavbarPlaygroundDemo() -> Element {
                             selected: active() == 2,
                             desktop_placement: NavbarTabDesktopPlacement::Bottom,
                             icon: rsx! {
-                                CircleUserRound { size: 20, class: "fill-none" }
+                                CircleUserRound { size: 20 }
                             },
                             onclick: move |_| active.set(2),
                         }

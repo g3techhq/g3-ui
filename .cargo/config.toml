@@ -1,0 +1,5 @@
+# Normal development, CI, and release builds resolve g3-route-transitions from crates.io.
+# Uncomment both lines while developing against a sibling checkout, then comment them again
+# before committing so a standalone clone remains buildable.
+# [patch.crates-io]
+# g3-route-transitions = { path = "../g3-route-transitions" }

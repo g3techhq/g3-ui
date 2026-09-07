@@ -48,3 +48,6 @@ ci: quality security
 
 package:
     cargo package
+
+record-transitions:
+    node playground/record-transitions.cjs

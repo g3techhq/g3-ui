@@ -1,6 +1,6 @@
 //! Style constants for AppWrapper (shell) component.
 #![allow(dead_code)]
-pub const SHELL_BASE: &str = "g3-app-shell flex flex-col overflow-hidden h-dvh";
+pub const SHELL_BASE: &str = "g3-app-shell";
 pub const SHELL_IOS: &str = "g3-shell-ios";
 pub const SHELL_MD: &str = "g3-shell-md";
 pub const SHELL_NO_SELECT: &str = "g3-no-select";

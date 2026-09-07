@@ -158,6 +158,11 @@ class for push transitions.
 Without the feature, `g3-ui` does not depend on `g3-route-transitions` and does not emit
 route-transition marker classes.
 
+`G3AppWrapper` owns the cover snapshot by default. If a documentation shell or
+other non-navigating theme wrapper contains a second app wrapper, set
+`route_transition_root: false` on the outer wrapper so only the actual app owns
+that snapshot name.
+
 ## Responsive App Shell
 
 `G3AppWrapper` measures its own available width with a CSS container query. At `48rem` and wider,
@@ -215,7 +220,18 @@ shadow back onto the exposed sheet.
 An interactive component gallery lives in `playground/` inside this repository. It renders every
 registered component with live controls. Use the MD/iOS mode switch alongside the Mobile, Desktop,
 and Compare viewport controls to inspect the same component tree in compact- and wide-shell frames.
-The Demo App opens first and shows the complete responsive shell in phone and small-desktop frames.
+Every demo has a stable URL such as `/components/button`, so documentation can link directly to a
+specific component instead of dropping readers on the gallery home screen.
+
+The `/transitions` showcase composes the real app shell, header, body, navbar, cards, lists, sheet,
+buttons, and segmented controls with `g3-route-transitions`. Navigation between component demos is
+routed as well, using the same integration a consuming application uses.
+
+When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent
+`[patch.crates-io]` block in `.cargo/config.toml`. Cargo then redirects every
+`g3-route-transitions` dependency in the library and playground to the sibling checkout. Comment
+the block again before committing; normal builds and published packages continue using the version
+from crates.io.
 
 ![g3-ui playground showing the responsive demo app in a mobile frame](docs/media/playground.png)
 
@@ -228,6 +244,15 @@ To just type-check the playground without launching a dev server:
 
 ```powershell
 cargo check --manifest-path playground/Cargo.toml
+```
+
+To regenerate the transition showcase media while the playground is already running on port 8080,
+install the optional capture dependency and run the recording recipe. The tour deliberately settles
+for more than a second between animations so each transition is readable.
+
+```powershell
+npm ci --prefix playground
+just record-transitions
 ```
 
 Production images are published to the GitHub Container Registry. See

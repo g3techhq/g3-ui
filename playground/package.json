@@ -1,0 +1,9 @@
+{
+  "name": "g3-ui-playground-capture",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser capture tooling for the g3-ui transition showcase",
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

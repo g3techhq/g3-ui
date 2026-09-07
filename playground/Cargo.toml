@@ -7,7 +7,9 @@ publish = false
 [dependencies]
 dioxus = { version = "0.7.9", features = ["web"] }
 dioxus-code = { version = "0.1", features = ["runtime"] }
-g3-ui = { path = "..", features = ["playground"] }
+g3-route-transitions = "0.1.0"
+g3-ui = { path = "..", features = ["playground", "transitions"] }
+gloo-timers = { version = "0.3", features = ["futures"] }
 manganis = "0.7.9"
 
 [features]
@@ -19,6 +21,13 @@ web = ["dioxus/web"]
 [profile.wasm-dev]
 inherits = "dev"
 opt-level = 1
+
+[target.wasm32-unknown-unknown.dependencies]
+# Read the shell breakpoint during the first render. The media-query eval that
+# keeps it up to date cannot answer until after that render, and the drawer has
+# to be laid out correctly before the page is first painted, not animated into
+# place afterwards.
+web-sys = { version = "0.3.102", features = ["MediaQueryList", "Window"] }
 
 [target.wasm32-unknown-unknown.dependencies.getrandom_v03]
 package = "getrandom"

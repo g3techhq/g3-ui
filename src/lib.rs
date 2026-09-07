@@ -552,8 +552,8 @@ mod tests {
         assert!(stylesheet.contains("-webkit-tap-highlight-color: transparent"));
         assert!(!stylesheet.contains(".g3-fab-ios:active"));
         assert!(!stylesheet.contains(".g3-fab-md:active"));
-        assert!(stylesheet.contains(".info-btn"));
-        assert!(stylesheet.contains(".info-btn:active"));
+        assert!(stylesheet.contains(".g3-info-btn"));
+        assert!(stylesheet.contains(".g3-info-btn:active"));
         assert!(list_source.contains("DISMISS_SWIPE_OFFSET: f64 = 430.0"));
         assert!(list_source.contains("DISMISS_EXIT_MS: u64 = 560"));
         assert!(stylesheet.contains("transition-duration: 560ms"));
@@ -869,7 +869,23 @@ mod tests {
         assert!(!body_styles.contains("route-transition-segment"));
         assert!(app_wrapper_source.contains("RouteTransitionProvider"));
         assert!(app_wrapper_source.contains("ROUTE_TRANSITION_COVER_CLASS"));
+        assert!(app_wrapper_source.contains("route_transition_root.unwrap_or(true)"));
         assert!(body_source.contains("ROUTE_TRANSITION_SEGMENT_CLASS"));
+    }
+    #[test]
+    fn playground_routes_every_demo_and_uses_the_real_transition_integration() {
+        let playground_cargo = include_str!("../playground/Cargo.toml");
+        let playground_source = include_str!("../playground/src/main.rs");
+        let transition_source = include_str!("../playground/src/transition_showcase.rs");
+
+        assert!(playground_cargo.contains("features = [\"playground\", \"transitions\"]"));
+        assert!(playground_source.contains("#[route(\"/components/:slug\")]"));
+        assert!(playground_source.contains("#[route(\"/transitions/ratings/:tab\")]"));
+        assert!(playground_source.contains("animated_navigate(Route::ComponentDemo"));
+        assert!(transition_source.contains("RouteTransitionPage"));
+        assert!(transition_source.contains("AppWrapper"));
+        assert!(transition_source.contains("Navbar"));
+        assert!(transition_source.contains("Sheet"));
     }
     #[test]
     fn app_wrapper_bundles_library_stylesheet() {
@@ -1023,14 +1039,59 @@ mod tests {
         let stylesheet = include_str!("../assets/g3-ui.css");
         let sheet_source = include_str!("components/sheet.rs");
         assert!(sheet_source.contains("STATE_CLOSED"));
-        assert!(sheet_source.contains("let mut ever_opened = use_signal(|| false);"));
-        assert!(sheet_source.contains("let mut presented_open = use_signal(|| false);"));
-        assert!(sheet_source.contains("requestAnimationFrame(() => dioxus.send(true))"));
+        assert!(sheet_source.contains("let mut ever_opened = use_signal(|| is_open_now);"));
         assert!(sheet_source.contains("if !is_open_now && !ever_opened()"));
         assert!(sheet_source.contains("return rsx! {};"));
-        assert!(sheet_source.contains("let visual_open = is_open_now && presented_open();"),);
+        assert!(sheet_source.contains("let visual_open = is_open_now;"));
         assert!(stylesheet.contains(".g3-sheet.g3-sheet-closed"));
         assert!(stylesheet.contains("box-shadow: none"));
+    }
+    /// Opening a sheet must not wait on a round trip to JS. A CSS transition
+    /// only runs when its start value has been painted, which a sheet inserted
+    /// on open has never had - buying that painted frame is what the old
+    /// `requestAnimationFrame` present signal did, at the cost of a bridge hop
+    /// before anything moved. That is cheap in wasm and not cheap in a mobile
+    /// webview. Keyframes need no painted start value, so the entrance is one.
+    #[test]
+    fn opening_a_sheet_animates_without_a_round_trip_to_javascript() {
+        let sheet_source = include_str!("components/sheet.rs");
+        let stylesheet = include_str!("../assets/g3-ui.css").replace(
+            "
+", "
+",
+        );
+        // No present signal, and no script to carry one.
+        assert!(!sheet_source.contains("presented_open"));
+        assert!(!sheet_source.contains("SHEET_PRESENT_SCRIPT"));
+        // The call, not the word: the comment above the entrance still names it.
+        assert!(!sheet_source.contains("requestAnimationFrame("));
+        // The only remaining eval is the drag handle, which is a real listener
+        // rather than a gate on first paint.
+        assert_eq!(sheet_source.matches("document::eval(").count(), 1);
+        assert!(sheet_source.contains("SHEET_DRAG_SCRIPT"));
+        // A sheet that mounts open is layout, so it gets no entrance; one that
+        // has been closed gets it back.
+        assert!(sheet_source.contains("let mut has_been_closed = use_signal(|| !is_open_now);"));
+        assert!(sheet_source.contains("if is_open_now && has_been_closed()"));
+        assert!(stylesheet.contains("@keyframes g3-sheet-enter-bottom"));
+        assert!(stylesheet.contains("@keyframes g3-sheet-enter-left"));
+        assert!(stylesheet.contains("@keyframes g3-sheet-enter-right"));
+        assert!(stylesheet.contains("@keyframes g3-sheet-enter-backdrop"));
+        // Reveal holds the sheet still and moves the page over it, so it has no
+        // entrance to play.
+        assert!(
+            stylesheet
+                .contains(".g3-sheet-enter.g3-sheet-left.g3-sheet-open:not(.g3-sheet-reveal)")
+        );
+        // The exit is still a transition - by then the open state is painted.
+        assert!(stylesheet.contains("transition: transform var(--transition-normal)"));
+        // The playground rail still needs the shell width during the first
+        // render, so it mounts open rather than opening into place.
+        let playground_main = include_str!("../playground/src/main.rs");
+        assert!(playground_main.contains("fn initial_compact_shell()"));
+        assert!(
+            playground_main.contains("use_signal(|| !initial_compact_shell().unwrap_or(true))")
+        );
     }
     #[test]
     fn header_slots_own_top_bar_edge_spacing() {
@@ -1238,6 +1299,132 @@ mod tests {
         assert!(sheet_source.contains("aria_hidden: (!is_open_now).to_string()"));
         assert!(sheet_source.contains("inert: (!is_open_now).then"));
         assert!(include_str!("components/select.rs").contains("draggable: false"));
+    }
+    /// A `Select` renders its `Sheet` inline, wherever the trigger sits, and the
+    /// sheet is `position: fixed`. Any ancestor with a transform, translate,
+    /// filter, or backdrop-filter becomes the containing block for that sheet,
+    /// which silently re-anchors it to the ancestor's box - the backdrop still
+    /// dims the screen, but the options land off-viewport. No CSS on the sheet
+    /// can escape that, so the ancestors have to stay clean.
+    /// `assets/g3-ui.css` is the only stylesheet a consumer links, so every
+    /// class a component emits has to be defined in it. These class names used
+    /// to be Tailwind utilities, which meant a consumer had to run Tailwind
+    /// over g3-ui's own source to get working components - and two of them
+    /// only existed in the playground's theme, so no consumer could get them
+    /// at all. The playground no longer builds Tailwind, so a utility class
+    /// reintroduced here would simply not resolve anywhere.
+    #[test]
+    fn components_only_emit_class_names_in_the_g3_namespace() {
+        let mut offenders = Vec::new();
+        for entry in std::fs::read_dir("src/components").expect("components dir") {
+            let path = entry.expect("dir entry").path();
+            if path.extension().and_then(|e| e.to_str()) != Some("rs") {
+                continue;
+            }
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("")
+                .to_string();
+            if !name.ends_with("_styles.rs") {
+                continue;
+            }
+            let source = std::fs::read_to_string(&path).expect("read styles");
+            for line in source.lines() {
+                let Some(rest) = line.split_once("&str = \"").map(|(_, r)| r) else {
+                    continue;
+                };
+                let Some((value, _)) = rest.split_once('"') else {
+                    continue;
+                };
+                for token in value.split_whitespace() {
+                    // Only the namespace is required. Some are marker classes
+                    // carrying no rules of their own - `g3-sheet-overlay` names
+                    // the default side-sheet behaviour, which needs none - and a
+                    // class that should be styled but is not shows up as an
+                    // unstyled component, not as a name in the wrong namespace.
+                    if !token.starts_with("g3-") {
+                        offenders.push(format!("{name}: {token}"));
+                    }
+                }
+            }
+        }
+        assert!(
+            offenders.is_empty(),
+            "class names not owned by g3-ui.css: {offenders:?}"
+        );
+    }
+    /// The playground builds no Tailwind, so nothing may ask for its output.
+    #[test]
+    fn the_playground_does_not_depend_on_tailwind() {
+        let dioxus_toml = include_str!("../playground/Dioxus.toml");
+        assert!(!dioxus_toml.contains("tailwind_input"));
+        assert!(!dioxus_toml.contains("tailwind_output"));
+        // A stylesheet listed here is injected as a bare <link>, not bundled as
+        // an asset, so it 404s in the built site. That is how the Tailwind
+        // sheet came to be linked but never shipped.
+        assert!(dioxus_toml.contains("style = []"));
+        assert!(!std::path::Path::new("playground/tailwind.css").exists());
+        assert!(!std::path::Path::new("playground/assets/tailwind.css").exists());
+    }
+    #[test]
+    fn sheet_ancestors_do_not_establish_a_fixed_position_containing_block() {
+        let stylesheet = include_str!("../assets/g3-ui.css").replace("\r\n", "\n");
+        let playground_stylesheet =
+            include_str!("../playground/assets/playground.css").replace("\r\n", "\n");
+        let block = |source: &str, selector: &str| {
+            source
+                .split(selector)
+                .nth(1)
+                .and_then(|rest| rest.split('}').next())
+                .unwrap_or_else(|| panic!("missing block for {selector}"))
+                .to_string()
+        };
+        let traps_fixed_descendants = |declarations: &str| {
+            [
+                "backdrop-filter:",
+                "filter:",
+                "transform:",
+                "translate:",
+                "perspective:",
+            ]
+            .iter()
+            .any(|property| {
+                declarations.lines().any(|line| {
+                    let line = line.trim();
+                    line.starts_with(property) && !line.ends_with("none;")
+                })
+            })
+        };
+
+        // The iOS header holds the playground's theme Select in an end slot.
+        let header = block(&stylesheet, ".g3-header-ios {");
+        assert!(
+            !traps_fixed_descendants(&header),
+            "iOS header traps fixed children: {header}"
+        );
+
+        // Content beside a push/reveal side sheet holds the app's own overlays.
+        let pushed_content = block(
+            &stylesheet,
+            concat!(
+                ".g3-app-shell:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))\n",
+                "    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {"
+            ),
+        );
+        assert!(
+            !traps_fixed_descendants(&pushed_content),
+            "closed push/reveal shell traps fixed children: {pushed_content}"
+        );
+        // The open state may translate; it is the resting state that must not.
+        assert!(stylesheet.contains("translate: var(--g3-side-sheet-width) 0;"));
+
+        // The playground page wraps the header, so it inherits the same rule.
+        let page = block(&playground_stylesheet, ".playground-page {");
+        assert!(
+            !traps_fixed_descendants(&page),
+            "playground page traps fixed children: {page}"
+        );
     }
     #[test]
     fn ios_segment_buttons_do_not_use_sibling_border_separators_or_press_flash() {
@@ -1490,7 +1677,7 @@ mod tests {
         assert!(playground_main.contains("AssetOptions::css().with_static_head(true)"));
         assert!(!playground_main.contains("document::Link"));
         assert!(playground_main.contains("selector_open.toggle()"));
-        assert!(playground_main.contains("dismiss_on_select: compact_shell()"));
+        assert!(playground_main.contains("dismiss_on_select: is_compact"));
         assert!(playground_main.contains("if dismiss_on_select {"));
         assert!(
             playground_stylesheet

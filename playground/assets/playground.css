@@ -27,7 +27,16 @@ textarea {
 
 .playground-root {
   --g3-side-sheet-width: min(18rem, 72vw);
-  min-height: 100vh;
+  /* A definite height, not `min-height`. `.playground-page` is `height: 100%`
+     over a grid whose second row scrolls, and a percentage height against an
+     auto-height parent resolves to auto - so the page grew with its content,
+     `.playground-main` never became the scroller, and the document scrolled
+     instead. That drags `.playground-page` up, and the sticky header sticks
+     inside it rather than to the viewport, so the header scrolled away.
+     `dvh` so mobile browser chrome shrinks the shell instead of overflowing
+     it; the `vh` line above is the fallback where `dvh` is unsupported. */
+  height: 100vh;
+  height: 100dvh;
   display: block;
   /* Colors come from the g3_ui::Theme passed to AppWrapper (see main.rs
      PlaygroundTheme::to_theme) - not from a theme attribute selector. */
@@ -44,9 +53,11 @@ textarea {
   background: var(--color-bg, #eef2f4);
   color: var(--color-text, #17202a);
   overflow: hidden;
-  translate: 0 0;
-  transition: translate var(--transition-normal, 0.25s) var(--transition-md, ease-out),
-    width var(--transition-normal, 0.25s) var(--transition-md, ease-out),
+  /* Only width/margin-left move this box for the Menu drawer. Never give it a
+     transform, translate, or filter: those make it the containing block for
+     every `position: fixed` descendant, which drops header Select sheets,
+     modals, and toasts to the bottom of the page instead of the viewport. */
+  transition: width var(--transition-normal, 0.25s) var(--transition-md, ease-out),
     margin-left var(--transition-normal, 0.25s) var(--transition-md, ease-out);
 }
 
@@ -129,6 +140,18 @@ textarea {
   font-size: 14px;
   line-height: 1.45;
   text-align: center;
+}
+
+.playground-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  view-transition-name: playground-intro;
+}
+
+.playground-intro .playground-description {
+  margin: 0;
 }
 
 .playground-menu-button {
@@ -232,6 +255,14 @@ textarea {
   max-width: 100%;
 }
 
+/* The standard component preview is intentionally a full 390 × 844 device.
+   The transition tour also includes the playground header and recorder
+   controls in a 1440 × 900 frame, so use the same aspect ratio at a smaller
+   showcase-only size rather than cropping the navbar off the video. */
+.transition-showcase-card.playground-viewport-mobile {
+  width: min(320px, 100%);
+}
+
 .playground-viewport-desktop {
   width: 50rem;
 }
@@ -292,6 +323,14 @@ textarea {
   background: color-mix(in srgb, var(--color-focused, #2563eb) 10%, transparent);
 }
 
+.playground-selector-sheet {
+  view-transition-name: playground-selector;
+}
+
+.source-panel {
+  view-transition-name: playground-source;
+}
+
 .g3-playground-preview {
   position: relative;
   width: min(390px, 100%);
@@ -305,6 +344,69 @@ textarea {
   border-radius: 40px;
   background: var(--color-bg, #f5f5f5);
   box-shadow: 0 22px 60px var(--color-shadow, rgba(24, 36, 48, 0.26));
+}
+
+.transition-showcase-preview {
+  overflow: hidden;
+}
+
+.transition-showcase-preview .transition-showcase-app,
+.transition-showcase-preview .transition-showcase-page,
+.transition-showcase-preview .route-transition-base {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.transition-showcase-preview .transition-showcase-app {
+  position: relative;
+  z-index: 1;
+}
+
+.transition-showcase-device-frame {
+  position: absolute;
+  z-index: 20;
+  inset: -8px;
+  pointer-events: none;
+  border: 8px solid #161b20;
+  border-radius: inherit;
+  view-transition-name: playground-device-frame;
+}
+
+.playground-viewport-desktop .transition-showcase-device-frame {
+  inset: -6px;
+  border-width: 6px;
+}
+
+.transition-showcase-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.transition-showcase-article {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+html[data-route-transition]::view-transition-old(playground-header),
+html[data-route-transition]::view-transition-new(playground-header),
+html[data-route-transition]::view-transition-old(playground-intro),
+html[data-route-transition]::view-transition-new(playground-intro),
+html[data-route-transition]::view-transition-old(playground-selector),
+html[data-route-transition]::view-transition-new(playground-selector),
+html[data-route-transition]::view-transition-old(playground-source),
+html[data-route-transition]::view-transition-new(playground-source),
+html[data-route-transition]::view-transition-old(playground-device-frame),
+html[data-route-transition]::view-transition-new(playground-device-frame) {
+  animation: none;
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+
+html[data-route-transition]::view-transition-group(playground-device-frame) {
+  z-index: 10000;
 }
 
 .playground-viewport-desktop .g3-playground-preview {
@@ -489,7 +591,8 @@ textarea {
 }
 
 @media (min-width: 64rem) {
-  .playground-header {
+.playground-header {
+  view-transition-name: playground-header;
     display: grid;
     grid-template-columns: auto minmax(12rem, 1fr) minmax(16rem, 24rem) minmax(0, 1fr) auto;
     grid-template-rows: minmax(4rem, auto);

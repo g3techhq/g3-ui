@@ -18,7 +18,7 @@ g3-ui is the Dioxus component library for the Greenside Partee project. It uses 
 g3-ui adopts the following structural conventions from eq_ui:
 
 - **Flat Component Module**: Components live together in `src/components/`; metadata groups them as Components or Utilities.
-- **Co-located `_styles.rs`**: Each component file has a sibling `*_styles.rs` holding its Tailwind class constants. Shared tokens live in `theme.rs`.
+- **Co-located `_styles.rs`**: Each component file has a sibling `*_styles.rs` holding its `g3-` class-name constants. The matching rules live in `assets/g3-ui.css`, which is the only stylesheet a consumer links - components must not emit class names that stylesheet does not define. Shared tokens live in `theme.rs`.
 - **CSS Custom Properties**: Colors and theming via CSS variables defined in theme CSS files.
 - **Theme Context**: `EqTheme`-style runtime theme switching with a context provider/consumer pattern.
 - **Playground Registration**: Components expose a `descriptor()` function for interactive playground demos.
@@ -126,7 +126,7 @@ Components must work across platforms:
 When adding a new component, verify:
 
 1. [ ] Placed in `src/components/`
-2. [ ] Has co-located `_styles.rs` with Tailwind constants
+2. [ ] Has co-located `_styles.rs` with `g3-` class constants defined in `assets/g3-ui.css`
 3. [ ] Accepts `class: String` for override via `merge_classes()`
 4. [ ] Has `#[cfg(test)]` smoke test
 5. [ ] Has WAI-ARIA attributes for interactive components
@@ -134,3 +134,14 @@ When adding a new component, verify:
 7. [ ] Matches corresponding Ionic component behavior/design
 8. [ ] Registered with `descriptor()` if playground support is needed
 9. [ ] Works on WASM and wasm32 targets (check feature gates for timers)
+
+---
+
+## Local Playground
+
+Agents may start, stop, and restart `dx serve` themselves when implementation
+or visual verification requires the playground. Use `--open false`, bind to
+`127.0.0.1`, and check whether port `8080` is already listening before launch.
+Use `8080` when it is free; otherwise choose the next available port so multiple
+project servers can run at once. Run the process in a hidden/background window,
+and keep its development logs under the repository's ignored `.codex/` folder.

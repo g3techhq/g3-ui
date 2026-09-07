@@ -6,7 +6,7 @@ use cfg_if::cfg_if;
 use dioxus::prelude::*;
 use std::cell::Cell;
 /// Platform styling mode - mirrors Ionic's `mode` attribute.
-#[derive(Clone, Copy, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ComponentMode {
     /// Material Design: sharper corners, flat elevation, ease-out transitions
     #[default]

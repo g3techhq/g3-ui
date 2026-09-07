@@ -150,7 +150,7 @@ pub fn AccordionItem(
                     }
                 }
                 span { class: s::CHEVRON, aria_hidden: "true",
-                    ChevronDown { size: 18, class: "fill-none" }
+                    ChevronDown { size: 18 }
                 }
             }
             div {

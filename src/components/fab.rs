@@ -62,20 +62,16 @@ pub fn Fab(
     let horiz = horizontal.unwrap_or_default();
     let is_edge = edge.unwrap_or(false);
     let vert_cls = match vert {
-        FabVertical::Top => "top-0",
-        FabVertical::Center => "top-[50%] -translate-y-[50%]",
-        FabVertical::Bottom => "bottom-6",
+        FabVertical::Top => s::FAB_VERTICAL_TOP,
+        FabVertical::Center => s::FAB_VERTICAL_CENTER,
+        FabVertical::Bottom => s::FAB_VERTICAL_BOTTOM,
     };
     let horiz_cls = match horiz {
-        FabHorizontal::Start => "left-6",
-        FabHorizontal::Center => "left-[50%] -translate-x-[50%]",
-        FabHorizontal::End => "right-6",
+        FabHorizontal::Start => s::FAB_HORIZONTAL_START,
+        FabHorizontal::Center => s::FAB_HORIZONTAL_CENTER,
+        FabHorizontal::End => s::FAB_HORIZONTAL_END,
     };
-    let edge_cls = if is_edge {
-        "mt-[-3.5rem] mb-[-3.5rem] "
-    } else {
-        ""
-    };
+    let edge_cls = if is_edge { s::FAB_CONTAINER_EDGE } else { "" };
     let container_cls = merge_classes(
         format!("{} {vert_cls} {horiz_cls} {edge_cls}", s::FAB_CONTAINER),
         class.as_deref(),

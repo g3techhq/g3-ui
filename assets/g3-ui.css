@@ -356,7 +356,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 }
 
 /* Info button */
-.info-btn {
+.g3-info-btn {
     -webkit-tap-highlight-color: transparent;
     display: inline-flex;
     align-items: center;
@@ -369,14 +369,14 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     color: var(--color-focused);
     cursor: pointer;
 }
-.info-btn-ios {
+.g3-info-btn-ios {
     background: color-mix(in srgb, var(--color-focused) 8%, transparent);
 }
-.info-btn-md {
+.g3-info-btn-md {
     border-radius: 0.25rem;
 }
 
-.info-btn:active {
+.g3-info-btn:active {
     background: inherit;
 }
 
@@ -1142,20 +1142,20 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
                 box-shadow var(--transition-normal) var(--transition-ios),
                 background var(--transition-fast) var(--transition-ios);
 }
-.g3-card-ios.g3-card-interactive:active:not(:has(.info-btn:active)) {
+.g3-card-ios.g3-card-interactive:active:not(:has(.g3-info-btn:active)) {
     background: color-mix(in srgb, var(--color-text) 3%, var(--color-card));
     transform: scale3d(0.97, 0.97, 1);
 }
 
 /* Selected state - tint the surface and add an outside ring without replacing
    the platform elevation. */
-.g3-card.selected {
+.g3-card.g3-card-selected {
     background: color-mix(in srgb, var(--color-focused) 4%, var(--color-card));
 }
-.g3-card-ios.selected {
+.g3-card-ios.g3-card-selected {
     box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
-.g3-card-md.selected {
+.g3-card-md.g3-card-selected {
     box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 
@@ -1171,7 +1171,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
                 transform var(--transition-fast) var(--transition-md),
                 background var(--transition-fast) var(--transition-md);
 }
-.g3-card-md.g3-card-interactive:active:not(:has(.info-btn:active)) {
+.g3-card-md.g3-card-interactive:active:not(:has(.g3-info-btn:active)) {
     box-shadow: var(--g3-shadow-md-elevation-2);
     transform: scale(0.99);
 }
@@ -1195,13 +1195,13 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
-.g3-card-inset.selected {
+.g3-card-inset.g3-card-selected {
     background: color-mix(in srgb, var(--color-focused) 6%, var(--color-card));
 }
-.g3-card-ios.g3-card-inset.selected {
+.g3-card-ios.g3-card-inset.g3-card-selected {
     box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
-.g3-card-md.g3-card-inset.selected {
+.g3-card-md.g3-card-inset.g3-card-selected {
     box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 
@@ -1365,6 +1365,14 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     width: var(--g3-side-sheet-width, min(18rem, 72vw));
 }
 
+/* Where an entrance starts from. Kept in sync with the matching
+   `.g3-sheet-closed` transforms below; overridden for the wide-shell bottom
+   sheet, which is centred with an x translate of its own. */
+.g3-sheet {
+    --g3-sheet-enter-x: 0;
+    --g3-sheet-enter-y: calc(100% + max(3rem, env(safe-area-inset-bottom)));
+}
+
 .g3-sheet.g3-sheet-bottom.g3-sheet-closed {
     transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
 }
@@ -1425,11 +1433,16 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     z-index: 0;
 }
 
+/* No `translate` in the closed state. A non-`none` translate makes this box
+   the containing block for every `position: fixed` descendant, which would
+   anchor Select sheets, modals, and toasts inside the app content instead of
+   the viewport for as long as a push/reveal sheet exists in the shell - open
+   or not. `none` interpolates as zero, so the open state below still
+   animates. */
 .g3-app-shell:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))
     > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
     position: relative;
     z-index: 1;
-    translate: 0 0;
     box-shadow: none;
     transition: translate var(--transition-normal) var(--transition-md),
         box-shadow var(--transition-normal) var(--transition-md);
@@ -1934,6 +1947,9 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     white-space: nowrap;
 }
 .g3-select-icon {
+    /* The chevron sits after a flexible label, so it must not be the thing
+       that gives way when the trigger runs out of room. */
+    flex-shrink: 0;
     transition: transform var(--transition-normal) var(--transition-md);
 }
 .g3-select-btn-md[aria-expanded="true"] .g3-select-icon {
@@ -2040,13 +2056,17 @@ textarea.g3-field {
 }
 
 /* Platform-specific header styles */
+/* No backdrop-filter: the background is an opaque `--color-card`, so blurring
+   what sits behind it is invisible, and a filtered header becomes the
+   containing block for every `position: fixed` descendant - which anchors a
+   header Select sheet to the header instead of the viewport. Translucent iOS
+   surfaces that do blur (.g3-sheet-ios, .g3-toast-ios, .g3-fab-translucent)
+   pair it with a color-mix background and hold no fixed children. */
 .g3-header-ios {
     padding-top: env(safe-area-inset-top);
     background: var(--color-card);
     border-bottom: 0.5px solid var(--color-card-border);
     box-shadow: none;
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 .g3-header-md {
     background: var(--color-card);
@@ -3860,6 +3880,11 @@ textarea.g3-field {
         transform: translate3d(-50%, calc(100% + 4.5rem), 0);
     }
 
+    .g3-sheet.g3-sheet-bottom {
+        --g3-sheet-enter-x: -50%;
+        --g3-sheet-enter-y: calc(100% + 4.5rem);
+    }
+
     .g3-sheet-ios.g3-sheet-bottom,
     .g3-sheet-md.g3-sheet-bottom {
         border-radius: 1rem;
@@ -4001,5 +4026,142 @@ textarea.g3-field {
         align-self: stretch;
         align-items: stretch;
         padding: 0;
+    }
+}
+
+/* -- Utilities the components used to borrow from Tailwind --
+
+   These were plain Tailwind classes on component markup, which meant every
+   consumer of the crate needed Tailwind configured to scan g3-ui's own source
+   or the components rendered unstyled - and two of them (`fill-gray`,
+   `text-focused`) only ever existed in the playground's `@theme` block. They
+   are now owned here, so linking this one stylesheet is genuinely enough. */
+
+/* Visually hidden but still announced. Not `display: none`, which would take it
+   out of the accessibility tree along with everything else. */
+.g3-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.g3-info-btn-icon {
+    color: var(--color-focused);
+}
+
+.g3-select-option-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.g3-field-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.g3-field-control {
+    position: relative;
+}
+
+.g3-field-trailing {
+    position: absolute;
+}
+
+.g3-card-image {
+    margin-bottom: 0.5rem;
+    justify-items: center;
+}
+
+.g3-card-right-text {
+    font-size: 0.875rem;
+    line-height: calc(1.25 / 0.875);
+    white-space: nowrap;
+}
+
+.g3-body-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-block: 2rem;
+}
+
+.g3-btn-expand {
+    width: 100%;
+}
+
+.g3-sheet-handle-wrap-ios:active {
+    cursor: grabbing;
+}
+
+/* Opt-in horizontal scrolling for a segment group with more buttons than fit. */
+.g3-segment-scrollable {
+    overflow-x: auto;
+}
+
+/* -- Sheet entrance --
+
+   Keyframes, not a transition. A transition only runs when its start value has
+   already been painted, which is never true for a sheet inserted on open - the
+   component used to buy that painted frame with a `requestAnimationFrame` round
+   trip through `document::eval`, so nothing moved until Rust and JS had spoken
+   twice. That is cheap in wasm and not cheap in a mobile webview. Keyframes run
+   on the frame the class lands, so an open is immediate everywhere.
+
+   Only `.g3-sheet-enter` sheets animate: one that mounts open is layout, not a
+   presentation. The exit stays a transition on `.g3-sheet-closed`, which is
+   sound because the open state has been painted by the time it runs. */
+@keyframes g3-sheet-enter-bottom {
+    from {
+        transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-enter-y), 0);
+    }
+}
+
+@keyframes g3-sheet-enter-left {
+    from {
+        transform: translateX(calc(-100% - 2rem));
+    }
+}
+
+@keyframes g3-sheet-enter-right {
+    from {
+        transform: translateX(calc(100% + 2rem));
+    }
+}
+
+@keyframes g3-sheet-enter-backdrop {
+    from {
+        opacity: 0;
+    }
+}
+
+.g3-sheet-enter.g3-sheet-bottom.g3-sheet-open {
+    animation: g3-sheet-enter-bottom var(--transition-normal) var(--transition-md);
+}
+
+/* Reveal keeps the sheet still and moves the page over it, so its open and
+   closed transforms are identical and there is nothing to animate from. */
+.g3-sheet-enter.g3-sheet-left.g3-sheet-open:not(.g3-sheet-reveal) {
+    animation: g3-sheet-enter-left var(--transition-normal) var(--transition-md);
+}
+
+.g3-sheet-enter.g3-sheet-right.g3-sheet-open:not(.g3-sheet-reveal) {
+    animation: g3-sheet-enter-right var(--transition-normal) var(--transition-md);
+}
+
+.g3-sheet-backdrop.g3-sheet-enter.g3-sheet-backdrop-open {
+    animation: g3-sheet-enter-backdrop var(--transition-normal) var(--transition-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-sheet-enter.g3-sheet-open,
+    .g3-sheet-backdrop.g3-sheet-enter.g3-sheet-backdrop-open {
+        animation: none;
     }
 }

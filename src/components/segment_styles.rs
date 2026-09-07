@@ -7,7 +7,7 @@ pub const SEGMENT_BTN_MD: &str = "g3-segment-btn-md";
 pub const TOOLBAR: &str = "g3-segment-toolbar";
 pub const STANDALONE: &str = "g3-segment-standalone";
 pub const ROUTE_WRAPPER: &str = "g3-segment-route-wrapper";
-pub const SCROLLABLE: &str = "overflow-x-auto";
+pub const SCROLLABLE: &str = "g3-segment-scrollable";
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("SEGMENT_IOS", SEGMENT_IOS),

@@ -44,7 +44,7 @@ pub fn Body(
                 ErrorBoundary {
                     handle_error: |_| rsx! {
                         div {
-                            class: "flex items-center justify-center py-8",
+                            class: s::ERROR,
                             style: "color: var(--color-danger);",
                             role: "alert",
                             "Failed to load resource. Please try again."

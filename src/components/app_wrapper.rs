@@ -1,5 +1,6 @@
 //! AppWrapper component - root shell for the entire app layout.
 use super::shell_styles as s;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::UI_CSS;
 use crate::theme::{
     ComponentMode, G3Mode, Theme, get_mode, merge_classes, use_ancestor_context, use_context_signal,
@@ -25,6 +26,11 @@ pub fn AppWrapper(
     /// accidental text selection during a drag is visually distracting.
     /// Defaults to `false`.
     disable_text_selection: Option<bool>,
+    /// Whether this wrapper owns the route-transition cover snapshot. Defaults
+    /// to `true`; set it to `false` for an outer documentation/theme wrapper
+    /// that contains a second `AppWrapper` representing the actual app. A
+    /// document may only have one element with a given view-transition name.
+    route_transition_root: Option<bool>,
 ) -> Element {
     let inherited_mode = use_ancestor_context::<G3Mode>();
     let inherited_theme = use_ancestor_context::<Signal<Theme>>();
@@ -51,7 +57,13 @@ pub fn AppWrapper(
         shell_cls = format!("{shell_cls} {}", s::SHELL_NO_SELECT);
     }
     #[cfg(feature = "transitions")]
-    let shell_cls = merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS));
+    let shell_cls = if route_transition_root.unwrap_or(true) {
+        merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS))
+    } else {
+        shell_cls
+    };
+    #[cfg(not(feature = "transitions"))]
+    let _ = route_transition_root;
     let shell_cls = merge_classes(shell_cls, class.as_deref());
     let shell = rsx! {
         div {
@@ -63,13 +75,33 @@ pub fn AppWrapper(
     };
     #[cfg(feature = "transitions")]
     return rsx! {
-        document::Link { rel: "stylesheet", href: UI_CSS }
+        StylesheetLink {}
         RouteTransitionProvider { {shell} }
     };
     #[cfg(not(feature = "transitions"))]
     rsx! {
-        document::Link { rel: "stylesheet", href: UI_CSS }
+        StylesheetLink {}
         {shell}
+    }
+}
+/// Links [`UI_CSS`] on the targets that need it at runtime.
+///
+/// On the web `AssetOptions::css().with_static_head(true)` has already put the
+/// `<link>` in the document head at build time, so linking again here only adds
+/// a second identical element and a second request for the same file. Desktop
+/// and mobile have no build-time head to write into, so there the runtime link
+/// is the one that loads it.
+#[component]
+fn StylesheetLink() -> Element {
+    #[cfg(target_arch = "wasm32")]
+    {
+        rsx! {}
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        rsx! {
+            document::Link { rel: "stylesheet", href: UI_CSS }
+        }
     }
 }
 #[cfg(feature = "playground")]

@@ -9,6 +9,7 @@ pub const SELECT_SHEET: &str = "g3-select-sheet";
 pub const OPTION: &str = "g3-select-option";
 pub const OPTION_SELECTED: &str = "g3-select-option-selected";
 pub const SEPARATOR: &str = "g3-select-separator";
+pub const OPTION_LIST: &str = "g3-select-option-list";
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("SELECT_BTN", SELECT_BTN),
@@ -20,5 +21,6 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("OPTION", OPTION),
         ("OPTION_SELECTED", OPTION_SELECTED),
         ("SEPARATOR", SEPARATOR),
+        ("OPTION_LIST", OPTION_LIST),
     ]
 }
