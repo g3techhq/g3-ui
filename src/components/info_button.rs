@@ -34,7 +34,7 @@ pub fn InfoButton(
                     onclick.call(event);
                 }
             },
-            Info { class: "text-focused fill-none", size: 24 }
+            Info { class: s::ICON, size: 24 }
         }
     }
 }

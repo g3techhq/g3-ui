@@ -32,8 +32,7 @@ pub fn Header(
     };
     let header_cls = merge_classes(header_cls, has_toolbar.then_some(s::HEADER_WITH_TOOLBAR));
     rsx! {
-        header { class: merge_classes(format!("{header_cls} relative"), class
-                    .as_deref()),
+        header { class: merge_classes(&header_cls, class.as_deref()),
             div { class: s::HEADER_ROW,
                 div { class: s::HEADER_START_SLOT,
                     if let Some(start) = start_button {

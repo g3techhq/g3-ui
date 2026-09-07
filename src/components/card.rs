@@ -64,7 +64,7 @@ pub fn Card(
                 }
             },
             if let Some(image) = image {
-                div { class: "mb-2 justify-items-center", {image} }
+                div { class: s::IMAGE, {image} }
             }
             if let Some(title) = title.as_deref() {
                 div { class: s::HEADER,

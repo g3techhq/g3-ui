@@ -67,7 +67,7 @@ pub fn Button(
         ButtonSize::Lg => s::LG,
     };
     let expand_cls = if expand.unwrap_or(false) {
-        "w-full"
+        s::EXPAND
     } else {
         ""
     };

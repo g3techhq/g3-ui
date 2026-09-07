@@ -1,6 +1,6 @@
 //! Style constants for Navbar component.
 #![allow(dead_code)]
-pub const NAVBAR_BASE: &str = "g3-navbar flex min-h-0 flex-1 flex-col overflow-hidden";
+pub const NAVBAR_BASE: &str = "g3-navbar";
 pub const NAVBAR_IOS: &str = "g3-navbar-ios";
 pub const NAVBAR_MD: &str = "g3-navbar-md";
 pub const TAB_BAR: &str = "g3-navbar-tab-bar";

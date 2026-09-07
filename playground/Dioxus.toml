@@ -3,8 +3,6 @@ name = "g3-ui-playground"
 default_platform = "web"
 out_dir = "dist"
 
-tailwind_input = "tailwind.css"
-tailwind_output = "assets/tailwind.css"
 
 [web.app]
 title = "g3_ui Playground"
@@ -14,7 +12,7 @@ reload_html = true
 watch_path = ["src", "assets", "../src", "../assets"]
 
 [web.resource]
-style = ["/assets/tailwind.css"]
+style = []
 script = []
 
 [web.resource.dev]

@@ -11,11 +11,14 @@ pub const SHEET_OVERLAY: &str = "g3-sheet-overlay";
 pub const SHEET_PUSH: &str = "g3-sheet-push";
 pub const SHEET_REVEAL: &str = "g3-sheet-reveal";
 pub const SHEET_MENU: &str = "g3-sheet-menu";
-pub const HANDLE_WRAP_IOS: &str = "g3-sheet-handle-wrap-ios flex justify-center cursor-grab active:cursor-grabbing touch-none select-none";
+pub const HANDLE_WRAP_IOS: &str = "g3-sheet-handle-wrap-ios";
 pub const HANDLE_IOS: &str = "g3-sheet-handle-ios";
 pub const BACKDROP: &str = "g3-sheet-backdrop";
 pub const STATE_OPEN: &str = "g3-sheet-open";
 pub const STATE_CLOSED: &str = "g3-sheet-closed";
+/// Marks an opening that should animate in. Absent when the sheet mounts open,
+/// which is layout rather than presentation.
+pub const ENTER: &str = "g3-sheet-enter";
 pub const CONTENT: &str = "g3-sheet-content";
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
@@ -35,6 +38,7 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("BACKDROP", BACKDROP),
         ("STATE_OPEN", STATE_OPEN),
         ("STATE_CLOSED", STATE_CLOSED),
+        ("ENTER", ENTER),
         ("CONTENT", CONTENT),
     ]
 }

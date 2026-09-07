@@ -16,7 +16,7 @@ pub fn Spinner(class: Option<String>, center: Option<bool>) -> Element {
             aria_live: "polite",
             aria_label: "Loading spinner",
             div { class: s::SPINNER, aria_hidden: "true" }
-            span { class: "sr-only", "Loading" }
+            span { class: s::SR_ONLY, "Loading" }
         }
     }
 }

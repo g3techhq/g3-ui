@@ -12,6 +12,7 @@ pub const SM: &str = "g3-btn-sm";
 pub const MD_SIZE: &str = "g3-btn-md-size";
 pub const LG: &str = "g3-btn-lg";
 pub const BADGE: &str = "g3-btn-badge";
+pub const EXPAND: &str = "g3-btn-expand";
 pub fn catalog() -> Vec<(&'static str, &'static str)> {
     vec![
         ("BASE", BASE),

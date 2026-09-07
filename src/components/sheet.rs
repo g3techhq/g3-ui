@@ -8,9 +8,6 @@ use dioxus_icons::lucide::Menu;
 use std::sync::atomic::{AtomicU64, Ordering};
 const SHEET_DISMISS_DISTANCE: f64 = 96.0;
 static SHEET_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
-const SHEET_PRESENT_SCRIPT: &str = r#"
-requestAnimationFrame(() => dioxus.send(true));
-"#;
 const SHEET_DRAG_SCRIPT: &str = r#"
 const dialog = document.getElementById("__DIALOG_ID__");
 const handle = document.getElementById("__HANDLE_ID__");
@@ -122,24 +119,18 @@ pub fn Sheet(
     let has_handle = matches!(placement, SheetPlacement::Bottom);
     let dialog_id = format!("g3-sheet-{instance_id}");
     let handle_id = format!("g3-sheet-handle-{instance_id}");
-    let mut ever_opened = use_signal(|| false);
-    let mut presented_open = use_signal(|| false);
+    let is_open_now = is_open();
+    let mut ever_opened = use_signal(|| is_open_now);
+    // A sheet that mounts open is part of the initial layout - a persistent
+    // `Menu` rail is the usual case - so it is painted open with no entrance.
+    // Once it has been closed, opening it again is a presentation and animates.
+    let mut has_been_closed = use_signal(|| !is_open_now);
     use_effect(move || {
-        if !is_open() {
-            presented_open.set(false);
-            return;
+        if is_open() {
+            ever_opened.set(true);
+        } else {
+            has_been_closed.set(true);
         }
-        ever_opened.set(true);
-        if presented_open() {
-            return;
-        }
-        spawn(async move {
-            let mut eval = document::eval(SHEET_PRESENT_SCRIPT);
-            let _ = eval.recv::<bool>().await;
-            if is_open() {
-                presented_open.set(true);
-            }
-        });
     });
     {
         let dialog_id = dialog_id.clone();
@@ -161,13 +152,24 @@ pub fn Sheet(
         });
     }
     use_lock_body_scroll(is_open);
-    let is_open_now = is_open();
     if !is_open_now && !ever_opened() {
         return rsx! {};
     }
-    let visual_open = is_open_now && presented_open();
+    let visual_open = is_open_now;
+    // The entrance is a keyframe animation rather than a transition between two
+    // painted states. A transition needs its start value to have been painted,
+    // which for a sheet inserted on open it never has - that is what the old
+    // `requestAnimationFrame` round trip through `document::eval` was buying, at
+    // the cost of a bridge hop before anything moved. Keyframes run on the frame
+    // the class lands, so opening is immediate on web, desktop and mobile alike.
+    // The exit stays a transition: the open state has been painted by then.
+    let enter_cls = if is_open_now && has_been_closed() {
+        s::ENTER
+    } else {
+        ""
+    };
     let backdrop_cls = format!(
-        "{} {} {placement_cls} {side_cls} {side_type_cls}",
+        "{} {} {enter_cls} {placement_cls} {side_cls} {side_type_cls}",
         s::BACKDROP,
         if visual_open {
             "g3-sheet-backdrop-open"
@@ -180,6 +182,7 @@ pub fn Sheet(
     } else {
         s::STATE_CLOSED
     };
+    let state_cls = format!("{state_cls} {enter_cls}");
     rsx! {
         if !is_menu {
             button {
@@ -275,7 +278,7 @@ pub fn SheetPlaygroundDemo() -> Element {
                                 size: crate::ButtonSize::Sm,
                                 aria_label: "Toggle menu".to_string(),
                                 onclick: move |_| open.toggle(),
-                                Menu { size: 22, class: "fill-none" }
+                                Menu { size: 22 }
                             }
                         },
                     }

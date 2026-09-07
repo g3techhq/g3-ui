@@ -87,13 +87,13 @@ pub fn Field(
         "width: stretch;"
     };
     rsx! {
-        div { class: "relative w-full",
+        div { class: s::WRAPPER,
             if !label.is_empty() {
                 label { r#for,
                     div { class: "g3-field-label", "{label}" }
                 }
             }
-            div { class: "relative",
+            div { class: s::CONTROL,
                 if multiline.unwrap_or(false) {
                     textarea {
                         id,
@@ -208,7 +208,7 @@ pub fn Field(
                 }
                 if let Some(end) = end {
                     div {
-                        class: "absolute",
+                        class: s::TRAILING,
                         style: "right: 0.5rem; top: 50%; transform: translateY(-50%); display: flex; align-items: center;",
                         {end}
                     }

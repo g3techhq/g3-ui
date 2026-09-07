@@ -4,7 +4,6 @@ extend-exclude = [
     "node_modules/**",
     "playwright-report/**",
     "test-results/**",
-    "assets/tailwind.css",
     "info_site/tailwind.css",
 ]
 

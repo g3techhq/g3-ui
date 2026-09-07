@@ -91,7 +91,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 aria_label: "Open menu"
                                         .to_string(),
                                 onclick: move |_| menu_open.set(true),
-                                Menu { size: 22, class: "fill-none" }
+                                Menu { size: 22 }
                             }
                         },
                         end_button: rsx! {
@@ -101,7 +101,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 aria_label: "Notifications"
                                         .to_string(),
                                 onclick: move |_| toast_open.set(true),
-                                Bell { size: 20, class: "fill-none" }
+                                Bell { size: 20 }
                             }
                         },
                         toolbar: (tab() == 0).then(|| rsx! {
@@ -119,14 +119,14 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 horizontal: crate::FabHorizontal::End,
                                 class: "g3-demo-fab",
                                 crate::FabButton { onclick: move |_| fab_open.toggle(),
-                                    Zap { size: 22, class: "fill-none" }
+                                    Zap { size: 22 }
                                 }
                                 crate::FabList { activated: fab_open(),
                                     crate::FabButton { onclick: move |_| {}, size: crate::FabSize::Small,
-                                        Star { size: 18, class: "fill-none" }
+                                        Star { size: 18 }
                                     }
                                     crate::FabButton { onclick: move |_| {}, size: crate::FabSize::Small,
-                                        MapPin { size: 18, class: "fill-none" }
+                                        MapPin { size: 18 }
                                     }
                                 }
                             }
@@ -139,7 +139,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                     .to_string(),
                             selected: tab() == 0,
                             icon: rsx! {
-                                House { size: 20, class: "fill-none" }
+                                House { size: 20 }
                             },
                             onclick: move |_| tab.set(0),
                         }
@@ -147,7 +147,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             label: "Discover".to_string(),
                             selected: tab() == 1,
                             icon: rsx! {
-                                Search { size: 20, class: "fill-none" }
+                                Search { size: 20 }
                             },
                             onclick: move |_| tab.set(1),
                         }
@@ -156,7 +156,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             selected: tab() == 2,
                             desktop_placement: crate::NavbarTabDesktopPlacement::Bottom,
                             icon: rsx! {
-                                CircleUserRound { size: 20, class: "fill-none" }
+                                CircleUserRound { size: 20 }
                             },
                             onclick: move |_| tab.set(2),
                         }
@@ -164,7 +164,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             label: "Activity".to_string(),
                             selected: tab() == 3,
                             icon: rsx! {
-                                Activity { size: 20, class: "fill-none" }
+                                Activity { size: 20 }
                             },
                             onclick: move |_| tab.set(3),
                         }
@@ -221,7 +221,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 kind: crate::ItemKind::Button,
                                 label: "Rounds".to_string(),
                                 start: rsx! {
-                                    House { size: 20, class: "fill-none" }
+                                    House { size: 20 }
                                 },
                                 onclick: move |_| {
                                     tab.set(0);
@@ -232,7 +232,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 kind: crate::ItemKind::Button,
                                 label: "Discover".to_string(),
                                 start: rsx! {
-                                    Search { size: 20, class: "fill-none" }
+                                    Search { size: 20 }
                                 },
                                 onclick: move |_| {
                                     tab.set(1);
@@ -243,7 +243,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 kind: crate::ItemKind::Button,
                                 label: "Profile".to_string(),
                                 start: rsx! {
-                                    CircleUserRound { size: 20, class: "fill-none" }
+                                    CircleUserRound { size: 20 }
                                 },
                                 onclick: move |_| {
                                     tab.set(2);
@@ -254,7 +254,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                                 kind: crate::ItemKind::Button,
                                 label: "Sign out".to_string(),
                                 start: rsx! {
-                                    LogOut { size: 20, class: "fill-none" }
+                                    LogOut { size: 20 }
                                 },
                                 onclick: move |_|
                                         menu_open.set(false),
@@ -270,7 +270,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                         crate::List { inset: true, lines: crate::ListLines::Inset,
                             crate::Item {
                                 start: rsx! {
-                                    MapPin { size: 20, class: "fill-none" }
+                                    MapPin { size: 20 }
                                 },
                                 label: "Nearby courses".to_string(),
                                 description: "Within 25 miles".to_string(),
@@ -280,7 +280,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             }
                             crate::Item {
                                 start: rsx! {
-                                    CircleUserRound { size: 20, class: "fill-none" }
+                                    CircleUserRound { size: 20 }
                                 },
                                 label: "Friends only".to_string(),
                                 description: "Rounds with people you follow"
@@ -291,7 +291,7 @@ pub fn DemoAppPlaygroundDemo() -> Element {
                             }
                             crate::Item {
                                 start: rsx! {
-                                    CalendarDays { size: 20, class: "fill-none" }
+                                    CalendarDays { size: 20 }
                                 },
                                 label: "This weekend".to_string(),
                                 description: "Sat and Sun tee times".to_string(),
@@ -381,7 +381,7 @@ fn RoundsScreen(
                         selected: true,
                         onclick: move |_| {},
                         start: rsx! {
-                            Trophy { size: 14, class: "fill-none" }
+                            Trophy { size: 14 }
                         },
                         "Match play"
                     }
@@ -526,7 +526,7 @@ fn DiscoverScreen(
                 crate::List { lines: crate::ListLines::Full,
                     crate::Item {
                         start: rsx! {
-                            Bell { size: 20, class: "fill-none" }
+                            Bell { size: 20 }
                         },
                         label: "Score updates".to_string(),
                         end: rsx! {
@@ -535,7 +535,7 @@ fn DiscoverScreen(
                     }
                     crate::Item {
                         start: rsx! {
-                            Heart { size: 20, class: "fill-none" }
+                            Heart { size: 20 }
                         },
                         label: "Cheers".to_string(),
                         end: rsx! {
@@ -551,7 +551,7 @@ fn DiscoverScreen(
                 expand: true,
                 onclick: move |_| filter_sheet_open.set(true),
                 start: rsx! {
-                    Settings { size: 18, class: "fill-none" }
+                    Settings { size: 18 }
                 },
                 "More filters"
             }
@@ -577,7 +577,7 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
                         crate::Chip {
                             onclick: move |_| {},
                             start: rsx! {
-                                Star { size: 14, class: "fill-none" }
+                                Star { size: 14 }
                             },
                             "8.4 hcp"
                         }
@@ -589,7 +589,7 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
         crate::List { inset: true,
             crate::Item {
                 start: rsx! {
-                    Trophy { size: 20, class: "fill-none" }
+                    Trophy { size: 20 }
                 },
                 label: "Achievements".to_string(),
                 detail: crate::ItemDetail::Show,
@@ -599,7 +599,7 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
             }
             crate::Item {
                 start: rsx! {
-                    CalendarDays { size: 20, class: "fill-none" }
+                    CalendarDays { size: 20 }
                 },
                 label: "Round history".to_string(),
                 metadata: "42"
@@ -610,11 +610,11 @@ fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> 
             }
             crate::Item {
                 start: rsx! {
-                    Settings { size: 20, class: "fill-none" }
+                    Settings { size: 20 }
                 },
                 label: "Settings".to_string(),
                 end: rsx! {
-                    ChevronRight { size: 18, class: "fill-none" }
+                    ChevronRight { size: 18 }
                 },
                 kind: crate::ItemKind::Button,
                 onclick: move |_| {},

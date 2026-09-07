@@ -1,6 +1,6 @@
 //! Style constants for Header component.
 #![allow(dead_code)]
-pub const HEADER_BASE: &str = "g3-header shadow-lg sticky top-0 z-10";
+pub const HEADER_BASE: &str = "g3-header";
 pub const HEADER_IOS: &str = "g3-header-ios";
 pub const HEADER_MD: &str = "g3-header-md";
 pub const HEADER_WITH_TOOLBAR: &str = "g3-header-with-toolbar";

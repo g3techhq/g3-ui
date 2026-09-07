@@ -69,7 +69,7 @@ pub fn Select(
             onclick: move |_| is_open.set(true),
             span { class: s::SELECT_VALUE, "{value()}" }
             ChevronDown {
-                class: format!("{} fill-gray ml-1 shrink-0", s::SELECT_ICON),
+                class: s::SELECT_ICON,
                 size: 16,
             }
         }
@@ -78,7 +78,7 @@ pub fn Select(
             mode,
             class: s::SELECT_SHEET,
             draggable: false,
-            div { class: "flex flex-col w-full", role: "listbox",
+            div { class: s::OPTION_LIST, role: "listbox",
                 for (index, option) in options.into_iter().enumerate() {
                     SelectOptionComponent {
                         value,
