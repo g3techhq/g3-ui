@@ -1,4 +1,4 @@
-FROM rust:1.95.0-bookworm AS builder
+FROM rust:1.98.0-bookworm AS builder
 
 ARG DIOXUS_CLI_VERSION=0.7.9
 
