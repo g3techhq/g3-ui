@@ -57,7 +57,7 @@ pub fn PlaygroundDemoFrame(
     rsx! {
         div { class: "g3-playground-demo-stack",
             if let Some(controls) = controls {
-                div { class: "playground-controls-pane", {controls} }
+                crate::Card { class: "playground-controls-pane", {controls} }
             }
             div { class: preview_cls,
                 if app.unwrap_or(true) {

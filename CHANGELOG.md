@@ -9,7 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Every playground demo now has a stable `/components/:slug` URL, and a
-  `/transitions` showcase demonstrates route pushes, sheets, fades, segmented
+  `/transitions` showcase demonstrates route pushes, full-screen covers, fades, segmented
   filmstrips, and morphs with the actual g3-ui app components.
 - `AppWrapper::route_transition_root` lets documentation shells and other
   non-navigating outer wrappers opt out of the cover snapshot while a nested

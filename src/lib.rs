@@ -885,7 +885,10 @@ mod tests {
         assert!(transition_source.contains("RouteTransitionPage"));
         assert!(transition_source.contains("AppWrapper"));
         assert!(transition_source.contains("Navbar"));
-        assert!(transition_source.contains("Sheet"));
+        assert!(transition_source.contains("title: \"Add players\""));
+        assert!(transition_source.contains("route_transition_base: false"));
+        assert!(!transition_source.contains("Sheet { mode, is_open"));
+        assert!(transition_source.contains("icon: rsx! { House"));
     }
     #[test]
     fn app_wrapper_bundles_library_stylesheet() {

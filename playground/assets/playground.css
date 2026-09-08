@@ -143,15 +143,22 @@ textarea {
 }
 
 .playground-intro {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   view-transition-name: playground-intro;
 }
 
 .playground-intro .playground-description {
   margin: 0;
+}
+
+.playground-intro > .g3-btn {
+  position: absolute;
+  right: 0;
 }
 
 .playground-menu-button {
@@ -255,14 +262,6 @@ textarea {
   max-width: 100%;
 }
 
-/* The standard component preview is intentionally a full 390 × 844 device.
-   The transition tour also includes the playground header and recorder
-   controls in a 1440 × 900 frame, so use the same aspect ratio at a smaller
-   showcase-only size rather than cropping the navbar off the video. */
-.transition-showcase-card.playground-viewport-mobile {
-  width: min(320px, 100%);
-}
-
 .playground-viewport-desktop {
   width: 50rem;
 }
@@ -358,6 +357,24 @@ textarea {
   min-height: 0;
 }
 
+.transition-showcase-preview .g3-navbar > .transition-showcase-page {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+@container g3-app-shell (min-width: 48rem) {
+  .transition-showcase-preview .g3-navbar > .transition-showcase-page {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
 .transition-showcase-preview .transition-showcase-app {
   position: relative;
   z-index: 1;
@@ -409,6 +426,51 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
   z-index: 10000;
 }
 
+html[data-route-transition]::view-transition-group(playground-device-frame),
+html[data-route-transition]::view-transition-image-pair(playground-device-frame) {
+  overflow: hidden;
+  border-radius: 40px;
+  clip-path: inset(0 round 40px);
+}
+
+/* The device border is a transparent overlay, not a mask. Clip every routed
+   snapshot to the phone's inner curve so moving surfaces cannot expose square
+   corners outside that border. */
+html[data-route-transition]::view-transition-group(page),
+html[data-route-transition]::view-transition-image-pair(page),
+html[data-route-transition]::view-transition-group(base),
+html[data-route-transition]::view-transition-image-pair(base),
+html[data-route-transition]::view-transition-group(cover),
+html[data-route-transition]::view-transition-image-pair(cover) {
+  overflow: hidden;
+  border-radius: 32px;
+  clip-path: inset(0 round 32px);
+}
+
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-group(playground-device-frame),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-image-pair(playground-device-frame) {
+  border-radius: 22px;
+  clip-path: inset(0 round 22px);
+}
+
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-group(page),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-image-pair(page),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-group(base),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-image-pair(base),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-group(cover),
+html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
+  ::view-transition-image-pair(cover) {
+  border-radius: 16px;
+  clip-path: inset(0 round 16px);
+}
+
 .playground-viewport-desktop .g3-playground-preview {
   width: 50rem;
   max-height: none;
@@ -423,6 +485,25 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+.g3-playground-preview .g3-navbar {
+  width: 100%;
+  height: 100%;
+}
+
+/* Route-transition markers default to the browser viewport for real apps.
+   Inside the playground they belong to the simulated device instead, or a
+   Navbar's tab bar lands below the phone at the browser's 100dvh position. */
+.g3-playground-preview .route-transition-base,
+.g3-playground-preview .route-transition-cover,
+.g3-playground-preview .route-transition-page {
+  height: 100%;
+  min-height: 0;
+}
+
+.g3-playground-preview .g3-navbar-tab-bar {
+  flex: 0 0 auto;
 }
 
 .g3-playground-preview .g3-body-content {
@@ -511,15 +592,14 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
    The explicit column keeps a wide control - a five-way segment group, say -
    from sizing the track to its max-content and spilling out of the card. */
 .playground-controls-pane {
+  width: 100%;
+}
+
+.playground-controls-pane > .g3-card-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 12px;
-  padding: 14px;
-  border: 1px solid var(--color-card-border, #d5dde3);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--color-card, #ffffff) 88%, transparent);
-  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-shadow, rgba(24, 36, 48, 0.16)) 24%, transparent);
 }
 
 /* These are playground chrome, not a sample of the component's own type scale.
@@ -644,6 +724,57 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
   }
 }
 
+@media (min-width: 761px) {
+  /* The global selector is a page-level bottom sheet. Keep it flush with the
+     page edge and make its animation purely vertical; the desktop component
+     default is a floating centred panel, which is wrong for this shell. */
+  .playground-header .g3-select-sheet.g3-sheet-bottom {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 1rem 1rem 0 0;
+    --g3-sheet-enter-x: 0;
+    --g3-sheet-enter-y: calc(100% + max(3rem, env(safe-area-inset-bottom)));
+  }
+
+  .playground-header .g3-select-sheet.g3-sheet-bottom.g3-sheet-open {
+    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
+  }
+
+  .playground-header .g3-select-sheet.g3-sheet-bottom.g3-sheet-closed {
+    transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
+  }
+
+  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    .playground-header
+    .g3-sheet-backdrop {
+    left: var(--g3-side-sheet-width);
+    width: calc(100% - var(--g3-side-sheet-width));
+  }
+
+  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    .playground-header
+    .g3-select-sheet.g3-sheet-bottom {
+    right: 0;
+    bottom: 0;
+    left: var(--g3-side-sheet-width);
+    width: calc(100% - var(--g3-side-sheet-width));
+  }
+
+  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    .playground-header
+    .g3-select-sheet.g3-sheet-bottom.g3-sheet-open {
+    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
+  }
+
+  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
+    .playground-header
+    .g3-select-sheet.g3-sheet-bottom.g3-sheet-closed {
+    transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
+  }
+}
+
 @media (max-width: 760px) {
   .playground-header-row {
     padding: 12px;
@@ -660,6 +791,10 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
 
   .playground-main {
     padding: 14px 10px 24px;
+  }
+
+  .playground-intro > .g3-btn {
+    position: static;
   }
 
   .playground-viewport-demo > .g3-playground-demo-stack {

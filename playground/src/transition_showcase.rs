@@ -1,16 +1,16 @@
 //! Route-transition showcase composed entirely from public g3-ui components.
 use dioxus::prelude::*;
+use dioxus_icons::lucide::{BookOpen, CircleUserRound, House, Star};
 use g3_route_transitions::{RouteTransitionPage, animated_navigate};
 use g3_ui::{
     AppWrapper, Badge, Body, Button, ButtonSize, ButtonStyle, Card, ComponentMode, Header, Item,
     ItemDetail, List, ListLines, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement,
-    PlaygroundDemoFrame, RightSlot, SegmentButton, SegmentGroup, Sheet, SheetPlacement,
-    StatusColor,
+    PlaygroundDemoFrame, RightSlot, SegmentButton, SegmentGroup, StatusColor,
 };
 
 use super::{PlaygroundViewport, Route, active_playground_settings};
 
-pub const DESCRIPTION: &str = "Real g3-ui app screens demonstrating route-owned push, sheet, fade, segmented, and morph transitions.";
+pub const DESCRIPTION: &str = "Real g3-ui app screens that demonstrate route-owned push, sheet, fade, segmented, and morph transitions.";
 pub const SOURCE: &str = r#"#[route_transitions]
 #[derive(Clone, Debug, PartialEq, Routable)]
 enum Route {
@@ -33,12 +33,12 @@ enum Route {
 
 rsx! {
     G3AppWrapper {
-        RouteTransitionPage {
-            G3Navbar {
+        G3Navbar {
+            RouteTransitionPage {
                 G3Header { title: "Fairway" }
                 G3Body { G3Card { title: "Today's round", "Ready to play" } }
-                G3NavbarTabBar { /* routed tabs */ }
             }
+            G3NavbarTabBar { /* persistent routed tabs */ }
         }
     }
 }"#;
@@ -127,8 +127,8 @@ fn TransitionScreen(screen: ShowcaseScreen, mode: ComponentMode) -> Element {
         ShowcaseScreen::Queue => rsx! { QueueScreen { mode } },
         ShowcaseScreen::Ratings(tab) => rsx! { RatingsScreen { tab, mode } },
         _ => rsx! {
-            RouteTransitionPage { class: "transition-showcase-page".to_string(),
-                Navbar { mode,
+            Navbar { mode,
+                RouteTransitionPage { class: "transition-showcase-page".to_string(),
                     Header {
                         mode,
                         title: screen_title(screen).to_string(),
@@ -161,8 +161,8 @@ fn TransitionScreen(screen: ShowcaseScreen, mode: ComponentMode) -> Element {
                             ShowcaseScreen::Queue | ShowcaseScreen::Ratings(_) => rsx! {},
                         }
                     }
-                    ShowcaseTabs { selected: screen }
                 }
+                ShowcaseTabs { selected: screen }
             }
         },
     }
@@ -280,7 +280,8 @@ fn ArticleDetailContent(mode: ComponentMode) -> Element {
 
 #[component]
 fn RatingsScreen(tab: u8, mode: ComponentMode) -> Element {
-    let active = use_signal(|| tab as usize);
+    let mut active = use_signal(|| tab as usize);
+    use_effect(use_reactive!(|tab| active.set(tab as usize)));
     rsx! {
         Navbar { mode,
             Header {
@@ -346,24 +347,36 @@ fn rating_rows(tab: u8) -> [(&'static str, &'static str); 3] {
 
 #[component]
 fn QueueScreen(mode: ComponentMode) -> Element {
-    let open = use_signal(|| true);
     rsx! {
-        Navbar { mode,
-            Header { mode, title: "Fairway".to_string() }
-            Body { mode, has_footer_space: false, HomeContent { mode } }
-            ShowcaseTabs { selected: ShowcaseScreen::Home }
-        }
-        Sheet { mode, is_open: open, placement: SheetPlacement::Bottom,
-            h3 { "Add players" }
-            List { mode, lines: ListLines::Inset,
+        Navbar { mode, route_transition_base: false,
+            Header {
+                mode,
+                title: "Add players".to_string(),
+                start_button: rsx! {
+                    Button {
+                        mode,
+                        style: ButtonStyle::Clear,
+                        size: ButtonSize::Sm,
+                        aria_label: "Back to fairway".to_string(),
+                        onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
+                        "Back"
+                    }
+                },
+            }
+            Body { mode, has_footer_space: false,
+                Card { mode, title: "Available for 10:40 AM".to_string(),
+                    p { "Choose players to add to the Pebble Creek round." }
+                }
+                List { mode, inset: true, lines: ListLines::Inset,
                 Item { mode, label: "Morgan Lee".to_string(), description: "Available at 10:40".to_string() }
                 Item { mode, label: "Taylor Kim".to_string(), description: "Usually walks".to_string() }
-            }
-            Button {
-                mode,
-                expand: true,
-                onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
-                "Done"
+                }
+                Button {
+                    mode,
+                    expand: true,
+                    onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
+                    "Done"
+                }
             }
         }
     }
@@ -376,22 +389,26 @@ fn ShowcaseTabs(selected: ShowcaseScreen) -> Element {
             NavbarTab {
                 label: "Home".to_string(),
                 selected: matches!(selected, ShowcaseScreen::Home | ShowcaseScreen::Queue | ShowcaseScreen::Detail),
+                icon: rsx! { House { size: 20 } },
                 onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
             }
             NavbarTab {
                 label: "Ratings".to_string(),
                 selected: matches!(selected, ShowcaseScreen::Ratings(_)),
+                icon: rsx! { Star { size: 20 } },
                 onclick: move |_| async move { animated_navigate(Route::TransitionRatings { tab: 0 }).await },
             }
             NavbarTab {
                 label: "Stories".to_string(),
                 selected: matches!(selected, ShowcaseScreen::Article | ShowcaseScreen::ArticleDetail),
+                icon: rsx! { BookOpen { size: 20 } },
                 onclick: move |_| async move { animated_navigate(Route::TransitionArticle {}).await },
             }
             NavbarTab {
                 label: "Profile".to_string(),
                 selected: selected == ShowcaseScreen::Profile,
                 desktop_placement: NavbarTabDesktopPlacement::Bottom,
+                icon: rsx! { CircleUserRound { size: 20 } },
                 onclick: move |_| async move { animated_navigate(Route::TransitionProfile {}).await },
             }
         }

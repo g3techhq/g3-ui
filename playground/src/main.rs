@@ -615,8 +615,25 @@ fn PlaygroundNav(
     mut selector_open: Signal<bool>,
     dismiss_on_select: bool,
 ) -> Element {
+    let demo_app = demos
+        .iter()
+        .copied()
+        .find(|demo| demo.descriptor.name == "Demo App");
+    let mut component_demos = demos
+        .into_iter()
+        .filter(|demo| demo.descriptor.name != "Demo App")
+        .collect::<Vec<_>>();
+    component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
     rsx! {
         g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
+            if let Some(demo) = demo_app {
+                ComponentNavButton {
+                    demo,
+                    current_route: current_route.clone(),
+                    selector_open,
+                    dismiss_on_select,
+                }
+            }
             g3_ui::Item {
                 kind: g3_ui::ItemKind::Button,
                 selected: current_route.is_transition_showcase(),
@@ -629,7 +646,7 @@ fn PlaygroundNav(
                     animated_navigate(Route::TransitionHome {}).await;
                 },
             }
-            for demo in demos.iter().copied() {
+            for demo in component_demos {
                 ComponentNavButton {
                     demo,
                     current_route: current_route.clone(),
