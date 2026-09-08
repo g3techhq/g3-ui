@@ -45,8 +45,7 @@ jobs:
           set -euo pipefail
 
           if [[ "${DRY_RUN}" == "true" ]]; then
-            echo "Listing package files for g3-ui; full dry-run requires g3-route-transitions to exist on crates.io first."
-            cargo package --list
+            cargo publish --dry-run
             exit 0
           fi
 
