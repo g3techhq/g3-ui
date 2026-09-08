@@ -27,15 +27,15 @@ is `g3_ui`.
 ```toml
 [dependencies]
 dioxus = { version = "0.7.9", features = ["router"] }
-g3-ui = "0.1"
+g3-ui = "0.2"
 ```
 
 Enable the optional route-transition integration when your app also uses `g3-route-transitions`:
 
 ```toml
 [dependencies]
-g3-ui = { version = "0.1", features = ["transitions"] }
-g3-route-transitions = "0.1"
+g3-ui = { version = "0.2", features = ["transitions"] }
+g3-route-transitions = "0.2"
 ```
 
 ## Quick Start

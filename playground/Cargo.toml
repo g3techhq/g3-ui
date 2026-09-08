@@ -8,7 +8,7 @@ publish = false
 dioxus = { version = "0.7.9", features = ["web"] }
 dioxus-code = { version = "0.1", features = ["runtime"] }
 dioxus-icons = "0.1.0"
-g3-route-transitions = "0.1.0"
+g3-route-transitions = "0.2.0"
 g3-ui = { path = "..", features = ["playground", "transitions"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
 manganis = "0.7.9"

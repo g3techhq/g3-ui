@@ -1281,9 +1281,9 @@ dependencies = [
 
 [[package]]
 name = "g3-route-transitions"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a00fe7e9fcf1d09e28919715a8de18af72534046c46f916cf81b6e34d0788f84"
+checksum = "3d857f6738f63c3e18608e0d2b88f102a4bf0b72507f165b643b0d141dce809e"
 dependencies = [
  "dioxus",
  "g3-route-transitions-macros",
@@ -1293,9 +1293,9 @@ dependencies = [
 
 [[package]]
 name = "g3-route-transitions-macros"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0d3bfbd2f96fd35c5af00db544f37895f0014ebd5e815c7f02d91f7f697fc0b"
+checksum = "6683c9847b3f0eb5f750bac2ed556e3b446b288c465e24d2dfda22c4bd366b28"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1304,7 +1304,7 @@ dependencies = [
 
 [[package]]
 name = "g3-ui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cfg-if",
  "dioxus",

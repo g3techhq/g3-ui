@@ -865,7 +865,7 @@ mod tests {
         let body_source = include_str!("components/body.rs");
         let body_styles = include_str!("components/body_styles.rs");
         assert!(cargo.contains("transitions = [\"dep:g3-route-transitions\"]"));
-        assert!(cargo.contains("g3-route-transitions = { version = \"0.1.0\", optional = true }",),);
+        assert!(cargo.contains("g3-route-transitions = { version = \"0.2.0\", optional = true }",),);
         assert!(!body_styles.contains("route-transition-segment"));
         assert!(app_wrapper_source.contains("RouteTransitionProvider"));
         assert!(app_wrapper_source.contains("ROUTE_TRANSITION_COVER_CLASS"));
