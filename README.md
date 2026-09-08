@@ -223,8 +223,9 @@ and Compare viewport controls to inspect the same component tree in compact- and
 Every demo has a stable URL such as `/components/button`, so documentation can link directly to a
 specific component instead of dropping readers on the gallery home screen.
 
-The `/transitions` showcase composes the real app shell, header, body, navbar, cards, lists, sheet,
-buttons, and segmented controls with `g3-route-transitions`. Navigation between component demos is
+The `/transitions` showcase composes the real app shell, header, body, navbar, cards, lists,
+buttons, and segmented controls with `g3-route-transitions`, including a full-screen sheet-style
+cover route. Navigation between component demos is
 routed as well, using the same integration a consuming application uses.
 
 When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent

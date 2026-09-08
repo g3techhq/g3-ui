@@ -21,7 +21,15 @@ pub enum NavbarTabDesktopPlacement {
     Bottom,
 }
 #[component]
-pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMode>) -> Element {
+pub fn Navbar(
+    children: Element,
+    class: Option<String>,
+    mode: Option<ComponentMode>,
+    /// Whether this navbar owns the stable base snapshot during a cover
+    /// transition. Defaults to `true`; disable it when the navbar is itself
+    /// the full-page cover destination.
+    route_transition_base: Option<bool>,
+) -> Element {
     let mode = use_component_mode(mode);
     let theme_style = use_ambient_theme().unwrap_or_default().to_style_attr();
     let navbar_cls = match mode {
@@ -29,7 +37,13 @@ pub fn Navbar(children: Element, class: Option<String>, mode: Option<ComponentMo
         ComponentMode::Md => format!("{} {}", s::NAVBAR_BASE, s::NAVBAR_MD),
     };
     #[cfg(feature = "transitions")]
-    let navbar_cls = merge_classes(navbar_cls, Some(ROUTE_TRANSITION_BASE_CLASS));
+    let navbar_cls = if route_transition_base.unwrap_or(true) {
+        merge_classes(navbar_cls, Some(ROUTE_TRANSITION_BASE_CLASS))
+    } else {
+        navbar_cls
+    };
+    #[cfg(not(feature = "transitions"))]
+    let _ = route_transition_base;
     let navbar_cls = merge_classes(navbar_cls, class.as_deref());
     rsx! {
         div {

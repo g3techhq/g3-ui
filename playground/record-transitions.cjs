@@ -18,7 +18,7 @@ async function main() {
     } catch {
         browser = await chromium.launch({ headless: true });
     }
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
     const page = await context.newPage();
     await page.goto(showcaseUrl, { waitUntil: "domcontentloaded" });
     const iosTab = page.getByRole("tab", { name: "iOS" });

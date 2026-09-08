@@ -1321,6 +1321,7 @@ version = "0.1.0"
 dependencies = [
  "dioxus",
  "dioxus-code",
+ "dioxus-icons",
  "g3-route-transitions",
  "g3-ui",
  "getrandom 0.2.17",
