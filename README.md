@@ -8,6 +8,14 @@
 
 Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](https://ionicframework.com/).
 
+<p align="center">
+  <img
+    src="docs/media/social-preview.png"
+    alt="Four mobile g3-ui Demo App screens showing rounds, forms, a sheet, and a profile"
+    width="1280"
+  >
+</p>
+
 `g3-ui` is a flat, `G3`-prefixed component library for building responsive apps (bottom-tab
 navigation that becomes a desktop rail, sheets, cards, swipeable lists) that compile to web (WASM), desktop (Wry), and native
 mobile targets through Dioxus. Every interactive component ships with iOS/Material Design (MD)
@@ -217,24 +225,23 @@ shadow back onto the exposed sheet.
 
 ## Playground
 
-An interactive component gallery lives in `playground/` inside this repository. It renders every
-registered component with live controls. Use the MD/iOS mode switch alongside the Mobile, Desktop,
-and Compare viewport controls to inspect the same component tree in compact- and wide-shell frames.
-Every demo has a stable URL such as `/components/button`, so documentation can link directly to a
-specific component instead of dropping readers on the gallery home screen.
+The [deployed interactive component gallery](https://g3ui.g3tech.net/) is built from `playground/`
+inside this repository. It renders every registered component with live controls. Use the MD/iOS
+mode switch alongside the Mobile, Desktop, and Compare viewport controls to inspect the same
+component tree in compact- and wide-shell frames. Every demo has a stable URL such as
+`/components/button`, so documentation can link directly to a specific component instead of
+dropping readers on the gallery home screen.
 
-The `/transitions` showcase composes the real app shell, header, body, navbar, cards, lists,
-buttons, and segmented controls with `g3-route-transitions`, including a full-screen sheet-style
-cover route. Navigation between component demos is
-routed as well, using the same integration a consuming application uses.
+The deployed [`/transitions` showcase](https://g3ui.g3tech.net/transitions) composes the real app
+shell, header, body, navbar, cards, lists, buttons, and segmented controls with
+`g3-route-transitions`, including a full-screen sheet-style cover route. Navigation between
+component demos is routed as well, using the same integration a consuming application uses.
 
 When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent
 `[patch.crates-io]` block in `.cargo/config.toml`. Cargo then redirects every
 `g3-route-transitions` dependency in the library and playground to the sibling checkout. Comment
 the block again before committing; normal builds and published packages continue using the version
 from crates.io.
-
-![g3-ui playground showing the responsive demo app in a mobile frame](docs/media/playground.png)
 
 ```powershell
 cd playground
