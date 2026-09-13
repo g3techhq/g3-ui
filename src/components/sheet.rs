@@ -8,6 +8,20 @@ use dioxus_icons::lucide::Menu;
 use std::sync::atomic::{AtomicU64, Ordering};
 const SHEET_DISMISS_DISTANCE: f64 = 96.0;
 static SHEET_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
+/// Dismissible sheets open right now, kept by every `Sheet` as it opens, closes
+/// and unmounts. Global on purpose: the question it answers is app-wide.
+static OPEN_SHEETS: GlobalSignal<usize> = Signal::global(|| 0);
+/// How many dismissible sheets are open in this app.
+///
+/// Reactive, so a component that reads it re-renders as sheets open and close.
+/// Meant for app-level dismissal such as Android Back, which has to know a
+/// sheet is up even when the page that opened it holds its `is_open` signal
+/// privately. A persistent `Menu` side sheet is not a dismissible layer and is
+/// not counted. Close the topmost one by clicking its `[data-g3-sheet-dismiss]`
+/// control, which every open dismissible sheet renders whatever its backdrop.
+pub fn open_sheet_count() -> usize {
+    OPEN_SHEETS()
+}
 const SHEET_DRAG_SCRIPT: &str = r#"
 const dialog = document.getElementById("__DIALOG_ID__");
 const handle = document.getElementById("__HANDLE_ID__");
@@ -81,11 +95,30 @@ pub enum SheetPlacement {
     /// Slides in from the trailing edge, for inspectors and filters.
     Right(SideSheetType),
 }
+/// What sits behind an open sheet.
+///
+/// The two useful halves of Ionic's `showBackdrop` and `backdropDismiss`,
+/// joined: the scrim is the dismiss target, so removing one removes the other.
+/// A `Menu` side sheet never renders a backdrop, whatever this says.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum SheetBackdrop {
+    /// A dimming scrim over the page. Tapping it closes the sheet, and the page
+    /// behind does not scroll while the sheet is open.
+    #[default]
+    Dismiss,
+    /// No scrim, for a sheet that sits over a page the viewer is still using -
+    /// comments below a playing video, say. The page stays visible, interactive
+    /// and scrollable, and nothing outside the sheet closes it: a bottom sheet
+    /// is dismissed by dragging its handle. With `draggable: false` as well, only
+    /// the owner setting `is_open` to false closes it.
+    None,
+}
 #[component]
 pub fn Sheet(
     mut is_open: Signal<bool>,
     placement: Option<SheetPlacement>,
     draggable: Option<bool>,
+    backdrop: Option<SheetBackdrop>,
     class: Option<String>,
     mode: Option<ComponentMode>,
     children: Element,
@@ -151,7 +184,45 @@ pub fn Sheet(
             });
         });
     }
-    use_lock_body_scroll(is_open);
+    let has_backdrop = backdrop.unwrap_or_default() == SheetBackdrop::Dismiss;
+    // Without a backdrop the page behind is meant to stay usable, so it keeps
+    // its scroll too. The hook takes a signal, and handing it `is_open` would
+    // lock the page whatever the backdrop is.
+    let mut scroll_locked = use_signal(|| is_open_now && has_backdrop);
+    use_effect(move || {
+        let locked = is_open() && has_backdrop;
+        if *scroll_locked.peek() != locked {
+            scroll_locked.set(locked);
+        }
+    });
+    use_lock_body_scroll(scroll_locked);
+    // Whether this sheet is in `OPEN_SHEETS`. A cell rather than a signal
+    // because the drop below runs as the scope is torn down, and it must not
+    // read state that is going away with it.
+    let counted = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(false)));
+    {
+        let counted = counted.clone();
+        use_effect(move || {
+            let open = is_open() && !is_menu;
+            if counted.get() != open {
+                counted.set(open);
+                let mut count = OPEN_SHEETS.write();
+                *count = if open {
+                    *count + 1
+                } else {
+                    count.saturating_sub(1)
+                };
+            }
+        });
+    }
+    // A sheet unmounted while open - its page navigated away - must not leave
+    // the count claiming a layer that no longer exists.
+    use_drop(move || {
+        if counted.get() {
+            let mut count = OPEN_SHEETS.write();
+            *count = count.saturating_sub(1);
+        }
+    });
     if !is_open_now && !ever_opened() {
         return rsx! {};
     }
@@ -184,21 +255,31 @@ pub fn Sheet(
     };
     let state_cls = format!("{state_cls} {enter_cls}");
     rsx! {
-        if !is_menu {
+        if !is_menu && has_backdrop {
             button {
                 r#type: "button",
                 aria_label: "Close sheet",
                 aria_hidden: (!is_open_now).to_string(),
                 tabindex: if is_open_now { "0" } else { "-1" },
                 class: backdrop_cls,
-                onpointerdown: move |_| is_open.set(false),
+                // Dismiss on click, never on pointerdown. Closing on the press
+                // removes this button before the press completes, so the click
+                // is delivered to whatever the scrim was covering - tapping to
+                // dismiss also activated the control underneath.
+                //
+                // Waiting for the click costs nothing: it fires for touch and
+                // mouse alike, and a press that ends outside the scrim is a
+                // cancelled gesture that should leave the sheet open.
                 onclick: move |_| is_open.set(false),
             }
         }
         div {
             id: dialog_id,
             role: if is_menu { "navigation" } else { "dialog" },
-            aria_modal: (!is_menu).to_string(),
+            // Modal only while the page behind is shut off. A sheet with no
+            // backdrop leaves that page in use, and announcing it as modal
+            // would hide the page from assistive technology for no reason.
+            aria_modal: (!is_menu && has_backdrop).to_string(),
             aria_label: if is_menu { "Menu" } else { "Sheet" },
             aria_hidden: (!
                     is_open_now).to_string(),
@@ -211,6 +292,21 @@ pub fn Sheet(
                     class: s::HANDLE_WRAP_IOS,
                     aria_label: "Sheet handle",
                     div { class: s::HANDLE_IOS }
+                }
+            }
+            // A close control that does not depend on the backdrop, for an app's
+            // own dismissal paths - Android Back above all. A sheet with
+            // `SheetBackdrop::None` has no scrim to click, so this is the one
+            // hook every dismissible sheet shares. Hidden and out of the tab
+            // order: nothing on screen reaches it.
+            if is_open_now && !is_menu {
+                button {
+                    r#type: "button",
+                    hidden: true,
+                    tabindex: "-1",
+                    aria_hidden: "true",
+                    "data-g3-sheet-dismiss": "",
+                    onclick: move |_| is_open.set(false),
                 }
             }
             div { class: s::CONTENT, {children} }
@@ -231,6 +327,13 @@ pub fn SheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
     let placement_index = use_signal(|| 0_usize);
     let side_type_index = use_signal(|| 0_usize);
+    let backdrop_index = use_signal(|| 0_usize);
+    // Offered for bottom sheets only, where the handle is left to dismiss.
+    let backdrop = if placement_index() == 0 && backdrop_index() == 1 {
+        SheetBackdrop::None
+    } else {
+        SheetBackdrop::Dismiss
+    };
     let side_type = match side_type_index() {
         1 => SideSheetType::Push,
         2 => SideSheetType::Reveal,
@@ -264,6 +367,14 @@ pub fn SheetPlaygroundDemo() -> Element {
                             crate::SegmentButton { index: 3, "Menu" }
                         }
                     }
+                } else {
+                    div {
+                        span { "Backdrop" }
+                        crate::SegmentGroup { active: backdrop_index,
+                            crate::SegmentButton { index: 0, "Dismiss" }
+                            crate::SegmentButton { index: 1, "None" }
+                        }
+                    }
                 }
                 crate::Checkbox { checked: open, label: "Open"
                             .to_string() }
@@ -292,6 +403,7 @@ pub fn SheetPlaygroundDemo() -> Element {
                 Sheet {
                     is_open: open,
                     placement,
+                    backdrop,
                     class: "g3-sheet-demo-surface",
                     div { class: "g3-sheet-demo-menu",
                         div { class: "g3-sheet-demo-menu-header",

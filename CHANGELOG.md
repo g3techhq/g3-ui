@@ -6,6 +6,43 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-13
+
+### Added
+
+- `--g3-sheet-max-height` sets how tall a bottom sheet's content may grow. It
+  defaults to the existing cap, `min(50dvh, 26rem)`, or `min(70dvh, 30rem)` on
+  wide shells. Set it from the sheet's `class` to size one sheet; overriding
+  the cap with a selector had to out-rank g3-ui's own rule, and because
+  `g3-ui.css` loads after an app's stylesheet, an equal-weight override lost.
+- `Sheet` takes a `backdrop: SheetBackdrop`. `Dismiss`, the default, keeps the
+  current dimming scrim that closes the sheet when tapped. `None` renders no
+  scrim, for a sheet over a page that is still in use: the page stays visible,
+  interactive and scrollable, the sheet is no longer announced as modal, and a
+  bottom sheet closes only by dragging its handle.
+- Every open dismissible sheet renders a hidden `[data-g3-sheet-dismiss]`
+  control, and `open_sheet_count()` reports how many are open. Together they let
+  an app close the topmost sheet from Android Back or any other app-level path
+  without depending on the backdrop, which a `SheetBackdrop::None` sheet does
+  not have. The count is reactive and includes sheets whose `is_open` signal a
+  page keeps to itself; persistent `Menu` side sheets are not counted.
+
+### Fixed
+
+- Bottom sheet content taller than the cap now scrolls instead of being cut
+  off. The content box is a flex column, so an inset `List` or other child that
+  clips its overflow shrank to fit the cap: its last rows were hidden inside it
+  and the sheet had nothing to scroll. Direct children of the content box no
+  longer shrink.
+- Cards nested inside another card or placed on a bottom sheet now receive a
+  theme-derived contrasting surface automatically. The tint uses the shared
+  text and card color tokens, so it darkens light themes and lightens dark
+  themes without consumer-specific selectors.
+- The sheet backdrop no longer dismisses on `pointerdown`, only on `click`.
+  Closing on the press unmounted the scrim before the press completed, so the
+  browser delivered the click to whatever the sheet had been covering: tapping
+  the backdrop to dismiss a sheet also activated the control underneath it.
+
 ## [0.2.0] - 2026-09-08
 
 ### Added

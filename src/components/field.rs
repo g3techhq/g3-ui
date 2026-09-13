@@ -2,6 +2,33 @@
 use super::field_styles as s;
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+
+fn is_within_immediate_input_limits(
+    new_value: &str,
+    min: Option<isize>,
+    max: Option<isize>,
+    _minlength: Option<usize>,
+    maxlength: Option<usize>,
+) -> bool {
+    if let Some(max) = max
+        && let Ok(value) = new_value.parse::<isize>()
+        && value > max
+    {
+        return false;
+    }
+    if let Some(min) = min
+        && let Ok(value) = new_value.parse::<isize>()
+        && value < min
+    {
+        return false;
+    }
+    if let Some(maxlength) = maxlength
+        && new_value.len() > maxlength
+    {
+        return false;
+    }
+    true
+}
 #[component]
 pub fn Field(
     #[props(extends = input)] attributes: Vec<Attribute>,
@@ -53,29 +80,11 @@ pub fn Field(
         }
     });
     let mut check_validity = move |new_value: String| -> bool {
-        if let Some(max) = max
-            && let Ok(v) = new_value.parse::<isize>()
-            && v > max
-        {
-            reapply_value.toggle();
-            return false;
-        }
-        if let Some(min) = min
-            && let Ok(v) = new_value.parse::<isize>()
-            && v < min
-        {
-            reapply_value.toggle();
-            return false;
-        }
-        if let Some(minlength) = minlength
-            && new_value.len() < minlength
-        {
-            reapply_value.toggle();
-            return false;
-        }
-        if let Some(maxlength) = maxlength
-            && new_value.len() > maxlength
-        {
+        // `minlength` deliberately is not an immediate input limit. Every
+        // typed value begins shorter than the minimum, so rejecting it here
+        // makes fields such as passwords impossible to type character by
+        // character. Keep the attribute on the element for normal validation.
+        if !is_within_immediate_input_limits(&new_value, min, max, minlength, maxlength) {
             reapply_value.toggle();
             return false;
         }
@@ -292,5 +301,30 @@ mod tests {
         assert!(source.contains("class: field_cls,"));
         let stylesheet = include_str!("../../assets/g3-ui.css");
         assert!(stylesheet.contains("textarea.g3-field"));
+    }
+
+    #[test]
+    fn minlength_does_not_reject_intermediate_typing() {
+        assert!(is_within_immediate_input_limits(
+            "p",
+            None,
+            None,
+            Some(8),
+            Some(128)
+        ));
+        assert!(is_within_immediate_input_limits(
+            "password",
+            None,
+            None,
+            Some(8),
+            Some(128)
+        ));
+        assert!(!is_within_immediate_input_limits(
+            &"p".repeat(129),
+            None,
+            None,
+            Some(8),
+            Some(128)
+        ));
     }
 }
