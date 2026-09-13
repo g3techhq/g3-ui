@@ -199,6 +199,40 @@ G3NavbarTab {
 
 The placement only changes the wide rail. Compact bottom tabs retain their declared order.
 
+## Sheet Backdrop
+
+A sheet normally opens over a dimming scrim, and tapping the scrim closes it. Pass
+`G3SheetBackdrop::None` for a sheet that sits over a page the viewer is still using, such as
+comments below a playing video. There is no scrim and no tint, the page behind stays interactive
+and scrollable, and a bottom sheet closes only when its handle is dragged down:
+
+```rust,ignore
+G3Sheet {
+    is_open: comments_open,
+    backdrop: G3SheetBackdrop::None,
+    // sheet content
+}
+```
+
+With `draggable: false` as well, nothing on screen closes the sheet; the app has to set `is_open`
+to `false` itself.
+
+A platform Back button should still close a sheet with no backdrop. Every open dismissible sheet
+renders a hidden `[data-g3-sheet-dismiss]` control for that, and `open_sheet_count()` reports how
+many are open, including sheets whose `is_open` signal a page keeps privately. Pass the count to
+`use_native_back_navigation_with_interception` so Back is claimed while a sheet is up, and click
+the last open sheet's control to close it:
+
+```js
+const dismiss = [
+    ...document.querySelectorAll(".g3-sheet.g3-sheet-open [data-g3-sheet-dismiss]"),
+].pop();
+if (dismiss) {
+    event.preventDefault();
+    dismiss.click();
+}
+```
+
 ## Side Sheets
 
 Side sheets support Ionic-style overlay, push, reveal, and persistent menu behavior on either edge.

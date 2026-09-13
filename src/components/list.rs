@@ -37,6 +37,7 @@ pub const DISMISS_EXIT_MS: u64 = 560;
 pub const DISMISS_COLLAPSE_MS: u64 = 180;
 pub const LONG_PRESS_MS: u64 = 500;
 pub const LONG_PRESS_CANCEL_DISTANCE: f64 = 8.0;
+pub const HORIZONTAL_COMMIT_DISTANCE: f64 = 10.0;
 pub fn elastic_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
     let limit = action_width.max(1.0);
     if raw_offset > limit {
@@ -64,6 +65,14 @@ pub fn swipe_ratio(offset: f64, action_width: f64) -> f64 {
 }
 pub fn should_cancel_long_press(delta_x: f64, delta_y: f64) -> bool {
     delta_x.hypot(delta_y) > LONG_PRESS_CANCEL_DISTANCE
+}
+/// Whether a drag has moved far enough, and squarely enough sideways, to be a
+/// swipe rather than the beginning of a scroll.
+///
+/// The slop matches the browser's own: below it every gesture looks diagonal,
+/// and claiming one there would steal ordinary scrolls.
+pub fn is_horizontal_gesture(delta_x: f64, delta_y: f64) -> bool {
+    delta_x.abs() > HORIZONTAL_COMMIT_DISTANCE && delta_x.abs() > delta_y.abs()
 }
 pub fn is_swipe_side_available(
     offset: f64,
@@ -535,6 +544,10 @@ pub fn SwipeItem(
     end_actions: Option<Element>,
     behavior: Option<SwipeBehavior>,
     disabled: Option<bool>,
+    /// Whether mouse drags may start a swipe. Touch and pen gestures are still
+    /// available when this is false, which lets responsive consumers keep the
+    /// mobile gesture while using explicit actions on desktop.
+    mouse_swipe_enabled: Option<bool>,
     class: Option<String>,
     on_drag: Option<Callback<SwipeState>>,
     on_full_swipe: Option<Callback<SwipeState>>,
@@ -547,10 +560,15 @@ pub fn SwipeItem(
     let has_start_actions = start_actions.is_some();
     let has_end_actions = end_actions.is_some();
     let disabled = disabled.unwrap_or(false);
+    let mouse_swipe_enabled = mouse_swipe_enabled.unwrap_or(true);
     let mut start_x = use_signal(|| 0.0);
     let mut start_y = use_signal(|| 0.0);
     let mut offset = use_signal(|| 0.0);
     let mut dragging = use_signal(|| false);
+    // Set once the gesture is unambiguously sideways. Two jobs: it tells the CSS
+    // to stop transitioning so the row tracks the finger exactly, and it starts
+    // cancelling touchmove so the page cannot scroll out from under a swipe.
+    let mut horizontal = use_signal(|| false);
     let mut long_press_generation = use_signal(|| 0_u64);
     let mut dismiss_phase = use_signal(|| DismissPhase::Idle);
     let mut suppress_click = use_signal(|| false);
@@ -579,11 +597,26 @@ pub fn SwipeItem(
                 SwipeBehavior::Dismiss => "dismiss",
             },
             "data-state": dismiss_phase().as_str(),
+            "data-dragging": (dragging() && horizontal()).then_some("true"),
+            // `touch-action: pan-y` lets the browser start a vertical scroll at any
+            // point in the gesture, including after a swipe is already underway.
+            // Cancelling touchmove once the swipe has committed takes the scroll
+            // off the table for the rest of this gesture - it stays available for
+            // gestures that begin vertically, which never set `horizontal`.
+            ontouchmove: move |event: TouchEvent| {
+                if horizontal() {
+                    event.prevent_default();
+                }
+            },
             onpointerdown: move |event: PointerEvent| {
-                if disabled || dismiss_phase() != DismissPhase::Idle {
+                if disabled
+                    || (!mouse_swipe_enabled && event.data.pointer_type() == "mouse")
+                    || dismiss_phase() != DismissPhase::Idle
+                {
                     return;
                 }
                 dragging.set(true);
+                horizontal.set(false);
                 start_x.set(event.client_coordinates().x);
                 start_y.set(event.client_coordinates().y);
                 click_suppress_generation.with_mut(|value| *value += 1);
@@ -611,6 +644,9 @@ pub fn SwipeItem(
                     long_press_generation.with_mut(|value| *value += 1);
                     suppress_click.set(true);
                 }
+                if !horizontal() && is_horizontal_gesture(dx, dy) {
+                    horizontal.set(true);
+                }
                 let next = swipe_offset_for_behavior(
                     dx,
                     action_width,
@@ -636,6 +672,7 @@ pub fn SwipeItem(
                     return;
                 }
                 dragging.set(false);
+                horizontal.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 let current = offset();
                 match behavior {
@@ -717,6 +754,7 @@ pub fn SwipeItem(
                     return;
                 }
                 dragging.set(false);
+                horizontal.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 offset.set(0.0);
                 suppress_click.set(false);
@@ -729,6 +767,7 @@ pub fn SwipeItem(
                     return;
                 }
                 dragging.set(false);
+                horizontal.set(false);
                 long_press_generation.with_mut(|value| *value += 1);
                 offset
                     .set(

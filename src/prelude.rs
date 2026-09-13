@@ -11,7 +11,8 @@ pub use crate::components::{AppWrapper, Body, Header};
 pub use crate::components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide,
     FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement, RightSlot,
-    Select, SelectOption, Sheet, SheetButton, SheetPlacement, SideSheetType,
+    Select, SelectOption, Sheet, SheetBackdrop, SheetButton, SheetPlacement, SideSheetType,
+    open_sheet_count,
 };
 pub use crate::theme::{
     ComponentMode, G3Mode, G3Theme, G3ThemeProvider, Theme, get_mode, init_auto_mode,
@@ -29,7 +30,7 @@ pub use crate::{
 pub use crate::{G3AppWrapper, G3Body, G3Header};
 pub use crate::{
     G3Card, G3ConfirmModal, G3Fab, G3FabButton, G3FabContainer, G3FabList, G3Modal, G3Navbar,
-    G3NavbarTab, G3NavbarTabBar, G3NavbarTabDesktopPlacement, G3Select, G3Sheet, G3SheetButton,
-    G3SheetPlacement, G3SideSheetType,
+    G3NavbarTab, G3NavbarTabBar, G3NavbarTabDesktopPlacement, G3Select, G3Sheet, G3SheetBackdrop,
+    G3SheetButton, G3SheetPlacement, G3SideSheetType,
 };
 pub use dioxus::prelude::*;

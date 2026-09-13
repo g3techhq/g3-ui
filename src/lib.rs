@@ -40,15 +40,16 @@ pub use components::{AppWrapper as G3AppWrapper, Body as G3Body, Header as G3Hea
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
     FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement, RightSlot,
-    Select, SelectOption, Sheet, SheetButton, SheetPlacement, SideSheetType,
+    Select, SelectOption, Sheet, SheetBackdrop, SheetButton, SheetPlacement, SideSheetType,
+    open_sheet_count,
 };
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
     FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
     NavbarTab as G3NavbarTab, NavbarTabBar as G3NavbarTabBar,
     NavbarTabDesktopPlacement as G3NavbarTabDesktopPlacement, Select as G3Select, Sheet as G3Sheet,
-    SheetButton as G3SheetButton, SheetPlacement as G3SheetPlacement,
-    SideSheetType as G3SideSheetType,
+    SheetBackdrop as G3SheetBackdrop, SheetButton as G3SheetButton,
+    SheetPlacement as G3SheetPlacement, SideSheetType as G3SideSheetType,
 };
 pub use descriptor::{ComponentDescriptor, component_descriptors};
 #[cfg(feature = "playground")]
@@ -737,6 +738,25 @@ mod tests {
         assert!(!stylesheet.contains(".g3-settings-group-inset"));
     }
     #[test]
+    fn cards_on_elevated_surfaces_use_a_theme_derived_tint() {
+        let stylesheet = include_str!("../assets/g3-ui.css");
+        assert!(stylesheet.contains(".g3-card .g3-card,"));
+        assert!(stylesheet.contains(".g3-sheet-bottom .g3-card,"));
+        assert!(stylesheet.contains(
+            "--g3-card-surface: color-mix(in srgb, var(--color-text) 7%, var(--color-card))"
+        ));
+        assert!(stylesheet.contains("background: var(--g3-card-surface)"));
+    }
+    #[test]
+    fn inset_lists_inside_cards_use_a_theme_derived_tint() {
+        let stylesheet = include_str!("../assets/g3-ui.css");
+        assert!(stylesheet.contains(".g3-card .g3-list-inset"));
+        assert!(stylesheet.contains(
+            "--g3-list-surface: color-mix(in srgb, var(--color-text) 9%, var(--color-card))"
+        ));
+        assert!(stylesheet.contains("background: var(--g3-list-surface)"));
+    }
+    #[test]
     fn inset_lists_keep_the_standard_item_surface() {
         let stylesheet = include_str!("../assets/g3-ui.css");
         let inset_block = stylesheet
@@ -865,7 +885,7 @@ mod tests {
         let body_source = include_str!("components/body.rs");
         let body_styles = include_str!("components/body_styles.rs");
         assert!(cargo.contains("transitions = [\"dep:g3-route-transitions\"]"));
-        assert!(cargo.contains("g3-route-transitions = { version = \"0.2.0\", optional = true }",),);
+        assert!(cargo.contains("g3-route-transitions = { version = \"0.3.0\", optional = true }",),);
         assert!(!body_styles.contains("route-transition-segment"));
         assert!(app_wrapper_source.contains("RouteTransitionProvider"));
         assert!(app_wrapper_source.contains("ROUTE_TRANSITION_COVER_CLASS"));
@@ -909,7 +929,7 @@ mod tests {
     fn theme_defaults_are_configurable_without_mode() {
         let theme = Theme::default_light().with_focused("#22c55e");
         assert_eq!(theme.focused, "#22c55e");
-        assert_eq!(theme.bg, "#f8f8f8");
+        assert_eq!(theme.bg, "#e9ebef");
     }
     #[test]
     fn app_wrapper_accepts_custom_theme_tokens() {
@@ -1231,13 +1251,70 @@ mod tests {
         );
     }
     #[test]
+    fn bottom_sheet_content_scrolls_and_its_cap_is_a_custom_property() {
+        let stylesheet = include_str!("../assets/g3-ui.css");
+        // Without this an inset List shrank to fit the cap and hid its last rows.
+        let child_block = stylesheet
+            .split(".g3-sheet-content > * {")
+            .nth(1)
+            .and_then(|rest| rest.split('}').next())
+            .expect("missing sheet content child rule");
+        assert!(child_block.contains("flex-shrink: 0"));
+        assert!(stylesheet.contains("max-height: var(--g3-sheet-max-height, min(50dvh, 26rem))"));
+        assert!(stylesheet.contains("max-height: var(--g3-sheet-max-height, min(70dvh, 30rem))"));
+        // Select sheets keep their own cap rather than following the variable.
+        assert!(stylesheet.contains(".g3-select-sheet.g3-sheet-bottom .g3-sheet-content"));
+    }
+    #[test]
+    fn sheet_backdrop_none_drops_the_scrim_its_dismissal_and_the_scroll_lock() {
+        let sheet_source = include_str!("components/sheet.rs");
+        assert!(sheet_source.contains("pub enum SheetBackdrop"));
+        assert!(sheet_source.contains("backdrop: Option<SheetBackdrop>"));
+        assert!(sheet_source.contains(
+            "let has_backdrop = backdrop.unwrap_or_default() == SheetBackdrop::Dismiss;"
+        ));
+        // The scrim is the tap-outside dismiss target, so without it the handle
+        // drag is the only dismissal left.
+        assert!(sheet_source.contains("if !is_menu && has_backdrop {"));
+        assert!(sheet_source.contains("aria_modal: (!is_menu && has_backdrop).to_string()"));
+        // The page behind a sheet with no backdrop stays scrollable.
+        assert!(sheet_source.contains("let locked = is_open() && has_backdrop;"));
+        assert!(sheet_source.contains("use_lock_body_scroll(scroll_locked);"));
+    }
+    #[test]
+    fn open_sheets_expose_a_backdrop_independent_dismiss_control_and_a_count() {
+        let sheet_source = include_str!("components/sheet.rs");
+        // Back has to close a sheet that has no scrim to click, so the dismiss
+        // control is rendered for every open non-menu sheet, not with the backdrop.
+        let dismiss_block = sheet_source
+            .split("if is_open_now && !is_menu {")
+            .nth(1)
+            .and_then(|rest| rest.split("div { class: s::CONTENT").next())
+            .expect("missing sheet dismiss control");
+        assert!(dismiss_block.contains("\"data-g3-sheet-dismiss\": \"\""));
+        assert!(dismiss_block.contains("hidden: true"));
+        assert!(dismiss_block.contains("onclick: move |_| is_open.set(false)"));
+        assert!(!dismiss_block.contains("has_backdrop"));
+        // The count is what lets an app claim Back while a privately owned sheet
+        // is open, so it must follow opening, closing and unmounting.
+        assert!(sheet_source.contains("static OPEN_SHEETS: GlobalSignal<usize>"));
+        assert!(sheet_source.contains("pub fn open_sheet_count() -> usize"));
+        assert!(sheet_source.contains("let open = is_open() && !is_menu;"));
+        let drop_block = sheet_source
+            .split("use_drop(move || {")
+            .nth(1)
+            .and_then(|rest| rest.split("});").next())
+            .expect("missing sheet count drop");
+        assert!(drop_block.contains("count.saturating_sub(1)"));
+    }
+    #[test]
     fn overlays_lock_background_scroll_while_open() {
         let stylesheet = include_str!("../assets/g3-ui.css");
         let sheet_source = include_str!("components/sheet.rs");
         let modal_source = include_str!("components/modal.rs");
         let overlay_scroll_source = include_str!("components/overlay_scroll.rs");
         let descriptor_source = include_str!("descriptor.rs");
-        assert!(sheet_source.contains(r#"use_lock_body_scroll(is_open);"#));
+        assert!(sheet_source.contains(r#"use_lock_body_scroll(scroll_locked);"#));
         assert!(modal_source.contains(r#"use_lock_body_scroll(open);"#));
         assert!(stylesheet.contains("body.g3-overlay-scroll-locked"));
         assert!(stylesheet.contains("overscroll-behavior: none"));
@@ -1274,8 +1351,11 @@ mod tests {
         assert!(backdrop_block.contains("width: 100%"));
         assert!(backdrop_block.contains("height: 100%"));
         assert!(sheet_source.contains("aria_label: \"Close sheet\""));
-        assert!(sheet_source.contains("onpointerdown: move |_| is_open.set(false)"));
         assert!(sheet_source.contains("onclick: move |_| is_open.set(false)"));
+        // Dismissing on the press removed the scrim before the press completed,
+        // so the click landed on whatever the sheet was covering and activated
+        // it. The backdrop must wait for the click.
+        assert!(!sheet_source.contains("onpointerdown"));
         assert!(!sheet_source.contains("g3-sheet-backdrop-closed pointer-events-none"));
         assert!(playground_stylesheet.contains(".g3-sheet-backdrop-open:not(.g3-sheet-reveal)"),);
         assert!(playground_stylesheet.contains("position: absolute !important"));
@@ -1516,7 +1596,14 @@ mod tests {
             .split("#[cfg(test)]")
             .next()
             .expect("library source should have a public section");
-        for symbol in ["SheetPlacement", "SideSheetType", "G3SideSheetType"] {
+        for symbol in [
+            "SheetPlacement",
+            "SideSheetType",
+            "G3SideSheetType",
+            "SheetBackdrop",
+            "G3SheetBackdrop",
+            "open_sheet_count",
+        ] {
             assert!(
                 public_source.contains(symbol),
                 "{symbol} missing from exports"

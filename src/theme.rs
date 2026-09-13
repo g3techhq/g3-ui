@@ -65,25 +65,29 @@ impl Default for Theme {
     }
 }
 impl Theme {
-    /// The built-in light theme: iOS system colors on a near-white ground.
+    /// The built-in light theme: cool neutral greys with every elevation a
+    /// visible step apart. White-on-near-white collapses page, cards, sheets
+    /// and controls into one surface, so none of them are pure white. Accent
+    /// and semantic colors are darkened to keep text contrast on the grey
+    /// ground.
     pub fn default_light() -> Self {
         Self {
-            focused: "#007aff".into(),
-            label_primary: "#000000".into(),
-            label_secondary: "#8f8f8f".into(),
-            card_border: "#c7c7c7".into(),
-            bg: "#f8f8f8".into(),
-            bg_secondary: "#efeff4".into(),
-            card: "#ffffff".into(),
-            card_inset: "#fafafa".into(),
-            surface: "#ffffff".into(),
-            control: "#ffffff".into(),
-            text: "#000000".into(),
-            text_secondary: "#6b6b6b".into(),
-            shadow: "rgba(0, 0, 0, 0.1)".into(),
-            success: "#37c964".into(),
-            warning: "#ff9f0a".into(),
-            danger: "#ff3b30".into(),
+            focused: "#0066d6".into(),
+            label_primary: "#111827".into(),
+            label_secondary: "#5f6673".into(),
+            card_border: "#c5cad3".into(),
+            bg: "#e9ebef".into(),
+            bg_secondary: "#dfe2e8".into(),
+            card: "#f7f8fa".into(),
+            card_inset: "#eceef2".into(),
+            surface: "#f2f4f7".into(),
+            control: "#e3e6eb".into(),
+            text: "#111827".into(),
+            text_secondary: "#555c68".into(),
+            shadow: "rgba(15, 23, 42, 0.14)".into(),
+            success: "#067647".into(),
+            warning: "#b54708".into(),
+            danger: "#d92d20".into(),
             color_scheme: "light".into(),
         }
     }

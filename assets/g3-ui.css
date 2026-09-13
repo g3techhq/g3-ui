@@ -43,27 +43,27 @@
 /* -- Theme variables -- */
 
 :root {
-    --color-focused: #007aff;
-    --color-label-primary: #000000;
-    --color-label-secondary: #8f8f8f;
-    --color-card-border: #c7c7c7;
-    --color-bg: #f8f8f8;
-    --color-bg-secondary: #efeff4;
-    --color-card: #ffffff;
-    --color-card-inset: #fafafa;
-    --color-surface: #ffffff;
-    --color-control: #ffffff;
-    --color-text: #000000;
-    --color-text-secondary: #6b6b6b;
-    --color-shadow: rgba(0, 0, 0, 0.1);
+    --color-focused: #0066d6;
+    --color-label-primary: #111827;
+    --color-label-secondary: #5f6673;
+    --color-card-border: #c5cad3;
+    --color-bg: #e9ebef;
+    --color-bg-secondary: #dfe2e8;
+    --color-card: #f7f8fa;
+    --color-card-inset: #eceef2;
+    --color-surface: #f2f4f7;
+    --color-control: #e3e6eb;
+    --color-text: #111827;
+    --color-text-secondary: #555c68;
+    --color-shadow: rgba(15, 23, 42, 0.14);
     --g3-shadow-ios-card: 0 4px 16px rgba(0, 0, 0, 0.12);
     --g3-shadow-ios-float: 0 12px 30px rgba(0, 0, 0, 0.18);
     --g3-shadow-md-elevation-1: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
     --g3-shadow-md-elevation-2: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
     --g3-shadow-md-fab: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
-    --color-success: #37c964;
-    --color-warning: #ff9f0a;
-    --color-danger: #ff3b30;
+    --color-success: #067647;
+    --color-warning: #b54708;
+    --color-danger: #d92d20;
 
     /* Baseline scheme; overridden by a theme's inline `color-scheme` (dark themes)
      * or by a wrapping theme selector. Mode selectors must NOT set this. */
@@ -76,12 +76,12 @@
 }
 
 [data-g3-mode="ios"] {
-    --color-bg: #f2f2f7;
-    --color-bg-secondary: #f2f2f7;
+    --color-bg: #e9e9ee;
+    --color-bg-secondary: #e9e9ee;
     --color-card-border: rgba(60, 60, 67, 0.18);
-    --color-card: #ffffff;
+    --color-card: #f7f7fa;
     --color-card-inset: rgba(118, 118, 128, 0.08);
-    --color-surface: #ffffff;
+    --color-surface: #f2f2f6;
     --color-control: rgba(118, 118, 128, 0.12);
     --color-shadow: rgba(60, 60, 67, 0.12);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
@@ -89,12 +89,12 @@
 }
 
 [data-g3-mode="md"] {
-    --color-bg: #f5f5f5;
-    --color-bg-secondary: #eeeeee;
-    --color-card: #ffffff;
-    --color-card-inset: #fafafa;
-    --color-surface: #ffffff;
-    --color-control: #ffffff;
+    --color-bg: #e9ebef;
+    --color-bg-secondary: #dfe2e8;
+    --color-card: #f7f8fa;
+    --color-card-inset: #eceef2;
+    --color-surface: #f2f4f7;
+    --color-control: #e3e6eb;
 }
 
 * {
@@ -1124,6 +1124,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 /* -- Card -- */
 
 .g3-card {
+    --g3-card-surface: var(--color-card);
     box-sizing: border-box;
     position: relative;
     min-width: 0;
@@ -1135,7 +1136,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     border: 0;
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
-    background: var(--color-card);
+    background: var(--g3-card-surface);
     padding: 1rem;
     margin-bottom: 1.5rem;
     transition: transform 500ms cubic-bezier(0.12, 0.72, 0.29, 1),
@@ -1143,20 +1144,8 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
                 background var(--transition-fast) var(--transition-ios);
 }
 .g3-card-ios.g3-card-interactive:active:not(:has(.g3-info-btn:active)) {
-    background: color-mix(in srgb, var(--color-text) 3%, var(--color-card));
+    background: color-mix(in srgb, var(--color-text) 3%, var(--g3-card-surface));
     transform: scale3d(0.97, 0.97, 1);
-}
-
-/* Selected state - tint the surface and add an outside ring without replacing
-   the platform elevation. */
-.g3-card.g3-card-selected {
-    background: color-mix(in srgb, var(--color-focused) 4%, var(--color-card));
-}
-.g3-card-ios.g3-card-selected {
-    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
-}
-.g3-card-md.g3-card-selected {
-    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 
 /* Material card */
@@ -1164,7 +1153,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     border: 0;
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    background: var(--color-card);
+    background: var(--g3-card-surface);
     padding: 1rem;
     margin-bottom: 0.75rem;
     transition: box-shadow var(--transition-normal) var(--transition-md),
@@ -1176,9 +1165,18 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     transform: scale(0.99);
 }
 
+/* A nested card needs a distinct surface from the card or bottom sheet behind
+   it. Mixing the theme's text into its card color darkens light themes and
+   lightens dark themes, without knowing which preset or custom colors are in
+   use. Explicit inset cards use the same treatment. */
+.g3-card .g3-card,
+.g3-sheet-bottom .g3-card,
+.g3-card-inset {
+    --g3-card-surface: color-mix(in srgb, var(--color-text) 7%, var(--color-card));
+}
+
 .g3-card-inset {
     border: 0;
-    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
     padding: 0.75rem;
     margin-bottom: 0.5rem;
 }
@@ -1186,17 +1184,28 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 .g3-card-ios.g3-card-inset {
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
-    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
 .g3-card-md.g3-card-inset {
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    background: color-mix(in srgb, var(--color-text) 7%, var(--color-card-inset));
 }
 
+/* Selected state - tint the surface and add an outside ring without replacing
+   the platform elevation. Keep this after contextual surface rules so a
+   selected nested card still reads as selected. */
+.g3-card.g3-card-selected {
+    --g3-card-surface: color-mix(in srgb, var(--color-focused) 4%, var(--color-card));
+    background: var(--g3-card-surface);
+}
 .g3-card-inset.g3-card-selected {
-    background: color-mix(in srgb, var(--color-focused) 6%, var(--color-card));
+    --g3-card-surface: color-mix(in srgb, var(--color-focused) 6%, var(--color-card));
+}
+.g3-card-ios.g3-card-selected {
+    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
+}
+.g3-card-md.g3-card-selected {
+    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
 }
 .g3-card-ios.g3-card-inset.g3-card-selected {
     box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
@@ -1328,9 +1337,22 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     -ms-overflow-style: none;
 }
 
+/* The content box is a capped flex column, so its children are flex items and
+   shrink to fit the cap by default. A child that clips its own overflow - an
+   inset List, a Card - has an automatic minimum size of zero, so it shrank
+   instead of overflowing: its last rows were cut off inside it, the content box
+   never overflowed, and there was nothing to scroll to. Children keep their
+   size, and the content box scrolls. */
+.g3-sheet-content > * {
+    flex-shrink: 0;
+}
+
+/* The cap reads a custom property so an app can size one sheet from its own
+   class. An override written as a selector had to out-rank this rule, and since
+   this stylesheet loads after the app's, an equal-weight override silently lost. */
 .g3-sheet.g3-sheet-bottom .g3-sheet-content {
     min-height: 0;
-    max-height: min(50dvh, 26rem);
+    max-height: var(--g3-sheet-max-height, min(50dvh, 26rem));
 }
 
 .g3-sheet.g3-sheet-left .g3-sheet-content,
@@ -2706,6 +2728,7 @@ textarea.g3-field {
 /* -- List and swipe item -- */
 
 .g3-list {
+    --g3-list-surface: var(--color-card);
     width: 100%;
     color: var(--color-text);
     -webkit-user-select: none;
@@ -2716,6 +2739,14 @@ textarea.g3-field {
    platform-specific rounded container. */
 .g3-list-inset {
     overflow: hidden;
+}
+
+/* A grouped list inside a card is another surface, just like a nested card.
+   Without this it inherits the parent card fill and its toggles/rows merge
+   into the container instead of reading as a distinct control group. */
+.g3-card .g3-list-inset {
+    --g3-list-surface: color-mix(in srgb, var(--color-text) 9%, var(--color-card));
+    background: var(--g3-list-surface);
 }
 
 .g3-list-ios.g3-list-inset {
@@ -2745,7 +2776,7 @@ textarea.g3-field {
     min-height: 56px;
     padding: 0.75rem 1rem;
     border: 0;
-    background: var(--color-card);
+    background: var(--g3-list-surface);
     color: var(--color-text);
     text-align: left;
     text-decoration: none;
@@ -3062,7 +3093,11 @@ textarea.g3-field {
     overflow: hidden;
     background: var(--color-card);
     transform: translate3d(var(--g3-swipe-offset, 0px), 0, 0);
-    transition: transform var(--transition-normal) var(--transition-md), opacity 140ms ease;
+    /* The release, not the drag. A row that is let go past the activation point
+       has much further to travel than one let go just short of it, and a single
+       short duration turns that longer trip into a snap. This is long enough,
+       and decelerating enough, to read as settling back rather than recoiling. */
+    transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease;
     will-change: transform;
     /* The content carries the drag transform, so it rasterizes on its own
        compositing layer while the action colours paint in the row's layer
@@ -3075,6 +3110,12 @@ textarea.g3-field {
        only ever cover the part the content still occupies. `overflow: hidden`
        on the row clips them, so they cost no height. */
     box-shadow: 0 1px 0 var(--g3-swipe-edge), 0 -1px 0 var(--g3-swipe-edge);
+}
+
+/* While the finger is down the row is not animating anywhere - it is being
+   dragged - and any transition here shows up as the row trailing the finger. */
+.g3-swipe-item[data-dragging="true"] .g3-swipe-content {
+    transition: none;
 }
 
 /* Keep the guard the same colour as the row it is guarding. */
@@ -3895,7 +3936,11 @@ textarea.g3-field {
         border-radius: 0.75rem;
     }
 
-    .g3-sheet.g3-sheet-bottom .g3-sheet-content,
+    .g3-sheet.g3-sheet-bottom .g3-sheet-content {
+        max-height: var(--g3-sheet-max-height, min(70dvh, 30rem));
+        padding-bottom: 1rem;
+    }
+
     .g3-select-sheet.g3-sheet-bottom .g3-sheet-content {
         max-height: min(70dvh, 30rem);
         padding-bottom: 1rem;

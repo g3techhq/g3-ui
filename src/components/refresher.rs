@@ -27,6 +27,7 @@ if (root) {
     const ELASTIC = __ELASTIC__;
     let dragging = false;
     let engaged = false;
+    let startX = 0;
     let startY = 0;
     let pull = 0;
 
@@ -76,17 +77,25 @@ if (root) {
         if (label) label.textContent = "Pull to refresh";
     };
 
-    const onDown = (y) => {
+    const onDown = (x, y) => {
         if (!gateOk() || !atTop()) return;
         dragging = true;
         engaged = false;
+        startX = x;
         startY = y;
     };
 
     // `e` is optional (touch path passes it so we can preventDefault the scroll).
-    const onMove = (y, e) => {
+    const onMove = (x, y, e) => {
         if (!dragging) return;
         const dy = y - startY;
+        // A sideways drag belongs to whatever scrolls sideways under the finger
+        // (a chip strip, a carousel). Any downward drift would otherwise engage
+        // the pull and cancel that pan, so the strip could not be dragged at all.
+        if (!engaged && Math.abs(x - startX) > Math.abs(dy)) {
+            dragging = false;
+            return;
+        }
         if (dy <= 0) {
             if (engaged) {
                 engaged = false;
@@ -126,11 +135,11 @@ if (root) {
 
     // Mouse (desktop) rides pointer events; touch uses touch events so the
     // touchmove listener can be non-passive and cancel the scroll.
-    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientY); });
-    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientY, null); });
+    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientX, e.clientY); });
+    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientX, e.clientY, null); });
     root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") onEnd(); });
-    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientY); }, { passive: true });
-    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientY, e); }, { passive: false });
+    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false });
     root.addEventListener("touchend", () => onEnd());
     root.addEventListener("touchcancel", () => onEnd());
 }
@@ -261,6 +270,20 @@ mod tests {
         assert!(source.contains("\"touchmove\""));
         assert!(source.contains("{ passive: false }"));
         assert!(source.contains("e.preventDefault()"));
+    }
+    #[test]
+    fn refresher_leaves_sideways_drags_to_horizontal_scrollers() {
+        let script = REFRESHER_DRAG_SCRIPT;
+        let axis_check = script
+            .find("Math.abs(x - startX) > Math.abs(dy)")
+            .expect("a sideways drag is released");
+        let prevent = script
+            .find("e.preventDefault()")
+            .expect("pull cancels the scroll");
+        assert!(
+            axis_check < prevent,
+            "the axis is decided before the scroll is cancelled"
+        );
     }
     #[test]
     fn refresher_hands_off_to_rust_refreshing_state() {
