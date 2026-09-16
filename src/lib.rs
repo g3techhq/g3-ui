@@ -39,14 +39,15 @@ pub use components::{AppWrapper, Body, Header};
 pub use components::{AppWrapper as G3AppWrapper, Body as G3Body, Header as G3Header};
 pub use components::{
     Card, ConfirmModal, Fab, FabButton, FabContainer, FabHorizontal, FabList, FabListSide, FabSize,
-    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement, RightSlot,
-    Select, SelectOption, Sheet, SheetBackdrop, SheetButton, SheetPlacement, SideSheetType,
-    open_sheet_count,
+    FabVertical, Modal, Navbar, NavbarTab, NavbarTabBar, NavbarTabBarVisibility,
+    NavbarTabDesktopPlacement, RightSlot, Select, SelectOption, Sheet, SheetBackdrop, SheetButton,
+    SheetPlacement, SideSheetType, open_sheet_count,
 };
 pub use components::{
     Card as G3Card, ConfirmModal as G3ConfirmModal, Fab as G3Fab, FabButton as G3FabButton,
     FabContainer as G3FabContainer, FabList as G3FabList, Modal as G3Modal, Navbar as G3Navbar,
     NavbarTab as G3NavbarTab, NavbarTabBar as G3NavbarTabBar,
+    NavbarTabBarVisibility as G3NavbarTabBarVisibility,
     NavbarTabDesktopPlacement as G3NavbarTabDesktopPlacement, Select as G3Select, Sheet as G3Sheet,
     SheetBackdrop as G3SheetBackdrop, SheetButton as G3SheetButton,
     SheetPlacement as G3SheetPlacement, SideSheetType as G3SideSheetType,
@@ -820,10 +821,12 @@ mod tests {
             "Navbar",
             "NavbarTab",
             "NavbarTabBar",
+            "NavbarTabBarVisibility",
             "NavbarTabDesktopPlacement",
             "G3Navbar",
             "G3NavbarTab",
             "G3NavbarTabBar",
+            "G3NavbarTabBarVisibility",
             "G3NavbarTabDesktopPlacement",
         ] {
             assert!(
@@ -837,7 +840,7 @@ mod tests {
         }
         assert!(navbar_source.contains("#[cfg(feature = \"transitions\")]"));
         let stylesheet = include_str!("../assets/g3-ui.css");
-        assert!(navbar_source.contains("ROUTE_TRANSITION_BASE_CLASS"));
+        assert!(navbar_source.contains("ROUTE_TRANSITION_BASE_REGION_CLASS"));
         assert!(navbar_source.contains("pub fn NavbarTabBar"));
         assert!(navbar_source.contains("role: \"tab\""));
         assert!(stylesheet.contains(".g3-navbar-tab-bar"));
@@ -854,6 +857,17 @@ mod tests {
         assert!(stylesheet.contains("grid-row: 1 / -1"));
         assert!(stylesheet.contains(".g3-navbar-tab-desktop-bottom"));
         assert!(navbar_source.contains("NavbarTabDesktopPlacement"));
+        // Rail-only tab bars are hidden until the desktop shell query shows
+        // them, and the rail is persistent route-transition chrome there.
+        assert!(navbar_source.contains("NavbarTabBarVisibility::RailOnly"));
+        assert!(stylesheet.contains(".g3-navbar-tab-bar-rail-only {\n    display: none;"));
+        let desktop_shell = stylesheet
+            .split("@container g3-app-shell (min-width: 48rem)")
+            .nth(1)
+            .expect("desktop shell query");
+        assert!(desktop_shell.contains(
+            ".route-transition-overlay-region .g3-navbar > .g3-navbar-tab-bar {\n        view-transition-name: persistent;",
+        ));
         assert!(stylesheet.contains(".g3-header .g3-header-toolbar"));
         assert!(stylesheet.contains(".g3-header-with-toolbar"));
         assert!(
@@ -885,11 +899,11 @@ mod tests {
         let body_source = include_str!("components/body.rs");
         let body_styles = include_str!("components/body_styles.rs");
         assert!(cargo.contains("transitions = [\"dep:g3-route-transitions\"]"));
-        assert!(cargo.contains("g3-route-transitions = { version = \"0.3.0\", optional = true }",),);
+        assert!(cargo.contains("g3-route-transitions = { version = \"0.4.0\", optional = true }",),);
         assert!(!body_styles.contains("route-transition-segment"));
-        assert!(app_wrapper_source.contains("RouteTransitionProvider"));
-        assert!(app_wrapper_source.contains("ROUTE_TRANSITION_COVER_CLASS"));
-        assert!(app_wrapper_source.contains("route_transition_root.unwrap_or(true)"));
+        assert!(app_wrapper_source.contains("RouteTransitionStyles"));
+        assert!(app_wrapper_source.contains("ROUTE_TRANSITION_OVERLAY_REGION_CLASS"));
+        assert!(app_wrapper_source.contains("route_transition_overlay.unwrap_or(true)"));
         assert!(body_source.contains("ROUTE_TRANSITION_SEGMENT_CLASS"));
     }
     #[test]
@@ -1825,7 +1839,7 @@ mod tests {
         assert!(!SEGMENT_SOURCE.contains("SegmentRouteTarget"));
         assert!(!SEGMENT_SOURCE.contains("HashMap"));
         assert!(!SEGMENT_SOURCE.contains("animated_update"));
-        assert!(!SEGMENT_SOURCE.contains("NavigationAnimation"));
+        assert!(!SEGMENT_SOURCE.contains("NavigationTransition"));
         assert!(!SEGMENT_SOURCE.contains("navigator.push"));
         assert!(!SEGMENT_SOURCE.contains("route: Option"));
     }

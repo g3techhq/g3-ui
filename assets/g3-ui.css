@@ -3589,6 +3589,12 @@ textarea.g3-field {
     box-shadow: 0 -8px 22px color-mix(in srgb, var(--color-shadow) 36%, transparent);
 }
 
+/* A rail-only bar is hidden on compact shells; the desktop shell query below
+   shows it as a rail. */
+.g3-navbar-tab-bar-rail-only {
+    display: none;
+}
+
 .g3-navbar-ios .g3-navbar-tab-bar {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
@@ -3700,7 +3706,7 @@ textarea.g3-field {
    same component tree adapt automatically while embedded/narrow app shells
    continue to render with mobile chrome inside a wide desktop page. */
 @container g3-app-shell (min-width: 48rem) {
-    /* The transitions feature adds .route-transition-base to Navbar and its
+    /* The transitions feature adds .route-transition-base-region to Navbar and its
        stylesheet intentionally loads after this one. The extra shell
        specificity keeps that generic transition layout from resetting the
        responsive rail back to display:flex. */
@@ -3747,6 +3753,15 @@ textarea.g3-field {
         border-right: 1px solid var(--color-card-border);
         background: var(--color-card);
         box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+    }
+
+    /* Inside a transitions-enabled app shell, the rail is persistent chrome:
+       g3-route-transitions captures it on its own, so it stays put while
+       pages slide and sheets rise beside it, instead of moving or dimming
+       with the page. The bottom bar on compact shells is deliberately left in
+       the page, where a full-screen sheet covers it. */
+    .route-transition-overlay-region .g3-navbar > .g3-navbar-tab-bar {
+        view-transition-name: persistent;
     }
 
     /* A flexible rail spacer groups marked account/settings destinations at

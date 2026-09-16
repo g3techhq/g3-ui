@@ -1,7 +1,9 @@
 //! g3-ui playground - component-owned demos rendered in responsive device contexts.
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
-use g3_route_transitions::{Platform, animated_navigate, route_transitions, set_platform};
+use g3_route_transitions::{
+    Platform, RouteTransitions, animated_navigate, set_platform, use_browser_history_transitions,
+};
 use g3_ui::{
     AppWrapper, ComponentMode, ComponentPlaygroundDemo, G3Theme, SegmentButton, SegmentGroup,
     Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
@@ -20,48 +22,47 @@ const PLAYGROUND_CSS: Asset = asset!(
     AssetOptions::css().with_static_head(true)
 );
 
-#[route_transitions]
-#[derive(Clone, Debug, PartialEq, Routable)]
+#[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 #[rustfmt::skip]
 enum Route {
     #[layout(Playground)]
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/")]
         Landing {},
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/components/:slug")]
         ComponentDemo { slug: String },
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/transitions")]
         TransitionHome {},
 
-        #[transition(pushed)]
+        #[transition(layer = stack_page)]
         #[route("/transitions/detail")]
         TransitionDetail {},
 
-        #[transition(cover)]
+        #[transition(layer = sheet)]
         #[route("/transitions/queue")]
         TransitionQueue {},
 
-        #[transition(base, replace, push(group = showcase_tabs, order = tab))]
+        #[transition(history = replace, peers(group = showcase_tabs, order = tab))]
         #[route("/transitions/ratings/:tab")]
         TransitionRatings { tab: u8 },
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/transitions/profile")]
         TransitionProfile {},
 
-        #[transition(base)]
+        #[transition(forward_to = TransitionArticleDetail)]
         #[route("/transitions/article")]
         TransitionArticle {},
 
-        #[transition(morph)]
+        #[transition(layer = stack_page)]
         #[route("/transitions/article/read")]
         TransitionArticleDetail {},
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
@@ -241,6 +242,7 @@ fn main() {
 }
 #[component]
 fn App() -> Element {
+    use_browser_history_transitions::<Route>();
     rsx! {
         Router::<Route> {}
     }
@@ -277,7 +279,7 @@ fn Playground() -> Element {
     };
     set_platform(match active_mode {
         ComponentMode::Ios => Platform::Ios,
-        ComponentMode::Md => Platform::Md,
+        ComponentMode::Md => Platform::Material,
     });
     // The wide-shell drawer is a persistent `Menu` that reserves its own space
     // beside the page, so it is part of the layout rather than something to
@@ -332,7 +334,7 @@ fn Playground() -> Element {
             mode: active_mode,
             class: "playground-root",
             layout: false,
-            route_transition_root: false,
+            route_transition_overlay: false,
             div { class: "playground-page",
                 g3_ui::Header {
                     title: page_title,

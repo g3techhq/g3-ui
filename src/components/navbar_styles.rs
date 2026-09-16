@@ -4,6 +4,7 @@ pub const NAVBAR_BASE: &str = "g3-navbar";
 pub const NAVBAR_IOS: &str = "g3-navbar-ios";
 pub const NAVBAR_MD: &str = "g3-navbar-md";
 pub const TAB_BAR: &str = "g3-navbar-tab-bar";
+pub const TAB_BAR_RAIL_ONLY: &str = "g3-navbar-tab-bar-rail-only";
 pub const TAB: &str = "g3-navbar-tab";
 pub const TAB_SELECTED: &str = "g3-navbar-tab-selected";
 pub const TAB_DISABLED: &str = "g3-navbar-tab-disabled";
@@ -16,6 +17,7 @@ pub fn catalog() -> Vec<(&'static str, &'static str)> {
         ("NAVBAR_IOS", NAVBAR_IOS),
         ("NAVBAR_MD", NAVBAR_MD),
         ("TAB_BAR", TAB_BAR),
+        ("TAB_BAR_RAIL_ONLY", TAB_BAR_RAIL_ONLY),
         ("TAB", TAB),
         ("TAB_SELECTED", TAB_SELECTED),
         ("TAB_DISABLED", TAB_DISABLED),

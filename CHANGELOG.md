@@ -6,6 +6,42 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `NavbarTabBar` takes `visibility: NavbarTabBarVisibility`. `Always`, the
+  default, keeps today's behavior. `RailOnly` hides the bar on compact
+  shells and shows it only as the desktop rail. Full-screen routes such as
+  routed sheets use it to keep the rail beside them on desktop while still
+  covering the bottom tabs on phones.
+
+### Fixed
+
+- With the `transitions` feature, the desktop rail no longer dims and
+  scales with the page when a routed sheet opens, and the sheet no longer
+  leaves an empty rail-width gap. Inside `G3AppWrapper`, the rail is
+  route-transition persistent chrome, which stays in place above the
+  rising sheet.
+
+### Changed
+
+- The `transitions` feature now depends on `g3-route-transitions` 0.4 and
+  uses its region vocabulary. `G3AppWrapper` marks the shell with
+  `ROUTE_TRANSITION_OVERLAY_REGION_CLASS` and loads `RouteTransitionStyles`.
+  `G3Navbar` marks itself with `ROUTE_TRANSITION_BASE_REGION_CLASS`.
+- **Breaking:** renamed `G3AppWrapper`'s `route_transition_root` prop to
+  `route_transition_overlay`. "Root" now names a route layer
+  (`layer = stack_root`) in `g3-route-transitions`, and this prop controls
+  the overlay region.
+- The playground migrated to `#[derive(RouteTransitions)]`. The removed
+  morph transition on the article detail route is replaced by a
+  `forward_to` drill-down into a `stack_page`.
+
+### Documentation
+
+- The route-transition section now lists the region each component
+  provides, where to add `RouteTransitionPage`, and the layout rules for
+  sheet routes, segmented screens, and nested wrappers.
+
 ## [0.3.0] - 2026-09-13
 
 ### Added

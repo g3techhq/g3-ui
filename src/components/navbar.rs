@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Trophy};
 #[cfg(feature = "transitions")]
-use g3_route_transitions::ROUTE_TRANSITION_BASE_CLASS;
+use g3_route_transitions::ROUTE_TRANSITION_BASE_REGION_CLASS;
 /// Where a tab belongs when the bottom tab bar becomes a desktop rail.
 ///
 /// This does not affect compact layouts: every tab remains in its declared
@@ -25,9 +25,9 @@ pub fn Navbar(
     children: Element,
     class: Option<String>,
     mode: Option<ComponentMode>,
-    /// Whether this navbar owns the stable base snapshot during a cover
-    /// transition. Defaults to `true`; disable it when the navbar is itself
-    /// the full-page cover destination.
+    /// Whether this navbar is the route-transition base region: the page shell
+    /// that stays put during navigation and dims under a routed sheet. Defaults
+    /// to `true`; set it to `false` when the navbar is rendered by a sheet route.
     route_transition_base: Option<bool>,
 ) -> Element {
     let mode = use_component_mode(mode);
@@ -38,7 +38,7 @@ pub fn Navbar(
     };
     #[cfg(feature = "transitions")]
     let navbar_cls = if route_transition_base.unwrap_or(true) {
-        merge_classes(navbar_cls, Some(ROUTE_TRANSITION_BASE_CLASS))
+        merge_classes(navbar_cls, Some(ROUTE_TRANSITION_BASE_REGION_CLASS))
     } else {
         navbar_cls
     };
@@ -54,15 +54,39 @@ pub fn Navbar(
         }
     }
 }
+/// When a [`NavbarTabBar`] is shown.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum NavbarTabBarVisibility {
+    /// Show the bar as a bottom tab bar on compact shells and as a rail on
+    /// wide ones.
+    #[default]
+    Always,
+    /// Show the bar only as a desktop rail. Compact shells hide it.
+    ///
+    /// Useful for full-screen routes such as routed sheets. On a phone they
+    /// cover the tab bar, but on a wide shell the rail should stay in place
+    /// beside them.
+    RailOnly,
+}
+/// Persistent tabs: a bottom bar on compact shells and a rail on wide ones.
+///
+/// With the `transitions` feature, the rail is route-transition persistent
+/// chrome inside a `G3AppWrapper`. It stays in place and above rising sheets
+/// during route transitions, as long as the routes on both sides render it.
 #[component]
 pub fn NavbarTabBar(
     class: Option<String>,
     aria_label: Option<String>,
+    visibility: Option<NavbarTabBarVisibility>,
     children: Element,
 ) -> Element {
+    let tab_bar_cls = match visibility.unwrap_or_default() {
+        NavbarTabBarVisibility::Always => s::TAB_BAR.to_string(),
+        NavbarTabBarVisibility::RailOnly => format!("{} {}", s::TAB_BAR, s::TAB_BAR_RAIL_ONLY),
+    };
     rsx! {
         nav {
-            class: merge_classes(s::TAB_BAR, class.as_deref()),
+            class: merge_classes(tab_bar_cls, class.as_deref()),
             role: "tablist",
             aria_label: aria_label.unwrap_or_else(|| "Primary navigation".to_string()),
             {children}

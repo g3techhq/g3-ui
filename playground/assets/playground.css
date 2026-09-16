@@ -351,7 +351,7 @@ textarea {
 
 .transition-showcase-preview .transition-showcase-app,
 .transition-showcase-preview .transition-showcase-page,
-.transition-showcase-preview .route-transition-base {
+.transition-showcase-preview .route-transition-base-region {
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -440,8 +440,8 @@ html[data-route-transition]::view-transition-group(page),
 html[data-route-transition]::view-transition-image-pair(page),
 html[data-route-transition]::view-transition-group(base),
 html[data-route-transition]::view-transition-image-pair(base),
-html[data-route-transition]::view-transition-group(cover),
-html[data-route-transition]::view-transition-image-pair(cover) {
+html[data-route-transition]::view-transition-group(overlay),
+html[data-route-transition]::view-transition-image-pair(overlay) {
   overflow: hidden;
   border-radius: 32px;
   clip-path: inset(0 round 32px);
@@ -464,9 +464,9 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
   ::view-transition-image-pair(base),
 html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
-  ::view-transition-group(cover),
+  ::view-transition-group(overlay),
 html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-transition]
-  ::view-transition-image-pair(cover) {
+  ::view-transition-image-pair(overlay) {
   border-radius: 16px;
   clip-path: inset(0 round 16px);
 }
@@ -495,8 +495,8 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 /* Route-transition markers default to the browser viewport for real apps.
    Inside the playground they belong to the simulated device instead, or a
    Navbar's tab bar lands below the phone at the browser's 100dvh position. */
-.g3-playground-preview .route-transition-base,
-.g3-playground-preview .route-transition-cover,
+.g3-playground-preview .route-transition-base-region,
+.g3-playground-preview .route-transition-overlay-region,
 .g3-playground-preview .route-transition-page {
   height: 100%;
   min-height: 0;

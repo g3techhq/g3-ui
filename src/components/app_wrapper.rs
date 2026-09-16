@@ -7,7 +7,7 @@ use crate::theme::{
 };
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
-use g3_route_transitions::{ROUTE_TRANSITION_COVER_CLASS, RouteTransitionProvider};
+use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitionStyles};
 #[component]
 pub fn AppWrapper(
     children: Element,
@@ -26,11 +26,12 @@ pub fn AppWrapper(
     /// accidental text selection during a drag is visually distracting.
     /// Defaults to `false`.
     disable_text_selection: Option<bool>,
-    /// Whether this wrapper owns the route-transition cover snapshot. Defaults
-    /// to `true`; set it to `false` for an outer documentation/theme wrapper
-    /// that contains a second `AppWrapper` representing the actual app. A
-    /// document may only have one element with a given view-transition name.
-    route_transition_root: Option<bool>,
+    /// Whether this wrapper is the route-transition overlay region: the part
+    /// that rises and falls for routed sheets. Defaults to `true`; set it to
+    /// `false` for an outer documentation/theme wrapper that contains a second
+    /// `AppWrapper` representing the actual app. A document may only have one
+    /// overlay region at a time. Requires the `transitions` feature.
+    route_transition_overlay: Option<bool>,
 ) -> Element {
     let inherited_mode = use_ancestor_context::<G3Mode>();
     let inherited_theme = use_ancestor_context::<Signal<Theme>>();
@@ -57,13 +58,13 @@ pub fn AppWrapper(
         shell_cls = format!("{shell_cls} {}", s::SHELL_NO_SELECT);
     }
     #[cfg(feature = "transitions")]
-    let shell_cls = if route_transition_root.unwrap_or(true) {
-        merge_classes(shell_cls, Some(ROUTE_TRANSITION_COVER_CLASS))
+    let shell_cls = if route_transition_overlay.unwrap_or(true) {
+        merge_classes(shell_cls, Some(ROUTE_TRANSITION_OVERLAY_REGION_CLASS))
     } else {
         shell_cls
     };
     #[cfg(not(feature = "transitions"))]
-    let _ = route_transition_root;
+    let _ = route_transition_overlay;
     let shell_cls = merge_classes(shell_cls, class.as_deref());
     let shell = rsx! {
         div {
@@ -76,7 +77,7 @@ pub fn AppWrapper(
     #[cfg(feature = "transitions")]
     return rsx! {
         StylesheetLink {}
-        RouteTransitionProvider { {shell} }
+        RouteTransitionStyles { {shell} }
     };
     #[cfg(not(feature = "transitions"))]
     rsx! {

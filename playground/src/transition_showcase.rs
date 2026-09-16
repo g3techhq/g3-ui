@@ -4,41 +4,60 @@ use dioxus_icons::lucide::{BookOpen, CircleUserRound, House, Star};
 use g3_route_transitions::{RouteTransitionPage, animated_navigate};
 use g3_ui::{
     AppWrapper, Badge, Body, Button, ButtonSize, ButtonStyle, Card, ComponentMode, Header, Item,
-    ItemDetail, List, ListLines, Navbar, NavbarTab, NavbarTabBar, NavbarTabDesktopPlacement,
-    PlaygroundDemoFrame, RightSlot, SegmentButton, SegmentGroup, StatusColor,
+    ItemDetail, List, ListLines, Navbar, NavbarTab, NavbarTabBar, NavbarTabBarVisibility,
+    NavbarTabDesktopPlacement, PlaygroundDemoFrame, RightSlot, SegmentButton, SegmentGroup,
+    StatusColor,
 };
 
 use super::{PlaygroundViewport, Route, active_playground_settings};
 
-pub const DESCRIPTION: &str = "Real g3-ui app screens that demonstrate route-owned push, sheet, fade, segmented, and morph transitions.";
-pub const SOURCE: &str = r#"#[route_transitions]
-#[derive(Clone, Debug, PartialEq, Routable)]
+pub const DESCRIPTION: &str = "Real g3-ui app screens that demonstrate route-owned stack, sheet, cross-fade, segmented, and drill-down transitions.";
+pub const SOURCE: &str = r#"#[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 enum Route {
-    #[transition(root)]
+    // Tab roots cross-fade between each other.
+    #[transition(layer = stack_root)]
     #[route("/transitions")]
     Home {},
 
-    #[transition(pushed)]
+    // Home -> Detail slides forward; Back slides backward.
+    #[transition(layer = stack_page)]
     #[route("/transitions/detail")]
     Detail {},
 
-    #[transition(cover)]
+    // Rises over the current page; Back drops it away.
+    #[transition(layer = sheet)]
     #[route("/transitions/queue")]
     Queue {},
 
-    #[transition(base, replace, push(group = ratings, order = tab))]
+    // Segments slide by tab order without adding history entries.
+    #[transition(history = replace, peers(group = ratings, order = tab))]
     #[route("/transitions/ratings/:tab")]
     Ratings { tab: u8 },
+
+    // A base page that drills into a stack page.
+    #[transition(forward_to = ArticleDetail)]
+    #[route("/transitions/article")]
+    Article {},
+
+    #[transition(layer = stack_page)]
+    #[route("/transitions/article/read")]
+    ArticleDetail {},
 }
 
 rsx! {
+    // Overlay region: rises and falls for sheets.
     G3AppWrapper {
+        // Base region: stays put, dims under sheets.
+        // Sheet routes pass `route_transition_base: false` and render their
+        // tabs with `visibility: RailOnly`, so a desktop rail stays beside them.
         G3Navbar {
+            // Page region: slides for Forward/Backward.
             RouteTransitionPage {
                 G3Header { title: "Fairway" }
                 G3Body { G3Card { title: "Today's round", "Ready to play" } }
             }
-            G3NavbarTabBar { /* persistent routed tabs */ }
+            // Persistent chrome: a desktop rail stays still in every transition.
+            G3NavbarTabBar { /* routed tabs */ }
         }
     }
 }"#;
@@ -378,14 +397,17 @@ fn QueueScreen(mode: ComponentMode) -> Element {
                     "Done"
                 }
             }
+            // The sheet covers the bottom tabs on a phone, but a desktop rail stays
+            // beside it.
+            ShowcaseTabs { selected: ShowcaseScreen::Queue, visibility: NavbarTabBarVisibility::RailOnly }
         }
     }
 }
 
 #[component]
-fn ShowcaseTabs(selected: ShowcaseScreen) -> Element {
+fn ShowcaseTabs(selected: ShowcaseScreen, visibility: Option<NavbarTabBarVisibility>) -> Element {
     rsx! {
-        NavbarTabBar { aria_label: "Transition demo navigation".to_string(),
+        NavbarTabBar { aria_label: "Transition demo navigation".to_string(), visibility,
             NavbarTab {
                 label: "Home".to_string(),
                 selected: matches!(selected, ShowcaseScreen::Home | ShowcaseScreen::Queue | ShowcaseScreen::Detail),

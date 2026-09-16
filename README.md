@@ -35,7 +35,7 @@ Enable the optional route-transition integration when your app also uses `g3-rou
 ```toml
 [dependencies]
 g3-ui = { version = "0.2", features = ["transitions"] }
-g3-route-transitions = "0.2"
+g3-route-transitions = "0.4"
 ```
 
 ## Quick Start
@@ -158,18 +158,55 @@ rsx! {
 
 ## Route Transition Integration
 
-With the `transitions` feature enabled, `G3AppWrapper` loads the `g3-route-transitions` stylesheet
-provider and marks the shell with the cover snapshot class. `G3Navbar` marks persistent tab/navigation
-layouts with the base snapshot class. `G3Body` marks its scrollable content with the segment snapshot
-class for push transitions.
+With the `transitions` feature enabled, g3-ui components provide the
+[`g3-route-transitions`](https://github.com/g3techhq/g3-route-transitions)
+snapshot regions for you:
 
-Without the feature, `g3-ui` does not depend on `g3-route-transitions` and does not emit
-route-transition marker classes.
+| Component | Region | Effect |
+|---|---|---|
+| `G3AppWrapper` | overlay (plus the stylesheet) | Rises and falls for routed sheets |
+| `G3Navbar` | base | Stays put during navigation and dims under a sheet |
+| `G3Body` content | segment | Slides for ordered peer routes such as segmented tabs |
+| `G3NavbarTabBar` as a desktop rail | persistent | Stays in place, above a rising sheet (the compact bottom bar stays part of the base) |
 
-`G3AppWrapper` owns the cover snapshot by default. If a documentation shell or
-other non-navigating theme wrapper contains a second app wrapper, set
-`route_transition_root: false` on the outer wrapper so only the actual app owns
-that snapshot name.
+Add `RouteTransitionPage` yourself, around each page's header and body, to
+get stack push/pop motion:
+
+```rust,ignore
+use g3_route_transitions::RouteTransitionPage;
+
+rsx! {
+    G3Navbar {
+        RouteTransitionPage {
+            G3Header { title: "Rounds" }
+            G3Body { /* page content */ }
+        }
+        G3NavbarTabBar { /* persistent tabs stay still */ }
+    }
+}
+```
+
+Layout rules:
+
+- **Sheet routes:** a route declared with `layer = sheet` must render
+  `G3Navbar { route_transition_base: false, .. }` (or no navbar) and no
+  `RouteTransitionPage`. Otherwise its content is captured outside the
+  rising overlay. To keep the desktop rail beside the sheet, render the
+  same tabs with `visibility: G3NavbarTabBarVisibility::RailOnly`. Phones
+  hide them, so the sheet still covers the bottom tabs.
+- **Segmented screens:** leave `RouteTransitionPage` out of screens whose
+  `G3Body` should slide by itself. Inside a page, the whole page moves
+  instead.
+- **Nested wrappers:** `G3AppWrapper` is the overlay region by default. If a
+  documentation shell or other non-navigating wrapper contains a second app
+  wrapper, set `route_transition_overlay: false` on the outer one. A document
+  may only have one overlay region.
+
+See the `g3-route-transitions` README for the route metadata that decides
+which transition runs.
+
+Without the feature, `g3-ui` does not depend on `g3-route-transitions` and
+does not emit route-transition marker classes.
 
 ## Responsive App Shell
 
@@ -268,7 +305,7 @@ dropping readers on the gallery home screen.
 
 The deployed [`/transitions` showcase](https://g3ui.g3tech.net/transitions) composes the real app
 shell, header, body, navbar, cards, lists, buttons, and segmented controls with
-`g3-route-transitions`, including a full-screen sheet-style cover route. Navigation between
+`g3-route-transitions`, including a routed sheet. Navigation between
 component demos is routed as well, using the same integration a consuming application uses.
 
 When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent
