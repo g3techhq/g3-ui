@@ -26,6 +26,11 @@ cascade layer. The README has a table of the most common renames.
   `DatePicker` and `TimePicker`, which also carry a typed value instead of a
   string; a date and a time field side by side cover `datetime-local`.
 
+### Fixed
+
+- Package only the crate's own root files. The `include` patterns were
+  unanchored, so `deploy/README.md` shipped in the crate.
+
 ### Changed
 
 - A dismissed `SwipeItem` leaves by the row's own width instead of a fixed

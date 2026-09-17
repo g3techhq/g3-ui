@@ -186,6 +186,9 @@ pub fn PlaygroundDemoFrame(
 /// demo wiring the playground collects.
 ///
 /// Expands to items in the calling module, so invoke it once per component.
+/// Internal: the playground collects only this crate's own entries, so an
+/// entry declared elsewhere has nothing to appear in.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! g3_playground {
     (
