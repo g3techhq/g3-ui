@@ -43,6 +43,10 @@ pub fn SideSheet(
     width: Option<String>,
     /// Called after the user dismisses the sheet.
     on_dismiss: Option<EventHandler<()>>,
+    /// Pad the sheet's content. Defaults to `true`. Set it to `false` for a
+    /// sheet whose rows run to its edges, the way
+    /// [`Content`](crate::Content) does for a page.
+    padding: Option<bool>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the sheet surface.
@@ -61,6 +65,7 @@ pub fn SideSheet(
             title,
             aria_label,
             on_dismiss,
+            padding,
             mode,
             class,
             {children}
@@ -75,6 +80,7 @@ fn SideSheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
     let edge = use_signal(|| SheetEdge::Start);
     let behavior = use_signal(|| SideSheetBehavior::Overlay);
+    let padding = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
@@ -89,12 +95,14 @@ fn SideSheetPlaygroundDemo() -> Element {
                     crate::SegmentButton { value: SideSheetBehavior::Reveal, "Reveal" }
                 }
                 crate::Checkbox { checked: open, label: "Open" }
+                crate::Checkbox { checked: padding, label: "Pad the content" }
             },
             crate::AppWrapper { class: "g3-playground-device-app",
                 SideSheet {
                     open,
                     edge: edge(),
                     behavior: behavior(),
+                    padding: padding(),
                     title: "Round menu",
                     crate::List { lines: crate::ListLines::Full,
                         crate::Item { label: "Scorecard", metadata: "12 / 18" }

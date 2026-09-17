@@ -33,7 +33,8 @@ impl ListLines {
 pub enum ListVariant {
     /// Rows span the full width of the screen, with no group around them,
     /// like a phone inbox or a settings page on Android. Put the list in
-    /// [`Content`](crate::Content) with `padding: false` so nothing insets it.
+    /// [`Content`](crate::Content) with `padding: false` so nothing insets
+    /// it; a sheet or drawer takes the same `padding` prop.
     #[default]
     EdgeToEdge,
     /// A rounded group lifted off the page with a shadow.

@@ -32,8 +32,9 @@ cascade layer. The README has a table of the most common renames.
   430px, so a wide desktop row no longer stops partway across.
 - A `Searchbar` in a `Header`'s `toolbar` keeps the room a field needs from
   the header's edges. A segmented strip still sits flush, as it should.
-- A `List` directly inside a `SideSheet` or `NavigationDrawer` runs to the
-  sheet's edges; anything else in the sheet stays inset.
+- `BottomSheet`, `SideSheet`, and `NavigationDrawer` take `padding`, the
+  same way `Content` does, so a drawer whose rows are its navigation can run
+  them to its edges.
 - The playground's two showcases are coherent mini apps. `DemoApp` gives each
   tab one job - a feed that refreshes, a booking form, an edge-to-edge inbox,
   and a settings page - and puts the segmented control and the searchbar in

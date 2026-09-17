@@ -305,7 +305,6 @@ textarea {
 
 .playground-selector-sheet .g3-sheet-content {
   min-height: 0;
-  padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;

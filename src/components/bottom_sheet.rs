@@ -55,6 +55,10 @@ pub fn BottomSheet(
     max_height: Option<String>,
     /// Called after the user dismisses the sheet.
     on_dismiss: Option<EventHandler<()>>,
+    /// Pad the sheet's content. Defaults to `true`. Set it to `false` for a
+    /// sheet whose rows run to its edges, the way
+    /// [`Content`](crate::Content) does for a page.
+    padding: Option<bool>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the sheet surface.
@@ -79,6 +83,7 @@ pub fn BottomSheet(
             title,
             aria_label,
             on_dismiss,
+            padding,
             mode,
             class,
             {children}

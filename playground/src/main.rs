@@ -398,6 +398,7 @@ fn Playground() -> Element {
                 SideSheet {
                     open: selector_open,
                     aria_label: "Components",
+                    padding: false,
                     class: "playground-selector-sheet",
                     {selector}
                 }
@@ -405,6 +406,7 @@ fn Playground() -> Element {
                 NavigationDrawer {
                     open: selector_open,
                     aria_label: "Components",
+                    padding: false,
                     class: "playground-selector-sheet",
                     {selector}
                 }

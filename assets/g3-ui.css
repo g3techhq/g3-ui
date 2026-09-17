@@ -1800,6 +1800,13 @@ button.g3-chip:focus-visible {
     display: none;
 }
 
+/* Rows that run to the sheet's edges, for a drawer whose list is its
+   navigation. The top inset stays: it clears the title and the notch. */
+.g3-sheet-content[data-padding="false"] {
+    padding-inline: 0;
+    padding-bottom: 0;
+}
+
 /* Children keep their size and the content box scrolls. As flex items they
    would otherwise shrink to fit, clipping inset lists and cards inside
    themselves with nothing left to scroll. */
@@ -1934,18 +1941,7 @@ button.g3-chip:focus-visible {
     padding-top: max(1rem, env(safe-area-inset-top));
 }
 
-/* A drawer's rows are its navigation: they highlight and press from edge to
-   edge, so a list directly inside one keeps the sheet's side padding off it.
-   Anything else in the sheet stays inset. */
-.g3-sheet-side .g3-sheet-content:has(> .g3-list),
-.g3-drawer .g3-sheet-content:has(> .g3-list) {
-    padding-inline: 0;
-}
 
-.g3-sheet-side .g3-sheet-content:has(> .g3-list) > :not(.g3-list),
-.g3-drawer .g3-sheet-content:has(> .g3-list) > :not(.g3-list) {
-    margin-inline: 1.5rem;
-}
 
 .g3-sheet-side[data-state="closed"],
 .g3-drawer[data-state="closed"] {

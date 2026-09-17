@@ -59,7 +59,9 @@ fn DemoAppPlaygroundDemo() -> Element {
         PlaygroundDemoFrame { app: false,
             AppWrapper { mode, class: "g3-playground-device-app",
                 // Everything the tab bar has no room for.
-                SideSheet { open: drawer_open, title: "Fairway",
+                // `padding: false`: the rows are the navigation, so they
+                // press from edge to edge.
+                SideSheet { open: drawer_open, title: "Fairway", padding: false,
                     List { lines: ListLines::None,
                         Item {
                             label: "Matthew W.",

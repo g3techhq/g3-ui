@@ -187,6 +187,7 @@ pub(crate) fn SheetFrame(
     title: Option<String>,
     aria_label: Option<String>,
     on_dismiss: Option<EventHandler<()>>,
+    padding: Option<bool>,
     mode: Option<ComponentMode>,
     class: Option<String>,
     children: Element,
@@ -438,7 +439,11 @@ pub(crate) fn SheetFrame(
                     h2 { id: title_id, class: "g3-sheet-title", "{title}" }
                 }
             }
-            div { class: "g3-sheet-content", {children} }
+            div {
+                class: "g3-sheet-content",
+                "data-padding": padding.unwrap_or(true).to_string(),
+                {children}
+            }
         }
     }
 }
