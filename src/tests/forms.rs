@@ -33,12 +33,12 @@ fn inputs_with_the_same_label_get_distinct_linked_ids() {
 fn inputs_use_typed_kinds() {
     fn app() -> Element {
         rsx! {
-            Input { aria_label: "When", input_type: InputType::DateTime }
+            Input { aria_label: "When", input_type: InputType::Tel }
             TextArea { label: "Notes", rows: 4 }
         }
     }
     let html = render(app);
-    assert!(html.contains("type=\"datetime-local\""));
+    assert!(html.contains("type=\"tel\""));
     assert!(html.contains("aria-label=\"When\""));
     assert!(html.contains("<textarea"));
 }

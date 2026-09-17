@@ -194,7 +194,7 @@ fn DiscoverScreen() -> Element {
     let format = use_signal(|| Some("stroke"));
     let walking = use_signal(|| true);
     let players = use_signal(|| 4_i64);
-    let date = use_signal(String::new);
+    let date = use_signal(|| None::<CalendarDate>);
     rsx! {
         Content {
             Stack { gap: Space::Lg,
@@ -213,7 +213,7 @@ fn DiscoverScreen() -> Element {
                                 SelectOption::new("oak".to_string(), "Oak Hollow").description("Closed Mondays"),
                             ],
                         }
-                        Input { label: "Tee date", value: date, input_type: InputType::Date }
+                        DatePicker { label: "Tee date", value: date }
                         Stepper { label: "Players", value: players, min: 1, max: 8 }
                         RadioGroup { value: format, label: "Format",
                             Radio { value: "stroke", label: "Stroke play" }

@@ -21,6 +21,10 @@ cascade layer. The README has a table of the most common renames.
 - **Breaking:** `SheetButton` (use `InfoButton { sheet, .. }`), `ItemKind`
   (an `Item` now infers its element from its props), `RefresherState`,
   `can_refresh`, and `Card`'s `RightSlot` and `top_margin`.
+- **Breaking:** `InputType`'s `Date`, `Time`, `DateTime`, and `Month`. They
+  opened the browser's own picker, which ignores the mode and the theme. Use
+  `DatePicker` and `TimePicker`, which also carry a typed value instead of a
+  string; a date and a time field side by side cover `datetime-local`.
 
 ### Changed
 

@@ -79,7 +79,13 @@ pub(crate) fn is_invalid(error: &Option<String>) -> bool {
 }
 
 /// The kind of value an [`Input`] takes. Each maps to an HTML input `type`,
-/// which picks the on-screen keyboard and any native picker.
+/// which picks the on-screen keyboard.
+///
+/// There are no date or time kinds: those open the browser's own picker,
+/// which ignores the mode and the theme. Use
+/// [`DatePicker`](crate::DatePicker) and [`TimePicker`](crate::TimePicker),
+/// which carry [`CalendarDate`](crate::CalendarDate) and
+/// [`TimeOfDay`](crate::TimeOfDay) rather than a string.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum InputType {
     /// Free text.
@@ -97,14 +103,6 @@ pub enum InputType {
     Url,
     /// A search query.
     Search,
-    /// A date (`YYYY-MM-DD`), with the platform date picker.
-    Date,
-    /// A time (`HH:MM`), with the platform time picker.
-    Time,
-    /// A local date and time (`YYYY-MM-DDTHH:MM`).
-    DateTime,
-    /// A month (`YYYY-MM`).
-    Month,
 }
 
 impl InputType {
@@ -117,10 +115,6 @@ impl InputType {
             InputType::Tel => "tel",
             InputType::Url => "url",
             InputType::Search => "search",
-            InputType::Date => "date",
-            InputType::Time => "time",
-            InputType::DateTime => "datetime-local",
-            InputType::Month => "month",
         }
     }
 }
@@ -247,7 +241,7 @@ pub fn Input(
     disabled: Option<bool>,
     /// Make the field read-only.
     readonly: Option<bool>,
-    /// Smallest number, for numeric and date types.
+    /// Smallest number, for [`InputType::Number`].
     min: Option<f64>,
     /// Largest number. Typing past it is refused.
     max: Option<f64>,
@@ -465,8 +459,8 @@ fn InputPlaygroundDemo() -> Element {
                         crate::SelectOption::new(InputType::Text, "Text"),
                         crate::SelectOption::new(InputType::Number, "Number"),
                         crate::SelectOption::new(InputType::Password, "Password"),
-                        crate::SelectOption::new(InputType::Date, "Date"),
-                        crate::SelectOption::new(InputType::Time, "Time"),
+                        crate::SelectOption::new(InputType::Email, "Email"),
+                        crate::SelectOption::new(InputType::Tel, "Phone"),
                     ],
                 }
                 crate::Checkbox { checked: disabled, label: "Disabled" }
@@ -492,7 +486,7 @@ fn InputPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Input",
-    description: "Text, number, date, and multi-line fields with helper and error text.",
+    description: "Text, number, and multi-line fields with helper and error text.",
     components: ["Input", "TextArea"],
     demo: InputPlaygroundDemo,
     source: "src/components/field.rs",

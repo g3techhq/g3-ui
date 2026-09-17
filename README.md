@@ -111,9 +111,10 @@ type, so options can be your own enums instead of strings or indexes.
 
 ## Dates and Times
 
-`DatePicker` and `TimePicker` are form fields that open a picker. Their values are
-`CalendarDate` and `TimeOfDay`, which parse from and print as ISO 8601 (`2026-09-19`,
-`14:05`), so nothing has to agree on a string format:
+`DatePicker` and `TimePicker` are form fields that open a picker. They are the way in:
+`Input` has no date or time kind, because the browser's own picker ignores the mode and
+the theme. Their values are `CalendarDate` and `TimeOfDay`, which parse from and print as
+ISO 8601 (`2026-09-19`, `14:05`), so nothing has to agree on a string format:
 
 ```rust,ignore
 let tee_day = use_signal(|| None::<CalendarDate>);
