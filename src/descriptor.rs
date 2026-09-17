@@ -145,6 +145,8 @@ pub fn PlaygroundDemoFrame(
     controls: Option<Element>,
     app: Option<bool>,
     center: Option<bool>,
+    /// Pad the preview's content. Defaults to `true`.
+    padding: Option<bool>,
     class: Option<String>,
 ) -> Element {
     crate::components::overlay::disable_body_scroll_lock_for_subtree();
@@ -163,7 +165,12 @@ pub fn PlaygroundDemoFrame(
             div { class: preview_cls,
                 if app.unwrap_or(true) {
                     crate::AppWrapper { mode, class: "g3-playground-device-app",
-                        crate::Content { class: body_cls, footer_space: false, {children} }
+                        crate::Content {
+                            class: body_cls,
+                            padding: padding.unwrap_or(true),
+                            footer_space: false,
+                            {children}
+                        }
                     }
                 } else {
                     div { class: "g3-playground-raw-surface", {children} }

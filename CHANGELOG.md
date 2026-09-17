@@ -47,7 +47,7 @@ cascade layer. The README has a table of the most common renames.
   `Raised` (the default, with a shadow), `Flat` (a border and no shadow), or
   `Filled` (a tinted surface, the old `inset`).
 - **Breaking:** `List`'s `inset: bool` is now `variant: ListVariant`:
-  `Plain` (the default, edge to edge) or a rounded group drawn like a card:
+  `EdgeToEdge` (the default) or a rounded group drawn like a card:
   `Raised` (the old `inset: true`), `Flat`, or `Filled`.
 - **Breaking:** `SwipeItem`'s `behavior` is split into `start_behavior` and
   `end_behavior`, so each edge can reveal, activate, or dismiss on its own.
@@ -153,9 +153,11 @@ cascade layer. The README has a table of the most common renames.
 - Sheets animate in and out over 0.5s on a softer curve instead of 0.25s,
   which read as popping in. The side sheet backdrop fades instead of sliding
   in with the sheet.
-- A `BottomSheet` with detents slides in at its resting height instead of
-  resizing on the way in. Its entrance ends when the animation does, so
-  later detent changes still animate.
+- A `BottomSheet` with detents slides in instead of appearing at the end
+  of its entrance: the rules sizing it also delayed it becoming visible. It
+  slides in at its resting height, and later detent changes still animate.
+- A popover shown as a bottom sheet on a phone slides and fades on the
+  sheet timing.
 - An `AppWrapper` with `layout: false` is still the container its wide
   layout rules measure, so a `Select` in such a page opens as a menu on wide
   screens instead of a full-width sheet.

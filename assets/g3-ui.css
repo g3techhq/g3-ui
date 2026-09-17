@@ -1697,7 +1697,7 @@ textarea.g3-input {
     color: var(--g3-color-text);
     outline: none;
     transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
-                visibility 0s linear var(--g3-sheet-duration);
+                visibility 0s linear var(--g3-sheet-hide-delay, 0s);
 }
 
 .g3-sheet {
@@ -1708,14 +1708,18 @@ textarea.g3-input {
     z-index: var(--g3-z-fab);
 }
 
+/* A sheet shows at once and hides only after sliding away. The delay is a
+   property rather than part of each `transition`, so rules that redeclare the
+   transition (detent heights, the entrance) cannot delay an opening sheet
+   into view. */
 .g3-sheet[data-state="open"],
 .g3-drawer[data-state="open"] {
     visibility: visible;
-    transition-delay: 0s;
 }
 
 .g3-sheet[data-state="closed"],
 .g3-drawer[data-state="closed"] {
+    --g3-sheet-hide-delay: var(--g3-sheet-duration);
     box-shadow: none;
     pointer-events: none;
     visibility: hidden;
@@ -1819,14 +1823,14 @@ textarea.g3-input {
     max-height: calc(100% - max(env(safe-area-inset-top), 0.75rem));
     transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
                 height var(--g3-sheet-duration) var(--g3-sheet-easing),
-                visibility 0s linear var(--g3-sheet-duration);
+                visibility 0s linear var(--g3-sheet-hide-delay, 0s);
 }
 
 /* Entering: the height is already where it should be. A detent reset as the
    sheet opens must not grow or shrink it while it slides in. */
 .g3-sheet-enter.g3-sheet-bottom[data-detent] {
     transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
-                visibility 0s linear var(--g3-sheet-duration);
+                visibility 0s linear var(--g3-sheet-hide-delay, 0s);
 }
 
 .g3-sheet-bottom[data-state="closed"] {
@@ -4326,6 +4330,13 @@ textarea.g3-input {
     border-width: 0;
     border-radius: 16px 16px 0 0;
     transform-origin: bottom;
+    transition: opacity var(--g3-transition-fast) ease,
+                transform var(--g3-sheet-duration) var(--g3-sheet-easing),
+                visibility 0s linear var(--g3-sheet-duration);
+}
+
+.g3-popover-sheet[data-state="open"] {
+    transition-delay: 0s;
 }
 
 .g3-popover-sheet[data-placement] {
@@ -4338,6 +4349,7 @@ textarea.g3-input {
 
 .g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
     background: rgba(0, 0, 0, 0.4);
+    animation: g3-sheet-enter-backdrop var(--g3-backdrop-duration) ease backwards;
 }
 
 .g3-menu {
@@ -4417,6 +4429,9 @@ textarea.g3-input {
         padding-bottom: 0;
         border-width: 1px;
         transform-origin: top;
+        transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                    transform var(--g3-transition-fast) var(--g3-transition-md),
+                    visibility 0s linear var(--g3-transition-fast);
     }
 
     .g3-popover-sheet[data-placement^="bottom"] {

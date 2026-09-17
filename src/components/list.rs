@@ -26,14 +26,16 @@ impl ListLines {
     }
 }
 
-/// How a [`List`] sits on the page. Apart from `Plain`, these match
+/// How a [`List`] sits on the page. Apart from `EdgeToEdge`, these match
 /// [`CardVariant`](crate::CardVariant): the rows sit in a rounded group,
 /// like an iOS settings screen, drawn the way a card with that variant is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ListVariant {
-    /// Rows run edge to edge with no group around them.
+    /// Rows span the full width of the screen, with no group around them,
+    /// like a phone inbox or a settings page on Android. Put the list in
+    /// [`Content`](crate::Content) with `padding: false` so nothing insets it.
     #[default]
-    Plain,
+    EdgeToEdge,
     /// A rounded group lifted off the page with a shadow.
     Raised,
     /// A rounded group outlined by a border.
@@ -67,8 +69,8 @@ pub enum ItemDetail {
 /// ```
 #[component]
 pub fn List(
-    /// Plain, or a rounded group drawn like a card. Defaults to
-    /// [`ListVariant::Plain`].
+    /// Edge to edge, or a rounded group drawn like a card. Defaults to
+    /// [`ListVariant::EdgeToEdge`].
     variant: Option<ListVariant>,
     /// Separators between rows. Defaults to [`ListLines::Inset`].
     lines: Option<ListLines>,
@@ -85,7 +87,7 @@ pub fn List(
         "g3-list",
         mode.pick("g3-list-ios", "g3-list-md"),
         match variant.unwrap_or_default() {
-            ListVariant::Plain => "",
+            ListVariant::EdgeToEdge => "",
             ListVariant::Raised => "g3-list-grouped",
             ListVariant::Flat => "g3-list-grouped g3-list-flat",
             ListVariant::Filled => "g3-list-grouped g3-list-filled",
@@ -274,9 +276,11 @@ fn ListPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
+            // An edge-to-edge list is meant to touch the screen edges.
+            padding: variant() != ListVariant::EdgeToEdge,
             controls: rsx! {
                 crate::SegmentGroup { value: variant, aria_label: "Variant",
-                    crate::SegmentButton { value: ListVariant::Plain, "Plain" }
+                    crate::SegmentButton { value: ListVariant::EdgeToEdge, "Edge to edge" }
                     crate::SegmentButton { value: ListVariant::Raised, "Raised" }
                     crate::SegmentButton { value: ListVariant::Flat, "Flat" }
                     crate::SegmentButton { value: ListVariant::Filled, "Filled" }
@@ -312,48 +316,51 @@ fn ListPlaygroundDemo() -> Element {
                     ],
                 }
             },
-            List { variant: variant(), lines: lines(),
-                ListHeader { "Settings" }
-                Item { label: "Profile", description: "Name and handicap", onclick: |_| {} }
-                Item { label: "Notifications", checked: notify(), onclick: move |_| notify.toggle() }
-                Item { label: "Version", metadata: "0.4.0" }
-            }
-            List { variant: variant(), lines: lines(),
-                ListHeader { "Rounds — swipe either way" }
-                for row in rows() {
-                    SwipeItem {
-                        key: "{row}",
-                        start_behavior: start_behavior(),
-                        end_behavior: end_behavior(),
-                        start_actions: rsx! {
-                            SwipeAction {
-                                color: Color::Success,
-                                onclick: move |_| { toast.success(format!("{row} archived")); },
-                                "Archive"
-                            }
-                        },
-                        end_actions: rsx! {
-                            if end_behavior() == SwipeBehavior::Reveal {
+            crate::Stack {
+                gap: if variant() == ListVariant::EdgeToEdge { crate::Space::None } else { crate::Space::Lg },
+                List { variant: variant(), lines: lines(),
+                    ListHeader { "Settings" }
+                    Item { label: "Profile", description: "Name and handicap", onclick: |_| {} }
+                    Item { label: "Notifications", checked: notify(), onclick: move |_| notify.toggle() }
+                    Item { label: "Version", metadata: "0.4.0" }
+                }
+                List { variant: variant(), lines: lines(),
+                    ListHeader { "Rounds — swipe either way" }
+                    for row in rows() {
+                        SwipeItem {
+                            key: "{row}",
+                            start_behavior: start_behavior(),
+                            end_behavior: end_behavior(),
+                            start_actions: rsx! {
                                 SwipeAction {
-                                    color: Color::Accent,
-                                    onclick: move |_| { toast.show(format!("{row} pinned")); },
-                                    "Pin"
+                                    color: Color::Success,
+                                    onclick: move |_| { toast.success(format!("{row} archived")); },
+                                    "Archive"
                                 }
-                            }
-                            SwipeAction {
-                                color: Color::Danger,
-                                onclick: move |_| rows.write().retain(|r| *r != row),
-                                "Delete"
-                            }
-                        },
-                        on_activate: move |state: crate::SwipeState| match state.side {
-                            crate::SwipeSide::Start => {
-                                toast.success(format!("{row} archived"));
-                            }
-                            crate::SwipeSide::End => rows.write().retain(|r| *r != row),
-                        },
-                        on_dismiss: move |_| rows.write().retain(|r| *r != row),
-                        Item { label: row, description: "Pebble Creek" }
+                            },
+                            end_actions: rsx! {
+                                if end_behavior() == SwipeBehavior::Reveal {
+                                    SwipeAction {
+                                        color: Color::Accent,
+                                        onclick: move |_| { toast.show(format!("{row} pinned")); },
+                                        "Pin"
+                                    }
+                                }
+                                SwipeAction {
+                                    color: Color::Danger,
+                                    onclick: move |_| rows.write().retain(|r| *r != row),
+                                    "Delete"
+                                }
+                            },
+                            on_activate: move |state: crate::SwipeState| match state.side {
+                                crate::SwipeSide::Start => {
+                                    toast.success(format!("{row} archived"));
+                                }
+                                crate::SwipeSide::End => rows.write().retain(|r| *r != row),
+                            },
+                            on_dismiss: move |_| rows.write().retain(|r| *r != row),
+                            Item { label: row, description: "Pebble Creek" }
+                        }
                     }
                 }
             }
