@@ -22,6 +22,7 @@ const PLAYGROUND_CSS: Asset = asset!(
     "/assets/playground.css",
     AssetOptions::css().with_static_head(true)
 );
+const FAVICON: Asset = asset!("/assets/favicon.svg");
 
 #[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 #[rustfmt::skip]
@@ -223,6 +224,7 @@ fn main() {
 fn App() -> Element {
     use_browser_history_transitions::<Route>();
     rsx! {
+        document::Link { rel: "icon", r#type: "image/svg+xml", href: FAVICON }
         Router::<Route> {}
     }
 }
