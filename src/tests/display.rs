@@ -46,7 +46,7 @@ fn items_pick_their_element_from_their_props() {
     assert!(list.contains("role=\"list\""));
     assert!(list.contains("data-lines=\"full\""));
     assert_eq!(html.matches("role=\"listitem\"").count(), 5);
-    assert!(html.contains("<h3 class=\"g3-list-header\">Account</h3>"));
+    assert!(html.contains("<h2 class=\"g3-list-header\">Account</h2>"));
     assert!(html.contains("href=\"/profile\""));
     assert!(html.contains("role=\"checkbox\""));
     assert!(html.contains("aria-checked=\"true\""));
@@ -90,7 +90,7 @@ fn accordion_items_link_headers_and_panels_by_unique_ids() {
     assert_eq!(all_ids.len(), unique.len());
     assert_eq!(html.matches("aria-expanded=\"true\"").count(), 1);
     assert_eq!(
-        html.matches("<h3 class=\"g3-accordion-heading\"").count(),
+        html.matches("<h2 class=\"g3-accordion-heading\"").count(),
         2
     );
     assert_eq!(html.matches("role=\"region\"").count(), 2);

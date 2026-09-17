@@ -137,6 +137,9 @@ if (root && root.dataset.g3Bound !== "true") {
 /// component directly to refresh only part of a page. It grows to fill its
 /// scroll area, so a pull can start anywhere below the content too.
 ///
+/// A pull needs a pointer. Offer another way to refresh as well, such as a
+/// button in the header, for keyboard and switch users.
+///
 /// ```rust,ignore
 /// let mut refreshing = use_signal(|| false);
 /// rsx! {
@@ -202,8 +205,15 @@ pub fn Refresher(
             "data-refreshing": refreshing.to_string(),
             "data-disabled": disabled.unwrap_or(false).to_string(),
             aria_busy: refreshing.then_some("true"),
-            div { class: "g3-refresher-indicator", role: "status",
-                span { class: "g3-refresher-spinner", aria_hidden: "true" }
+            // Only the refresh itself is announced. The pull prompts change on
+            // every movement and would be read over and over.
+            span { class: "g3-sr-only", role: "status",
+                if refreshing {
+                    "{strings.refreshing}"
+                }
+            }
+            div { class: "g3-refresher-indicator", aria_hidden: "true",
+                span { class: "g3-refresher-spinner" }
                 span { id: label_id, class: "g3-refresher-label",
                     if refreshing {
                         "{strings.refreshing}"

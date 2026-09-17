@@ -1,4 +1,5 @@
 //! Images and tooltips.
+use super::overlay::js_string;
 use crate::state::use_element_id;
 use crate::theme::{classes, merge_classes};
 use dioxus::prelude::*;
@@ -77,6 +78,16 @@ pub enum TooltipPlacement {
     Bottom,
 }
 
+/// Points the trigger at its tooltip, unless the caller already did.
+const DESCRIBE_SCRIPT: &str = r#"
+const tip = document.getElementById(__ID__);
+const anchor = tip && tip.parentElement;
+const control = anchor && anchor.querySelector("a[href], button, input, select, textarea, [tabindex]");
+if (control && control !== tip && !control.hasAttribute("aria-describedby")) {
+    control.setAttribute("aria-describedby", tip.id);
+}
+"#;
+
 /// A short label shown while the trigger is hovered or focused.
 ///
 /// A tooltip only supplements a control that is already named. To have it
@@ -95,8 +106,8 @@ pub fn Tooltip(
     label: String,
     /// Where it appears. Defaults to [`TooltipPlacement::Top`].
     placement: Option<TooltipPlacement>,
-    /// Element id of the tooltip, for the trigger's `aria_describedby`.
-    /// Generated when not given.
+    /// Element id of the tooltip. Generated when not given. The first
+    /// focusable element in `children` is described by it automatically.
     id: Option<String>,
     /// Extra classes for the tooltip.
     class: Option<String>,
@@ -104,12 +115,30 @@ pub fn Tooltip(
     children: Element,
 ) -> Element {
     let id = use_element_id("tooltip", id);
+    // Escape hides the tip until the pointer or focus leaves, as WCAG 1.4.13
+    // asks of content that appears on hover or focus.
+    let mut dismissed = use_signal(|| false);
+    {
+        let id = id.clone();
+        use_effect(move || {
+            document::eval(&DESCRIBE_SCRIPT.replace("__ID__", &js_string(&id)));
+        });
+    }
     let placement = match placement.unwrap_or_default() {
         TooltipPlacement::Top => "top",
         TooltipPlacement::Bottom => "bottom",
     };
     rsx! {
-        span { class: "g3-tooltip-anchor",
+        span {
+            class: "g3-tooltip-anchor",
+            "data-dismissed": dismissed().then_some("true"),
+            onkeydown: move |event| {
+                if event.key() == Key::Escape && !dismissed() {
+                    dismissed.set(true);
+                }
+            },
+            onpointerleave: move |_| dismissed.set(false),
+            onfocusout: move |_| dismissed.set(false),
             {children}
             span {
                 id,

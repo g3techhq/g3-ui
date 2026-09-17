@@ -45,8 +45,9 @@ fn theme_style_attr_declares_every_token() {
 #[test]
 fn adaptive_themes_use_light_dark_only_where_presets_differ() {
     let theme = Theme::system();
-    assert_eq!(theme.on_accent, "#ffffff");
-    assert_eq!(theme.accent, "light-dark(#0066d6, #0a84ff)");
+    assert_eq!(theme.warning, "light-dark(#f5b400, #ffd60a)");
+    assert_eq!(theme.on_warning, "#1f1a00");
+    assert_eq!(theme.accent, "light-dark(#0066d6, #4ea3ff)");
 }
 
 #[test]

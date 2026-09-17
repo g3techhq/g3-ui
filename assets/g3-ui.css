@@ -66,6 +66,9 @@
 .g3-app,
 .g3-theme-provider {
     --g3-color-warning-ink: color-mix(in srgb, var(--g3-color-warning) 40%, var(--g3-color-text));
+    /* The edge of a field or checkbox: at least 3:1 against a card, as
+       WCAG 1.4.11 asks of the boundary that identifies a control. */
+    --g3-color-control-border: color-mix(in srgb, var(--g3-color-text) 50%, var(--g3-color-card));
 }
 
 /* ThemeProvider carries tokens without adding a box of its own. */
@@ -332,6 +335,13 @@ body.g3-overlay-scroll-locked {
     filter: grayscale(0.65);
     box-shadow: none;
     transform: none;
+}
+
+/* A loading button is busy, not unavailable: it keeps its colour. */
+.g3-btn.g3-btn-loading[aria-disabled="true"] {
+    cursor: progress;
+    opacity: 1;
+    filter: none;
 }
 
 .g3-btn-solid:disabled:not(.g3-btn-neutral),
@@ -819,7 +829,7 @@ body.g3-overlay-scroll-locked {
     min-height: 44px;
     margin: 0;
     padding: 0.625rem 0.875rem;
-    border: 1px solid var(--g3-color-border);
+    border: 1px solid var(--g3-color-control-border);
     background: var(--g3-color-card);
     color: var(--g3-color-text);
     font: inherit;
@@ -1034,6 +1044,14 @@ textarea.g3-input {
     cursor: pointer;
 }
 
+/* Keyboard focus rings for controls without one of their own. */
+.g3-range-input:focus-visible,
+.g3-stepper:focus-visible,
+button.g3-chip:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
 .g3-range-input:disabled {
     opacity: 0.45;
     cursor: not-allowed;
@@ -1055,7 +1073,7 @@ textarea.g3-input {
     display: inline-flex;
     align-items: center;
     align-self: flex-start;
-    border: 1px solid var(--g3-color-border);
+    border: 1px solid var(--g3-color-control-border);
     border-radius: 10px;
     background: var(--g3-color-card);
     overflow: hidden;
@@ -1250,7 +1268,7 @@ textarea.g3-input {
     justify-content: center;
     width: 22px;
     height: 22px;
-    border: 2px solid color-mix(in srgb, var(--g3-color-text) 30%, transparent);
+    border: 2px solid var(--g3-color-control-border);
     background: var(--g3-color-card);
     color: var(--g3-color-on-accent);
     transition: border-color var(--g3-transition-normal) var(--g3-transition-md),
@@ -1442,7 +1460,7 @@ textarea.g3-input {
     justify-content: center;
     width: 22px;
     height: 22px;
-    border: 2px solid color-mix(in srgb, var(--g3-color-text) 40%, transparent);
+    border: 2px solid var(--g3-color-control-border);
     border-radius: 50%;
     transition: border-color var(--g3-transition-fast) var(--g3-transition-md);
 }
@@ -2669,6 +2687,15 @@ textarea.g3-input {
     --g3-content-padding: 0;
 }
 
+.g3-content-scroll:focus {
+    outline: none;
+}
+
+.g3-content-scroll:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: -2px;
+}
+
 /* A limited width narrows the children, not the scroller: the side padding
    grows to centre them, so the scrollbar stays at the page edge. */
 .g3-content-scroll[data-width="readable"] {
@@ -3653,6 +3680,10 @@ textarea.g3-input {
     background: var(--g3-toast-accent-color);
     opacity: 0.55;
     animation: g3-toast-timer var(--g3-toast-duration, 3000ms) linear forwards;
+}
+
+.g3-toast[data-paused="true"] .g3-toast-timer {
+    animation-play-state: paused;
 }
 
 .g3-toast[data-state="closed"] .g3-toast-timer,
@@ -4730,10 +4761,27 @@ textarea.g3-input {
     transform: translate(-50%, -0.25rem);
 }
 
-.g3-tooltip-anchor:hover > .g3-tooltip,
-.g3-tooltip-anchor:focus-within > .g3-tooltip {
+/* The tip stays up while the pointer moves onto it, and the bridge covers
+   the gap between it and the trigger. */
+.g3-tooltip::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    height: 0.5rem;
+}
+
+.g3-tooltip[data-placement="top"]::before {
+    top: 100%;
+}
+
+.g3-tooltip[data-placement="bottom"]::before {
+    bottom: 100%;
+}
+
+.g3-tooltip-anchor:is(:hover, :focus-within):not([data-dismissed="true"]) > .g3-tooltip {
     opacity: 1;
     visibility: visible;
+    pointer-events: auto;
     transform: translate(-50%, 0);
 }
 
@@ -5075,13 +5123,7 @@ textarea.g3-input {
     }
 }
 
-/* -- Utilities the components used to borrow from Tailwind --
-
-   These were plain Tailwind classes on component markup, which meant every
-   consumer of the crate needed Tailwind configured to scan g3-ui's own source
-   or the components rendered unstyled - and two of them (`fill-gray`,
-   `text-focused`) only ever existed in the playground's `@theme` block. They
-   are now owned here, so linking this one stylesheet is genuinely enough. */
+/* -- Utilities -- */
 
 /* Visually hidden but still announced. Not `display: none`, which would take it
    out of the accessibility tree along with everything else. */
@@ -5110,7 +5152,50 @@ textarea.g3-input {
     padding-block: 2rem;
 }
 
-/* Opt-in horizontal scrolling for a segment group with more buttons than fit. */
+/* -- Forced colours --
+
+   Windows High Contrast and similar modes replace every colour with a small
+   system palette and drop backgrounds and shadows. Controls drawn from those
+   get outlines and system colours back, so their state stays visible. */
+@media (forced-colors: active) {
+    .g3-control-mark,
+    .g3-switch-ios,
+    .g3-switch-md,
+    .g3-stepper,
+    .g3-chip,
+    .g3-badge {
+        border: 1px solid CanvasText;
+    }
+
+    [aria-checked="true"] > .g3-control-mark,
+    .g3-toggle[aria-checked="true"] :is(.g3-switch-ios, .g3-switch-md) {
+        background: Highlight;
+        forced-color-adjust: none;
+    }
+
+    :is(.g3-segment-btn-ios, .g3-segment-btn-md, .g3-select-option):is([aria-checked="true"], [aria-selected="true"]),
+    .g3-nav-item[aria-current="page"],
+    .g3-item-selected {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    .g3-sheet,
+    .g3-drawer,
+    .g3-modal,
+    .g3-popover,
+    .g3-toast,
+    .g3-card,
+    .g3-list-grouped,
+    .g3-tooltip {
+        border: 1px solid CanvasText;
+    }
+
+    .g3-btn-solid,
+    .g3-fab {
+        border: 1px solid ButtonText;
+    }
+}
 
 }
 

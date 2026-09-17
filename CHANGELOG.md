@@ -182,6 +182,42 @@ cascade layer. The README has a table of the most common renames.
 - Generated element ids are unique, so labels, descriptions, and
   accordion panels no longer collide when a component is used twice.
 
+### Accessibility
+
+Every playground demo passes an axe-core audit in both modes.
+
+- Toasts pause their timer while the pointer is over them or focus is
+  inside, and a toast with an action defaults to the long duration.
+- A loading `Button` stays focusable: it is `aria-disabled` and busy
+  rather than `disabled`, so pressing it does not drop focus to the page.
+  Its spinner is no longer a second live region.
+- Links that open a new tab say so to screen readers.
+- A `SwipeItem` inside a `List` is the list item; the row inside it no
+  longer claims to be another one.
+- `Card`, `AccordionItem`, and `ListHeader` take `heading_level`, and
+  default to `h2` instead of `h3` so a page's outline does not skip a
+  level.
+- `NavItem`s keep their names in a rail, where the visible label is
+  hidden.
+- `Menu` and `Popover` set `aria-haspopup`, `aria-expanded`, and
+  `aria-controls` on their trigger. Menus and `Select` lists jump to the
+  next item starting with a typed letter, and `Select` opens with the
+  arrow keys.
+- `Stepper` supports Home, End, PageUp, and PageDown.
+- `Tooltip` describes its trigger automatically, stays up while hovered,
+  and hides on Escape.
+- `Badge` takes an `aria_label` for counts that need context.
+- The pull-to-refresh prompts are no longer announced on every movement;
+  only the refresh is.
+- `Content`'s scroll area can take keyboard focus, so a page with nothing
+  focusable can still be scrolled from the keyboard.
+- Fields, checkboxes, radios, and steppers use a new
+  `--g3-color-control-border` with at least 3:1 contrast. The dark preset's
+  accent and danger colours meet 4.5:1 as text, and its fills carry dark
+  text (`on_accent` is `#04162b`).
+- Focus rings for ranges, steppers, and chips; Windows High Contrast
+  support; reduced motion is respected when segments scroll.
+
 ### Documentation
 
 - The README covers the 0.4 API, overlays opened from code, styling, and

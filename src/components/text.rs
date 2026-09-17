@@ -100,3 +100,17 @@ pub fn Text(
         },
     }
 }
+
+/// A heading at a caller-chosen level, clamped to `h1`..`h6`. Components with
+/// a title use it so an app can keep its heading outline in order.
+#[component]
+pub(crate) fn Heading(level: u8, class: String, children: Element) -> Element {
+    match level.clamp(1, 6) {
+        1 => rsx! { h1 { class, {children} } },
+        2 => rsx! { h2 { class, {children} } },
+        3 => rsx! { h3 { class, {children} } },
+        4 => rsx! { h4 { class, {children} } },
+        5 => rsx! { h5 { class, {children} } },
+        _ => rsx! { h6 { class, {children} } },
+    }
+}

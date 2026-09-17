@@ -174,3 +174,36 @@ mod shell {
         assert!(html.contains("g3-spinner-sm"));
     }
 }
+
+#[test]
+fn accessibility_names_and_states_hold() {
+    fn app() -> Element {
+        rsx! {
+            Button { loading: true, "Save" }
+            Button { href: "https://example.com", new_tab: true, "Docs" }
+            Badge { aria_label: "3 unread", "3" }
+            NavBar {
+                NavItem { label: "Inbox", badge: "3", href: "/inbox" }
+            }
+            List {
+                SwipeItem {
+                    end_actions: rsx! { SwipeAction { "Delete" } },
+                    Item { label: "Round" }
+                }
+            }
+        }
+    }
+    let html = render(app);
+    // A loading button keeps focus: busy, not disabled, and its spinner is
+    // not a second live region.
+    let busy = element_with_class(&html, "g3-btn-loading");
+    assert!(busy.contains("aria-disabled=\"true\""));
+    assert!(!busy.contains(" disabled=\"true\"") && !busy.contains(" disabled "));
+    assert!(!html.contains("role=\"status\""));
+    assert!(html.contains("(opens in a new tab)"));
+    assert!(html.contains(">3 unread</span>"));
+    assert!(element_with_class(&html, "g3-nav-item").contains("aria-label=\"Inbox, 3\""));
+    // The swipe row is the list item; the row inside it is not another.
+    assert_eq!(html.matches("role=\"listitem\"").count(), 1);
+    assert!(element_with_class(&html, "g3-swipe-item").contains("role=\"listitem\""));
+}

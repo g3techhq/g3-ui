@@ -1,5 +1,6 @@
 //! The element behind every tappable component: a `<button>`, a plain link,
 //! or a router link, chosen from the props the caller set.
+use crate::theme::use_strings;
 use dioxus::prelude::*;
 
 /// Where a tappable component goes when activated.
@@ -59,13 +60,24 @@ pub(crate) fn Pressable(
     class: String,
     #[props(default)] target: Target,
     #[props(default)] disabled: bool,
+    // Ignores presses but keeps focus, for work in progress: a pressed button
+    // that became `disabled` would drop focus to the page.
+    #[props(default)] busy: bool,
     #[props(default)] button_type: ButtonType,
     onclick: Option<EventHandler<MouseEvent>>,
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
     children: Element,
 ) -> Element {
+    let strings = use_strings();
+    let new_tab_note = rsx! {
+        span { class: "g3-sr-only", " {strings.opens_in_new_tab}" }
+    };
+    let mut attributes = attributes;
+    if busy {
+        attributes.push(Attribute::new("aria-disabled", "true", None, false));
+    }
     let handle_click = move |event: MouseEvent| {
-        if disabled {
+        if disabled || busy {
             event.prevent_default();
             return;
         }
@@ -103,6 +115,9 @@ pub(crate) fn Pressable(
                 onclick: handle_click,
                 ..attributes,
                 {children}
+                if new_tab {
+                    {new_tab_note}
+                }
             }
         },
         Target::Route { to, new_tab } => rsx! {
@@ -113,6 +128,9 @@ pub(crate) fn Pressable(
                 onclick: handle_click,
                 attributes,
                 {children}
+                if new_tab {
+                    {new_tab_note}
+                }
             }
         },
     }

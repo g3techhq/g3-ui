@@ -161,16 +161,24 @@ pub fn Stepper(
                 aria_valuemax: max.map(|max| max.to_string()),
                 aria_disabled: disabled.then_some("true"),
                 aria_describedby: described_by(&id, &helper, &None),
-                onkeydown: move |event| match event.key() {
-                    Key::ArrowUp if can_increase => {
-                        event.prevent_default();
-                        change(step);
-                    }
-                    Key::ArrowDown if can_decrease => {
-                        event.prevent_default();
-                        change(-step);
-                    }
-                    _ => {}
+                onkeydown: move |event| {
+                    let delta = match event.key() {
+                        Key::ArrowUp | Key::ArrowRight if can_increase => step,
+                        Key::ArrowDown | Key::ArrowLeft if can_decrease => -step,
+                        Key::PageUp if can_increase => step.saturating_mul(10),
+                        Key::PageDown if can_decrease => -step.saturating_mul(10),
+                        Key::Home if can_decrease => match min {
+                            Some(min) => min - current,
+                            None => return,
+                        },
+                        Key::End if can_increase => match max {
+                            Some(max) => max - current,
+                            None => return,
+                        },
+                        _ => return,
+                    };
+                    event.prevent_default();
+                    change(delta);
                 },
                 button {
                     r#type: "button",

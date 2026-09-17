@@ -12,6 +12,9 @@ use dioxus::prelude::*;
 pub fn Badge(
     /// Colour. Defaults to [`Color::Neutral`].
     color: Option<Color>,
+    /// What the badge means, when its text alone does not say, such as
+    /// "3 unread" for a badge showing "3".
+    aria_label: Option<String>,
     /// Extra classes for the badge.
     class: Option<String>,
     children: Element,
@@ -20,7 +23,12 @@ pub fn Badge(
     rsx! {
         span {
             class: merge_classes(format!("g3-badge g3-badge-{}", color.as_str()), class.as_deref()),
-            {children}
+            if let Some(label) = aria_label {
+                span { aria_hidden: "true", {children} }
+                span { class: "g3-sr-only", "{label}" }
+            } else {
+                {children}
+            }
         }
     }
 }

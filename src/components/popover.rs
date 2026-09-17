@@ -64,6 +64,24 @@ if (el) {
 }
 "#;
 
+/// Describes the panel on the control that opens it: what kind of popup it
+/// is, whether it is open, and which element it is. The trigger is the
+/// caller's own element, so these are set on it from the page. Attributes the
+/// caller already set are left alone.
+const TRIGGER_SCRIPT: &str = r#"
+const anchor = document.getElementById(__ANCHOR__);
+const trigger = anchor && [...anchor.children].find((node) => !node.matches(".g3-popover, .g3-popover-backdrop"));
+const control = trigger && (trigger.matches("button, a, [role=button], [tabindex]") ? trigger : trigger.querySelector("button, a, [role=button], [tabindex]"));
+if (control) {
+    if (!control.hasAttribute("aria-haspopup") || control.dataset.g3Popup === "true") {
+        control.setAttribute("aria-haspopup", __POPUP__);
+        control.dataset.g3Popup = "true";
+    }
+    control.setAttribute("aria-expanded", __OPEN__);
+    control.setAttribute("aria-controls", __PANEL__);
+}
+"#;
+
 #[component]
 pub(crate) fn PopoverFrame(
     open: Signal<bool>,
@@ -82,6 +100,7 @@ pub(crate) fn PopoverFrame(
 ) -> Element {
     let mode = use_component_mode(mode);
     let id = use_element_id("popover", id);
+    let anchor_id = format!("{id}-anchor");
     let dismiss = use_callback(move |()| {
         let mut open = open;
         open.set(false);
@@ -94,10 +113,22 @@ pub(crate) fn PopoverFrame(
     {
         let id = id.clone();
         use_effect(move || {
-            if open() {
+            let is_open = open();
+            if is_open {
                 ever_opened.set(true);
                 document::eval(&FIT_SCRIPT.replace("__ID__", &js_string(&id)));
             }
+            let popup = match role {
+                "menu" | "listbox" => role,
+                _ => "dialog",
+            };
+            document::eval(
+                &TRIGGER_SCRIPT
+                    .replace("__ANCHOR__", &js_string(&format!("{id}-anchor")))
+                    .replace("__POPUP__", &js_string(popup))
+                    .replace("__OPEN__", &js_string(&is_open.to_string()))
+                    .replace("__PANEL__", &js_string(&id)),
+            );
         });
     }
     let is_open = open();
@@ -112,7 +143,7 @@ pub(crate) fn PopoverFrame(
         },
     ]);
     rsx! {
-        span { class: "g3-popover-anchor",
+        span { id: anchor_id, class: "g3-popover-anchor",
             {trigger}
             if is_open {
                 div {

@@ -130,9 +130,11 @@ pub fn Button(
     if loading {
         attributes.push(Attribute::new("aria-busy", "true", None, false));
     }
+    // Loading keeps the button focusable, so a pressed button does not drop
+    // focus to the page while its work runs.
     let start = if loading {
         Some(rsx! {
-            Spinner { size: SpinnerSize::Sm }
+            Spinner { size: SpinnerSize::Sm, decorative: true }
         })
     } else {
         start
@@ -141,7 +143,8 @@ pub fn Button(
         Pressable {
             class: merge_classes(cls, class.as_deref()),
             target: Target::from_props(href, to, new_tab.unwrap_or(false)),
-            disabled: disabled.unwrap_or(false) || loading,
+            disabled: disabled.unwrap_or(false),
+            busy: loading,
             button_type: button_type.unwrap_or_default(),
             onclick,
             attributes,

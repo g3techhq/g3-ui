@@ -181,6 +181,13 @@ pub fn Select<T: Clone + PartialEq + 'static>(
             aria_describedby: describedby,
             aria_invalid: invalid.then_some("true"),
             onclick: move |_| open.toggle(),
+            // Arrow keys open the list, as a native select does.
+            onkeydown: move |event| {
+                if matches!(event.key(), Key::ArrowDown | Key::ArrowUp) && !open() {
+                    event.prevent_default();
+                    open.set(true);
+                }
+            },
             match chosen {
                 Some(option) => rsx! {
                     span { id: format!("{id}-value"), class: "g3-select-value", "{option.label}" }

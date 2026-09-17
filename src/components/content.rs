@@ -91,6 +91,9 @@ pub fn Content(
         div { class: merge_classes("g3-content", class.as_deref()),
             div {
                 class: scroll_cls,
+                // Keyboard users scroll a page with no focusable content by
+                // focusing the scroll area itself.
+                tabindex: "0",
                 "data-padding": padding.to_string(),
                 "data-width": width.unwrap_or_default().as_str(),
                 ErrorBoundary {

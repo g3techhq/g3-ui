@@ -44,6 +44,15 @@ pub enum ListVariant {
     Filled,
 }
 
+/// Marks the children of a [`List`], so rows know to be list items.
+#[derive(Clone, Copy)]
+pub(crate) struct InList;
+
+/// Marks the content of a [`SwipeItem`](crate::SwipeItem): the swipe row is
+/// the list item, so the row inside it is not another one.
+#[derive(Clone, Copy)]
+pub(crate) struct InSwipeRow;
+
 /// Whether an [`Item`] shows a trailing chevron.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ItemDetail {
@@ -83,6 +92,7 @@ pub fn List(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    use_context_provider(|| InList);
     let cls = classes([
         "g3-list",
         mode.pick("g3-list-ios", "g3-list-md"),
@@ -107,6 +117,9 @@ pub fn List(
 /// A section heading inside a [`List`].
 #[component]
 pub fn ListHeader(
+    /// Heading level of the header, 1 to 6. Defaults to 2; set it so the page's
+    /// headings do not skip a level.
+    heading_level: Option<u8>,
     /// Extra classes for the header row.
     class: Option<String>,
     children: Element,
@@ -115,7 +128,7 @@ pub fn ListHeader(
         div {
             class: merge_classes("g3-list-header-row", class.as_deref()),
             role: "listitem",
-            h3 { class: "g3-list-header", {children} }
+            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-list-header", {children} }
         }
     }
 }
@@ -169,6 +182,9 @@ pub fn Item(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    let list_item = use_hook(|| {
+        try_consume_context::<InList>().is_some() && try_consume_context::<InSwipeRow>().is_none()
+    });
     let target = Target::from_props(href, to, new_tab.unwrap_or(false));
     let interactive = onclick.is_some() || target.is_link() || checked.is_some();
     let selected = selected.unwrap_or(false);
@@ -247,15 +263,25 @@ pub fn Item(
     if selected && interactive {
         attributes.push(Attribute::new("aria-current", "true", None, false));
     }
-    if let Some(label) = aria_label.clone() {
+    // A name belongs on the control when there is one, otherwise on the list
+    // item; a plain `div` may not carry one.
+    let (control_label, row_label) = if interactive {
+        (aria_label, None)
+    } else {
+        (None, aria_label)
+    };
+    if let Some(label) = control_label {
         attributes.push(Attribute::new("aria-label", label, None, false));
     }
     rsx! {
-        div { class: "g3-item-row", role: "listitem",
+        div {
+            class: "g3-item-row",
+            role: list_item.then_some("listitem"),
+            aria_label: row_label.filter(|_| list_item),
             if interactive {
                 Pressable { class: cls, target, disabled, onclick, attributes, {content} }
             } else {
-                div { class: cls, aria_label, {content} }
+                div { class: cls, {content} }
             }
         }
     }

@@ -24,6 +24,9 @@ pub fn Spinner(
     /// What is loading, for screen readers. Defaults to
     /// [`Strings::loading`](crate::Strings::loading).
     label: Option<String>,
+    /// Hide it from assistive technology, when something nearby already says
+    /// the work is in progress, such as a button's `aria-busy`.
+    decorative: Option<bool>,
     /// Extra classes for the wrapper.
     class: Option<String>,
 ) -> Element {
@@ -42,9 +45,15 @@ pub fn Spinner(
         },
     ]);
     rsx! {
-        div { class: merge_classes(wrapper_cls, class.as_deref()), role: "status",
-            div { class: classes(["g3-spinner", size_cls]), aria_hidden: "true" }
-            span { class: "g3-sr-only", "{label}" }
+        if decorative.unwrap_or(false) {
+            div { class: merge_classes(wrapper_cls, class.as_deref()), aria_hidden: "true",
+                div { class: classes(["g3-spinner", size_cls]) }
+            }
+        } else {
+            div { class: merge_classes(wrapper_cls, class.as_deref()), role: "status",
+                div { class: classes(["g3-spinner", size_cls]), aria_hidden: "true" }
+                span { class: "g3-sr-only", "{label}" }
+            }
         }
     }
 }

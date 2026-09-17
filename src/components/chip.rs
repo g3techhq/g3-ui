@@ -52,7 +52,6 @@ pub fn Chip(
         None => rsx! {
             span {
                 class: merge_classes("g3-chip g3-chip-static", class.as_deref()),
-                aria_current: selected.unwrap_or(false).then_some("true"),
                 {body}
             }
         },

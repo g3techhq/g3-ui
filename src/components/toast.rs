@@ -64,7 +64,10 @@ pub fn Toast(
     /// Colour of the status dot and tint. Defaults to [`Color::Neutral`].
     /// [`Color::Danger`] and [`Color::Warning`] are announced assertively.
     color: Option<Color>,
-    /// How long it stays up. Defaults to [`ToastDuration::Short`].
+    /// How long it stays up. Defaults to [`ToastDuration::Short`], or
+    /// [`ToastDuration::Long`] when there is an `action`. The timer pauses
+    /// while the pointer is over the toast or focus is inside it, so there is
+    /// time to reach the action.
     duration: Option<ToastDuration>,
     /// A button beside the message, such as "Undo".
     action: Option<Element>,
@@ -82,7 +85,16 @@ pub fn Toast(
     let strings = use_strings();
     let color = color.unwrap_or(Color::Neutral);
     let position = position.unwrap_or_default();
-    let lifetime = duration.unwrap_or_default().as_duration();
+    let lifetime = duration
+        .unwrap_or(if action.is_some() {
+            ToastDuration::Long
+        } else {
+            ToastDuration::Short
+        })
+        .as_duration();
+    let mut hovered = use_signal(|| false);
+    let mut focused = use_signal(|| false);
+    let paused = hovered() || focused();
     let urgent = matches!(color, Color::Danger | Color::Warning);
     let is_open = open();
 
@@ -99,11 +111,20 @@ pub fn Toast(
         }
         if let Some(lifetime) = lifetime {
             spawn(async move {
-                dioxus_sdk_time::sleep(lifetime).await;
-                if *generation.peek() == current && *open.peek() {
-                    let mut open = open;
-                    open.set(false);
+                // Count only the time the toast is not paused.
+                let tick = Duration::from_millis(100);
+                let mut elapsed = Duration::ZERO;
+                while elapsed < lifetime {
+                    dioxus_sdk_time::sleep(tick).await;
+                    if *generation.peek() != current || !*open.peek() {
+                        return;
+                    }
+                    if !*hovered.peek() && !*focused.peek() {
+                        elapsed += tick;
+                    }
                 }
+                let mut open = open;
+                open.set(false);
             });
         }
     });
@@ -144,6 +165,11 @@ pub fn Toast(
             aria_atomic: "true",
             "data-state": if is_open { "open" } else { "closed" },
             "data-timer": if lifetime.is_some() { "active" } else { "none" },
+            "data-paused": paused.then_some("true"),
+            onpointerenter: move |_| hovered.set(true),
+            onpointerleave: move |_| hovered.set(false),
+            onfocusin: move |_| focused.set(true),
+            onfocusout: move |_| focused.set(false),
             style: "--g3-toast-duration: {duration_ms}ms;",
             // Keep the live region in the page but empty while closed, so the
             // message is announced when it appears rather than when it mounts.

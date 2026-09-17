@@ -41,6 +41,9 @@ pub fn Card(
     title: Option<String>,
     /// Secondary line under the title.
     subtitle: Option<String>,
+    /// Heading level of the title, 1 to 6. Defaults to 2; set it so the page's
+    /// headings do not skip a level.
+    heading_level: Option<u8>,
     /// Content at the trailing end of the header, such as a badge or value.
     end: Option<Element>,
     /// Content above everything else, usually an image, drawn edge to edge.
@@ -140,7 +143,7 @@ pub fn Card(
                 div { class: "g3-card-header",
                     div { class: "g3-card-heading",
                         if let Some(title) = title_node {
-                            h3 { class: "g3-card-title", {title} }
+                            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-card-title", {title} }
                         }
                         if let Some(subtitle) = subtitle {
                             span { class: "g3-card-subtitle", "{subtitle}" }

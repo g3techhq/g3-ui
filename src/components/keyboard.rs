@@ -1,4 +1,5 @@
 //! Arrow-key movement inside composite widgets.
+use super::overlay::js_string;
 use dioxus::prelude::*;
 
 const ROVING_SCRIPT: &str = r#"
@@ -10,7 +11,8 @@ if (root && root.dataset.g3Roving !== "true") {
         ? { next: ["ArrowDown", "ArrowRight"], previous: ["ArrowUp", "ArrowLeft"] }
         : { next: ["ArrowRight", "ArrowDown"], previous: ["ArrowLeft", "ArrowUp"] };
     root.addEventListener("keydown", (event) => {
-        const items = [...root.querySelectorAll(selector)].filter((node) => !node.disabled);
+        const items = [...root.querySelectorAll(selector)]
+            .filter((node) => !node.disabled && node.getAttribute("aria-disabled") !== "true");
         const current = items.indexOf(document.activeElement);
         if (current < 0) return;
         const rtl = getComputedStyle(root).direction === "rtl" && !__VERTICAL__;
@@ -35,8 +37,8 @@ if (root && root.dataset.g3Roving !== "true") {
 pub(crate) fn use_roving_selection(id: String, selector: &'static str, vertical: bool) {
     use_effect(move || {
         let script = ROVING_SCRIPT
-            .replace("__ID__", &format!("{id:?}"))
-            .replace("__SELECTOR__", &format!("{selector:?}"))
+            .replace("__ID__", &js_string(&id))
+            .replace("__SELECTOR__", &js_string(selector))
             .replace("__VERTICAL__", if vertical { "true" } else { "false" });
         let _ = document::eval(&script);
     });

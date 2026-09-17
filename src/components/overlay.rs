@@ -110,6 +110,19 @@ if (el) {
             dioxus.send('escape');
             return;
         }
+        // Typing a letter moves to the next item starting with it.
+        if (roving && event.key.length === 1 && event.key.trim() !== "" && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            const items = [...el.querySelectorAll(roving)].filter((node) => !node.disabled && node.getAttribute('aria-disabled') !== 'true');
+            const current = items.indexOf(document.activeElement);
+            const key = event.key.toLowerCase();
+            const ordered = items.slice(current + 1).concat(items.slice(0, current + 1));
+            const match = ordered.find((node) => node.textContent.trim().toLowerCase().startsWith(key));
+            if (match) {
+                event.preventDefault();
+                match.focus();
+            }
+            return;
+        }
         if (roving && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
             const items = [...el.querySelectorAll(roving)].filter((node) => !node.disabled && node.getAttribute('aria-disabled') !== 'true');
             if (items.length === 0) return;

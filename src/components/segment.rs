@@ -18,7 +18,9 @@ if (group && group.dataset.g3Scroll !== "true") {
         group.dataset.overflowStart = String(group.scrollLeft > 1);
         group.dataset.overflowEnd = String(group.scrollLeft < max - 1);
     };
-    const reveal = (smooth) => {
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const reveal = (animate) => {
+        const smooth = animate && !calm.matches;
         const selected = group.querySelector("[aria-checked=true], [aria-selected=true]");
         if (!selected) return;
         // The group is positioned, so this is already relative to it.

@@ -1,5 +1,6 @@
 //! Swipeable list rows.
 use super::Color;
+use super::list::{InList, InSwipeRow};
 use super::overlay::js_string;
 use crate::state::use_element_id;
 use crate::theme::{classes, merge_classes, use_strings};
@@ -275,6 +276,8 @@ pub fn SwipeItem(
 ) -> Element {
     let strings = use_strings();
     let row_id = use_element_id("swipe", None);
+    let in_list = use_hook(|| try_consume_context::<InList>().is_some());
+    use_context_provider(|| InSwipeRow);
     let start_behavior = start_behavior.unwrap_or_default();
     let end_behavior = end_behavior.unwrap_or_default();
     let has_start = start_actions.is_some();
@@ -394,6 +397,7 @@ pub fn SwipeItem(
         div {
             id: row_id.clone(),
             class: merge_classes("g3-swipe-item", class.as_deref()),
+            role: in_list.then_some("listitem"),
             style: format!(
                 "--g3-swipe-offset: {current}px; --g3-swipe-progress: {};",
                 (current / current_width).abs().min(1.4),

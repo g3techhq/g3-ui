@@ -157,6 +157,12 @@ pub fn NavItem(
         NavItemGroup::Secondary => "g3-nav-item-secondary",
     };
     let badge = badge.filter(|badge| !badge.is_empty());
+    // The rail hides the visible label, which also hides it from assistive
+    // technology, so the name is given directly.
+    let name = match &badge {
+        Some(badge) => format!("{label}, {badge}"),
+        None => label.clone(),
+    };
     rsx! {
         Pressable {
             class: merge_classes(classes(["g3-nav-item", group_cls]), class.as_deref()),
@@ -164,16 +170,14 @@ pub fn NavItem(
             disabled: disabled.unwrap_or(false),
             onclick,
             aria_current: selected.unwrap_or(false).then_some("page"),
+            aria_label: name,
             span { class: "g3-nav-item-icon", aria_hidden: "true",
                 {icon}
                 if let Some(badge) = &badge {
                     span { class: "g3-nav-item-badge", "{badge}" }
                 }
             }
-            span { class: "g3-nav-item-label", "{label}" }
-            if let Some(badge) = badge {
-                span { class: "g3-sr-only", ", {badge}" }
-            }
+            span { class: "g3-nav-item-label", aria_hidden: "true", "{label}" }
         }
     }
 }

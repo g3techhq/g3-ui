@@ -131,8 +131,9 @@ impl Theme {
     /// than inverted.
     pub fn default_dark() -> Self {
         Self {
-            accent: "#0a84ff".into(),
-            on_accent: "#ffffff".into(),
+            // Light enough for 4.5:1 as text on cards, so fills carry dark text.
+            accent: "#4ea3ff".into(),
+            on_accent: "#04162b".into(),
             text: "#ffffff".into(),
             text_secondary: "#d1d5db".into(),
             text_tertiary: "#a1a1aa".into(),
@@ -146,7 +147,7 @@ impl Theme {
             success: "#30d158".into(),
             warning: "#ffd60a".into(),
             on_warning: "#1f1a00".into(),
-            danger: "#ff453a".into(),
+            danger: "#ff6b61".into(),
             color_scheme: "dark".into(),
         }
     }
@@ -292,6 +293,8 @@ pub struct Strings {
     pub search: String,
     /// Accessible name of a swipe row's keyboard "show actions" control.
     pub show_actions: String,
+    /// Read after a link that opens in a new tab.
+    pub opens_in_new_tab: String,
 }
 
 impl Default for Strings {
@@ -316,6 +319,7 @@ impl Default for Strings {
             back: "Back".into(),
             search: "Search".into(),
             show_actions: "Show actions".into(),
+            opens_in_new_tab: "(opens in a new tab)".into(),
         }
     }
 }
