@@ -251,13 +251,14 @@ fn card_and_list_variants_set_their_surface() {
             Card { title: "Raised", "a" }
             Card { variant: CardVariant::Flat, title: "Flat", "b" }
             Card { variant: CardVariant::Filled, title: "Filled", "c" }
-            List { variant: ListVariant::Grouped, Item { label: "Row" } }
+            List { variant: ListVariant::Flat, Item { label: "Row" } }
         }
     }
     let html = render(app);
     assert_eq!(html.matches("g3-card-flat").count(), 1);
     assert_eq!(html.matches("g3-card-filled").count(), 1);
-    assert!(element_with_class(&html, "g3-list").contains("g3-list-grouped"));
+    let list = element_with_class(&html, "g3-list");
+    assert!(list.contains("g3-list-grouped") && list.contains("g3-list-flat"));
 }
 
 #[test]

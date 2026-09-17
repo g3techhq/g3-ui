@@ -906,6 +906,26 @@ textarea.g3-input {
 }
 
 /* Select */
+.g3-field:is(.g3-select-width-fit, .g3-select-width-sm, .g3-select-width-md, .g3-select-width-lg) {
+    max-width: 100%;
+}
+
+.g3-field.g3-select-width-fit {
+    width: max-content;
+}
+
+.g3-field.g3-select-width-sm {
+    width: 8rem;
+}
+
+.g3-field.g3-select-width-md {
+    width: 12rem;
+}
+
+.g3-field.g3-select-width-lg {
+    width: 18rem;
+}
+
 .g3-select {
     display: flex;
     align-items: center;
@@ -1802,6 +1822,13 @@ textarea.g3-input {
                 visibility 0s linear var(--g3-sheet-duration);
 }
 
+/* Entering: the height is already where it should be. A detent reset as the
+   sheet opens must not grow or shrink it while it slides in. */
+.g3-sheet-enter.g3-sheet-bottom[data-detent] {
+    transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
+                visibility 0s linear var(--g3-sheet-duration);
+}
+
 .g3-sheet-bottom[data-state="closed"] {
     transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-enter-y), 0);
 }
@@ -2579,15 +2606,17 @@ textarea.g3-input {
 
 /* Every AppWrapper root, with or without the shell layout. Sheets and
    drawers resize or move its other children. */
+/* Every AppWrapper root is the container its responsive rules measure, with
+   or without the full-height shell layout, so a page embedded with
+   `layout: false` still gets wide-screen menus and floating sheets. */
 .g3-app {
-    --g3-side-sheet-width: min(18rem, 72vw);
+    --g3-side-sheet-width: min(18rem, 72cqw);
     isolation: isolate;
+    container-name: g3-app-shell;
+    container-type: inline-size;
 }
 
 .g3-app-shell {
-    --g3-side-sheet-width: min(18rem, 72cqw);
-    container-name: g3-app-shell;
-    container-type: inline-size;
     display: flex;
     flex-direction: column;
     background: var(--g3-color-bg);
@@ -2639,11 +2668,11 @@ textarea.g3-input {
 /* A limited width narrows the children, not the scroller: the side padding
    grows to centre them, so the scrollbar stays at the page edge. */
 .g3-content-scroll[data-width="readable"] {
-    --g3-content-max-width: 45rem;
+    --g3-content-max-width: 40rem;
 }
 
 .g3-content-scroll[data-width="wide"] {
-    --g3-content-max-width: 75rem;
+    --g3-content-max-width: 60rem;
 }
 
 .g3-content-scroll:is([data-width="readable"], [data-width="wide"]) {
@@ -2969,6 +2998,17 @@ textarea.g3-input {
     box-shadow: var(--g3-shadow-md-elevation-1);
 }
 
+.g3-list.g3-list-flat {
+    border: 1px solid var(--g3-color-border);
+    box-shadow: none;
+}
+
+.g3-list.g3-list-filled {
+    --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 6%, var(--g3-color-card));
+    background: var(--g3-list-surface);
+    box-shadow: none;
+}
+
 .g3-item-row {
     display: block;
     width: 100%;
@@ -3240,7 +3280,7 @@ textarea.g3-input {
     max-height: var(--g3-swipe-row-max-height, 7.5rem);
     overflow: hidden;
     isolation: isolate;
-    background: var(--g3-color-card);
+    background: var(--g3-list-surface, var(--g3-color-card));
     touch-action: pan-y;
     transition: max-height 180ms var(--g3-transition-md), margin 180ms var(--g3-transition-md), opacity 140ms ease;
 }
@@ -3325,11 +3365,11 @@ textarea.g3-input {
 }
 
 .g3-swipe-content {
-    --g3-swipe-edge: var(--g3-color-card);
+    --g3-swipe-edge: var(--g3-list-surface, var(--g3-color-card));
     position: relative;
     z-index: 1;
     overflow: hidden;
-    background: var(--g3-color-card);
+    background: var(--g3-list-surface, var(--g3-color-card));
     transform: translate3d(var(--g3-swipe-offset, 0px), 0, 0);
     /* The release, not the drag. A row that is let go past the activation point
        has much further to travel than one let go just short of it, and a single

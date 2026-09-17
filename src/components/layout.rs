@@ -261,6 +261,7 @@ fn LayoutPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Layout",
     description: "Stacks, grids, and text styles.",
+    components: ["Stack", "Grid", "Text"],
     demo: LayoutPlaygroundDemo,
     source: "src/components/layout.rs",
 }

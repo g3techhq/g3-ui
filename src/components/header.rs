@@ -134,6 +134,7 @@ fn HeaderPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Header",
     description: "Page top bar with start, title, end, and toolbar slots.",
+    components: ["Header", "BackButton"],
     demo: HeaderPlaygroundDemo,
     source: "src/components/header.rs",
 }

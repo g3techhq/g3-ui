@@ -5,15 +5,24 @@ use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
 use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
 
-/// How wide [`Content`] lets its children grow on a wide shell.
+/// How wide [`Content`] lets its children grow.
+///
+/// A limit only shows once the page is wider than it. The children are
+/// centred in a column of at most that width, and the rest of the page is
+/// empty margin; the scroll area, and its scrollbar, still span the page. On
+/// a phone every option looks the same.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ContentWidth {
-    /// Span the whole page.
+    /// No limit: children span the page, less its padding. Suits lists,
+    /// maps, and tables that use every column.
     #[default]
     Full,
-    /// Stay within a comfortable reading width, about 45rem, centred.
+    /// At most 40rem (640px), about 70 characters of body text a line. Suits
+    /// articles, settings, and forms, which are hard to read when stretched
+    /// across a monitor.
     Readable,
-    /// Stay within about 75rem, centred, for dashboards and grids.
+    /// At most 60rem (960px). Suits dashboards and card grids that should
+    /// grow on a laptop but not sprawl across a large monitor.
     Wide,
 }
 
@@ -46,8 +55,9 @@ impl ContentWidth {
 pub fn Content(
     /// Pad the content. Defaults to `true`; the padding grows on wide shells.
     padding: Option<bool>,
-    /// How wide the content may grow. Defaults to [`ContentWidth::Full`].
-    /// The scroll area, and its scrollbar, always span the whole page.
+    /// The widest the children may grow; see [`ContentWidth`]. Defaults to
+    /// [`ContentWidth::Full`]. The scroll area, and its scrollbar, always span
+    /// the whole page.
     width: Option<ContentWidth>,
     /// Leave space after the last child so it clears a bottom tab bar or FAB.
     /// Defaults to `true`.
@@ -127,7 +137,17 @@ fn ContentPlaygroundDemo() -> Element {
     let width = use_signal(|| ContentWidth::Readable);
     let pull = use_signal(|| true);
     let mut refreshing = use_signal(|| false);
+    let mut column = use_signal(|| 0.0_f64);
     let mode = crate::use_component_mode(None);
+    let explain = match width() {
+        ContentWidth::Full => "Full: no limit. The cards span the page, less its padding.",
+        ContentWidth::Readable => {
+            "Readable: at most 640px, centred. Visible on the Desktop viewport, which is about 790px wide."
+        }
+        ContentWidth::Wide => {
+            "Wide: at most 960px, centred. The Desktop viewport is narrower than that, so it matches Full here; on a large monitor it would not."
+        }
+    };
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
@@ -142,7 +162,7 @@ fn ContentPlaygroundDemo() -> Element {
                     crate::SegmentButton { value: ContentWidth::Wide, "Wide" }
                 }
                 crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
-                    "Width limits show on the Desktop viewport. The scrollbar stays at the edge either way."
+                    "{explain} The scrollbar stays at the page edge either way."
                 }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
@@ -164,6 +184,19 @@ fn ContentPlaygroundDemo() -> Element {
                             crate::FabButton { aria_label: "Add", "+" }
                         }
                     }),
+                    div {
+                        class: "playground-content-ruler",
+                        onresize: move |event| {
+                            if let Ok(size) = event.data().get_content_box_size() {
+                                column.set(size.width);
+                            }
+                        },
+                        if column() > 0.0 {
+                            "Content column: {column():.0}px wide"
+                        } else {
+                            "Content column"
+                        }
+                    }
                     for index in 1..=12 {
                         crate::Card { title: format!("Hole {index}"),
                             "Scrollable content with enough rows to overflow."

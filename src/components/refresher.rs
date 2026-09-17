@@ -237,7 +237,7 @@ fn RefresherPlaygroundDemo() -> Element {
                             refreshing.set(false);
                         });
                     },
-                    crate::List { variant: crate::ListVariant::Grouped,
+                    crate::List { variant: crate::ListVariant::Raised,
                         crate::Item { label: "Pull down anywhere to refresh" }
                         crate::Item { label: "Refreshed", metadata: "{count} times" }
                     }
@@ -250,6 +250,7 @@ fn RefresherPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Refresher",
     description: "Pull-to-refresh with a threshold and elastic pull.",
+    components: ["Refresher", "Content"],
     demo: RefresherPlaygroundDemo,
     source: "src/components/refresher.rs",
 }

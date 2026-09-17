@@ -1,6 +1,6 @@
 //! Floating panels anchored to a trigger: popovers and menus.
 use super::Color;
-use super::overlay::use_overlay_focus_with;
+use super::overlay::{js_string, use_overlay_focus_with};
 use crate::components::pressable::{Pressable, Target};
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
@@ -31,6 +31,39 @@ impl PopoverPlacement {
     }
 }
 
+/// Flips an open popover to the other side of its trigger when the requested
+/// placement would run past the edge of the app, as a menu at the end of a
+/// toolbar would. Sheets are left alone.
+const FIT_SCRIPT: &str = r#"
+const el = document.getElementById(__ID__);
+if (el) {
+    const base = el.dataset.basePlacement || el.getAttribute("data-placement");
+    el.dataset.basePlacement = base;
+    el.setAttribute("data-placement", base);
+    if (getComputedStyle(el).position === "absolute") {
+        const app = el.closest(".g3-app");
+        const box = app ? app.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+        const bounds = {
+            left: Math.max(box.left, 0) + 8,
+            right: Math.min(box.right, innerWidth) - 8,
+            top: Math.max(box.top, 0) + 8,
+            bottom: Math.min(box.bottom, innerHeight) - 8,
+        };
+        const rect = el.getBoundingClientRect();
+        let [vertical, horizontal] = base.split("-");
+        const rtl = getComputedStyle(el).direction === "rtl";
+        const growsRight = (horizontal === "start") !== rtl;
+        if (growsRight ? rect.right > bounds.right : rect.left < bounds.left) {
+            horizontal = horizontal === "start" ? "end" : "start";
+        }
+        if (vertical === "bottom" ? rect.bottom > bounds.bottom : rect.top < bounds.top) {
+            vertical = vertical === "bottom" ? "top" : "bottom";
+        }
+        el.setAttribute("data-placement", vertical + "-" + horizontal);
+    }
+}
+"#;
+
 #[component]
 pub(crate) fn PopoverFrame(
     open: Signal<bool>,
@@ -58,11 +91,15 @@ pub(crate) fn PopoverFrame(
     });
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
     let mut ever_opened = use_signal(|| false);
-    use_effect(move || {
-        if open() {
-            ever_opened.set(true);
-        }
-    });
+    {
+        let id = id.clone();
+        use_effect(move || {
+            if open() {
+                ever_opened.set(true);
+                document::eval(&FIT_SCRIPT.replace("__ID__", &js_string(&id)));
+            }
+        });
+    }
     let is_open = open();
     let state = if is_open { "open" } else { "closed" };
     let cls = classes([
@@ -345,6 +382,7 @@ fn MenuPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Menu",
     description: "Menus of actions and popovers of detail, anchored to the control that opens them.",
+    components: ["Menu", "MenuItem", "Popover"],
     demo: MenuPlaygroundDemo,
     source: "src/components/popover.rs",
 }

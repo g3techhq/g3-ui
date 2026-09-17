@@ -252,6 +252,7 @@ fn NavPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Navigation",
     description: "Bottom bars and side rails, adaptive to the shell width.",
+    components: ["TabLayout", "AdaptiveNav", "NavBar", "NavRail", "NavItem"],
     demo: NavPlaygroundDemo,
     source: "src/components/nav.rs",
 }

@@ -47,7 +47,8 @@ cascade layer. The README has a table of the most common renames.
   `Raised` (the default, with a shadow), `Flat` (a border and no shadow), or
   `Filled` (a tinted surface, the old `inset`).
 - **Breaking:** `List`'s `inset: bool` is now `variant: ListVariant`:
-  `Plain` (the default) or `Grouped` (the old `inset: true`).
+  `Plain` (the default, edge to edge) or a rounded group drawn like a card:
+  `Raised` (the old `inset: true`), `Flat`, or `Filled`.
 - **Breaking:** `SwipeItem`'s `behavior` is split into `start_behavior` and
   `end_behavior`, so each edge can reveal, activate, or dismiss on its own.
   Revealed actions are as wide as their buttons, and pressing one closes
@@ -122,9 +123,13 @@ cascade layer. The README has a table of the most common renames.
   visible and usable. Detents are fractions of the app's height, so `1.0`
   fills it; they were fractions of the browser window. Detents can change
   while the sheet is mounted.
-- `Content` takes `width: ContentWidth` (`Full`, `Readable`, `Wide`) to
-  narrow its children on wide shells while the scrollbar stays at the page
+- `Content` takes `width: ContentWidth` (`Full`, `Readable` at 40rem, `Wide`
+  at 60rem) to narrow its children on wide shells while the scrollbar stays at the page
   edge, and `on_refresh`/`refreshing` for pull to refresh.
+- `Select` takes `width: SelectWidth`: `Fill` (the default), `Fit` to its
+  chosen option, or a fixed `Sm`, `Md`, or `Lg`.
+- Popovers, menus, and `Select` lists flip to the other side of their
+  trigger when they would run past the edge of the app.
 - `Grid` takes `wide_columns` and `wide_gap` for shells `48rem` and wider.
 - Scrollable `SegmentGroup`s scroll by mouse drag and wheel as well as
   touch, fade the edge that has more buttons, and keep the selected button in
@@ -148,6 +153,14 @@ cascade layer. The README has a table of the most common renames.
 - Sheets animate in and out over 0.5s on a softer curve instead of 0.25s,
   which read as popping in. The side sheet backdrop fades instead of sliding
   in with the sheet.
+- A `BottomSheet` with detents slides in at its resting height instead of
+  resizing on the way in. Its entrance ends when the animation does, so
+  later detent changes still animate.
+- An `AppWrapper` with `layout: false` is still the container its wide
+  layout rules measure, so a `Select` in such a page opens as a menu on wide
+  screens instead of a full-width sheet.
+- A swipe released outside its row finishes instead of leaving the row
+  stuck mid-drag.
 - Accordion panels open without a jump: the padding no longer snaps in
   before the height animates.
 - Wide `Content` shows a thin scrollbar without arrow buttons.

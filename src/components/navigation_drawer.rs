@@ -62,14 +62,29 @@ pub fn NavigationDrawer(
 fn NavigationDrawerPlaygroundDemo() -> Element {
     use dioxus_icons::lucide::Menu;
     let mut open = use_signal(|| true);
+    let edge = use_signal(|| SheetEdge::Start);
+    let toggle = rsx! {
+        crate::Button {
+            fill: crate::ButtonFill::Clear,
+            size: crate::ButtonSize::Sm,
+            aria_label: "Toggle navigation",
+            onclick: move |_| open.toggle(),
+            Menu { size: 22 }
+        }
+    };
+    let at_start = edge() == SheetEdge::Start;
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
                 crate::Checkbox { checked: open, label: "Open" }
+                crate::SegmentGroup { value: edge, aria_label: "Side",
+                    crate::SegmentButton { value: SheetEdge::Start, "Start (left)" }
+                    crate::SegmentButton { value: SheetEdge::End, "End (right)" }
+                }
             },
             crate::AppWrapper { class: "g3-playground-device-app",
-                NavigationDrawer { open,
+                NavigationDrawer { open, edge: edge(),
                     crate::List { lines: crate::ListLines::None,
                         crate::Item { label: "Rounds", selected: true, onclick: |_| {} }
                         crate::Item { label: "Players", onclick: |_| {} }
@@ -79,15 +94,8 @@ fn NavigationDrawerPlaygroundDemo() -> Element {
                 div { class: "g3-sheet-demo-content-root",
                     crate::Header {
                         title: "Rounds",
-                        start: rsx! {
-                            crate::Button {
-                                fill: crate::ButtonFill::Clear,
-                                size: crate::ButtonSize::Sm,
-                                aria_label: "Toggle navigation",
-                                onclick: move |_| open.toggle(),
-                                Menu { size: 22 }
-                            }
-                        },
+                        start: at_start.then(|| toggle.clone()),
+                        end: (!at_start).then_some(toggle),
                     }
                     crate::Content { footer_space: false,
                         crate::Card { title: "Split layout", "The page narrows beside the drawer." }

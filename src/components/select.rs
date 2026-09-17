@@ -6,6 +6,22 @@ use crate::theme::{ComponentMode, classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{Check, ChevronDown};
 
+/// How wide a [`Select`] is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum SelectWidth {
+    /// As wide as its container, like other form fields.
+    #[default]
+    Fill,
+    /// As wide as the chosen option, for toolbars and inline filters.
+    Fit,
+    /// A fixed 8rem.
+    Sm,
+    /// A fixed 12rem.
+    Md,
+    /// A fixed 18rem.
+    Lg,
+}
+
 /// One choice in a [`Select`].
 ///
 /// ```
@@ -117,11 +133,21 @@ pub fn Select<T: Clone + PartialEq + 'static>(
     onchange: Option<EventHandler<T>>,
     /// Element id of the trigger. Generated when not given.
     id: Option<String>,
+    /// How wide the field is. Defaults to [`SelectWidth::Fill`].
+    width: Option<SelectWidth>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the field wrapper.
     class: Option<String>,
 ) -> Element {
+    let width_cls = match width.unwrap_or_default() {
+        SelectWidth::Fill => "",
+        SelectWidth::Fit => "g3-select-width-fit",
+        SelectWidth::Sm => "g3-select-width-sm",
+        SelectWidth::Md => "g3-select-width-md",
+        SelectWidth::Lg => "g3-select-width-lg",
+    };
+    let class = Some(crate::theme::merge_classes(width_cls, class.as_deref()));
     let mode = use_component_mode(mode);
     let strings = use_strings();
     let id = use_element_id("select", id);
@@ -250,14 +276,27 @@ fn SelectOptionRow<T: Clone + PartialEq + 'static>(
 fn SelectPlaygroundDemo() -> Element {
     let club = use_signal(|| "Driver".to_string());
     let disabled = use_signal(|| false);
+    let width = use_signal(|| SelectWidth::Fill);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
                 crate::Checkbox { checked: disabled, label: "Disabled" }
+                Select {
+                    label: "Width",
+                    value: width,
+                    options: vec![
+                        SelectOption::new(SelectWidth::Fill, "Fill container"),
+                        SelectOption::new(SelectWidth::Fit, "Fit content"),
+                        SelectOption::new(SelectWidth::Sm, "Small (8rem)"),
+                        SelectOption::new(SelectWidth::Md, "Medium (12rem)"),
+                        SelectOption::new(SelectWidth::Lg, "Large (18rem)"),
+                    ],
+                }
             },
             Select {
                 label: "Club",
                 value: club,
+                width: width(),
                 disabled: disabled(),
                 helper: format!("Selected: {club}"),
                 options: vec![
@@ -269,6 +308,7 @@ fn SelectPlaygroundDemo() -> Element {
             }
             Select::<u8> {
                 label: "Tee time",
+                width: width(),
                 placeholder: "Choose a time",
                 options: vec![SelectOption::new(8, "8:00"), SelectOption::new(9, "9:00")],
                 default_value: 0,

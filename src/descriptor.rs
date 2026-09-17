@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 /// by generated documentation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ComponentDescriptor {
-    /// The component's public name, e.g. `"G3Button"`.
+    /// The gallery entry's name, e.g. `"Button"`.
     pub name: &'static str,
     /// One sentence describing what the component is for.
     pub description: &'static str,
@@ -19,8 +19,108 @@ pub struct ComponentPlaygroundDemo {
     pub descriptor: ComponentDescriptor,
     /// Renders the live demo.
     pub render: fn() -> dioxus::prelude::Element,
-    /// The demo's source, displayed next to it so the example can be copied.
+    /// The source file holding the demo, displayed next to it so the example
+    /// can be copied.
     pub source: &'static str,
+    /// The demo function's name, to find it in `source`.
+    pub demo_name: &'static str,
+    /// The public components the demo shows, whose own source the playground
+    /// lists beside the demo's. See [`component_source`].
+    pub components: &'static [&'static str],
+}
+
+/// Every file that defines a public component.
+#[cfg(feature = "playground")]
+const COMPONENT_FILES: &[&str] = &[
+    include_str!("components/accordion.rs"),
+    include_str!("components/action_sheet.rs"),
+    include_str!("components/alert.rs"),
+    include_str!("components/app_wrapper.rs"),
+    include_str!("components/avatar.rs"),
+    include_str!("components/back_button.rs"),
+    include_str!("components/badge.rs"),
+    include_str!("components/bottom_sheet.rs"),
+    include_str!("components/button.rs"),
+    include_str!("components/card.rs"),
+    include_str!("components/checkbox.rs"),
+    include_str!("components/chip.rs"),
+    include_str!("components/confirm_modal.rs"),
+    include_str!("components/content.rs"),
+    include_str!("components/divider.rs"),
+    include_str!("components/fab.rs"),
+    include_str!("components/field.rs"),
+    include_str!("components/header.rs"),
+    include_str!("components/infinite_scroll.rs"),
+    include_str!("components/info_button.rs"),
+    include_str!("components/layout.rs"),
+    include_str!("components/list.rs"),
+    include_str!("components/media.rs"),
+    include_str!("components/modal.rs"),
+    include_str!("components/nav.rs"),
+    include_str!("components/navigation_drawer.rs"),
+    include_str!("components/overlay_host.rs"),
+    include_str!("components/popover.rs"),
+    include_str!("components/progress.rs"),
+    include_str!("components/radio.rs"),
+    include_str!("components/range.rs"),
+    include_str!("components/refresher.rs"),
+    include_str!("components/searchbar.rs"),
+    include_str!("components/segment.rs"),
+    include_str!("components/select.rs"),
+    include_str!("components/side_sheet.rs"),
+    include_str!("components/skeleton.rs"),
+    include_str!("components/spinner.rs"),
+    include_str!("components/swipe.rs"),
+    include_str!("components/tab_layout.rs"),
+    include_str!("components/tabs.rs"),
+    include_str!("components/text.rs"),
+    include_str!("components/toast.rs"),
+    include_str!("components/toggle.rs"),
+];
+
+/// The definition of the public component `name`: its doc comment,
+/// attributes, signature, and body. `None` if no component has that name.
+#[cfg(feature = "playground")]
+pub fn component_source(name: &str) -> Option<&'static str> {
+    COMPONENT_FILES
+        .iter()
+        .find_map(|file| function_source(file, &format!("pub fn {name}")))
+}
+
+/// The function whose declaration starts with `declaration`, from its doc
+/// comment through its closing brace.
+#[cfg(feature = "playground")]
+pub fn function_source(file: &'static str, declaration: &str) -> Option<&'static str> {
+    let at = [format!("{declaration}("), format!("{declaration}<")]
+        .iter()
+        .filter_map(|pattern| file.find(pattern.as_str()))
+        .min()?;
+    // Back up over the doc comment and attributes above the function.
+    let mut start = file[..at].rfind('\n').map_or(0, |i| i + 1);
+    while start > 0 {
+        let previous = file[..start - 1].rfind('\n').map_or(0, |i| i + 1);
+        let line = file[previous..start - 1].trim_start();
+        if line.starts_with("///") || line.starts_with("#[") {
+            start = previous;
+        } else {
+            break;
+        }
+    }
+    let open = at + file[at..].find('{')?;
+    let mut depth = 0_usize;
+    for (offset, ch) in file[open..].char_indices() {
+        match ch {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(&file[start..=open + offset]);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 #[cfg(feature = "playground")]
 impl PartialEq for ComponentPlaygroundDemo {
@@ -84,6 +184,21 @@ macro_rules! g3_playground {
         demo: $demo:ident,
         source: $source:literal $(,)?
     ) => {
+        $crate::g3_playground! {
+            name: $name,
+            description: $description,
+            components: [$name],
+            demo: $demo,
+            source: $source,
+        }
+    };
+    (
+        name: $name:literal,
+        description: $description:literal,
+        components: [$($component:expr),* $(,)?],
+        demo: $demo:ident,
+        source: $source:literal $(,)?
+    ) => {
         pub const DESCRIPTOR: $crate::ComponentDescriptor = $crate::ComponentDescriptor {
             name: $name,
             description: $description,
@@ -93,6 +208,8 @@ macro_rules! g3_playground {
             descriptor: DESCRIPTOR,
             render: __g3_playground_render,
             source: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $source)),
+            demo_name: stringify!($demo),
+            components: &[$($component),*],
         };
         #[cfg(feature = "playground")]
         fn __g3_playground_render() -> dioxus::prelude::Element {

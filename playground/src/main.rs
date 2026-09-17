@@ -272,10 +272,13 @@ fn Playground() -> Element {
     } else {
         selected.descriptor.description
     };
-    let selected_source = if showing_transitions {
-        transition_showcase::SOURCE.to_string()
+    let source_panels = if showing_transitions {
+        vec![(
+            "Transition showcase routes".to_string(),
+            transition_showcase::SOURCE.to_string(),
+        )]
     } else {
-        playground_demo_source(selected.source)
+        source_panels(&selected)
     };
     let play_all = move |_| {
         if playing() {
@@ -337,7 +340,12 @@ fn Playground() -> Element {
                         }
                     },
                     end: rsx! {
-                        Select { value: theme, aria_label: "Theme", options: theme_options }
+                        Select {
+                            value: theme,
+                            aria_label: "Theme",
+                            width: g3_ui::SelectWidth::Fit,
+                            options: theme_options,
+                        }
                     },
                     toolbar: rsx! {
                         div { class: "playground-header-toggles",
@@ -369,13 +377,16 @@ fn Playground() -> Element {
                         "data-playground-viewport": active_viewport.as_str(),
                         Outlet::<Route> {}
                     }
-                    g3_ui::AccordionGroup { value: source_value, class: "source-panel",
-                        g3_ui::AccordionItem {
-                            value: "source".to_string(),
-                            label: "Source".to_string(),
-                            Code {
-                                src: SourceCode::new(Language::Rust, selected_source.clone()),
-                                theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                    g3_ui::AccordionGroup { value: source_value, multiple: true, class: "source-panel",
+                        for (title, code) in source_panels {
+                            g3_ui::AccordionItem {
+                                key: "{title}",
+                                value: title.clone(),
+                                label: title.clone(),
+                                Code {
+                                    src: SourceCode::new(Language::Rust, code),
+                                    theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                                }
                             }
                         }
                     }
@@ -551,37 +562,22 @@ fn PlaygroundViewportDemo(
         }
     }
 }
-fn playground_demo_source(source: &str) -> String {
-    let Some(marker_index) = source.find("PlaygroundDemo") else {
-        return source.trim().to_string();
-    };
-    let function_start = source[..marker_index]
-        .rfind("pub fn")
-        .unwrap_or(marker_index);
-    let start = source[..function_start]
-        .rfind("#[component]")
-        .unwrap_or(function_start);
-    let Some(open_brace) = source[function_start..]
-        .find('{')
-        .map(|index| function_start + index)
-    else {
-        return source[start..].trim().to_string();
-    };
-    let mut depth = 0_i32;
-    for (index, ch) in source[open_brace..].char_indices() {
-        match ch {
-            '{' => depth += 1,
-            '}' => {
-                depth -= 1;
-                if depth == 0 {
-                    let end = open_brace + index + ch.len_utf8();
-                    return source[start..end].trim().to_string();
-                }
-            }
-            _ => {}
+/// The source panels under a demo: the demo itself, then each component it
+/// shows, titled so the reader knows which is which.
+fn source_panels(demo: &ComponentPlaygroundDemo) -> Vec<(String, String)> {
+    let mut panels = Vec::new();
+    let demo_code = g3_ui::function_source(demo.source, &format!("fn {}", demo.demo_name))
+        .unwrap_or(demo.source);
+    panels.push((
+        format!("{} demo source", demo.descriptor.name),
+        demo_code.trim().to_string(),
+    ));
+    for name in demo.components {
+        if let Some(code) = g3_ui::component_source(name) {
+            panels.push((format!("{name} source"), code.trim().to_string()));
         }
     }
-    source[start..].trim().to_string()
+    panels
 }
 #[component]
 fn PlaygroundNav(
@@ -670,27 +666,34 @@ fn ComponentNavButton(
 }
 #[cfg(test)]
 mod tests {
-    use super::{PlaygroundViewport, demo_slug, playground_demo_source};
+    use super::{PlaygroundViewport, demo_slug, source_panels};
     #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
         assert_eq!(PlaygroundViewport::Mobile.as_str(), "mobile");
         assert_eq!(PlaygroundViewport::Desktop.as_str(), "desktop");
     }
     #[test]
-    fn source_panel_extracts_only_playground_demo_function() {
-        let source = r#"
-fn helper() {}
-#[component]
-pub fn ButtonPlaygroundDemo() -> Element {
-    rsx! { div { "Button" } }
-}
-crate::g3_playground! { name: "Button" }
-"#;
-        let extracted = playground_demo_source(source);
-        assert!(extracted.contains("pub fn ButtonPlaygroundDemo"));
-        assert!(extracted.contains("Button"));
-        assert!(!extracted.contains("fn helper"));
-        assert!(!extracted.contains("g3_playground"));
+    fn every_demo_lists_its_demo_and_component_sources() {
+        for demo in g3_ui::component_playground_demos() {
+            let panels = source_panels(&demo);
+            let (title, code) = &panels[0];
+            assert!(title.ends_with("demo source"), "{title}");
+            assert!(
+                code.contains(&format!("fn {}", demo.demo_name))
+                    && !code.contains("g3_playground!"),
+                "{} demo source is not just the demo function",
+                demo.descriptor.name
+            );
+            assert_eq!(
+                panels.len(),
+                demo.components.len() + 1,
+                "{} names a component with no source",
+                demo.descriptor.name
+            );
+            for (name, (_, code)) in demo.components.iter().zip(&panels[1..]) {
+                assert!(code.contains(&format!("pub fn {name}")), "{name}");
+            }
+        }
     }
     #[test]
     fn component_names_have_stable_shareable_slugs() {

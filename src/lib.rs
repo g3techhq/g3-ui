@@ -26,7 +26,10 @@ pub use components::*;
 pub use descriptor::{ComponentDescriptor, component_descriptors};
 #[cfg(feature = "playground")]
 #[doc(hidden)]
-pub use descriptor::{ComponentPlaygroundDemo, PlaygroundDemoFrame, component_playground_demos};
+pub use descriptor::{
+    ComponentPlaygroundDemo, PlaygroundDemoFrame, component_playground_demos, component_source,
+    function_source,
+};
 pub use theme::{
     ComponentMode, Strings, Theme, ThemeProvider, detect_platform_mode, get_mode, init_auto_mode,
     merge_classes, set_mode, use_component_mode, use_strings, use_theme,

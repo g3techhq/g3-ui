@@ -226,11 +226,15 @@ pub(crate) fn SheetFrame(
     // presentation and animates.
     let mut ever_opened = use_signal(|| is_open);
     let mut has_been_closed = use_signal(|| !is_open);
+    // Cleared when the entrance finishes, so a detent change while open
+    // animates its height again.
+    let mut entered = use_signal(|| false);
     use_effect(move || {
         if open() {
             ever_opened.set(true);
         } else {
             has_been_closed.set(true);
+            entered.set(false);
         }
     });
 
@@ -288,7 +292,7 @@ pub(crate) fn SheetFrame(
     }
 
     let state = if is_open { "open" } else { "closed" };
-    let enter_cls = if is_open && has_been_closed() {
+    let enter_cls = if is_open && has_been_closed() && !entered() {
         "g3-sheet-enter"
     } else {
         ""
@@ -397,6 +401,12 @@ pub(crate) fn SheetFrame(
             tabindex: (!is_drawer).then_some("-1"),
             "data-state": state,
             "data-detent": detent_attr,
+            onanimationend: move |event| {
+                // Animations inside the sheet bubble here too.
+                if event.data().animation_name().starts_with("g3-sheet-enter") && !*entered.peek() {
+                    entered.set(true);
+                }
+            },
             "data-detents": match &kind {
                 FrameKind::Bottom { detents, .. } if !detents.is_empty() => Some(format!("{detents:?}")),
                 _ => None,

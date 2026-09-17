@@ -307,6 +307,7 @@ fn FabPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Fab",
     description: "Floating action buttons and a speed-dial menu.",
+    components: ["FabMenu", "FabButton", "FabList", "Fab"],
     demo: FabPlaygroundDemo,
     source: "src/components/fab.rs",
 }

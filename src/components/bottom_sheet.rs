@@ -92,9 +92,7 @@ fn BottomSheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
     let backdrop = use_signal(|| SheetBackdrop::Dismiss);
     let preset = use_signal(|| 0_usize);
-    let mut detent = use_signal(|| 0_usize);
-    let start_at = use_signal(|| 0_usize);
-    let backdrop_from = use_signal(|| 0_usize);
+    let detent = use_signal(|| 0_usize);
     let presets: [(&str, Vec<f64>); 4] = [
         ("Fit content", vec![]),
         ("Half / full", vec![0.5, 1.0]),
@@ -107,13 +105,6 @@ fn BottomSheetPlaygroundDemo() -> Element {
         .iter()
         .map(|fraction| format!("{:.0}%", fraction * 100.0))
         .collect::<Vec<_>>();
-    let position_options = |labels: &[String]| {
-        labels
-            .iter()
-            .enumerate()
-            .map(|(index, label)| crate::SelectOption::new(index, label.clone()))
-            .collect::<Vec<_>>()
-    };
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
@@ -131,26 +122,13 @@ fn BottomSheetPlaygroundDemo() -> Element {
                         .map(|(index, (label, _))| crate::SelectOption::new(index, *label))
                         .collect::<Vec<_>>(),
                 }
-                if count > 0 {
-                    crate::Select { label: "Opens at", value: start_at, options: position_options(&heights) }
-                    if backdrop() == SheetBackdrop::Dismiss {
-                        crate::Select {
-                            label: "Backdrop from",
-                            value: backdrop_from,
-                            options: position_options(&heights),
-                        }
-                    }
-                }
             },
             crate::AppWrapper { class: "g3-playground-device-app",
                 crate::Header { title: "Bottom sheet" }
                 crate::Content { footer_space: false,
                     crate::Stack {
                         crate::Button {
-                            onclick: move |_| {
-                                detent.set(start_at().min(count.saturating_sub(1)));
-                                open.set(true);
-                            },
+                            onclick: move |_| open.set(true),
                             "Open sheet"
                         }
                         crate::Text { tone: crate::TextTone::Secondary,
@@ -168,7 +146,6 @@ fn BottomSheetPlaygroundDemo() -> Element {
                     backdrop: backdrop(),
                     detents,
                     detent,
-                    backdrop_detent: backdrop_from(),
                     if count > 0 {
                         crate::Text { tone: crate::TextTone::Secondary,
                             "Resting at {heights[detent().min(count - 1)]}"

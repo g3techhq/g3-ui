@@ -26,14 +26,20 @@ impl ListLines {
     }
 }
 
-/// How a [`List`] sits on the page.
+/// How a [`List`] sits on the page. Apart from `Plain`, these match
+/// [`CardVariant`](crate::CardVariant): the rows sit in a rounded group,
+/// like an iOS settings screen, drawn the way a card with that variant is.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ListVariant {
-    /// Rows run edge to edge on the page background.
+    /// Rows run edge to edge with no group around them.
     #[default]
     Plain,
-    /// Rows sit in a rounded group with margins, like iOS settings screens.
-    Grouped,
+    /// A rounded group lifted off the page with a shadow.
+    Raised,
+    /// A rounded group outlined by a border.
+    Flat,
+    /// A rounded group on a tinted surface.
+    Filled,
 }
 
 /// Whether an [`Item`] shows a trailing chevron.
@@ -52,7 +58,7 @@ pub enum ItemDetail {
 ///
 /// ```rust,ignore
 /// rsx! {
-///     List { variant: ListVariant::Grouped,
+///     List { variant: ListVariant::Raised,
 ///         ListHeader { "Account" }
 ///         Item { label: "Profile", to: Route::Profile {} }
 ///         Item { label: "Notifications", end: rsx! { Toggle { checked: notify, aria_label: "Notifications" } } }
@@ -61,7 +67,8 @@ pub enum ItemDetail {
 /// ```
 #[component]
 pub fn List(
-    /// Plain or grouped. Defaults to [`ListVariant::Plain`].
+    /// Plain, or a rounded group drawn like a card. Defaults to
+    /// [`ListVariant::Plain`].
     variant: Option<ListVariant>,
     /// Separators between rows. Defaults to [`ListLines::Inset`].
     lines: Option<ListLines>,
@@ -79,7 +86,9 @@ pub fn List(
         mode.pick("g3-list-ios", "g3-list-md"),
         match variant.unwrap_or_default() {
             ListVariant::Plain => "",
-            ListVariant::Grouped => "g3-list-grouped",
+            ListVariant::Raised => "g3-list-grouped",
+            ListVariant::Flat => "g3-list-grouped g3-list-flat",
+            ListVariant::Filled => "g3-list-grouped g3-list-filled",
         },
     ]);
     rsx! {
@@ -254,12 +263,13 @@ pub fn Item(
 #[component]
 fn ListPlaygroundDemo() -> Element {
     use crate::{Color, SwipeAction, SwipeBehavior, SwipeItem, use_toast};
-    let variant = use_signal(|| ListVariant::Grouped);
+    let variant = use_signal(|| ListVariant::Raised);
     let lines = use_signal(|| ListLines::Inset);
     let start_behavior = use_signal(|| SwipeBehavior::Activate);
     let end_behavior = use_signal(|| SwipeBehavior::Reveal);
     let mut notify = use_signal(|| true);
-    let mut rows = use_signal(|| vec!["Round 12", "Round 11", "Round 10", "Round 9"]);
+    const ROWS: [&str; 4] = ["Round 12", "Round 11", "Round 10", "Round 9"];
+    let mut rows = use_signal(|| ROWS.to_vec());
     let toast = use_toast();
     rsx! {
         crate::PlaygroundDemoFrame {
@@ -267,12 +277,21 @@ fn ListPlaygroundDemo() -> Element {
             controls: rsx! {
                 crate::SegmentGroup { value: variant, aria_label: "Variant",
                     crate::SegmentButton { value: ListVariant::Plain, "Plain" }
-                    crate::SegmentButton { value: ListVariant::Grouped, "Grouped" }
+                    crate::SegmentButton { value: ListVariant::Raised, "Raised" }
+                    crate::SegmentButton { value: ListVariant::Flat, "Flat" }
+                    crate::SegmentButton { value: ListVariant::Filled, "Filled" }
                 }
                 crate::SegmentGroup { value: lines, aria_label: "Lines",
                     crate::SegmentButton { value: ListLines::Full, "Full lines" }
                     crate::SegmentButton { value: ListLines::Inset, "Inset lines" }
                     crate::SegmentButton { value: ListLines::None, "No lines" }
+                }
+                crate::Button {
+                    fill: crate::ButtonFill::Outline,
+                    color: crate::Color::Neutral,
+                    disabled: rows.read().len() == ROWS.len(),
+                    onclick: move |_| rows.set(ROWS.to_vec()),
+                    "Restore deleted rows"
                 }
                 crate::Select {
                     label: "Swipe right",
@@ -345,6 +364,7 @@ fn ListPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "List",
     description: "Lists, rows, section headers, and swipeable rows.",
+    components: ["List", "ListHeader", "Item", "SwipeItem", "SwipeAction"],
     demo: ListPlaygroundDemo,
     source: "src/components/list.rs",
 }

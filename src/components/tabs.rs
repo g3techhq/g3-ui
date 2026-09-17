@@ -230,6 +230,7 @@ fn TabsPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Tabs",
     description: "Switch between panels of content in place. Use SegmentGroup to pick a value instead.",
+    components: ["Tabs", "TabList", "Tab", "TabPanel"],
     demo: TabsPlaygroundDemo,
     source: "src/components/tabs.rs",
 }

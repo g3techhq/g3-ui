@@ -727,3 +727,15 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   color: var(--g3-color-text-secondary, #5c6873);
   font-size: 13px;
 }
+
+/* Content demo: marks the edges of the content column. */
+.playground-content-ruler {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px dashed var(--g3-color-accent, #2563eb);
+  border-radius: 8px;
+  color: var(--g3-color-accent, #2563eb);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}

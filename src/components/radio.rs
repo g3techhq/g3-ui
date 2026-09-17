@@ -223,6 +223,7 @@ fn RadioPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Radio",
     description: "Radio groups with optional empty selection.",
+    components: ["RadioGroup", "Radio"],
     demo: RadioPlaygroundDemo,
     source: "src/components/radio.rs",
 }

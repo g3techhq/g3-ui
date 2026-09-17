@@ -251,6 +251,7 @@ fn AlertPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Alert",
     description: "Alerts, prompts, action sheets, and modals, declared or opened from code.",
+    components: ["use_alert", "use_action_sheet", "Alert", "ActionSheet"],
     demo: AlertPlaygroundDemo,
     source: "src/components/alert.rs",
 }

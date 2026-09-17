@@ -150,6 +150,7 @@ fn MediaPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Img",
     description: "Lazy images with placeholders and fallbacks, and tooltips.",
+    components: ["Img", "Tooltip"],
     demo: MediaPlaygroundDemo,
     source: "src/components/media.rs",
 }

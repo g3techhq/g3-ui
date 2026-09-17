@@ -493,6 +493,7 @@ fn InputPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Input",
     description: "Text, number, date, and multi-line fields with helper and error text.",
+    components: ["Input", "TextArea"],
     demo: InputPlaygroundDemo,
     source: "src/components/field.rs",
 }

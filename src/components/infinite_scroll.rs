@@ -92,7 +92,7 @@ fn InfiniteScrollPlaygroundDemo() -> Element {
     let mut loading = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
-            crate::List { variant: crate::ListVariant::Grouped,
+            crate::List { variant: crate::ListVariant::Raised,
                 for index in 1..=count() {
                     crate::Item { key: "{index}", label: format!("Round {index}") }
                 }

@@ -1,5 +1,7 @@
 //! Swipeable list rows.
 use super::Color;
+use super::overlay::js_string;
+use crate::state::use_element_id;
 use crate::theme::{classes, merge_classes, use_strings};
 use dioxus::prelude::*;
 use std::time::Duration;
@@ -272,6 +274,7 @@ pub fn SwipeItem(
     children: Element,
 ) -> Element {
     let strings = use_strings();
+    let row_id = use_element_id("swipe", None);
     let start_behavior = start_behavior.unwrap_or_default();
     let end_behavior = end_behavior.unwrap_or_default();
     let has_start = start_actions.is_some();
@@ -334,8 +337,62 @@ pub fn SwipeItem(
         }
     };
 
+    // Ends a gesture, however it ends: released over the row, or anywhere
+    // else once the pointer is captured.
+    let release = use_callback(move |()| {
+        if !dragging() || phase() != Phase::Idle {
+            return;
+        }
+        dragging.set(false);
+        let was_horizontal = horizontal();
+        horizontal.set(false);
+        if !was_horizontal {
+            return;
+        }
+        suppress_click.set(true);
+        spawn(async move {
+            dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
+            suppress_click.set(false);
+        });
+        let released = offset();
+        let Some(edge) = edge_for(released, start_edge, end_edge) else {
+            offset.set(0.0);
+            return;
+        };
+        let committed = edge.committed(released);
+        match edge.behavior {
+            SwipeBehavior::Reveal => offset.set(edge.settle(released)),
+            SwipeBehavior::Activate => {
+                if committed
+                    && let Some(state) = edge.state(released, true)
+                    && let Some(on_activate) = on_activate
+                {
+                    on_activate.call(state);
+                }
+                offset.set(0.0);
+            }
+            SwipeBehavior::Dismiss => {
+                let Some(state) = edge.state(released, true).filter(|_| committed) else {
+                    offset.set(0.0);
+                    return;
+                };
+                offset.set(DISMISS_OFFSET.copysign(released));
+                phase.set(Phase::Exiting);
+                spawn(async move {
+                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS)).await;
+                    phase.set(Phase::Collapsing);
+                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS)).await;
+                    if let Some(on_dismiss) = on_dismiss {
+                        on_dismiss.call(state);
+                    }
+                });
+            }
+        }
+    });
+
     rsx! {
         div {
+            id: row_id.clone(),
             class: merge_classes("g3-swipe-item", class.as_deref()),
             style: format!(
                 "--g3-swipe-offset: {current}px; --g3-swipe-progress: {};",
@@ -407,6 +464,12 @@ pub fn SwipeItem(
                 if !horizontal() {
                     if (dx - offset()).abs() > HORIZONTAL_SLOP && (dx - offset()).abs() > dy.abs() {
                         horizontal.set(true);
+                        // Keep receiving the drag after the pointer leaves the row.
+                        document::eval(&format!(
+                            "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
+                            js_string(&row_id),
+                            event.data.pointer_id(),
+                        ));
                     } else {
                         return;
                     }
@@ -421,56 +484,11 @@ pub fn SwipeItem(
                     on_swipe.call(state);
                 }
             },
-            onpointerup: move |_| {
-                if !dragging() || phase() != Phase::Idle {
-                    return;
-                }
-                dragging.set(false);
-                let was_horizontal = horizontal();
-                horizontal.set(false);
-                if !was_horizontal {
-                    return;
-                }
-                suppress_click.set(true);
-                spawn(async move {
-                    dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
-                    suppress_click.set(false);
-                });
-                let released = offset();
-                let Some(edge) = edge_for(released, start_edge, end_edge) else {
-                    offset.set(0.0);
-                    return;
-                };
-                let committed = edge.committed(released);
-                match edge.behavior {
-                    SwipeBehavior::Reveal => offset.set(edge.settle(released)),
-                    SwipeBehavior::Activate => {
-                        if committed
-                            && let Some(state) = edge.state(released, true)
-                            && let Some(on_activate) = on_activate
-                        {
-                            on_activate.call(state);
-                        }
-                        offset.set(0.0);
-                    }
-                    SwipeBehavior::Dismiss => {
-                        let Some(state) = edge.state(released, true).filter(|_| committed) else {
-                            offset.set(0.0);
-                            return;
-                        };
-                        offset.set(DISMISS_OFFSET.copysign(released));
-                        phase.set(Phase::Exiting);
-                        spawn(async move {
-                            dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS)).await;
-                            phase.set(Phase::Collapsing);
-                            dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS)).await;
-                            if let Some(on_dismiss) = on_dismiss {
-                                on_dismiss.call(state);
-                            }
-                        });
-                    }
-                }
-            },
+            onpointerup: move |_| release(()),
+            // A captured pointer keeps reporting to the row wherever it goes.
+            // Leaving is the fallback for when capture was not granted.
+            onpointerleave: move |_| release(()),
+            onlostpointercapture: move |_| release(()),
             onpointercancel: move |_| {
                 if phase() == Phase::Idle {
                     press_generation.with_mut(|g| *g += 1);

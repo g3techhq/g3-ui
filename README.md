@@ -334,7 +334,7 @@ ARIA attributes (`[data-state="open"]`, `[aria-checked="true"]`) rather than mod
 | `G3FabContainer` | `FabMenu` |
 | `ButtonStyle` / `style:` | `ButtonFill` / `fill:` |
 | `Card { inset }` | `Card { variant: CardVariant::Filled }` |
-| `List { inset }` | `List { variant: ListVariant::Grouped }` |
+| `List { inset }` | `List { variant: ListVariant::Raised }` |
 | `SwipeItem { behavior }` | `start_behavior`, `end_behavior` |
 | `is_open`, `active` props | `open`, `value` |
 | `--color-*` variables | `--g3-color-*` |

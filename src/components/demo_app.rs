@@ -170,7 +170,7 @@ fn RoundsScreen() -> Element {
                         },
                         Progress { value: 7.0, max: 18.0, label: "Holes played", value_text: "7 of 18" }
                     }
-                    List { variant: crate::ListVariant::Grouped,
+                    List { variant: crate::ListVariant::Raised,
                         ListHeader { "Leaderboard" }
                         for (name, score) in [("Alex Morgan", "-3"), ("Grace Park", "E"), ("Sam Ortiz", "+1")] {
                             Item {
@@ -246,7 +246,7 @@ fn ProfileScreen() -> Element {
                         Text { variant: TextVariant::Caption, tone: TextTone::Secondary, "Handicap 12.4" }
                     }
                 }
-                List { variant: crate::ListVariant::Grouped,
+                List { variant: crate::ListVariant::Raised,
                     Item {
                         label: "Notifications",
                         end: rsx! { Toggle { checked: notifications, aria_label: "Notifications" } },
@@ -314,6 +314,7 @@ fn FiltersSheet(open: Signal<bool>) -> Element {
 crate::g3_playground! {
     name: "Demo App",
     description: "A small app composed from the whole library.",
+    components: [],
     demo: DemoAppPlaygroundDemo,
     source: "src/components/demo_app.rs",
 }

@@ -268,6 +268,7 @@ fn SegmentPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "SegmentGroup",
     description: "Pick one value from a row of buttons. Use Tabs to switch between panels of content instead.",
+    components: ["SegmentGroup", "SegmentButton"],
     demo: SegmentPlaygroundDemo,
     source: "src/components/segment.rs",
 }

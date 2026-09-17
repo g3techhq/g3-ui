@@ -225,6 +225,7 @@ fn RangePlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Range",
     description: "Slider and stepper for numeric values.",
+    components: ["Range", "Stepper"],
     demo: RangePlaygroundDemo,
     source: "src/components/range.rs",
 }

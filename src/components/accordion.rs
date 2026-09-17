@@ -207,6 +207,7 @@ fn AccordionPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Accordion",
     description: "Expandable sections, one or several open at a time.",
+    components: ["AccordionGroup", "AccordionItem"],
     demo: AccordionPlaygroundDemo,
     source: "src/components/accordion.rs",
 }
