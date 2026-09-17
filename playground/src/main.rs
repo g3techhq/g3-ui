@@ -14,8 +14,8 @@ use manganis::{AssetOptions, asset};
 
 mod transition_showcase;
 use transition_showcase::{
-    TransitionArticle, TransitionArticleDetail, TransitionDetail, TransitionHome,
-    TransitionProfile, TransitionQueue, TransitionRatings,
+    TransitionAlbum, TransitionEpisode, TransitionLibrary, TransitionListen, TransitionProfile,
+    TransitionQueue, TransitionRadio,
 };
 #[allow(dead_code)]
 const PLAYGROUND_CSS: Asset = asset!(
@@ -37,31 +37,31 @@ enum Route {
 
         #[transition(layer = stack_root)]
         #[route("/transitions")]
-        TransitionHome {},
+        TransitionListen {},
 
         #[transition(layer = stack_page)]
-        #[route("/transitions/detail")]
-        TransitionDetail {},
+        #[route("/transitions/album")]
+        TransitionAlbum {},
 
         #[transition(layer = sheet)]
         #[route("/transitions/queue")]
         TransitionQueue {},
 
         #[transition(history = replace, peers(group = showcase_tabs, order = tab))]
-        #[route("/transitions/ratings/:tab")]
-        TransitionRatings { tab: u8 },
+        #[route("/transitions/library/:tab")]
+        TransitionLibrary { tab: u8 },
 
         #[transition(layer = stack_root)]
         #[route("/transitions/profile")]
         TransitionProfile {},
 
-        #[transition(forward_to = TransitionArticleDetail)]
-        #[route("/transitions/article")]
-        TransitionArticle {},
+        #[transition(forward_to = TransitionEpisode)]
+        #[route("/transitions/radio")]
+        TransitionRadio {},
 
         #[transition(layer = stack_page)]
-        #[route("/transitions/article/read")]
-        TransitionArticleDetail {},
+        #[route("/transitions/radio/episode")]
+        TransitionEpisode {},
 
         #[transition(layer = stack_root)]
         #[route("/:..segments")]
@@ -263,7 +263,7 @@ fn Playground() -> Element {
     });
     g3_ui::set_mode(active_mode);
     let page_title = if showing_transitions {
-        "Route transitions".to_string()
+        "RouteTransitions".to_string()
     } else {
         selected.descriptor.name.to_string()
     };
@@ -417,13 +417,13 @@ impl Route {
     fn is_transition_showcase(&self) -> bool {
         matches!(
             self,
-            Self::TransitionHome {}
-                | Self::TransitionDetail {}
+            Self::TransitionListen {}
+                | Self::TransitionAlbum {}
                 | Self::TransitionQueue {}
-                | Self::TransitionRatings { .. }
+                | Self::TransitionLibrary { .. }
                 | Self::TransitionProfile {}
-                | Self::TransitionArticle {}
-                | Self::TransitionArticleDetail {}
+                | Self::TransitionRadio {}
+                | Self::TransitionEpisode {}
         )
     }
 }
@@ -513,23 +513,23 @@ async fn pause_between_transitions() {
 }
 
 async fn play_transition_tour() {
-    animated_navigate(Route::TransitionHome {}).await;
+    animated_navigate(Route::TransitionListen {}).await;
     TimeoutFuture::new(1_400).await;
     for route in [
-        Route::TransitionDetail {},
-        Route::TransitionHome {},
+        Route::TransitionAlbum {},
+        Route::TransitionListen {},
         Route::TransitionQueue {},
-        Route::TransitionHome {},
+        Route::TransitionListen {},
         Route::TransitionProfile {},
-        Route::TransitionHome {},
-        Route::TransitionRatings { tab: 0 },
-        Route::TransitionRatings { tab: 1 },
-        Route::TransitionRatings { tab: 2 },
-        Route::TransitionRatings { tab: 0 },
-        Route::TransitionArticle {},
-        Route::TransitionArticleDetail {},
-        Route::TransitionArticle {},
-        Route::TransitionHome {},
+        Route::TransitionListen {},
+        Route::TransitionLibrary { tab: 0 },
+        Route::TransitionLibrary { tab: 1 },
+        Route::TransitionLibrary { tab: 2 },
+        Route::TransitionLibrary { tab: 0 },
+        Route::TransitionRadio {},
+        Route::TransitionEpisode {},
+        Route::TransitionRadio {},
+        Route::TransitionListen {},
     ] {
         animated_navigate(route).await;
         pause_between_transitions().await;
@@ -589,10 +589,10 @@ fn PlaygroundNav(
     let demo_app = demos
         .iter()
         .copied()
-        .find(|demo| demo.descriptor.name == "Demo App");
+        .find(|demo| demo.descriptor.name == "DemoApp");
     let mut component_demos = demos
         .into_iter()
-        .filter(|demo| demo.descriptor.name != "Demo App")
+        .filter(|demo| demo.descriptor.name != "DemoApp")
         .collect::<Vec<_>>();
     component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
     rsx! {
@@ -607,13 +607,12 @@ fn PlaygroundNav(
             }
             Item {
                 selected: current_route.is_transition_showcase(),
-                label: "Route transitions",
-                description: "Navigation showcase",
+                label: "RouteTransitions",
                 onclick: move |_| async move {
                     if dismiss_on_select {
                         selector_open.set(false);
                     }
-                    animated_navigate(Route::TransitionHome {}).await;
+                    animated_navigate(Route::TransitionListen {}).await;
                 },
             }
             for demo in component_demos {
@@ -697,7 +696,7 @@ mod tests {
     }
     #[test]
     fn component_names_have_stable_shareable_slugs() {
-        assert_eq!(demo_slug("Demo App"), "demo-app");
+        assert_eq!(demo_slug("DemoApp"), "demoapp");
         assert_eq!(demo_slug("SegmentGroup"), "segmentgroup");
         assert_eq!(demo_slug("Confirm Modal"), "confirm-modal");
     }

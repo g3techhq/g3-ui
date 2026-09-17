@@ -11,7 +11,7 @@ Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](ht
 <p align="center">
   <img
     src="docs/media/social-preview.png"
-    alt="Four mobile g3-ui Demo App screens showing rounds, forms, a sheet, and a profile"
+    alt="Four mobile g3-ui screens showing a feed, a booking form, a sheet, and a profile"
     width="1280"
   >
 </p>

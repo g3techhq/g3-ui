@@ -28,6 +28,11 @@ cascade layer. The README has a table of the most common renames.
 
 ### Changed
 
+- The playground's two showcases are coherent mini apps. `DemoApp` gives each
+  tab one job - a feed that refreshes, a booking form, an edge-to-edge inbox,
+  and a settings page - and puts the segmented control and the searchbar in
+  the header where they belong. `RouteTransitions` is a listening app whose
+  every screen says which transition brought it in.
 - **Breaking:** renamed components:
   - `Body` → `Content`, with `loading` and `error` fallbacks.
   - `Navbar` → `TabLayout`.

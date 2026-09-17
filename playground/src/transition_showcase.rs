@@ -1,27 +1,29 @@
-//! Route-transition showcase composed entirely from public g3-ui components.
+//! Static: a listening app whose screens each demonstrate one route
+//! transition. Built only from public g3-ui components.
 use dioxus::prelude::*;
-use dioxus_icons::lucide::{BookOpen, CircleUserRound, House, Star};
+use dioxus_icons::lucide::{CircleUserRound, Headphones, Library, Radio};
 use g3_route_transitions::{RouteTransitionPage, animated_navigate};
 use g3_ui::{
     AdaptiveNav, AdaptiveNavCompact, AppWrapper, Badge, Button, ButtonExpand, ButtonFill,
     ButtonSize, Card, Color, Content, Header, Item, ItemDetail, List, ListLines, NavItem,
-    NavItemGroup, PlaygroundDemoFrame, SegmentButton, SegmentGroup, TabLayout, ThemeProvider,
+    NavItemGroup, PlaygroundDemoFrame, SegmentButton, SegmentGroup, TabLayout, Text, TextTone,
+    TextVariant, ThemeProvider,
 };
 
 use super::{PlaygroundViewport, Route, active_playground_settings};
 
-pub const DESCRIPTION: &str = "Real g3-ui app screens that demonstrate route-owned stack, sheet, cross-fade, segmented, and drill-down transitions.";
+pub const DESCRIPTION: &str = "Static, a listening app whose screens each demonstrate one route-owned transition: cross-fading tab roots, a pushed page, a rising sheet, sliding segments, and a drill-down.";
 pub const SOURCE: &str = r#"#[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 enum Route {
     // Tab roots cross-fade between each other.
     #[transition(layer = stack_root)]
     #[route("/transitions")]
-    Home {},
+    Listen {},
 
-    // Home -> Detail slides forward; Back slides backward.
+    // Listen -> Album slides forward; Back slides backward.
     #[transition(layer = stack_page)]
-    #[route("/transitions/detail")]
-    Detail {},
+    #[route("/transitions/album")]
+    Album {},
 
     // Rises over the current page; Back drops it away.
     #[transition(layer = sheet)]
@@ -29,18 +31,18 @@ enum Route {
     Queue {},
 
     // Segments slide by tab order without adding history entries.
-    #[transition(history = replace, peers(group = ratings, order = tab))]
-    #[route("/transitions/ratings/:tab")]
-    Ratings { tab: u8 },
+    #[transition(history = replace, peers(group = library, order = tab))]
+    #[route("/transitions/library/:tab")]
+    Library { tab: u8 },
 
     // A base page that drills into a stack page.
-    #[transition(forward_to = ArticleDetail)]
-    #[route("/transitions/article")]
-    Article {},
+    #[transition(forward_to = Episode)]
+    #[route("/transitions/radio")]
+    Radio {},
 
     #[transition(layer = stack_page)]
-    #[route("/transitions/article/read")]
-    ArticleDetail {},
+    #[route("/transitions/radio/episode")]
+    Episode {},
 }
 
 rsx! {
@@ -53,34 +55,34 @@ rsx! {
         TabLayout {
             // Page region: slides for Forward/Backward.
             RouteTransitionPage {
-                Header { title: "Fairway" }
-                Content { Card { title: "Today's round", "Ready to play" } }
+                Header { title: "Listen" }
+                Content { Card { title: "Now playing", "Blue Static" } }
             }
             // Persistent chrome: a desktop rail stays still in every transition.
-            AdaptiveNav { /* NavItem { to: Route::Home {}, .. } */ }
+            AdaptiveNav { /* NavItem { to: Route::Listen {}, .. } */ }
         }
     }
 }"#;
 
 #[derive(Clone, Copy, PartialEq)]
 enum ShowcaseScreen {
-    Home,
-    Detail,
+    Listen,
+    Album,
     Queue,
-    Ratings(u8),
+    Library(u8),
+    Radio,
+    Episode,
     Profile,
-    Article,
-    ArticleDetail,
 }
 
 #[component]
-pub fn TransitionHome() -> Element {
-    rsx! { TransitionShowcase { screen: ShowcaseScreen::Home } }
+pub fn TransitionListen() -> Element {
+    rsx! { TransitionShowcase { screen: ShowcaseScreen::Listen } }
 }
 
 #[component]
-pub fn TransitionDetail() -> Element {
-    rsx! { TransitionShowcase { screen: ShowcaseScreen::Detail } }
+pub fn TransitionAlbum() -> Element {
+    rsx! { TransitionShowcase { screen: ShowcaseScreen::Album } }
 }
 
 #[component]
@@ -89,8 +91,8 @@ pub fn TransitionQueue() -> Element {
 }
 
 #[component]
-pub fn TransitionRatings(tab: u8) -> Element {
-    rsx! { TransitionShowcase { screen: ShowcaseScreen::Ratings(tab.min(2)) } }
+pub fn TransitionLibrary(tab: u8) -> Element {
+    rsx! { TransitionShowcase { screen: ShowcaseScreen::Library(tab.min(2)) } }
 }
 
 #[component]
@@ -99,13 +101,13 @@ pub fn TransitionProfile() -> Element {
 }
 
 #[component]
-pub fn TransitionArticle() -> Element {
-    rsx! { TransitionShowcase { screen: ShowcaseScreen::Article } }
+pub fn TransitionRadio() -> Element {
+    rsx! { TransitionShowcase { screen: ShowcaseScreen::Radio } }
 }
 
 #[component]
-pub fn TransitionArticleDetail() -> Element {
-    rsx! { TransitionShowcase { screen: ShowcaseScreen::ArticleDetail } }
+pub fn TransitionEpisode() -> Element {
+    rsx! { TransitionShowcase { screen: ShowcaseScreen::Episode } }
 }
 
 #[component]
@@ -140,24 +142,32 @@ async fn go(route: Route) {
     animated_navigate(route).await;
 }
 
+/// The line under each title saying which transition brought this screen in.
+#[component]
+fn TransitionNote(children: Element) -> Element {
+    rsx! {
+        Text { variant: TextVariant::Caption, tone: TextTone::Secondary, {children} }
+    }
+}
+
 #[component]
 fn TransitionScreen(screen: ShowcaseScreen) -> Element {
     match screen {
         ShowcaseScreen::Queue => rsx! { QueueScreen {} },
-        ShowcaseScreen::Ratings(tab) => rsx! { RatingsScreen { tab } },
+        ShowcaseScreen::Library(tab) => rsx! { LibraryScreen { tab } },
         _ => rsx! {
             TabLayout {
                 RouteTransitionPage { class: "transition-showcase-page".to_string(),
                     Header {
                         title: screen_title(screen),
-                        start: matches!(screen, ShowcaseScreen::Detail | ShowcaseScreen::ArticleDetail)
+                        start: matches!(screen, ShowcaseScreen::Album | ShowcaseScreen::Episode)
                             .then(|| rsx! {
                                 g3_ui::BackButton {
                                     onclick: move |_| {
-                                        let destination = if screen == ShowcaseScreen::ArticleDetail {
-                                            Route::TransitionArticle {}
+                                        let destination = if screen == ShowcaseScreen::Episode {
+                                            Route::TransitionRadio {}
                                         } else {
-                                            Route::TransitionHome {}
+                                            Route::TransitionListen {}
                                         };
                                         spawn(go(destination));
                                     },
@@ -166,12 +176,12 @@ fn TransitionScreen(screen: ShowcaseScreen) -> Element {
                     }
                     Content { footer_space: false,
                         match screen {
-                            ShowcaseScreen::Home => rsx! { HomeContent {} },
-                            ShowcaseScreen::Detail => rsx! { DetailContent {} },
+                            ShowcaseScreen::Listen => rsx! { ListenContent {} },
+                            ShowcaseScreen::Album => rsx! { AlbumContent {} },
                             ShowcaseScreen::Profile => rsx! { ProfileContent {} },
-                            ShowcaseScreen::Article => rsx! { ArticleContent {} },
-                            ShowcaseScreen::ArticleDetail => rsx! { ArticleDetailContent {} },
-                            ShowcaseScreen::Queue | ShowcaseScreen::Ratings(_) => rsx! {},
+                            ShowcaseScreen::Radio => rsx! { RadioContent {} },
+                            ShowcaseScreen::Episode => rsx! { EpisodeContent {} },
+                            ShowcaseScreen::Queue | ShowcaseScreen::Library(_) => rsx! {},
                         }
                     }
                 }
@@ -183,55 +193,58 @@ fn TransitionScreen(screen: ShowcaseScreen) -> Element {
 
 fn screen_title(screen: ShowcaseScreen) -> &'static str {
     match screen {
-        ShowcaseScreen::Detail => "Round details",
+        ShowcaseScreen::Album => "Blue Static",
         ShowcaseScreen::Profile => "Profile",
-        ShowcaseScreen::Article | ShowcaseScreen::ArticleDetail => "Club stories",
-        ShowcaseScreen::Home | ShowcaseScreen::Queue | ShowcaseScreen::Ratings(_) => "Fairway",
+        ShowcaseScreen::Radio => "Radio",
+        ShowcaseScreen::Episode => "Side B, revisited",
+        ShowcaseScreen::Listen | ShowcaseScreen::Queue | ShowcaseScreen::Library(_) => "Listen",
     }
 }
 
 #[component]
-fn HomeContent() -> Element {
+fn ListenContent() -> Element {
     rsx! {
+        TransitionNote { "A tab root. Moving between Listen, Library, Radio, and Profile cross-fades." }
         Card {
-            title: "Today at Pebble Creek",
-            end: rsx! { "10:40 AM" },
-            p { "Four players · Match play · White tees" }
+            title: "Blue Static",
+            end: rsx! { "3:48" },
+            p { "Afterglow · Track 3 of 9" }
             div { class: "transition-showcase-actions",
                 Button {
                     size: ButtonSize::Sm,
-                    onclick: move |_| async move { go(Route::TransitionDetail {}).await },
-                    "View round"
+                    onclick: move |_| async move { go(Route::TransitionAlbum {}).await },
+                    "Open album"
                 }
                 Button {
                     size: ButtonSize::Sm,
                     fill: ButtonFill::Outline,
                     onclick: move |_| async move { go(Route::TransitionQueue {}).await },
-                    "Add players"
+                    "Open queue"
                 }
             }
         }
         List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
             Item {
-                label: "Jordan Diaz",
-                description: "Ready to play",
-                end: rsx! { Badge { color: Color::Success, "Ready" } },
+                label: "Paper Moon",
+                description: "Afterglow",
+                end: rsx! { Badge { color: Color::Success, "Next" } },
             }
-            Item { label: "Sam Meyer", description: "12.4 handicap", detail: ItemDetail::Show }
+            Item { label: "Night Ferry", description: "Marine Drive", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn DetailContent() -> Element {
+fn AlbumContent() -> Element {
     rsx! {
-        Card { title: "Match play", end: rsx! { "Thru 12" },
-            p { "Jordan leads 2 up with six holes remaining." }
+        TransitionNote { "A stack page. It slid in over Listen; Back slides it away." }
+        Card { title: "Blue Static", end: rsx! { "2024" },
+            p { "Afterglow · nine tracks · 38 minutes" }
         }
         List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Full,
-            Item { label: "Front nine", metadata: "+1" }
-            Item { label: "Back nine", metadata: "2 up" }
-            Item { label: "Course handicap", metadata: "12" }
+            Item { label: "Low Tide", metadata: "4:12" }
+            Item { label: "Paper Moon", metadata: "3:05" }
+            Item { label: "Blue Static", metadata: "3:48" }
         }
     }
 }
@@ -239,106 +252,99 @@ fn DetailContent() -> Element {
 #[component]
 fn ProfileContent() -> Element {
     rsx! {
+        TransitionNote { "Another tab root, so arriving here cross-fades rather than slides." }
         Card { title: "Matthew W.",
-            p { "42 rounds · 12.1 handicap" }
+            p { "412 hours listened · 38 albums saved" }
             Badge { color: Color::Accent, "Following 18" }
         }
         List { variant: g3_ui::ListVariant::Raised,
-            Item { label: "Achievements", detail: ItemDetail::Show }
-            Item { label: "Round history", metadata: "42", detail: ItemDetail::Show }
+            Item { label: "Saved albums", metadata: "38", detail: ItemDetail::Show }
+            Item { label: "Listening history", detail: ItemDetail::Show }
             Item { label: "Settings", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn ArticleContent() -> Element {
+fn RadioContent() -> Element {
     rsx! {
+        TransitionNote { "A base page that declares where it drills to, so the push is ready before the tap." }
         Card {
-            title: "Where the light stays",
-            end: rsx! { "5 min" },
-            onclick: move |_| async move { go(Route::TransitionArticleDetail {}).await },
-            p { "A quiet walk through the closing holes as the course settles into evening." }
+            title: "The Long Player",
+            end: rsx! { "52 min" },
+            onclick: move |_| async move { go(Route::TransitionEpisode {}).await },
+            p { "This week: a record that only makes sense on the second side." }
         }
         List { variant: g3_ui::ListVariant::Raised,
-            Item { label: "The architecture of risk", description: "Course design", detail: ItemDetail::Show }
-            Item { label: "Playing into the wind", description: "Field notes", detail: ItemDetail::Show }
+            Item { label: "Field Recordings", description: "Weekly · 40 min", detail: ItemDetail::Show }
+            Item { label: "Night Shift", description: "Daily · 20 min", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn ArticleDetailContent() -> Element {
+fn EpisodeContent() -> Element {
     rsx! {
-        Card { title: "Where the light stays",
+        TransitionNote { "The drill-down target, pushed as a stack page." }
+        Card { title: "Side B, revisited",
             p { class: "transition-showcase-article",
-                "By the time the final group reaches seventeen, the long shadows have crossed the fairway. The course feels quieter, and every decision becomes wonderfully simple."
+                "The first side asks the question and the second one answers it, which is why the running order matters more than any single track on the record."
             }
         }
     }
 }
 
 #[component]
-fn RatingsScreen(tab: u8) -> Element {
+fn LibraryScreen(tab: u8) -> Element {
     let mut selected = use_signal(|| tab);
     use_effect(use_reactive!(|tab| selected.set(tab)));
     rsx! {
         TabLayout {
             Header {
-                title: "Ratings",
+                title: "Library",
                 toolbar: rsx! {
                     SegmentGroup {
                         value: selected,
-                        aria_label: "Ratings",
+                        aria_label: "Library",
                         defer_selection: true,
                         onchange: move |next: u8| {
-                            spawn(go(Route::TransitionRatings { tab: next }));
+                            spawn(go(Route::TransitionLibrary { tab: next }));
                         },
-                        SegmentButton { value: 0_u8, "Courses" }
-                        SegmentButton { value: 1_u8, "Players" }
-                        SegmentButton { value: 2_u8, "Rounds" }
+                        SegmentButton { value: 0_u8, "Albums" }
+                        SegmentButton { value: 1_u8, "Artists" }
+                        SegmentButton { value: 2_u8, "Playlists" }
                     }
                 },
             }
             Content { footer_space: false,
-                Card {
-                    title: match tab { 1 => "Top players", 2 => "Best rounds", _ => "Top courses" },
-                    end: rsx! { {match tab { 1 => "9.2", 2 => "-4", _ => "8.9" }} },
-                    p {
-                        match tab {
-                            1 => "Players you follow, ranked by recent form.",
-                            2 => "Standout rounds from your golfing circle.",
-                            _ => "Courses ranked from your recent ratings.",
-                        }
-                    }
-                }
+                TransitionNote { "Each segment is its own route. They slide by tab order and replace history, so Back leaves the library rather than walking the segments." }
                 List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
-                    for (name, value) in rating_rows(tab) {
+                    for (name, value) in library_rows(tab) {
                         Item { key: "{name}", label: name, metadata: value }
                     }
                 }
             }
-            ShowcaseNav { selected: ShowcaseScreen::Ratings(tab) }
+            ShowcaseNav { selected: ShowcaseScreen::Library(tab) }
         }
     }
 }
 
-fn rating_rows(tab: u8) -> [(&'static str, &'static str); 3] {
+fn library_rows(tab: u8) -> [(&'static str, &'static str); 3] {
     match tab {
         1 => [
-            ("Jordan Diaz", "9.2"),
-            ("Sam Meyer", "8.8"),
-            ("Alex Lin", "8.6"),
+            ("Afterglow", "9 albums"),
+            ("Marine Drive", "4 albums"),
+            ("Otto Lang", "2 albums"),
         ],
         2 => [
-            ("Pebble Creek", "-4"),
-            ("Pine Hollow", "-2"),
-            ("Ocean Links", "E"),
+            ("Late shift", "31 tracks"),
+            ("Long drive", "64 tracks"),
+            ("Rain on glass", "18 tracks"),
         ],
         _ => [
-            ("The Quiet Course", "8.9"),
-            ("Afterglow", "8.7"),
-            ("Blue Static", "8.5"),
+            ("Blue Static", "Afterglow"),
+            ("Harbour Lights", "Marine Drive"),
+            ("Tape Hiss", "Otto Lang"),
         ],
     }
 }
@@ -348,27 +354,28 @@ fn QueueScreen() -> Element {
     rsx! {
         TabLayout { route_transition_base: false,
             Header {
-                title: "Add players",
+                title: "Queue",
                 start: rsx! {
                     g3_ui::BackButton {
-                        label: "Fairway",
+                        label: "Listen",
                         onclick: move |_| {
-                            spawn(go(Route::TransitionHome {}));
+                            spawn(go(Route::TransitionListen {}));
                         },
                     }
                 },
             }
             Content { footer_space: false,
-                Card { title: "Available for 10:40 AM",
-                    p { "Choose players to add to the Pebble Creek round." }
+                TransitionNote { "A sheet. It rose over Listen, which stayed put and dimmed behind it." }
+                Card { title: "Up next",
+                    p { "Three tracks left in this queue." }
                 }
                 List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
-                    Item { label: "Morgan Lee", description: "Available at 10:40" }
-                    Item { label: "Taylor Kim", description: "Usually walks" }
+                    Item { label: "Paper Moon", description: "Afterglow", metadata: "3:05" }
+                    Item { label: "Night Ferry", description: "Marine Drive", metadata: "5:22" }
                 }
                 Button {
                     expand: ButtonExpand::Block,
-                    onclick: move |_| async move { go(Route::TransitionHome {}).await },
+                    onclick: move |_| async move { go(Route::TransitionListen {}).await },
                     "Done"
                 }
             }
@@ -384,27 +391,27 @@ fn ShowcaseNav(selected: ShowcaseScreen, compact: Option<AdaptiveNavCompact>) ->
     rsx! {
         AdaptiveNav { aria_label: "Transition demo navigation", compact,
             NavItem {
-                label: "Home",
-                selected: matches!(selected, ShowcaseScreen::Home | ShowcaseScreen::Queue | ShowcaseScreen::Detail),
-                icon: rsx! { House { size: 20 } },
+                label: "Listen",
+                selected: matches!(selected, ShowcaseScreen::Listen | ShowcaseScreen::Queue | ShowcaseScreen::Album),
+                icon: rsx! { Headphones { size: 20 } },
                 onclick: move |_| {
-                    spawn(go(Route::TransitionHome {}));
+                    spawn(go(Route::TransitionListen {}));
                 },
             }
             NavItem {
-                label: "Ratings",
-                selected: matches!(selected, ShowcaseScreen::Ratings(_)),
-                icon: rsx! { Star { size: 20 } },
+                label: "Library",
+                selected: matches!(selected, ShowcaseScreen::Library(_)),
+                icon: rsx! { Library { size: 20 } },
                 onclick: move |_| {
-                    spawn(go(Route::TransitionRatings { tab: 0 }));
+                    spawn(go(Route::TransitionLibrary { tab: 0 }));
                 },
             }
             NavItem {
-                label: "Stories",
-                selected: matches!(selected, ShowcaseScreen::Article | ShowcaseScreen::ArticleDetail),
-                icon: rsx! { BookOpen { size: 20 } },
+                label: "Radio",
+                selected: matches!(selected, ShowcaseScreen::Radio | ShowcaseScreen::Episode),
+                icon: rsx! { Radio { size: 20 } },
                 onclick: move |_| {
-                    spawn(go(Route::TransitionArticle {}));
+                    spawn(go(Route::TransitionRadio {}));
                 },
             }
             NavItem {
