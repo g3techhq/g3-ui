@@ -272,8 +272,14 @@ fn RadioContent() -> Element {
         Card {
             title: "The Long Player",
             end: rsx! { "52 min" },
-            onclick: move |_| async move { go(Route::TransitionEpisode {}).await },
             p { "This week: a record that only makes sense on the second side." }
+            div { class: "transition-showcase-actions",
+                Button {
+                    size: ButtonSize::Sm,
+                    onclick: move |_| async move { go(Route::TransitionEpisode {}).await },
+                    "Open episode"
+                }
+            }
         }
         List { variant: g3_ui::ListVariant::Raised,
             Item { label: "Field Recordings", description: "Weekly · 40 min", detail: ItemDetail::Show }

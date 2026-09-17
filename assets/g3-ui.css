@@ -1934,6 +1934,19 @@ button.g3-chip:focus-visible {
     padding-top: max(1rem, env(safe-area-inset-top));
 }
 
+/* A drawer's rows are its navigation: they highlight and press from edge to
+   edge, so a list directly inside one keeps the sheet's side padding off it.
+   Anything else in the sheet stays inset. */
+.g3-sheet-side .g3-sheet-content:has(> .g3-list),
+.g3-drawer .g3-sheet-content:has(> .g3-list) {
+    padding-inline: 0;
+}
+
+.g3-sheet-side .g3-sheet-content:has(> .g3-list) > :not(.g3-list),
+.g3-drawer .g3-sheet-content:has(> .g3-list) > :not(.g3-list) {
+    margin-inline: 1.5rem;
+}
+
 .g3-sheet-side[data-state="closed"],
 .g3-drawer[data-state="closed"] {
     transform: translate3d(var(--g3-sheet-offscreen), 0, 0);
@@ -2616,6 +2629,17 @@ button.g3-chip:focus-visible {
 .g3-header-md .g3-header-toolbar {
     min-height: 48px;
     padding: 0;
+}
+
+/* A segmented strip is meant to sit flush in the toolbar, but a searchbar is a
+   field: it needs the same room from the header's edges that it would have in
+   the page, or it reads as wedged into the corner. */
+.g3-header-toolbar:has(> .g3-searchbar) {
+    padding: 0 0.75rem 0.75rem;
+}
+
+.g3-header-ios .g3-header-toolbar:has(> .g3-searchbar) {
+    padding: 0 0.5rem 0.5rem;
 }
 .g3-header-ios .g3-header-slot .g3-btn {
     min-height: 32px;
@@ -3432,7 +3456,10 @@ button.g3-chip:focus-visible {
     --g3-swipe-edge: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
 
+/* A dismissed row leaves by its own width rather than a fixed distance, so a
+   wide desktop row does not stop partway across. */
 .g3-swipe-item[data-state="exiting"] .g3-swipe-content {
+    transform: translate3d(calc(var(--g3-swipe-exit, 1) * 100%), 0, 0);
     transition-duration: 560ms;
 }
 
@@ -4990,8 +5017,12 @@ button.g3-chip:focus-visible {
        underline of the header itself - so it stays flush with the header's
        bottom edge at every width, exactly as it does on a compact shell. The
        inset above is for iOS, whose pill sits deliberately clear of the edge. */
-    .g3-header-md .g3-header-toolbar {
+    .g3-header-md .g3-header-toolbar:not(:has(> .g3-searchbar)) {
         padding-bottom: 0;
+    }
+
+    .g3-header .g3-header-toolbar:has(> .g3-searchbar) {
+        padding: 0 1rem 0.75rem;
     }
 
     .g3-header-toolbar .g3-segment-toolbar.g3-segment-ios,

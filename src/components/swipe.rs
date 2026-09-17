@@ -399,8 +399,12 @@ pub fn SwipeItem(
             class: merge_classes("g3-swipe-item", class.as_deref()),
             role: in_list.then_some("listitem"),
             style: format!(
-                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {};",
+                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {}; --g3-swipe-exit: {};",
                 (current / current_width).abs().min(1.4),
+                // Which way a dismissed row leaves. The distance is the row's
+                // own width, in CSS, so it clears a desktop row as surely as a
+                // phone one.
+                if current < 0.0 { -1 } else { 1 },
             ),
             "data-start-behavior": start_behavior.as_str(),
             "data-end-behavior": end_behavior.as_str(),

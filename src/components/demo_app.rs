@@ -119,17 +119,19 @@ fn DemoAppPlaygroundDemo() -> Element {
                         // The second row belongs to the screen below it: the
                         // feed switches between two lists, the booking screen
                         // searches courses.
+                        // `None`, not an empty element: a header with an
+                        // empty second row still reserves its height.
                         toolbar: match screen() {
-                            Screen::Today => rsx! {
+                            Screen::Today => Some(rsx! {
                                 SegmentGroup { value: when, aria_label: "Rounds",
                                     SegmentButton { value: 0_usize, "Live" }
                                     SegmentButton { value: 1_usize, "Upcoming" }
                                 }
-                            },
-                            Screen::Book => rsx! {
+                            }),
+                            Screen::Book => Some(rsx! {
                                 Searchbar { value: query, placeholder: "Search courses" }
-                            },
-                            Screen::Activity | Screen::Profile => rsx! {},
+                            }),
+                            Screen::Activity | Screen::Profile => None,
                         },
                     }
                     match screen() {
@@ -318,36 +320,131 @@ fn BookScreen(within: Signal<f64>) -> Element {
         }
     }
 }
+/// What a row's two edges do. Between the three rows every
+/// [`SwipeBehavior`] appears on both sides.
+#[derive(Clone, Copy, PartialEq)]
+enum Swipes {
+    /// Activate one way, dismiss the other.
+    ArchiveOrDelete,
+    /// Hold actions open on both sides.
+    RevealBoth,
+    /// Dismiss one way, activate the other.
+    DeleteOrRead,
+}
 
-/// The inbox: rows that run to both edges, because nothing insets them.
+impl Swipes {
+    fn start(self) -> SwipeBehavior {
+        match self {
+            Swipes::ArchiveOrDelete => SwipeBehavior::Activate,
+            Swipes::RevealBoth => SwipeBehavior::Reveal,
+            Swipes::DeleteOrRead => SwipeBehavior::Dismiss,
+        }
+    }
+
+    fn end(self) -> SwipeBehavior {
+        match self {
+            Swipes::ArchiveOrDelete => SwipeBehavior::Dismiss,
+            Swipes::RevealBoth => SwipeBehavior::Reveal,
+            Swipes::DeleteOrRead => SwipeBehavior::Activate,
+        }
+    }
+}
+
+type Row = (&'static str, &'static str, Swipes);
+
+const ACTIVITY_ROWS: [Row; 3] = [
+    (
+        "Birdie on 7",
+        "Swipe right to archive, left to delete",
+        Swipes::ArchiveOrDelete,
+    ),
+    (
+        "Invite from Grace",
+        "Swipe either way to uncover buttons",
+        Swipes::RevealBoth,
+    ),
+    (
+        "Round saved",
+        "Swipe right to delete, left to mark read",
+        Swipes::DeleteOrRead,
+    ),
+];
+
+/// The inbox: rows that run to both edges, because nothing insets them, and
+/// that swipe differently on each side.
 #[component]
 fn ActivityScreen() -> Element {
-    let initial = || {
-        vec![
-            ("Birdie on 7", "Grace Park saw your card"),
-            ("Invite from Grace", "Sunday at Oak Hollow"),
-            ("Round saved", "Pebble Creek · 82"),
-        ]
+    let toaster = use_toast();
+    let mut rows = use_signal(|| ACTIVITY_ROWS.to_vec());
+    let mut gone = use_signal(Vec::<Row>::new);
+    let mut take_row = move |label: &'static str| {
+        let at = rows.peek().iter().position(|(row, ..)| *row == label);
+        if let Some(at) = at {
+            let row = rows.write().remove(at);
+            gone.write().push(row);
+        }
     };
-    let mut rows = use_signal(initial);
-    let mut dismissed = use_signal(Vec::<(&'static str, &'static str)>::new);
     rsx! {
         // `padding: false` is what lets an edge-to-edge list reach the edges.
         Content { padding: false,
             List {
                 ListHeader { "This week" }
-                for (label, description) in rows() {
+                for (label, description, swipes) in rows() {
                     SwipeItem {
                         key: "{label}",
-                        end_behavior: SwipeBehavior::Dismiss,
-                        end_actions: rsx! {
-                            SwipeAction {
-                                color: Color::Danger,
-                                onclick: move |_| dismiss(&mut rows, &mut dismissed, label),
-                                "Delete"
+                        start_behavior: swipes.start(),
+                        end_behavior: swipes.end(),
+                        start_actions: match swipes {
+                            Swipes::ArchiveOrDelete => rsx! {
+                                SwipeAction { color: Color::Success, "Archive" }
+                            },
+                            Swipes::RevealBoth => rsx! {
+                                SwipeAction {
+                                    color: Color::Accent,
+                                    onclick: move |_| { toaster.success("Invite accepted"); },
+                                    "Accept"
+                                }
+                            },
+                            Swipes::DeleteOrRead => rsx! {
+                                SwipeAction { color: Color::Danger, "Delete" }
+                            },
+                        },
+                        end_actions: match swipes {
+                            Swipes::ArchiveOrDelete | Swipes::DeleteOrRead => rsx! {
+                                SwipeAction {
+                                    color: if swipes == Swipes::DeleteOrRead { Color::Accent } else { Color::Danger },
+                                    onclick: move |_| {
+                                        if swipes == Swipes::DeleteOrRead {
+                                            toaster.show("Marked read");
+                                        } else {
+                                            take_row(label);
+                                        }
+                                    },
+                                    if swipes == Swipes::DeleteOrRead { "Mark read" } else { "Delete" }
+                                }
+                            },
+                            Swipes::RevealBoth => rsx! {
+                                SwipeAction {
+                                    onclick: move |_| { toaster.show("Muted"); },
+                                    "Mute"
+                                }
+                                SwipeAction {
+                                    color: Color::Danger,
+                                    onclick: move |_| take_row(label),
+                                    "Decline"
+                                }
+                            },
+                        },
+                        on_activate: move |state: SwipeState| match state.side {
+                            SwipeSide::Start => {
+                                take_row(label);
+                                toaster.success("Archived");
+                            }
+                            SwipeSide::End => {
+                                toaster.show("Marked read");
                             }
                         },
-                        on_dismiss: move |_| dismiss(&mut rows, &mut dismissed, label),
+                        on_dismiss: move |_| take_row(label),
                         Item {
                             label,
                             description,
@@ -359,15 +456,18 @@ fn ActivityScreen() -> Element {
                     Item { label: "All caught up", description: "Nothing new this week" }
                 }
             }
-            if !dismissed().is_empty() {
+            if !gone().is_empty() {
                 List { lines: ListLines::None,
                     Item {
-                        label: "Undo delete",
-                        metadata: "{dismissed().len()}",
+                        label: "Bring them back",
+                        metadata: "{gone().len()}",
                         start: rsx! { RotateCcw { size: 20 } },
                         onclick: move |_| {
-                            let mut restored = dismissed.take();
+                            let mut restored = gone.take();
                             restored.append(&mut rows.write());
+                            restored.sort_by_key(|row| {
+                                ACTIVITY_ROWS.iter().position(|(label, ..)| *label == row.0)
+                            });
                             rows.set(restored);
                         },
                     }
@@ -375,18 +475,6 @@ fn ActivityScreen() -> Element {
             }
         }
     }
-}
-
-fn dismiss(
-    rows: &mut Signal<Vec<(&'static str, &'static str)>>,
-    dismissed: &mut Signal<Vec<(&'static str, &'static str)>>,
-    label: &'static str,
-) {
-    let Some(at) = rows.peek().iter().position(|(row, _)| *row == label) else {
-        return;
-    };
-    let row = rows.write().remove(at);
-    dismissed.write().push(row);
 }
 
 /// The settings screen: who you are, and the switches that follow you around.
