@@ -75,7 +75,7 @@ Component names are unprefixed. If one collides with a local name, import it und
 | App shell | `AppWrapper`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
 | Navigation | `AdaptiveNav`, `NavBar`, `NavRail`, `NavItem`, `NavigationDrawer`, `Tabs`, `TabList`, `Tab`, `TabPanel`, `SegmentGroup`, `SegmentButton` |
 | Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
-| Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar` |
+| Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar` |
 | Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider` |
 | Layout | `Stack`, `Grid` |
 | Disclosure | `AccordionGroup`, `AccordionItem` |
@@ -108,6 +108,38 @@ rsx! {
 
 `Select`, `RadioGroup`, `SegmentGroup`, `Tabs`, and `AccordionGroup` are generic over the value
 type, so options can be your own enums instead of strings or indexes.
+
+## Dates and Times
+
+`DatePicker` and `TimePicker` are form fields that open a picker. Their values are
+`CalendarDate` and `TimeOfDay`, which parse from and print as ISO 8601 (`2026-09-19`,
+`14:05`), so nothing has to agree on a string format:
+
+```rust,ignore
+let tee_day = use_signal(|| None::<CalendarDate>);
+let tee_time = use_signal(|| None::<TimeOfDay>);
+
+rsx! {
+    DatePicker { label: "Tee day", value: tee_day, min: CalendarDate::today() }
+    TimePicker { label: "Tee time", value: tee_time, minute_step: 10 }
+}
+```
+
+`style` decides how one opens. By default it follows the mode:
+
+| `PickerStyle` | Date | Time |
+|---|---|---|
+| `Auto` | wheels on iOS, dialog on MD | wheels on iOS, dialog on MD |
+| `Wheels` | month, day, and year columns in a bottom sheet | hour, minute, and AM/PM columns |
+| `Dialog` | a calendar with Cancel and OK | a clock face, with a typing mode |
+| `Popover` | a calendar anchored to the field | wheels anchored to the field |
+
+A `Popover` picker becomes a bottom sheet on a phone. `Calendar` is also available on its
+own, for a month grid inside a page.
+
+Both are usable without a pointer. The calendar's arrow keys move a day at a time, Home and
+End reach the ends of the week, and Page Up and Page Down change month or year. A wheel column
+is a spin button, and the clock face is a radio group; Material's dialog can also be typed into.
 
 ## Pull to Refresh
 

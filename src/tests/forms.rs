@@ -220,3 +220,47 @@ fn fab_menu_toggles_its_list() {
     assert!(list.contains("inert"));
     assert!(element_with_class(&html, "g3-fab-container").contains("g3-fab-vertical-bottom"));
 }
+
+#[test]
+fn a_calendar_is_a_grid_of_days() {
+    fn app() -> Element {
+        let day = use_signal(|| CalendarDate::new(2026, 9, 19));
+        rsx! {
+            Calendar { value: day, min: CalendarDate::new(2026, 9, 10).unwrap() }
+        }
+    }
+    let html = render(app);
+    assert!(element_with_class(&html, "g3-calendar-grid").contains("role=\"grid\""));
+    assert!(html.contains("September 2026"));
+    // Every day of the month, and the leading blanks to its first weekday.
+    assert_eq!(html.matches("g3-calendar-day").count(), 30);
+    assert!(html.contains("aria-label=\"Saturday, September 19, 2026\""));
+    let selected = html
+        .split("aria-selected=\"true\"")
+        .nth(1)
+        .expect("a selected day");
+    assert!(selected.contains("tabindex=\"0\""));
+    // Days before the minimum cannot be picked.
+    assert!(html.contains("aria-label=\"Tuesday, September 1, 2026\" disabled"));
+}
+
+#[test]
+fn pickers_are_fields_that_open_a_dialog() {
+    fn app() -> Element {
+        let day = use_signal(|| CalendarDate::new(2026, 9, 19));
+        let time = use_signal(|| TimeOfDay::new(14, 5));
+        rsx! {
+            DatePicker { label: "Tee day", value: day }
+            TimePicker { label: "Tee time", value: time }
+            TimePicker { aria_label: "Round start", hour_cycle: HourCycle::H24 }
+        }
+    }
+    let html = render(app);
+    let triggers = html.matches("aria-haspopup=\"dialog\"").count();
+    assert_eq!(triggers, 3);
+    assert!(html.contains(">Sep 19, 2026</span>"));
+    assert!(html.contains(">2:05 PM</span>"));
+    // An empty picker shows its placeholder, not a made-up time.
+    assert!(html.contains("g3-select-placeholder\">Select time"));
+    assert!(html.contains("aria-label=\"Round start\""));
+}

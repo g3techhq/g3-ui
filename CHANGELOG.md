@@ -104,6 +104,18 @@ cascade layer. The README has a table of the most common renames.
 
 ### Added
 
+- `DatePicker` and `TimePicker`: form fields that open an iOS wheel picker
+  or a Material calendar or clock dialog, chosen by `PickerStyle`. Both also
+  open in a popover anchored to the field, which becomes a sheet on phones.
+  The Material time dialog has a typing mode.
+- `Calendar`: a month grid for picking a date, usable on its own. Arrow keys
+  move by day, Home and End reach the ends of the week, and Page Up and Page
+  Down change month or year; the title opens a year list.
+- `CalendarDate` and `TimeOfDay` carry the values, parsing from and printing
+  as ISO 8601, with `today()`, `now()`, and calendar arithmetic. `HourCycle`
+  picks a 12- or 24-hour clock.
+- `Strings` gained month and weekday names, the first day of the week, AM and
+  PM, and the picker labels.
 - `use_toast`, `use_alert`, and `use_action_sheet` open overlays from code.
   `AppWrapper` hosts them. Alerts and action sheets return a future that
   resolves to the user's answer.

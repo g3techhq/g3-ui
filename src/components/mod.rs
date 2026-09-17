@@ -8,12 +8,16 @@ mod back_button;
 mod badge;
 mod bottom_sheet;
 mod button;
+mod calendar;
 mod card;
 mod checkbox;
 mod chip;
+mod clock;
 mod color;
 mod confirm_modal;
 mod content;
+mod date_picker;
+mod datetime;
 #[cfg(feature = "playground")]
 mod demo_app;
 mod divider;
@@ -48,8 +52,10 @@ mod swipe;
 mod tab_layout;
 mod tabs;
 mod text;
+mod time_picker;
 mod toast;
 mod toggle;
+mod wheel;
 
 pub use accordion::{AccordionGroup, AccordionItem};
 pub use action_sheet::{ActionSheet, ActionSheetButton};
@@ -60,12 +66,15 @@ pub use back_button::BackButton;
 pub use badge::Badge;
 pub use bottom_sheet::BottomSheet;
 pub use button::{Button, ButtonExpand, ButtonFill, ButtonSize};
+pub use calendar::Calendar;
 pub use card::{Card, CardVariant};
 pub use checkbox::{Checkbox, ControlLabelPlacement};
 pub use chip::Chip;
 pub use color::Color;
 pub use confirm_modal::ConfirmModal;
 pub use content::{Content, ContentWidth};
+pub use date_picker::{DatePicker, PickerStyle};
+pub use datetime::{CalendarDate, HourCycle, ParseDateTimeError, TimeOfDay};
 pub use divider::{Divider, DividerOrientation};
 pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
 #[cfg(test)]
@@ -102,6 +111,7 @@ pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
 pub use tab_layout::TabLayout;
 pub use tabs::{Tab, TabList, TabPanel, Tabs};
 pub use text::{Text, TextTone, TextVariant};
+pub use time_picker::TimePicker;
 pub use toast::{Toast, ToastDuration, ToastPosition};
 pub use toggle::{Toggle, ToggleSize};
 
@@ -137,6 +147,8 @@ gallery![
     radio,
     range,
     searchbar,
+    date_picker,
+    time_picker,
     card,
     list,
     layout,

@@ -295,6 +295,46 @@ pub struct Strings {
     pub show_actions: String,
     /// Read after a link that opens in a new tab.
     pub opens_in_new_tab: String,
+    /// Month names, January first.
+    pub months: Vec<String>,
+    /// Abbreviated month names, January first.
+    pub months_short: Vec<String>,
+    /// Weekday names, Sunday first.
+    pub weekdays: Vec<String>,
+    /// One- or two-letter weekday headings for a calendar, Sunday first.
+    pub weekdays_narrow: Vec<String>,
+    /// The day a calendar week starts on: 0 for Sunday, 1 for Monday.
+    pub first_weekday: u8,
+    /// The morning half of a 12-hour clock.
+    pub am: String,
+    /// The afternoon half of a 12-hour clock.
+    pub pm: String,
+    /// Accessible name of the AM/PM control.
+    pub day_period: String,
+    /// Button that accepts a picker's choice.
+    pub done: String,
+    /// Accessible name of the calendar's previous-month button.
+    pub previous_month: String,
+    /// Accessible name of the calendar's next-month button.
+    pub next_month: String,
+    /// Title of the date picker dialog, and its placeholder.
+    pub choose_date: String,
+    /// Title of the time picker dialog, and its placeholder.
+    pub choose_time: String,
+    /// Accessible name of an hour column or dial.
+    pub hour: String,
+    /// Accessible name of a minute column or dial.
+    pub minute: String,
+    /// Accessible name of a day column.
+    pub day: String,
+    /// Accessible name of a month column.
+    pub month: String,
+    /// Accessible name of a year column, and of the calendar's year list.
+    pub year: String,
+    /// Accessible name of the button that switches a time picker to typing.
+    pub type_time: String,
+    /// Accessible name of the button that switches a time picker to its dial.
+    pub pick_time_on_dial: String,
 }
 
 impl Default for Strings {
@@ -320,6 +360,57 @@ impl Default for Strings {
             search: "Search".into(),
             show_actions: "Show actions".into(),
             opens_in_new_tab: "(opens in a new tab)".into(),
+            months: [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ]
+            .map(String::from)
+            .to_vec(),
+            months_short: [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+            ]
+            .map(String::from)
+            .to_vec(),
+            weekdays: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+            ]
+            .map(String::from)
+            .to_vec(),
+            weekdays_narrow: ["S", "M", "T", "W", "T", "F", "S"]
+                .map(String::from)
+                .to_vec(),
+            first_weekday: 0,
+            am: "AM".into(),
+            pm: "PM".into(),
+            day_period: "AM or PM".into(),
+            done: "Done".into(),
+            previous_month: "Previous month".into(),
+            next_month: "Next month".into(),
+            choose_date: "Select date".into(),
+            choose_time: "Select time".into(),
+            hour: "Hour".into(),
+            minute: "Minute".into(),
+            day: "Day".into(),
+            month: "Month".into(),
+            year: "Year".into(),
+            type_time: "Type a time".into(),
+            pick_time_on_dial: "Pick a time on the clock".into(),
         }
     }
 }
