@@ -1,77 +1,90 @@
-//! AppWrapper component - root shell for the entire app layout.
-use super::shell_styles as s;
+//! The root of a g3-ui app.
+use super::overlay_host::{OverlayHost, use_provide_overlay_queues};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UI_CSS;
-use crate::theme::{
-    ComponentMode, G3Mode, Theme, get_mode, merge_classes, use_ancestor_context, use_context_signal,
-};
+use crate::theme::{ComponentMode, Strings, Theme, classes, merge_classes, use_provide_ambient};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
 use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitionStyles};
+
+/// The root of a g3-ui app: loads the stylesheet, applies the mode, theme, and
+/// strings, and lays out a full-height, responsive app shell.
+///
+/// Put everything else inside it. It also hosts the overlays opened from code
+/// with [`use_toast`](crate::use_toast), [`use_alert`](crate::use_alert), and
+/// [`use_action_sheet`](crate::use_action_sheet).
+///
+/// The shell measures its own width with a container query. At `48rem` and
+/// wider, a [`TabLayout`](crate::TabLayout) moves its navigation to a side
+/// rail, bottom sheets float, and dialogs widen.
+///
+/// ```rust,ignore
+/// rsx! {
+///     AppWrapper { theme: Theme::system(),
+///         Header { title: "Games" }
+///         Content { Card { title: "Pending game", "Invite players." } }
+///     }
+/// }
+/// ```
 #[component]
 pub fn AppWrapper(
-    children: Element,
-    class: Option<String>,
+    /// Platform look. Defaults to an enclosing provider's mode, then
+    /// [`get_mode`](crate::get_mode).
     mode: Option<ComponentMode>,
+    /// Colour tokens. Defaults to an enclosing provider's theme, then
+    /// [`Theme::default_light`]. Changing it re-themes the app in place.
     theme: Option<Theme>,
-    /// Whether to apply the responsive app-shell layout (`flex flex-col h-dvh
-    /// overflow-hidden` + mode class). Defaults to `true`. Set to `false` for
-    /// a root that provides its own top-level layout (e.g. a desktop page
-    /// that should scroll normally) and only wants `AppWrapper` for theme
-    /// tokens, the stylesheet link, and the first-paint guard.
+    /// Component text. Defaults to an enclosing provider's strings, then
+    /// English.
+    strings: Option<Strings>,
+    /// Apply the full-height app shell layout. Defaults to `true`. Set `false`
+    /// for a page that scrolls normally and only needs the stylesheet, mode,
+    /// and theme.
     layout: Option<bool>,
-    /// Disable text selection/highlighting across the whole app shell
-    /// (`input`/`textarea` are exempted so typing still works). Useful for
-    /// apps with drag gestures (reorder, swipe, scrubbing) where an
-    /// accidental text selection during a drag is visually distracting.
-    /// Defaults to `false`.
-    disable_text_selection: Option<bool>,
-    /// Whether this wrapper is the route-transition overlay region: the part
-    /// that rises and falls for routed sheets. Defaults to `true`; set it to
-    /// `false` for an outer documentation/theme wrapper that contains a second
-    /// `AppWrapper` representing the actual app. A document may only have one
-    /// overlay region at a time. Requires the `transitions` feature.
+    /// Allow text selection in the shell. Defaults to `true`. Turn it off in
+    /// apps built around drag gestures; inputs stay selectable.
+    text_selection: Option<bool>,
+    /// Whether this wrapper is the route-transition overlay region, the part
+    /// that rises for routed sheets. Defaults to `true`. Set `false` on an
+    /// outer wrapper that contains the real app's wrapper; a page may have
+    /// only one overlay region. Needs the `transitions` feature.
     route_transition_overlay: Option<bool>,
+    /// Extra classes for the shell element.
+    class: Option<String>,
+    children: Element,
 ) -> Element {
-    let inherited_mode = use_ancestor_context::<G3Mode>();
-    let inherited_theme = use_ancestor_context::<Signal<Theme>>();
-    let mode = mode
-        .or_else(|| inherited_mode.map(|context| (context.mode)()))
-        .unwrap_or_else(get_mode);
-    let effective_theme = theme
-        .or_else(|| inherited_theme.map(|theme| theme()))
-        .unwrap_or_default();
-    let theme_style = effective_theme.to_style_attr();
-    provide_context(G3Mode {
-        mode: use_context_signal(mode),
-    });
-    provide_context(use_context_signal(effective_theme));
-    let mut shell_cls = if layout.unwrap_or(true) {
-        match mode {
-            ComponentMode::Ios => format!("{} {}", s::SHELL_BASE, s::SHELL_IOS),
-            ComponentMode::Md => format!("{} {}", s::SHELL_BASE, s::SHELL_MD),
-        }
-    } else {
-        String::new()
-    };
-    if disable_text_selection.unwrap_or(false) {
-        shell_cls = format!("{shell_cls} {}", s::SHELL_NO_SELECT);
-    }
+    let (mode, theme) = use_provide_ambient(mode, theme, strings);
+    let queues = use_provide_overlay_queues();
+    let layout = layout.unwrap_or(true);
+    let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);
     #[cfg(feature = "transitions")]
-    let shell_cls = if route_transition_overlay.unwrap_or(true) {
-        merge_classes(shell_cls, Some(ROUTE_TRANSITION_OVERLAY_REGION_CLASS))
+    let overlay_cls = if overlay_region {
+        ROUTE_TRANSITION_OVERLAY_REGION_CLASS
     } else {
-        shell_cls
+        ""
     };
     #[cfg(not(feature = "transitions"))]
-    let _ = route_transition_overlay;
-    let shell_cls = merge_classes(shell_cls, class.as_deref());
+    let overlay_cls = {
+        let _ = overlay_region;
+        ""
+    };
+    let shell_cls = classes([
+        "g3-app",
+        if layout { "g3-app-shell" } else { "" },
+        if text_selection.unwrap_or(true) {
+            ""
+        } else {
+            "g3-no-select"
+        },
+        overlay_cls,
+    ]);
     let shell = rsx! {
         div {
-            class: shell_cls,
-            style: theme_style,
+            class: merge_classes(shell_cls, class.as_deref()),
+            style: theme.to_style_attr(),
             "data-g3-mode": mode.as_str(),
             {children}
+            OverlayHost { queues }
         }
     };
     #[cfg(feature = "transitions")]
@@ -85,13 +98,10 @@ pub fn AppWrapper(
         {shell}
     }
 }
-/// Links [`UI_CSS`] on the targets that need it at runtime.
-///
-/// On the web `AssetOptions::css().with_static_head(true)` has already put the
-/// `<link>` in the document head at build time, so linking again here only adds
-/// a second identical element and a second request for the same file. Desktop
-/// and mobile have no build-time head to write into, so there the runtime link
-/// is the one that loads it.
+
+/// Links [`UI_CSS`](crate::UI_CSS) where the build has not already put it in
+/// the document head: desktop and mobile. On the web a second link would only
+/// add a duplicate request.
 #[component]
 fn StylesheetLink() -> Element {
     #[cfg(target_arch = "wasm32")]
@@ -105,25 +115,27 @@ fn StylesheetLink() -> Element {
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn AppWrapperPlaygroundDemo() -> Element {
-    let playground_mode = crate::use_component_mode(None);
+fn AppWrapperPlaygroundDemo() -> Element {
+    let mode = crate::use_component_mode(None);
     rsx! {
         crate::PlaygroundDemoFrame { app: false,
-            crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
+            AppWrapper { mode, class: "g3-playground-device-app",
                 crate::Header { title: "Games" }
-                crate::Body { has_footer_space: false,
+                crate::Content { footer_space: false,
                     crate::Card { title: "Shell", "Mode and theme come from the playground controls." }
-                    crate::Card { title: "Pending", "A full app shell with header and body." }
+                    crate::Card { title: "Pending", "A full app shell with header and content." }
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "AppWrapper",
-    description: "Root app shell and mode provider.",
+    description: "Root app shell: stylesheet, mode, theme, strings, and overlay host.",
     demo: AppWrapperPlaygroundDemo,
     source: "src/components/app_wrapper.rs",
 }

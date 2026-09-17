@@ -3,10 +3,9 @@ use dioxus::prelude::*;
 use dioxus_icons::lucide::{BookOpen, CircleUserRound, House, Star};
 use g3_route_transitions::{RouteTransitionPage, animated_navigate};
 use g3_ui::{
-    AppWrapper, Badge, Body, Button, ButtonSize, ButtonStyle, Card, ComponentMode, Header, Item,
-    ItemDetail, List, ListLines, Navbar, NavbarTab, NavbarTabBar, NavbarTabBarVisibility,
-    NavbarTabDesktopPlacement, PlaygroundDemoFrame, RightSlot, SegmentButton, SegmentGroup,
-    StatusColor,
+    AdaptiveNav, AdaptiveNavCompact, AppWrapper, Badge, Button, ButtonExpand, ButtonFill,
+    ButtonSize, Card, Color, Content, Header, Item, ItemDetail, List, ListLines, NavItem,
+    NavItemGroup, PlaygroundDemoFrame, SegmentButton, SegmentGroup, TabLayout, ThemeProvider,
 };
 
 use super::{PlaygroundViewport, Route, active_playground_settings};
@@ -46,18 +45,19 @@ enum Route {
 
 rsx! {
     // Overlay region: rises and falls for sheets.
-    G3AppWrapper {
+    AppWrapper {
         // Base region: stays put, dims under sheets.
-        // Sheet routes pass `route_transition_base: false` and render their
-        // tabs with `visibility: RailOnly`, so a desktop rail stays beside them.
-        G3Navbar {
+        // Sheet routes pass `route_transition_base: false` and hide their
+        // navigation on phones with `compact: Hidden`, so a desktop rail
+        // stays beside them.
+        TabLayout {
             // Page region: slides for Forward/Backward.
             RouteTransitionPage {
-                G3Header { title: "Fairway" }
-                G3Body { G3Card { title: "Today's round", "Ready to play" } }
+                Header { title: "Fairway" }
+                Content { Card { title: "Today's round", "Ready to play" } }
             }
             // Persistent chrome: a desktop rail stays still in every transition.
-            G3NavbarTabBar { /* routed tabs */ }
+            AdaptiveNav { /* NavItem { to: Route::Home {}, .. } */ }
         }
     }
 }"#;
@@ -119,19 +119,15 @@ fn TransitionShowcase(screen: ShowcaseScreen) -> Element {
         section {
             class: "playground-viewport-card playground-viewport-{viewport.as_str()} transition-showcase-card",
             aria_label: format!("{label} route transition preview"),
-            div {
-                class: "playground-viewport-demo",
-                "data-g3-mode": mode.as_str(),
-                g3_ui::G3ThemeProvider { mode, theme: theme.to_theme(),
+            div { class: "playground-viewport-demo",
+                ThemeProvider { mode, theme: theme.to_theme(),
                     PlaygroundDemoFrame {
                         app: false,
                         center: false,
                         class: "transition-showcase-preview",
                         div { class: "transition-showcase-device-frame", aria_hidden: "true" }
-                        AppWrapper {
-                            mode,
-                            class: "g3-playground-device-app transition-showcase-app",
-                            TransitionScreen { screen, mode }
+                        AppWrapper { mode, class: "g3-playground-device-app transition-showcase-app",
+                            TransitionScreen { screen }
                         }
                     }
                 }
@@ -140,48 +136,46 @@ fn TransitionShowcase(screen: ShowcaseScreen) -> Element {
     }
 }
 
+async fn go(route: Route) {
+    animated_navigate(route).await;
+}
+
 #[component]
-fn TransitionScreen(screen: ShowcaseScreen, mode: ComponentMode) -> Element {
+fn TransitionScreen(screen: ShowcaseScreen) -> Element {
     match screen {
-        ShowcaseScreen::Queue => rsx! { QueueScreen { mode } },
-        ShowcaseScreen::Ratings(tab) => rsx! { RatingsScreen { tab, mode } },
+        ShowcaseScreen::Queue => rsx! { QueueScreen {} },
+        ShowcaseScreen::Ratings(tab) => rsx! { RatingsScreen { tab } },
         _ => rsx! {
-            Navbar { mode,
+            TabLayout {
                 RouteTransitionPage { class: "transition-showcase-page".to_string(),
                     Header {
-                        mode,
-                        title: screen_title(screen).to_string(),
-                        start_button: matches!(screen, ShowcaseScreen::Detail | ShowcaseScreen::ArticleDetail)
+                        title: screen_title(screen),
+                        start: matches!(screen, ShowcaseScreen::Detail | ShowcaseScreen::ArticleDetail)
                             .then(|| rsx! {
-                                Button {
-                                    mode,
-                                    style: ButtonStyle::Clear,
-                                    size: ButtonSize::Sm,
-                                    aria_label: "Back".to_string(),
-                                    onclick: move |_| async move {
+                                g3_ui::BackButton {
+                                    onclick: move |_| {
                                         let destination = if screen == ShowcaseScreen::ArticleDetail {
                                             Route::TransitionArticle {}
                                         } else {
                                             Route::TransitionHome {}
                                         };
-                                        animated_navigate(destination).await;
+                                        spawn(go(destination));
                                     },
-                                    "Back"
                                 }
                             }),
                     }
-                    Body { mode, has_footer_space: false,
+                    Content { footer_space: false,
                         match screen {
-                            ShowcaseScreen::Home => rsx! { HomeContent { mode } },
-                            ShowcaseScreen::Detail => rsx! { DetailContent { mode } },
-                            ShowcaseScreen::Profile => rsx! { ProfileContent { mode } },
-                            ShowcaseScreen::Article => rsx! { ArticleContent { mode } },
-                            ShowcaseScreen::ArticleDetail => rsx! { ArticleDetailContent { mode } },
+                            ShowcaseScreen::Home => rsx! { HomeContent {} },
+                            ShowcaseScreen::Detail => rsx! { DetailContent {} },
+                            ShowcaseScreen::Profile => rsx! { ProfileContent {} },
+                            ShowcaseScreen::Article => rsx! { ArticleContent {} },
+                            ShowcaseScreen::ArticleDetail => rsx! { ArticleDetailContent {} },
                             ShowcaseScreen::Queue | ShowcaseScreen::Ratings(_) => rsx! {},
                         }
                     }
                 }
-                ShowcaseTabs { selected: screen }
+                ShowcaseNav { selected: screen }
             }
         },
     }
@@ -197,99 +191,86 @@ fn screen_title(screen: ShowcaseScreen) -> &'static str {
 }
 
 #[component]
-fn HomeContent(mode: ComponentMode) -> Element {
+fn HomeContent() -> Element {
     rsx! {
         Card {
-            mode,
-            title: "Today at Pebble Creek".to_string(),
-            right_slot: RightSlot::Text("10:40 AM".to_string()),
+            title: "Today at Pebble Creek",
+            end: rsx! { "10:40 AM" },
             p { "Four players · Match play · White tees" }
             div { class: "transition-showcase-actions",
                 Button {
-                    mode,
                     size: ButtonSize::Sm,
-                    onclick: move |_| async move { animated_navigate(Route::TransitionDetail {}).await },
+                    onclick: move |_| async move { go(Route::TransitionDetail {}).await },
                     "View round"
                 }
                 Button {
-                    mode,
                     size: ButtonSize::Sm,
-                    style: ButtonStyle::Outline,
-                    onclick: move |_| async move { animated_navigate(Route::TransitionQueue {}).await },
+                    fill: ButtonFill::Outline,
+                    onclick: move |_| async move { go(Route::TransitionQueue {}).await },
                     "Add players"
                 }
             }
         }
-        List { mode, inset: true, lines: ListLines::Inset,
+        List { inset: true, lines: ListLines::Inset,
             Item {
-                mode,
-                label: "Jordan Diaz".to_string(),
-                description: "Ready to play".to_string(),
-                end: rsx! { Badge { color: StatusColor::Success, "Ready" } },
+                label: "Jordan Diaz",
+                description: "Ready to play",
+                end: rsx! { Badge { color: Color::Success, "Ready" } },
             }
-            Item {
-                mode,
-                label: "Sam Meyer".to_string(),
-                description: "12.4 handicap".to_string(),
-                detail: ItemDetail::Show,
-            }
+            Item { label: "Sam Meyer", description: "12.4 handicap", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn DetailContent(mode: ComponentMode) -> Element {
+fn DetailContent() -> Element {
     rsx! {
-        Card {
-            mode,
-            title: "Match play".to_string(),
-            right_slot: RightSlot::Text("Thru 12".to_string()),
+        Card { title: "Match play", end: rsx! { "Thru 12" },
             p { "Jordan leads 2 up with six holes remaining." }
         }
-        List { mode, inset: true, lines: ListLines::Full,
-            Item { mode, label: "Front nine".to_string(), metadata: "+1".to_string() }
-            Item { mode, label: "Back nine".to_string(), metadata: "2 up".to_string() }
-            Item { mode, label: "Course handicap".to_string(), metadata: "12".to_string() }
+        List { inset: true, lines: ListLines::Full,
+            Item { label: "Front nine", metadata: "+1" }
+            Item { label: "Back nine", metadata: "2 up" }
+            Item { label: "Course handicap", metadata: "12" }
         }
     }
 }
 
 #[component]
-fn ProfileContent(mode: ComponentMode) -> Element {
+fn ProfileContent() -> Element {
     rsx! {
-        Card { mode, title: "Matthew W.".to_string(),
+        Card { title: "Matthew W.",
             p { "42 rounds · 12.1 handicap" }
-            Badge { color: StatusColor::Accent, "Following 18" }
+            Badge { color: Color::Accent, "Following 18" }
         }
-        List { mode, inset: true,
-            Item { mode, label: "Achievements".to_string(), detail: ItemDetail::Show }
-            Item { mode, label: "Round history".to_string(), metadata: "42".to_string(), detail: ItemDetail::Show }
-            Item { mode, label: "Settings".to_string(), detail: ItemDetail::Show }
+        List { inset: true,
+            Item { label: "Achievements", detail: ItemDetail::Show }
+            Item { label: "Round history", metadata: "42", detail: ItemDetail::Show }
+            Item { label: "Settings", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn ArticleContent(mode: ComponentMode) -> Element {
+fn ArticleContent() -> Element {
     rsx! {
         Card {
-            mode,
-            title: "Where the light stays".to_string(),
-            right_slot: RightSlot::Text("5 min".to_string()),
-            onclick: move |_| async move { animated_navigate(Route::TransitionArticleDetail {}).await },
+            title: "Where the light stays",
+            end: rsx! { "5 min" },
+            onclick: move |_| async move { go(Route::TransitionArticleDetail {}).await },
             p { "A quiet walk through the closing holes as the course settles into evening." }
         }
-        List { mode, inset: true,
-            Item { mode, label: "The architecture of risk".to_string(), description: "Course design".to_string(), detail: ItemDetail::Show }
-            Item { mode, label: "Playing into the wind".to_string(), description: "Field notes".to_string(), detail: ItemDetail::Show }
+        List { inset: true,
+            Item { label: "The architecture of risk", description: "Course design", detail: ItemDetail::Show }
+            Item { label: "Playing into the wind", description: "Field notes", detail: ItemDetail::Show }
         }
     }
 }
 
 #[component]
-fn ArticleDetailContent(mode: ComponentMode) -> Element {
+fn ArticleDetailContent() -> Element {
     rsx! {
-        Card { mode, title: "Where the light stays".to_string(),
+        Card { title: "Where the light stays",
             p { class: "transition-showcase-article",
                 "By the time the final group reaches seventeen, the long shadows have crossed the fairway. The course feels quieter, and every decision becomes wonderfully simple."
             }
@@ -298,48 +279,46 @@ fn ArticleDetailContent(mode: ComponentMode) -> Element {
 }
 
 #[component]
-fn RatingsScreen(tab: u8, mode: ComponentMode) -> Element {
-    let mut active = use_signal(|| tab as usize);
-    use_effect(use_reactive!(|tab| active.set(tab as usize)));
+fn RatingsScreen(tab: u8) -> Element {
+    let mut selected = use_signal(|| tab);
+    use_effect(use_reactive!(|tab| selected.set(tab)));
     rsx! {
-        Navbar { mode,
+        TabLayout {
             Header {
-                mode,
-                title: "Ratings".to_string(),
+                title: "Ratings",
                 toolbar: rsx! {
                     SegmentGroup {
-                        mode,
-                        active,
-                        defer_active: true,
-                        on_change: move |next: usize| {
-                            spawn(async move {
-                                animated_navigate(Route::TransitionRatings { tab: next as u8 }).await;
-                            });
+                        value: selected,
+                        aria_label: "Ratings",
+                        defer_selection: true,
+                        onchange: move |next: u8| {
+                            spawn(go(Route::TransitionRatings { tab: next }));
                         },
-                        SegmentButton { mode, index: 0, "Courses" }
-                        SegmentButton { mode, index: 1, "Players" }
-                        SegmentButton { mode, index: 2, "Rounds" }
+                        SegmentButton { value: 0_u8, "Courses" }
+                        SegmentButton { value: 1_u8, "Players" }
+                        SegmentButton { value: 2_u8, "Rounds" }
                     }
                 },
             }
-            Body { mode, has_footer_space: false,
+            Content { footer_space: false,
                 Card {
-                    mode,
-                    title: match tab { 1 => "Top players", 2 => "Best rounds", _ => "Top courses" }.to_string(),
-                    right_slot: RightSlot::Text(match tab { 1 => "9.2", 2 => "-4", _ => "8.9" }.to_string()),
-                    p { match tab {
-                        1 => "Players you follow, ranked by recent form.",
-                        2 => "Standout rounds from your golfing circle.",
-                        _ => "Courses ranked from your recent ratings.",
-                    } }
+                    title: match tab { 1 => "Top players", 2 => "Best rounds", _ => "Top courses" },
+                    end: rsx! { {match tab { 1 => "9.2", 2 => "-4", _ => "8.9" }} },
+                    p {
+                        match tab {
+                            1 => "Players you follow, ranked by recent form.",
+                            2 => "Standout rounds from your golfing circle.",
+                            _ => "Courses ranked from your recent ratings.",
+                        }
+                    }
                 }
-                List { mode, inset: true, lines: ListLines::Inset,
+                List { inset: true, lines: ListLines::Inset,
                     for (name, value) in rating_rows(tab) {
-                        Item { mode, label: name.to_string(), metadata: value.to_string() }
+                        Item { key: "{name}", label: name, metadata: value }
                     }
                 }
             }
-            ShowcaseTabs { selected: ShowcaseScreen::Ratings(tab) }
+            ShowcaseNav { selected: ShowcaseScreen::Ratings(tab) }
         }
     }
 }
@@ -365,73 +344,77 @@ fn rating_rows(tab: u8) -> [(&'static str, &'static str); 3] {
 }
 
 #[component]
-fn QueueScreen(mode: ComponentMode) -> Element {
+fn QueueScreen() -> Element {
     rsx! {
-        Navbar { mode, route_transition_base: false,
+        TabLayout { route_transition_base: false,
             Header {
-                mode,
-                title: "Add players".to_string(),
-                start_button: rsx! {
-                    Button {
-                        mode,
-                        style: ButtonStyle::Clear,
-                        size: ButtonSize::Sm,
-                        aria_label: "Back to fairway".to_string(),
-                        onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
-                        "Back"
+                title: "Add players",
+                start: rsx! {
+                    g3_ui::BackButton {
+                        label: "Fairway",
+                        onclick: move |_| {
+                            spawn(go(Route::TransitionHome {}));
+                        },
                     }
                 },
             }
-            Body { mode, has_footer_space: false,
-                Card { mode, title: "Available for 10:40 AM".to_string(),
+            Content { footer_space: false,
+                Card { title: "Available for 10:40 AM",
                     p { "Choose players to add to the Pebble Creek round." }
                 }
-                List { mode, inset: true, lines: ListLines::Inset,
-                Item { mode, label: "Morgan Lee".to_string(), description: "Available at 10:40".to_string() }
-                Item { mode, label: "Taylor Kim".to_string(), description: "Usually walks".to_string() }
+                List { inset: true, lines: ListLines::Inset,
+                    Item { label: "Morgan Lee", description: "Available at 10:40" }
+                    Item { label: "Taylor Kim", description: "Usually walks" }
                 }
                 Button {
-                    mode,
-                    expand: true,
-                    onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
+                    expand: ButtonExpand::Block,
+                    onclick: move |_| async move { go(Route::TransitionHome {}).await },
                     "Done"
                 }
             }
-            // The sheet covers the bottom tabs on a phone, but a desktop rail stays
-            // beside it.
-            ShowcaseTabs { selected: ShowcaseScreen::Queue, visibility: NavbarTabBarVisibility::RailOnly }
+            // The sheet covers the bottom tabs on a phone, but a desktop rail
+            // stays beside it.
+            ShowcaseNav { selected: ShowcaseScreen::Queue, compact: AdaptiveNavCompact::Hidden }
         }
     }
 }
 
 #[component]
-fn ShowcaseTabs(selected: ShowcaseScreen, visibility: Option<NavbarTabBarVisibility>) -> Element {
+fn ShowcaseNav(selected: ShowcaseScreen, compact: Option<AdaptiveNavCompact>) -> Element {
     rsx! {
-        NavbarTabBar { aria_label: "Transition demo navigation".to_string(), visibility,
-            NavbarTab {
-                label: "Home".to_string(),
+        AdaptiveNav { aria_label: "Transition demo navigation", compact,
+            NavItem {
+                label: "Home",
                 selected: matches!(selected, ShowcaseScreen::Home | ShowcaseScreen::Queue | ShowcaseScreen::Detail),
                 icon: rsx! { House { size: 20 } },
-                onclick: move |_| async move { animated_navigate(Route::TransitionHome {}).await },
+                onclick: move |_| {
+                    spawn(go(Route::TransitionHome {}));
+                },
             }
-            NavbarTab {
-                label: "Ratings".to_string(),
+            NavItem {
+                label: "Ratings",
                 selected: matches!(selected, ShowcaseScreen::Ratings(_)),
                 icon: rsx! { Star { size: 20 } },
-                onclick: move |_| async move { animated_navigate(Route::TransitionRatings { tab: 0 }).await },
+                onclick: move |_| {
+                    spawn(go(Route::TransitionRatings { tab: 0 }));
+                },
             }
-            NavbarTab {
-                label: "Stories".to_string(),
+            NavItem {
+                label: "Stories",
                 selected: matches!(selected, ShowcaseScreen::Article | ShowcaseScreen::ArticleDetail),
                 icon: rsx! { BookOpen { size: 20 } },
-                onclick: move |_| async move { animated_navigate(Route::TransitionArticle {}).await },
+                onclick: move |_| {
+                    spawn(go(Route::TransitionArticle {}));
+                },
             }
-            NavbarTab {
-                label: "Profile".to_string(),
+            NavItem {
+                label: "Profile",
                 selected: selected == ShowcaseScreen::Profile,
-                desktop_placement: NavbarTabDesktopPlacement::Bottom,
+                group: NavItemGroup::Secondary,
                 icon: rsx! { CircleUserRound { size: 20 } },
-                onclick: move |_| async move { animated_navigate(Route::TransitionProfile {}).await },
+                onclick: move |_| {
+                    spawn(go(Route::TransitionProfile {}));
+                },
             }
         }
     }

@@ -1,175 +1,218 @@
-//! Button component with iOS/Android mode support.
-use super::button_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Buttons.
+use super::Color;
+use crate::components::pressable::{ButtonType, Pressable, Target};
+use crate::components::{Spinner, SpinnerSize};
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
-/// Visual variant of the button.
-#[derive(Clone, Copy, PartialEq, Default)]
-pub enum ButtonStyle {
-    /// Filled with the accent color. The primary action on a screen.
+
+/// How a [`Button`] is filled.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ButtonFill {
+    /// Filled with its colour. The primary action on a screen.
     #[default]
     Solid,
-    /// Accent-colored border and label over a transparent fill - a secondary
-    /// action sitting beside a `Solid` one.
+    /// A coloured border and label, for a secondary action.
     Outline,
-    /// Text only, no fill or border. For low-emphasis and inline actions.
+    /// Label only, for low-emphasis and toolbar actions.
     Clear,
-    /// Filled, but in a neutral surface color rather than the accent. Use
-    /// where a button needs presence without claiming primacy.
-    Neutral,
-    /// Destructive action (delete, remove, sign out) — same weight as
-    /// `Clear` (text-only, no fill/border) but tinted with the theme's
-    /// danger color instead of the accent color.
-    Danger,
 }
-/// Button size.
-#[derive(Clone, Copy, PartialEq, Default)]
+
+/// [`Button`] size.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ButtonSize {
     /// Compact, for toolbars and dense rows.
     Sm,
-    /// Standard size.
+    /// Standard.
     #[default]
     Md,
-    /// Prominent, for a full-width primary call to action.
+    /// Prominent, for a main call to action.
     Lg,
 }
+
+/// How a [`Button`] fills the width of its container.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ButtonExpand {
+    /// Full width, keeping its rounded corners.
+    Block,
+    /// Full width with square corners and no side borders, edge to edge.
+    Full,
+}
+
+/// A button, or a link that looks like one. Like Ionic's `ion-button`.
+///
+/// Set `to` for a router destination or `href` for a plain link; otherwise it
+/// renders a `<button>`. An icon-only button needs an `aria_label`.
+///
+/// ```rust,ignore
+/// rsx! {
+///     Button { onclick: move |_| save(), "Save" }
+///     Button { fill: ButtonFill::Outline, color: Color::Danger, "Delete" }
+///     Button { fill: ButtonFill::Clear, aria_label: "Settings", Settings {} }
+///     Button { button_type: ButtonType::Submit, loading: saving(), "Sign in" }
+/// }
+/// ```
 #[component]
 pub fn Button(
-    style: Option<ButtonStyle>,
+    /// Fill. Defaults to [`ButtonFill::Solid`].
+    fill: Option<ButtonFill>,
+    /// Colour. Defaults to [`Color::Accent`].
+    color: Option<Color>,
+    /// Size. Defaults to [`ButtonSize::Md`].
     size: Option<ButtonSize>,
+    /// Stretch to the container's width.
+    expand: Option<ButtonExpand>,
+    /// Disable the button.
     disabled: Option<bool>,
-    aria_label: Option<String>,
-    expand: Option<bool>,
-    class: Option<String>,
-    mode: Option<ComponentMode>,
+    /// Show a spinner and ignore presses, for an action in progress.
+    loading: Option<bool>,
+    /// The `<button>` type. Defaults to [`ButtonType::Button`], so a button in
+    /// a form does not submit it unless asked to.
+    button_type: Option<ButtonType>,
+    /// Router destination. Renders a link.
+    #[props(into)]
+    to: Option<NavigationTarget>,
+    /// Plain link destination, used when `to` is not set.
+    href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
+    /// Content before the label, usually an icon.
     start: Option<Element>,
-    /// Small counter overlay in the button's top-right corner (e.g. active
-    /// filter count). Hidden entirely when `None` or `Some(0)` — callers can
-    /// pass a raw count without special-casing zero.
-    badge: Option<u32>,
-    onclick: Callback<Event<MouseData>>,
+    /// Content after the label, usually an icon.
+    end: Option<Element>,
+    /// Accessible name. Required when the button has no visible text.
+    aria_label: Option<String>,
+    /// Called when pressed.
+    onclick: Option<EventHandler<MouseEvent>>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
+    /// Extra classes for the button.
+    class: Option<String>,
+    /// Any other HTML attribute, such as `aria_haspopup` or `data-*`.
+    #[props(extends = GlobalAttributes)]
+    attributes: Vec<Attribute>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::IOS,
-        ComponentMode::Md => s::MD,
+    let loading = loading.unwrap_or(false);
+    let fill_cls = match fill.unwrap_or_default() {
+        ButtonFill::Solid => "g3-btn-solid",
+        ButtonFill::Outline => "g3-btn-outline",
+        ButtonFill::Clear => "g3-btn-clear",
     };
-    let style_cls = match style.unwrap_or_default() {
-        ButtonStyle::Solid => s::SOLID,
-        ButtonStyle::Outline => s::OUTLINE,
-        ButtonStyle::Clear => s::CLEAR,
-        ButtonStyle::Neutral => s::NEUTRAL,
-        ButtonStyle::Danger => s::DANGER,
+    // Accent is the base colour, so it needs no class of its own.
+    let color_cls = match color.unwrap_or_default() {
+        Color::Accent => String::new(),
+        color => format!("g3-btn-{}", color.as_str()),
     };
     let size_cls = match size.unwrap_or_default() {
-        ButtonSize::Sm => s::SM,
-        ButtonSize::Md => s::MD_SIZE,
-        ButtonSize::Lg => s::LG,
+        ButtonSize::Sm => "g3-btn-sm",
+        ButtonSize::Md => "g3-btn-md-size",
+        ButtonSize::Lg => "g3-btn-lg",
     };
-    let expand_cls = if expand.unwrap_or(false) {
-        s::EXPAND
+    let expand_cls = match expand {
+        Some(ButtonExpand::Block) => "g3-btn-expand-block",
+        Some(ButtonExpand::Full) => "g3-btn-expand-full",
+        None => "",
+    };
+    let cls = classes([
+        "g3-btn",
+        mode.pick("g3-btn-ios", "g3-btn-md"),
+        fill_cls,
+        &color_cls,
+        size_cls,
+        expand_cls,
+        if loading { "g3-btn-loading" } else { "" },
+    ]);
+    let mut attributes = attributes;
+    if let Some(label) = aria_label {
+        attributes.push(Attribute::new("aria-label", label, None, false));
+    }
+    if loading {
+        attributes.push(Attribute::new("aria-busy", "true", None, false));
+    }
+    let start = if loading {
+        Some(rsx! {
+            Spinner { size: SpinnerSize::Sm }
+        })
     } else {
-        ""
+        start
     };
-    let is_disabled = disabled.unwrap_or(false);
-    let cls = merge_classes(
-        format!("{} {mode_cls} {style_cls} {size_cls} {expand_cls}", s::BASE),
-        class.as_deref(),
-    );
-    let badge_count = badge.filter(|count| *count > 0);
     rsx! {
-        button {
-            class: cls,
-            r#type: "button",
-            disabled: is_disabled,
-            aria_label,
-            onclick: move |event| {
-                onclick.call(event);
-            },
-            if let Some(start) = start {
-                div { class: "g3-btn-content g3-btn-content-start",
+        Pressable {
+            class: merge_classes(cls, class.as_deref()),
+            target: Target::from_props(href, to, new_tab.unwrap_or(false)),
+            disabled: disabled.unwrap_or(false) || loading,
+            button_type: button_type.unwrap_or_default(),
+            onclick,
+            attributes,
+            span { class: "g3-btn-content",
+                if let Some(start) = start {
                     span { class: "g3-btn-start", {start} }
-                    span { class: "g3-btn-label", {children} }
-                    span { class: "g3-btn-end-spacer" }
                 }
-            } else {
-                div { class: "g3-btn-content", {children} }
-            }
-            if let Some(count) = badge_count {
-                span { class: s::BADGE, "{count}" }
+                span { class: "g3-btn-label", {children} }
+                if let Some(end) = end {
+                    span { class: "g3-btn-end", {end} }
+                }
             }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn ButtonPlaygroundDemo() -> Element {
-    let style_index = use_signal(|| 0_usize);
-    let size_index = use_signal(|| 1_usize);
+fn ButtonPlaygroundDemo() -> Element {
+    let fill = use_signal(|| ButtonFill::Solid);
+    let color = use_signal(|| Color::Accent);
+    let size = use_signal(|| ButtonSize::Md);
     let disabled = use_signal(|| false);
+    let loading = use_signal(|| false);
     let expand = use_signal(|| false);
     let label = use_signal(|| "Create".to_string());
-    let style = match style_index() {
-        1 => ButtonStyle::Outline,
-        2 => ButtonStyle::Clear,
-        3 => ButtonStyle::Neutral,
-        _ => ButtonStyle::Solid,
-    };
-    let size = match size_index() {
-        0 => ButtonSize::Sm,
-        2 => ButtonSize::Lg,
-        _ => ButtonSize::Md,
-    };
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Field { label: "Label"
-                            .to_string(), value: label }
-                div {
-                    span { "Style" }
-                    crate::SegmentGroup { active: style_index,
-                        crate::SegmentButton { index: 0, "Solid" }
-                        crate::SegmentButton { index: 1, "Outline" }
-                        crate::SegmentButton { index: 2, "Clear" }
-                        crate::SegmentButton { index: 3, "Neutral" }
-                    }
+                crate::Input { label: "Label", value: label }
+                crate::SegmentGroup { value: fill, aria_label: "Fill",
+                    crate::SegmentButton { value: ButtonFill::Solid, "Solid" }
+                    crate::SegmentButton { value: ButtonFill::Outline, "Outline" }
+                    crate::SegmentButton { value: ButtonFill::Clear, "Clear" }
                 }
-                div {
-                    span { "Size" }
-                    crate::SegmentGroup { active: size_index,
-                        crate::SegmentButton { index: 0, "Sm" }
-                        crate::SegmentButton { index: 1, "Md" }
-                        crate::SegmentButton { index: 2, "Lg" }
-                    }
+                crate::Select {
+                    label: "Color",
+                    value: color,
+                    options: vec![
+                        crate::SelectOption::new(Color::Accent, "Accent"),
+                        crate::SelectOption::new(Color::Neutral, "Neutral"),
+                        crate::SelectOption::new(Color::Success, "Success"),
+                        crate::SelectOption::new(Color::Warning, "Warning"),
+                        crate::SelectOption::new(Color::Danger, "Danger"),
+                    ],
                 }
-                crate::Checkbox { checked: disabled, label: "Disabled"
-                            .to_string() }
-                crate::Checkbox { checked: expand, label: "Expand".to_string() }
+                crate::SegmentGroup { value: size, aria_label: "Size",
+                    crate::SegmentButton { value: ButtonSize::Sm, "Sm" }
+                    crate::SegmentButton { value: ButtonSize::Md, "Md" }
+                    crate::SegmentButton { value: ButtonSize::Lg, "Lg" }
+                }
+                crate::Checkbox { checked: disabled, label: "Disabled" }
+                crate::Checkbox { checked: loading, label: "Loading" }
+                crate::Checkbox { checked: expand, label: "Expand" }
             },
             Button {
-                style,
-                size,
+                fill: fill(),
+                color: color(),
+                size: size(),
                 disabled: disabled(),
-                expand: expand(),
-                onclick: |
-                        _ | {},
-                "{label()}"
+                loading: loading(),
+                expand: expand().then_some(ButtonExpand::Block),
+                "{label}"
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Button",
-    description: "Ionic-style action button with solid, outline, clear, and neutral variants.",
+    description: "Buttons and button-styled links in solid, outline, and clear fills.",
     demo: ButtonPlaygroundDemo,
     source: "src/components/button.rs",
-}
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn button_exposes_aria_label_for_icon_only_triggers() {
-        let source = include_str!("button.rs");
-        assert!(source.contains("aria_label: Option<String>"));
-        assert!(source.contains("aria_label,"));
-    }
 }

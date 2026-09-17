@@ -1,0 +1,327 @@
+//! Floating panels anchored to a trigger: popovers and menus.
+use super::Color;
+use super::overlay::use_overlay_focus_with;
+use crate::components::pressable::{Pressable, Target};
+use crate::state::use_element_id;
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
+use dioxus::prelude::*;
+
+/// Where a [`Popover`] or [`Menu`] opens relative to its trigger.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum PopoverPlacement {
+    /// Below the trigger, aligned to its leading edge.
+    #[default]
+    BottomStart,
+    /// Below the trigger, aligned to its trailing edge.
+    BottomEnd,
+    /// Above the trigger, aligned to its leading edge.
+    TopStart,
+    /// Above the trigger, aligned to its trailing edge.
+    TopEnd,
+}
+
+impl PopoverPlacement {
+    fn as_str(self) -> &'static str {
+        match self {
+            PopoverPlacement::BottomStart => "bottom-start",
+            PopoverPlacement::BottomEnd => "bottom-end",
+            PopoverPlacement::TopStart => "top-start",
+            PopoverPlacement::TopEnd => "top-end",
+        }
+    }
+}
+
+#[component]
+pub(crate) fn PopoverFrame(
+    open: Signal<bool>,
+    trigger: Element,
+    placement: PopoverPlacement,
+    sheet_on_compact: bool,
+    role: &'static str,
+    roving: Option<&'static str>,
+    id: Option<String>,
+    aria_label: Option<String>,
+    aria_labelledby: Option<String>,
+    on_dismiss: Option<EventHandler<()>>,
+    mode: Option<ComponentMode>,
+    class: Option<String>,
+    children: Element,
+) -> Element {
+    let mode = use_component_mode(mode);
+    let id = use_element_id("popover", id);
+    let dismiss = use_callback(move |()| {
+        let mut open = open;
+        open.set(false);
+        if let Some(on_dismiss) = on_dismiss {
+            on_dismiss.call(());
+        }
+    });
+    use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
+    let mut ever_opened = use_signal(|| false);
+    use_effect(move || {
+        if open() {
+            ever_opened.set(true);
+        }
+    });
+    let is_open = open();
+    let state = if is_open { "open" } else { "closed" };
+    let cls = classes([
+        "g3-popover",
+        mode.pick("g3-popover-ios", "g3-popover-md"),
+        if sheet_on_compact {
+            "g3-popover-sheet"
+        } else {
+            ""
+        },
+    ]);
+    rsx! {
+        span { class: "g3-popover-anchor",
+            {trigger}
+            if is_open {
+                div {
+                    class: "g3-popover-backdrop",
+                    aria_hidden: "true",
+                    onclick: move |_| dismiss.call(()),
+                }
+            }
+            if is_open || ever_opened() {
+                div {
+                    id,
+                    class: merge_classes(cls, class.as_deref()),
+                    role,
+                    aria_label,
+                    aria_labelledby,
+                    tabindex: "-1",
+                    "data-state": state,
+                    "data-placement": placement.as_str(),
+                    aria_hidden: (!is_open).then_some("true"),
+                    inert: (!is_open).then_some(true),
+                    {children}
+                }
+            }
+        }
+    }
+}
+
+/// A panel of content floating beside a trigger, such as a filter form or a
+/// profile card. Like Ionic's `ion-popover`.
+///
+/// The trigger is any element; give it `aria_haspopup: "dialog"` and
+/// `aria_expanded` so assistive technology knows what it opens. Escape and a
+/// tap outside close the popover. With `sheet_on_compact`, it shows as a
+/// bottom sheet on shells narrower than `48rem`.
+///
+/// ```rust,ignore
+/// rsx! {
+///     Popover { open,
+///         trigger: rsx! {
+///             Button { aria_haspopup: "dialog", aria_expanded: open().to_string(),
+///                 onclick: move |_| open.toggle(), "Filters" }
+///         },
+///         FilterForm {}
+///     }
+/// }
+/// ```
+#[component]
+pub fn Popover(
+    /// Whether the popover is open.
+    open: Signal<bool>,
+    /// The element the popover is anchored to.
+    trigger: Element,
+    /// Where it opens. Defaults to [`PopoverPlacement::BottomStart`].
+    placement: Option<PopoverPlacement>,
+    /// Show as a bottom sheet on compact shells.
+    sheet_on_compact: Option<bool>,
+    /// Accessible name of the panel.
+    aria_label: Option<String>,
+    /// Called after the user dismisses the popover.
+    on_dismiss: Option<EventHandler<()>>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
+    /// Extra classes for the panel.
+    class: Option<String>,
+    children: Element,
+) -> Element {
+    rsx! {
+        PopoverFrame {
+            open,
+            trigger,
+            placement: placement.unwrap_or_default(),
+            sheet_on_compact: sheet_on_compact.unwrap_or(false),
+            role: "dialog",
+            aria_label,
+            on_dismiss,
+            mode,
+            class,
+            div { class: "g3-popover-content", {children} }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+struct MenuContext {
+    open: Signal<bool>,
+}
+
+/// A menu of actions anchored to a trigger. Like a desktop dropdown menu.
+///
+/// Arrow keys, Home, and End move between items; Escape closes the menu.
+/// Choosing an item closes it.
+///
+/// ```rust,ignore
+/// rsx! {
+///     Menu { open,
+///         trigger: rsx! {
+///             Button { fill: ButtonFill::Clear, aria_label: "More", aria_haspopup: "menu",
+///                 aria_expanded: open().to_string(), onclick: move |_| open.toggle(), Ellipsis {} }
+///         },
+///         MenuItem { onclick: move |_| rename(), "Rename" }
+///         MenuItem { color: Color::Danger, onclick: move |_| delete(), "Delete" }
+///     }
+/// }
+/// ```
+#[component]
+pub fn Menu(
+    /// Whether the menu is open.
+    open: Signal<bool>,
+    /// The element the menu is anchored to.
+    trigger: Element,
+    /// Where it opens. Defaults to [`PopoverPlacement::BottomStart`].
+    placement: Option<PopoverPlacement>,
+    /// Accessible name of the menu.
+    aria_label: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
+    /// Extra classes for the menu panel.
+    class: Option<String>,
+    children: Element,
+) -> Element {
+    use_context_provider(|| MenuContext { open });
+    rsx! {
+        PopoverFrame {
+            open,
+            trigger,
+            placement: placement.unwrap_or_default(),
+            sheet_on_compact: false,
+            role: "menu",
+            roving: Some("[role=menuitem]"),
+            aria_label,
+            mode,
+            class: merge_classes("g3-menu", class.as_deref()),
+            {children}
+        }
+    }
+}
+
+/// One action in a [`Menu`].
+#[component]
+pub fn MenuItem(
+    /// Content before the label, usually an icon.
+    start: Option<Element>,
+    /// Content after the label, such as a keyboard shortcut.
+    end: Option<Element>,
+    /// Colour. Only [`Color::Danger`] and [`Color::Accent`] change the item.
+    color: Option<Color>,
+    /// Disable the item.
+    disabled: Option<bool>,
+    /// Router destination.
+    #[props(into)]
+    to: Option<NavigationTarget>,
+    /// Plain link destination, used when `to` is not set.
+    href: Option<String>,
+    /// Called when chosen.
+    onclick: Option<EventHandler<MouseEvent>>,
+    /// Extra classes for the item.
+    class: Option<String>,
+    children: Element,
+) -> Element {
+    let context = try_use_context::<MenuContext>();
+    let color_cls = match color {
+        Some(Color::Danger) => "g3-menu-item-danger",
+        Some(Color::Accent) => "g3-menu-item-accent",
+        _ => "",
+    };
+    rsx! {
+        Pressable {
+            class: merge_classes(classes(["g3-menu-item", color_cls]), class.as_deref()),
+            target: Target::from_props(href, to, false),
+            disabled: disabled.unwrap_or(false),
+            onclick: move |event| {
+                if let Some(onclick) = onclick {
+                    onclick.call(event);
+                }
+                if let Some(MenuContext { mut open }) = context {
+                    open.set(false);
+                }
+            },
+            attributes: vec![
+                Attribute::new("role", "menuitem", None, false),
+                Attribute::new("tabindex", "-1", None, false),
+            ],
+            if let Some(start) = start {
+                span { class: "g3-menu-item-start", aria_hidden: "true", {start} }
+            }
+            span { class: "g3-menu-item-label", {children} }
+            if let Some(end) = end {
+                span { class: "g3-menu-item-end", {end} }
+            }
+        }
+    }
+}
+
+#[cfg(feature = "playground")]
+#[component]
+fn MenuPlaygroundDemo() -> Element {
+    let mut menu_open = use_signal(|| false);
+    let mut popover_open = use_signal(|| false);
+    let mut last = use_signal(|| "Nothing yet".to_string());
+    rsx! {
+        crate::PlaygroundDemoFrame {
+            div { class: "playground-row",
+                Menu {
+                    open: menu_open,
+                    trigger: rsx! {
+                        crate::Button {
+                            fill: crate::ButtonFill::Outline,
+                            aria_haspopup: "menu",
+                            aria_expanded: menu_open().to_string(),
+                            onclick: move |_| menu_open.toggle(),
+                            "Actions"
+                        }
+                    },
+                    MenuItem { onclick: move |_| last.set("Rename".into()), "Rename" }
+                    MenuItem { onclick: move |_| last.set("Duplicate".into()), "Duplicate" }
+                    MenuItem {
+                        color: Color::Danger,
+                        onclick: move |_| last.set("Delete".into()),
+                        "Delete"
+                    }
+                }
+                Popover {
+                    open: popover_open,
+                    sheet_on_compact: true,
+                    aria_label: "Player",
+                    trigger: rsx! {
+                        crate::Button {
+                            fill: crate::ButtonFill::Clear,
+                            aria_haspopup: "dialog",
+                            aria_expanded: popover_open().to_string(),
+                            onclick: move |_| popover_open.toggle(),
+                            "Player card"
+                        }
+                    },
+                    strong { "Alex Morgan" }
+                    p { "Handicap 12 · 18 rounds this season" }
+                }
+            }
+            p { "Last action: {last}" }
+        }
+    }
+}
+
+crate::g3_playground! {
+    name: "Menu",
+    description: "Anchored menus and popovers.",
+    demo: MenuPlaygroundDemo,
+    source: "src/components/popover.rs",
+}

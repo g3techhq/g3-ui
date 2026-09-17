@@ -1,333 +1,312 @@
-//! Fab component - Floating Action Button with full Ionic parity.
-//! Supports: Fab container, FabButton, FabList.
-use super::fab_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Floating action buttons.
+use crate::components::pressable::{Pressable, Target};
+use crate::state::{use_controlled, use_element_id};
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
-/// Fab container vertical alignment
-#[derive(Clone, Copy, PartialEq, Default)]
+
+/// Vertical position of a [`Fab`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum FabVertical {
-    /// Pin to the top of the container.
-    #[default]
+    /// Top edge.
     Top,
-    /// Center vertically.
+    /// Centre.
     Center,
-    /// Pin to the bottom - the usual placement for a primary action.
+    /// Bottom edge.
+    #[default]
     Bottom,
 }
-/// Fab container horizontal alignment
-#[derive(Clone, Copy, PartialEq, Default)]
+
+/// Horizontal position of a [`Fab`], in reading direction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum FabHorizontal {
-    /// Pin to the leading edge.
-    #[default]
+    /// Leading edge.
     Start,
-    /// Center horizontally.
+    /// Centre.
     Center,
-    /// Pin to the trailing edge - the usual placement for a primary action.
+    /// Trailing edge.
+    #[default]
     End,
 }
-/// FabList side relative to the main FabButton
-#[derive(Clone, Copy, PartialEq, Default)]
+
+/// Which way a [`FabList`] opens from its button.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum FabListSide {
-    /// Expand upward from the button.
+    /// Upward.
     #[default]
     Top,
-    /// Expand downward from the button.
+    /// Downward.
     Bottom,
-    /// Expand toward the leading edge.
+    /// Toward the leading edge.
     Start,
-    /// Expand toward the trailing edge.
+    /// Toward the trailing edge.
     End,
 }
-/// Fab button size
-#[derive(Clone, Copy, PartialEq, Default)]
+
+/// [`FabButton`] size.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum FabSize {
-    /// Full-size action button.
+    /// 56px.
     #[default]
-    Normal,
-    /// Reduced size, for the secondary buttons revealed by a `FabList`.
+    Regular,
+    /// 40px, for the buttons in a [`FabList`].
     Small,
 }
-/// Fab container - wraps buttons and lists, handles fixed positioning.
+
+/// Positions floating action buttons over the page. Like Ionic's `ion-fab`.
+/// Pass it to [`Content`](crate::Content)'s `fab` slot so it stays put while
+/// the content scrolls.
+///
+/// ```rust,ignore
+/// Content { fab: rsx! { Fab { FabButton { aria_label: "New round", onclick: new_round, Plus {} } } }, .. }
+/// ```
 #[component]
 pub fn Fab(
-    children: Element,
-    #[props(extends = Input)] attributes: Vec<Attribute>,
+    /// Vertical position. Defaults to [`FabVertical::Bottom`].
     vertical: Option<FabVertical>,
+    /// Horizontal position. Defaults to [`FabHorizontal::End`].
     horizontal: Option<FabHorizontal>,
+    /// Straddle the top or bottom edge, half over a header or footer.
     edge: Option<bool>,
+    /// Extra classes for the container.
     class: Option<String>,
+    children: Element,
 ) -> Element {
-    let vert = vertical.unwrap_or_default();
-    let horiz = horizontal.unwrap_or_default();
-    let is_edge = edge.unwrap_or(false);
-    let vert_cls = match vert {
-        FabVertical::Top => s::FAB_VERTICAL_TOP,
-        FabVertical::Center => s::FAB_VERTICAL_CENTER,
-        FabVertical::Bottom => s::FAB_VERTICAL_BOTTOM,
+    let vertical_cls = match vertical.unwrap_or_default() {
+        FabVertical::Top => "g3-fab-vertical-top",
+        FabVertical::Center => "g3-fab-vertical-center",
+        FabVertical::Bottom => "g3-fab-vertical-bottom",
     };
-    let horiz_cls = match horiz {
-        FabHorizontal::Start => s::FAB_HORIZONTAL_START,
-        FabHorizontal::Center => s::FAB_HORIZONTAL_CENTER,
-        FabHorizontal::End => s::FAB_HORIZONTAL_END,
+    let horizontal_cls = match horizontal.unwrap_or_default() {
+        FabHorizontal::Start => "g3-fab-horizontal-start",
+        FabHorizontal::Center => "g3-fab-horizontal-center",
+        FabHorizontal::End => "g3-fab-horizontal-end",
     };
-    let edge_cls = if is_edge { s::FAB_CONTAINER_EDGE } else { "" };
-    let container_cls = merge_classes(
-        format!("{} {vert_cls} {horiz_cls} {edge_cls}", s::FAB_CONTAINER),
-        class.as_deref(),
-    );
-    let final_attributes: Vec<Attribute> = attributes
-        .into_iter()
-        .filter(|attr| attr.name as &str != "onclick")
-        .collect();
+    let cls = classes([
+        "g3-fab-container",
+        vertical_cls,
+        horizontal_cls,
+        if edge.unwrap_or(false) {
+            "g3-fab-container-edge"
+        } else {
+            ""
+        },
+    ]);
     rsx! {
-        div { class: container_cls, ..final_attributes, {children} }
+        div { class: merge_classes(cls, class.as_deref()), {children} }
     }
 }
-/// FabButton - the primary circular action button.
+
+/// A round floating action button. Like Ionic's `ion-fab-button`.
+///
+/// It usually holds only an icon, so give it an `aria_label`.
 #[component]
 pub fn FabButton(
-    children: Element,
-    #[props(extends = Input)] attributes: Vec<Attribute>,
-    activated: Option<bool>,
-    close_icon: Option<Element>,
+    /// Accessible name. Required for icon-only buttons.
+    aria_label: Option<String>,
+    /// Size. Defaults to [`FabSize::Regular`].
     size: Option<FabSize>,
+    /// Use a translucent surface on iOS.
     translucent: Option<bool>,
-    onclick: Option<Callback<Event<MouseData>>>,
-    href: Option<String>,
-    target: Option<String>,
+    /// Disable the button.
     disabled: Option<bool>,
-    class: Option<String>,
+    /// Router destination. Renders a link.
+    #[props(into)]
+    to: Option<NavigationTarget>,
+    /// Plain link destination, used when `to` is not set.
+    href: Option<String>,
+    /// Called when pressed.
+    onclick: Option<EventHandler<MouseEvent>>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Extra classes for the button.
+    class: Option<String>,
+    /// Any other HTML attribute, such as `aria_expanded`.
+    #[props(extends = GlobalAttributes)]
+    attributes: Vec<Attribute>,
+    children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let is_activated = activated.unwrap_or(false);
-    let is_small = size.unwrap_or_default() == FabSize::Small;
-    let is_translucent = translucent.unwrap_or(false);
-    let is_disabled = disabled.unwrap_or(false);
-    let fab_cls = match mode {
-        ComponentMode::Ios => s::FAB_IOS,
-        ComponentMode::Md => s::FAB_MD,
-    };
-    let size_cls = if is_small { s::FAB_SMALL } else { "" };
-    let translucent_cls = if is_translucent && mode == ComponentMode::Ios {
-        s::FAB_TRANSLUCENT
-    } else {
-        ""
-    };
-    let btn_cls = merge_classes(
-        format!("{} {fab_cls} {size_cls} {translucent_cls}", s::FAB),
-        class.as_deref(),
-    );
-    let final_attributes: Vec<Attribute> = attributes
-        .into_iter()
-        .filter(|attr| attr.name as &str != "onclick")
-        .collect();
-    if let Some(ref href) = href {
-        rsx! {
-            a {
-                href,
-                target: target.clone(),
-                class: btn_cls,
-                aria_disabled: is_disabled.to_string(),
-                ..final_attributes,
-                if is_activated && close_icon.is_some() {
-                    {close_icon}
-                } else {
-                    {children}
-                }
-            }
-        }
-    } else {
-        rsx! {
-            button {
-                class: btn_cls,
-                r#type: "button",
-                disabled: is_disabled,
-                onclick: move |event| {
-                    if is_disabled {
-                        return;
-                    }
-                    if let Some(ref handler) = onclick {
-                        handler.call(event);
-                    }
-                },
-                ..final_attributes,
-                if is_activated && close_icon.is_some() {
-                    {close_icon}
-                } else {
-                    {children}
-                }
-            }
+    let cls = classes([
+        "g3-fab",
+        mode.pick("g3-fab-ios", "g3-fab-md"),
+        if size.unwrap_or_default() == FabSize::Small {
+            "g3-fab-small"
+        } else {
+            ""
+        },
+        if translucent.unwrap_or(false) && mode == ComponentMode::Ios {
+            "g3-fab-translucent"
+        } else {
+            ""
+        },
+    ]);
+    let mut attributes = attributes;
+    if let Some(label) = aria_label {
+        attributes.push(Attribute::new("aria-label", label, None, false));
+    }
+    rsx! {
+        Pressable {
+            class: merge_classes(cls, class.as_deref()),
+            target: Target::from_props(href, to, false),
+            disabled: disabled.unwrap_or(false),
+            onclick,
+            attributes,
+            {children}
         }
     }
 }
-/// FabList - expandable list of secondary fab buttons.
+
+/// Secondary buttons that open from a [`FabButton`]. Like Ionic's
+/// `ion-fab-list`. [`FabMenu`] wires one up for you.
 #[component]
 pub fn FabList(
-    children: Element,
-    #[props(extends = Input)] attributes: Vec<Attribute>,
-    activated: Option<bool>,
+    /// Whether the list is open.
+    open: bool,
+    /// Which way it opens. Defaults to [`FabListSide::Top`].
     side: Option<FabListSide>,
+    /// Element id, for the button's `aria_controls`.
+    id: Option<String>,
+    /// Extra classes for the list.
     class: Option<String>,
-    mode: Option<ComponentMode>,
+    children: Element,
 ) -> Element {
-    let mode = use_component_mode(mode);
-    let is_activated = activated.unwrap_or(false);
-    let side = side.unwrap_or_default();
-    let list_cls = match mode {
-        ComponentMode::Ios => s::FAB_LIST_IOS,
-        ComponentMode::Md => s::FAB_LIST_MD,
+    let side_cls = match side.unwrap_or_default() {
+        FabListSide::Top => "g3-fab-list-top",
+        FabListSide::Bottom => "g3-fab-list-bottom",
+        FabListSide::Start => "g3-fab-list-start",
+        FabListSide::End => "g3-fab-list-end",
     };
-    let side_cls = match side {
-        FabListSide::Top => s::FAB_LIST_TOP,
-        FabListSide::Bottom => s::FAB_LIST_BOTTOM,
-        FabListSide::Start => s::FAB_LIST_START,
-        FabListSide::End => s::FAB_LIST_END,
-    };
-    let final_attributes: Vec<Attribute> = attributes.into_iter().collect();
     rsx! {
         div {
-            class: merge_classes(
-                format!("{} {} {}", s::FAB_LIST_BASE, list_cls, side_cls),
-                class.as_deref(),
-            ),
-            aria_hidden: (!is_activated).to_string(),
-            ..final_attributes,
-            if !is_activated {
-                div { style: "display: none;", {children} }
-            } else {
-                {children}
-            }
+            id,
+            class: merge_classes(classes(["g3-fab-list", side_cls]), class.as_deref()),
+            aria_hidden: (!open).to_string(),
+            inert: (!open).then_some(true),
+            {children}
         }
     }
 }
-/// Convenience component: Fab with integrated list.
-/// Wraps Fab + FabButton + FabList into a single component with activation toggle.
+
+/// A floating action button that opens a list of secondary actions, with the
+/// open state and close icon handled for you. A speed dial.
+///
+/// ```rust,ignore
+/// rsx! {
+///     FabMenu { aria_label: "Create", icon: rsx! { Plus {} },
+///         FabButton { size: FabSize::Small, aria_label: "Round", onclick: new_round, Flag {} }
+///         FabButton { size: FabSize::Small, aria_label: "Player", onclick: new_player, User {} }
+///     }
+/// }
+/// ```
 #[component]
-pub fn FabContainer(
-    main_button: Element,
-    list_buttons: Option<Element>,
+pub fn FabMenu(
+    /// Accessible name of the main button.
+    aria_label: String,
+    /// Icon of the main button while closed.
+    icon: Element,
+    /// Whether the list is open. Kept internally when not given.
+    open: Option<Signal<bool>>,
+    /// Which way the list opens. Defaults to [`FabListSide::Top`].
+    side: Option<FabListSide>,
+    /// Vertical position. Defaults to [`FabVertical::Bottom`].
     vertical: Option<FabVertical>,
+    /// Horizontal position. Defaults to [`FabHorizontal::End`].
     horizontal: Option<FabHorizontal>,
-    edge: Option<bool>,
-    list_side: Option<FabListSide>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
+    /// Extra classes for the container.
     class: Option<String>,
+    /// The secondary [`FabButton`]s.
+    children: Element,
 ) -> Element {
-    let mut is_activated = use_signal(|| false);
-    let toggle = Callback::new(move |_| {
-        is_activated.with_mut(|active| *active = !*active);
-    });
+    let mut open = use_controlled(open, || false);
+    let list_id = use_element_id("fab-list", None);
+    let close_label = use_strings().close;
+    let is_open = open();
     rsx! {
-        Fab {
-            vertical,
-            horizontal,
-            edge,
-            class,
+        Fab { vertical, horizontal, class,
             FabButton {
-                activated: is_activated(),
-                onclick: toggle,
-                close_icon: rsx! {
+                aria_label: if is_open { close_label } else { aria_label },
+                aria_expanded: is_open.to_string(),
+                aria_controls: list_id.clone(),
+                mode,
+                onclick: move |_| open.toggle(),
+                if is_open {
                     X { size: 24 }
-                },
-                {main_button}
+                } else {
+                    {icon}
+                }
             }
-            if let Some(list) = list_buttons {
-                FabList { activated: is_activated(), side: list_side, {list} }
-            }
+            FabList { open: is_open, side, id: list_id, {children} }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn FabPlaygroundDemo() -> Element {
-    let activated = use_signal(|| true);
-    let small = use_signal(|| false);
-    let edge = use_signal(|| false);
-    let vertical_index = use_signal(|| 2_usize);
-    let horizontal_index = use_signal(|| 2_usize);
-    let list_side_index = use_signal(|| 0_usize);
-    let playground_mode = crate::use_component_mode(None);
-    let vertical = match vertical_index() {
-        0 => FabVertical::Top,
-        1 => FabVertical::Center,
-        _ => FabVertical::Bottom,
-    };
-    let horizontal = match horizontal_index() {
-        0 => FabHorizontal::Start,
-        1 => FabHorizontal::Center,
-        _ => FabHorizontal::End,
-    };
-    let list_side = match list_side_index() {
-        1 => FabListSide::Bottom,
-        2 => FabListSide::Start,
-        3 => FabListSide::End,
-        _ => FabListSide::Top,
-    };
+fn FabPlaygroundDemo() -> Element {
+    use dioxus_icons::lucide::{Flag, Plus, UserPlus};
+    let open = use_signal(|| true);
+    let vertical = use_signal(|| FabVertical::Bottom);
+    let horizontal = use_signal(|| FabHorizontal::End);
+    let side = use_signal(|| FabListSide::Top);
+    let mode = crate::use_component_mode(None);
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
             center: false,
             controls: rsx! {
-                div {
-                    span { "Vertical" }
-                    crate::SegmentGroup { active: vertical_index,
-                        crate::SegmentButton { index: 0, "Top" }
-                        crate::SegmentButton { index: 1, "Center" }
-                        crate::SegmentButton { index: 2, "Bottom" }
-                    }
+                crate::SegmentGroup { value: vertical, aria_label: "Vertical",
+                    crate::SegmentButton { value: FabVertical::Top, "Top" }
+                    crate::SegmentButton { value: FabVertical::Center, "Center" }
+                    crate::SegmentButton { value: FabVertical::Bottom, "Bottom" }
                 }
-                div {
-                    span { "Horizontal" }
-                    crate::SegmentGroup { active: horizontal_index,
-                        crate::SegmentButton { index: 0, "Start" }
-                        crate::SegmentButton { index: 1, "Center" }
-                        crate::SegmentButton { index: 2, "End" }
-                    }
+                crate::SegmentGroup { value: horizontal, aria_label: "Horizontal",
+                    crate::SegmentButton { value: FabHorizontal::Start, "Start" }
+                    crate::SegmentButton { value: FabHorizontal::Center, "Center" }
+                    crate::SegmentButton { value: FabHorizontal::End, "End" }
                 }
-                div {
-                    span { "List side" }
-                    crate::SegmentGroup { active: list_side_index,
-                        crate::SegmentButton { index: 0, "Top" }
-                        crate::SegmentButton { index: 1, "Bottom" }
-                        crate::SegmentButton { index: 2, "Start" }
-                        crate::SegmentButton { index: 3, "End" }
-                    }
+                crate::SegmentGroup { value: side, aria_label: "List side",
+                    crate::SegmentButton { value: FabListSide::Top, "Top" }
+                    crate::SegmentButton { value: FabListSide::Bottom, "Bottom" }
+                    crate::SegmentButton { value: FabListSide::Start, "Start" }
+                    crate::SegmentButton { value: FabListSide::End, "End" }
                 }
-                crate::Checkbox { checked: activated, label: "List active".to_string() }
-                crate::Checkbox { checked: small, label: "Small main button".to_string() }
-                crate::Checkbox { checked: edge, label: "Edge".to_string() }
             },
-            crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
+            crate::AppWrapper { mode, class: "g3-playground-device-app",
                 crate::Header { title: "Fab" }
-                crate::Body {
+                crate::Content {
                     fab: rsx! {
-                        Fab { vertical, horizontal, edge: edge(),
-                            FabButton { onclick: |_| {}, size: if small() { FabSize::Small } else { FabSize::Normal }, "+" }
-                            FabList { activated: activated(), side: list_side,
-                                FabButton { size: FabSize::Small, onclick: |_| {}, "A" }
-                                FabButton { size: FabSize::Small, onclick: |_| {}, "B" }
-                                FabButton { size: FabSize::Small, onclick: |_| {}, "C" }
+                        FabMenu {
+                            aria_label: "Create",
+                            icon: rsx! {
+                                Plus { size: 24 }
+                            },
+                            open,
+                            side: side(),
+                            vertical: vertical(),
+                            horizontal: horizontal(),
+                            FabButton { size: FabSize::Small, aria_label: "New round",
+                                Flag { size: 18 }
+                            }
+                            FabButton { size: FabSize::Small, aria_label: "Invite player",
+                                UserPlus { size: 18 }
                             }
                         }
                     },
-                    crate::Card { title: "Actions",
-                        "FAB is anchored to the body, and the list opens from the selected side."
-                    }
-                    crate::Card { title: "Content", "The button stays over scrolling body content." }
                     for index in 1..=8 {
-                        crate::Card { title: format!("Row {index}"),
-                            "Scrollable content for checking FAB overlap."
-                        }
+                        crate::Card { title: format!("Round {index}"), "Scroll to see the button stay put." }
                     }
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Fab",
-    description: "Floating action button container, button, and expandable list.",
+    description: "Floating action buttons and a speed-dial menu.",
     demo: FabPlaygroundDemo,
     source: "src/components/fab.rs",
 }

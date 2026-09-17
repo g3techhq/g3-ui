@@ -15,7 +15,7 @@ body,
      the app renders. White keeps that window indistinguishable from the
      browser's own blank page rather than flashing a colour of its own. */
   background: #ffffff;
-  color: var(--color-text, #17202a);
+  color: var(--g3-color-text, #17202a);
 }
 
 button,
@@ -26,7 +26,6 @@ textarea {
 }
 
 .playground-root {
-  --g3-side-sheet-width: min(18rem, 72vw);
   /* A definite height, not `min-height`. `.playground-page` is `height: 100%`
      over a grid whose second row scrolls, and a percentage height against an
      auto-height parent resolves to auto - so the page grew with its content,
@@ -40,25 +39,23 @@ textarea {
   display: block;
   /* Colors come from the g3_ui::Theme passed to AppWrapper (see main.rs
      PlaygroundTheme::to_theme) - not from a theme attribute selector. */
-  background: var(--color-bg, #eef2f4);
-  color: var(--color-text, #17202a);
+  background: var(--g3-color-bg, #eef2f4);
+  color: var(--g3-color-text, #17202a);
 }
 
+/* Width and margins are left to g3_ui, which narrows this box beside the open
+   NavigationDrawer. Never give it a transform, translate, or filter: those
+   make it the containing block for every `position: fixed` descendant, which
+   drops header Select sheets, modals, and toasts to the bottom of the page
+   instead of the viewport. */
 .playground-page {
-  width: 100%;
   height: 100%;
   min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  background: var(--color-bg, #eef2f4);
-  color: var(--color-text, #17202a);
+  background: var(--g3-color-bg, #eef2f4);
+  color: var(--g3-color-text, #17202a);
   overflow: hidden;
-  /* Only width/margin-left move this box for the Menu drawer. Never give it a
-     transform, translate, or filter: those make it the containing block for
-     every `position: fixed` descendant, which drops header Select sheets,
-     modals, and toasts to the bottom of the page instead of the viewport. */
-  transition: width var(--transition-normal, 0.25s) var(--transition-md, ease-out),
-    margin-left var(--transition-normal, 0.25s) var(--transition-md, ease-out);
 }
 
 .playground-title-block {
@@ -67,7 +64,7 @@ textarea {
 
 .playground-title-block h1 {
   margin: 0 0 3px;
-  color: var(--color-text, #17202a);
+  color: var(--g3-color-text, #17202a);
   font-size: 22px;
   line-height: 1.15;
 }
@@ -75,7 +72,7 @@ textarea {
 .description {
   max-width: 620px;
   margin: 0;
-  color: var(--color-text-secondary, #5c6873);
+  color: var(--g3-color-text-secondary, #5c6873);
   font-size: 13px;
   line-height: 1.4;
 }
@@ -89,7 +86,7 @@ textarea {
 }
 
 .playground-control-label {
-  color: var(--color-text-secondary, #52606b);
+  color: var(--g3-color-text-secondary, #52606b);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -104,15 +101,15 @@ textarea {
   width: 100%;
   min-height: 38px;
   padding: 0 34px 0 12px;
-  border: 1px solid var(--color-card-border, #d5dde3);
+  border: 1px solid var(--g3-color-border, #d5dde3);
   border-radius: 10px;
-  background-color: var(--color-card, #ffffff);
+  background-color: var(--g3-color-card, #ffffff);
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: right 15px center, right 10px center;
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
-  color: var(--color-text, #17202a);
+  color: var(--g3-color-text, #17202a);
   font-size: 14px;
   font-weight: 600;
   line-height: 1;
@@ -122,11 +119,11 @@ textarea {
 }
 
 .playground-theme-select:hover {
-  border-color: var(--color-focused, #2563eb);
+  border-color: var(--g3-color-accent, #2563eb);
 }
 
 .playground-theme-select:focus-visible {
-  outline: 2px solid var(--color-focused, #2563eb);
+  outline: 2px solid var(--g3-color-accent, #2563eb);
   outline-offset: 2px;
 }
 
@@ -136,7 +133,7 @@ textarea {
   justify-self: center;
   max-width: 640px;
   margin: 0;
-  color: var(--color-text-secondary, #5c6873);
+  color: var(--g3-color-text-secondary, #5c6873);
   font-size: 14px;
   line-height: 1.45;
   text-align: center;
@@ -156,11 +153,6 @@ textarea {
   margin: 0;
 }
 
-.playground-intro > .g3-btn {
-  position: absolute;
-  right: 0;
-}
-
 .playground-menu-button {
   -webkit-tap-highlight-color: transparent;
   display: inline-flex;
@@ -171,12 +163,12 @@ textarea {
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: var(--color-text, #17202a);
+  color: var(--g3-color-text, #17202a);
   cursor: pointer;
 }
 
 .playground-menu-button:hover {
-  background: color-mix(in srgb, var(--color-control, #eef2f4) 72%, transparent);
+  background: color-mix(in srgb, var(--g3-color-control, #eef2f4) 72%, transparent);
 }
 
 .playground-menu-button:active {
@@ -186,7 +178,7 @@ textarea {
 }
 
 .playground-menu-button:focus-visible {
-  outline: 2px solid var(--color-primary, #2f7d4f);
+  outline: 2px solid var(--g3-color-accent);
   outline-offset: 2px;
 }
 
@@ -247,7 +239,7 @@ textarea {
   overflow: visible;
   padding: 2px 0 12px;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-card-border, #d5dde3) transparent;
+  scrollbar-color: var(--g3-color-border, #d5dde3) transparent;
 }
 
 .playground-viewport-card {
@@ -293,19 +285,19 @@ textarea {
 
 .playground-sidebar-header {
   padding: 18px 18px 14px;
-  border-bottom: 1px solid var(--color-card-border, #e3e8ec);
+  border-bottom: 1px solid var(--g3-color-border, #e3e8ec);
 }
 
 .playground-sidebar-header h2 {
   margin: 0;
-  color: var(--color-text, #17202a);
+  color: var(--g3-color-text, #17202a);
   font-size: 18px;
   font-weight: 700;
 }
 
 .subtitle {
   margin-top: 4px;
-  color: var(--color-text-secondary, #65717c);
+  color: var(--g3-color-text-secondary, #65717c);
   font-size: 12px;
 }
 
@@ -319,7 +311,7 @@ textarea {
 }
 
 .playground-selector-sheet .g3-item-selected {
-  background: color-mix(in srgb, var(--color-focused, #2563eb) 10%, transparent);
+  background: color-mix(in srgb, var(--g3-color-accent, #2563eb) 10%, transparent);
 }
 
 .playground-selector-sheet {
@@ -341,8 +333,8 @@ textarea {
   transform: translateZ(0);
   border: 8px solid #161b20;
   border-radius: 40px;
-  background: var(--color-bg, #f5f5f5);
-  box-shadow: 0 22px 60px var(--color-shadow, rgba(24, 36, 48, 0.26));
+  background: var(--g3-color-bg, #f5f5f5);
+  box-shadow: 0 22px 60px var(--g3-color-shadow, rgba(24, 36, 48, 0.26));
 }
 
 .transition-showcase-preview {
@@ -355,24 +347,6 @@ textarea {
   width: 100%;
   height: 100%;
   min-height: 0;
-}
-
-.transition-showcase-preview .g3-navbar > .transition-showcase-page {
-  flex: 1 1 auto;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-}
-
-@container g3-app-shell (min-width: 48rem) {
-  .transition-showcase-preview .g3-navbar > .transition-showcase-page {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    min-height: 0;
-  }
 }
 
 .transition-showcase-preview .transition-showcase-app {
@@ -477,7 +451,7 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   aspect-ratio: 10 / 7;
   border-width: 6px;
   border-radius: 22px;
-  box-shadow: 0 24px 70px color-mix(in srgb, var(--color-shadow, rgba(24, 36, 48, 0.26)) 82%, transparent);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--g3-color-shadow, rgba(24, 36, 48, 0.26)) 82%, transparent);
 }
 
 .g3-playground-preview .g3-playground-device-app,
@@ -485,11 +459,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   width: 100%;
   height: 100%;
   min-height: 0;
-}
-
-.g3-playground-preview .g3-navbar {
-  width: 100%;
-  height: 100%;
 }
 
 /* Route-transition markers default to the browser viewport for real apps.
@@ -500,24 +469,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 .g3-playground-preview .route-transition-page {
   height: 100%;
   min-height: 0;
-}
-
-.g3-playground-preview .g3-navbar-tab-bar {
-  flex: 0 0 auto;
-}
-
-.g3-playground-preview .g3-body-content {
-  padding: var(--g3-body-padding, 16px);
-}
-
-.g3-playground-preview .g3-playground-body-center .g3-body-content {
-  display: grid;
-  place-items: center;
-  align-content: center;
-}
-
-.g3-playground-preview .g3-playground-body-flow .g3-body-content {
-  display: block;
 }
 
 .g3-playground-raw-surface {
@@ -539,22 +490,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 
 /* Demo backdrops belong to the simulated app, not to the surrounding
    playground. Keep the whole preview as a reliable dismiss target. */
-.g3-playground-preview .g3-sheet-backdrop-open {
-  opacity: 1;
-  pointer-events: auto !important;
-}
-
-.g3-playground-preview .g3-sheet-backdrop-open:not(.g3-sheet-reveal) {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-.g3-playground-preview .g3-sheet-backdrop-open.g3-sheet-push {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-.g3-playground-preview .g3-sheet.g3-sheet-closed {
-  visibility: hidden;
-}
 
 .playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-bottom {
   top: auto;
@@ -570,11 +505,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 
 .playground-viewport-mobile .g3-playground-preview .g3-app-shell {
   --g3-side-sheet-width: 68cqw;
-}
-
-.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-left .g3-sheet-content,
-.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-right .g3-sheet-content {
-  max-height: 100%;
 }
 
 .g3-playground-preview .g3-modal {
@@ -623,9 +553,9 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
-  border: 1px dashed var(--color-card-border);
+  border: 1px dashed var(--g3-color-border);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--color-card) 72%, transparent);
+  background: color-mix(in srgb, var(--g3-color-card) 72%, transparent);
 }
 
 .g3-playground-spinner-box-centered {
@@ -648,27 +578,18 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   margin: 0;
   overflow: auto;
   padding: 14px;
-  border-top: 1px solid var(--color-card-border, #e3e8ec);
+  border-top: 1px solid var(--g3-color-border, #e3e8ec);
   background: var(--playground-code-bg, #111827);
   color: var(--playground-code-text, #d1d5db);
   font-size: 12px;
   line-height: 1.5;
 }
 
-
 /* AppWrapper is layout-less at the playground root, so this mirrors Menu's
    component layout contract for the site drawer at every viewport width. */
-.playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-  > .playground-page {
-  width: calc(100% - var(--g3-side-sheet-width));
-  margin-left: var(--g3-side-sheet-width);
-}
 
 /* The drawer keeps the shared Menu edge treatment; only the radius is
    flattened against the page. */
-.playground-root > .playground-selector-sheet.g3-sheet-side.g3-sheet-menu {
-  border-radius: 0;
-}
 
 @media (min-width: 64rem) {
 .playground-header {
@@ -728,51 +649,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   /* The global selector is a page-level bottom sheet. Keep it flush with the
      page edge and make its animation purely vertical; the desktop component
      default is a floating centred panel, which is wrong for this shell. */
-  .playground-header .g3-select-sheet.g3-sheet-bottom {
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    border-radius: 1rem 1rem 0 0;
-    --g3-sheet-enter-x: 0;
-    --g3-sheet-enter-y: calc(100% + max(3rem, env(safe-area-inset-bottom)));
-  }
-
-  .playground-header .g3-select-sheet.g3-sheet-bottom.g3-sheet-open {
-    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
-  }
-
-  .playground-header .g3-select-sheet.g3-sheet-bottom.g3-sheet-closed {
-    transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
-  }
-
-  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    .playground-header
-    .g3-sheet-backdrop {
-    left: var(--g3-side-sheet-width);
-    width: calc(100% - var(--g3-side-sheet-width));
-  }
-
-  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    .playground-header
-    .g3-select-sheet.g3-sheet-bottom {
-    right: 0;
-    bottom: 0;
-    left: var(--g3-side-sheet-width);
-    width: calc(100% - var(--g3-side-sheet-width));
-  }
-
-  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    .playground-header
-    .g3-select-sheet.g3-sheet-bottom.g3-sheet-open {
-    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
-  }
-
-  .playground-root:has(> .playground-selector-sheet.g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    .playground-header
-    .g3-select-sheet.g3-sheet-bottom.g3-sheet-closed {
-    transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
-  }
 }
 
 @media (max-width: 760px) {
@@ -817,4 +693,68 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   .source-panel {
     width: 100%;
   }
+}
+
+/* -- Component demo surfaces (moved from g3-ui.css) -- */
+
+.g3-sheet-demo-content-root {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--g3-color-bg);
+}
+
+/* Showcase pages stand in for `Content` inside a TabLayout with an adaptive
+   rail, so they take the same grid cell once the rail appears. */
+@container g3-app-shell (min-width: 48rem) {
+  .transition-showcase-preview .g3-tab-layout > .transition-showcase-page {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+}
+
+/* Layout helpers shared by the component demos. */
+.playground-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playground-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.playground-divider-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--g3-color-card, #ffffff);
+}
+
+.playground-divider-surface.playground-divider-vertical {
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 64px;
+}
+
+.playground-img-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--g3-color-control, #eef2f4);
+  color: var(--g3-color-text-secondary, #5c6873);
+  font-size: 13px;
 }

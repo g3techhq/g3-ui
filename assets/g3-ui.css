@@ -1,103 +1,71 @@
-/* ======================================================
- * g3_ui Theme CSS - Full Ionic Parity
- * ====================================================== */
+/* g3-ui component stylesheet.
+ *
+ * Theme tokens are `--g3-color-*` custom properties, written inline by
+ * `AppWrapper`/`ThemeProvider` from a `Theme`. The `:root` values below are the
+ * `Theme::default_light()` fallback for markup rendered outside a provider. */
 
-/* -- Animatable custom properties -- */
-
-@font-face {
-    font-family: "G3 Provider Roboto";
-    font-style: normal;
-    font-weight: 500;
-    font-display: swap;
-    src: url("https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2")
-        format("woff2");
-}
-
-@property --btn-g1 {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: transparent;
-}
-@property --btn-g2 {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: transparent;
-}
-@property --btn-g3 {
-    syntax: '<color>';
-    inherits: true;
-    initial-value: transparent;
-}
-
-@property --segment-indicator-left {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-}
-@property --segment-indicator-width {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-}
+/* Every g3-ui rule lives in the `g3` cascade layer. Unlayered application CSS
+   always beats layered CSS, so an app overrides a component with an ordinary
+   selector - no `!important`, no specificity matching. Declare
+   `@layer g3;` before your own layers if you use layers yourself. */
+@layer g3 {
 
 /* -- Theme variables -- */
 
 :root {
-    --color-focused: #0066d6;
-    --color-label-primary: #111827;
-    --color-label-secondary: #5f6673;
-    --color-card-border: #c5cad3;
-    --color-bg: #e9ebef;
-    --color-bg-secondary: #dfe2e8;
-    --color-card: #f7f8fa;
-    --color-card-inset: #eceef2;
-    --color-surface: #f2f4f7;
-    --color-control: #e3e6eb;
-    --color-text: #111827;
-    --color-text-secondary: #555c68;
-    --color-shadow: rgba(15, 23, 42, 0.14);
+    /* Theme tokens - kept identical to `Theme::default_light()`. */
+    --g3-color-accent: #0066d6;
+    --g3-color-on-accent: #ffffff;
+    --g3-color-text: #111827;
+    --g3-color-text-secondary: #555c68;
+    --g3-color-text-tertiary: #5f6673;
+    --g3-color-bg: #e9ebef;
+    --g3-color-bg-secondary: #dfe2e8;
+    --g3-color-card: #f7f8fa;
+    --g3-color-surface: #f2f4f7;
+    --g3-color-control: #e3e6eb;
+    --g3-color-border: #c5cad3;
+    --g3-color-shadow: rgba(15, 23, 42, 0.14);
+    --g3-color-success: #067647;
+    --g3-color-warning: #b54708;
+    --g3-color-danger: #d92d20;
+
     --g3-shadow-ios-card: 0 4px 16px rgba(0, 0, 0, 0.12);
     --g3-shadow-ios-float: 0 12px 30px rgba(0, 0, 0, 0.18);
     --g3-shadow-md-elevation-1: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
     --g3-shadow-md-elevation-2: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
     --g3-shadow-md-fab: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
-    --color-success: #067647;
-    --color-warning: #b54708;
-    --color-danger: #d92d20;
 
     /* Baseline scheme; overridden by a theme's inline `color-scheme` (dark themes)
      * or by a wrapping theme selector. Mode selectors must NOT set this. */
     color-scheme: light;
 
-    --transition-normal: 0.25s;
-    --transition-fast: 0.15s;
-    --transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
-    --transition-md: ease-out;
+    --g3-transition-normal: 0.25s;
+    --g3-transition-fast: 0.15s;
+    --g3-transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
+    --g3-transition-md: ease-out;
+
+    /* Overlay stacking order. Toasts sit above dialogs, dialogs above
+       sheets, so a confirmation raised from a sheet is never hidden. */
+    --g3-z-fab: 40;
+    --g3-z-sheet-backdrop: 80;
+    --g3-z-sheet: 90;
+    --g3-z-modal: 100;
+    --g3-z-toast: 110;
+}
+
+/* ThemeProvider carries tokens without adding a box of its own. */
+.g3-theme-provider {
+    display: contents;
 }
 
 [data-g3-mode="ios"] {
-    --color-bg: #e9e9ee;
-    --color-bg-secondary: #e9e9ee;
-    --color-card-border: rgba(60, 60, 67, 0.18);
-    --color-card: #f7f7fa;
-    --color-card-inset: rgba(118, 118, 128, 0.08);
-    --color-surface: #f2f2f6;
-    --color-control: rgba(118, 118, 128, 0.12);
-    --color-shadow: rgba(60, 60, 67, 0.12);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
 
-[data-g3-mode="md"] {
-    --color-bg: #e9ebef;
-    --color-bg-secondary: #dfe2e8;
-    --color-card: #f7f8fa;
-    --color-card-inset: #eceef2;
-    --color-surface: #f2f4f7;
-    --color-control: #e3e6eb;
-}
-
-* {
+.g3-app-shell,
+.g3-app-shell * {
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -107,84 +75,60 @@ body.g3-overlay-scroll-locked {
     overscroll-behavior: none;
 }
 
-/* A menu is persistent page chrome rather than a modal surface, so it must
-   not freeze document scrolling. Keep the lock if another open sheet or modal
-   still needs it. */
-body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):not(
-        :has(.g3-sheet.g3-sheet-open:not(.g3-sheet-menu), .g3-modal-overlay[data-state="open"])
-    ) {
-    overflow: auto;
-    overscroll-behavior: auto;
-}
-
-*::-webkit-scrollbar {
+.g3-app-shell::-webkit-scrollbar,
+.g3-app-shell *::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
 }
-/* -- Button -- */
+/* -- Button --
+
+   A button is a fill (solid, outline, clear) in a colour. The colour class
+   sets two local properties and the fill class decides where they go. */
 
 .g3-btn {
+    --g3-btn-color: var(--g3-color-accent);
+    --g3-btn-on-color: var(--g3-color-on-accent);
     position: relative;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.75rem;
+    border: 0;
+    outline: none;
+    font: inherit;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--g3-transition-normal) var(--g3-transition-md),
+                color var(--g3-transition-normal) var(--g3-transition-md),
+                border-color var(--g3-transition-normal) var(--g3-transition-md),
+                box-shadow var(--g3-transition-normal) var(--g3-transition-md),
+                opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-btn:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-btn-content {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    transition: all var(--transition-normal) var(--transition-md),
-                --btn-g1 var(--transition-normal) var(--transition-md),
-                --btn-g2 var(--transition-normal) var(--transition-md),
-                --btn-g3 var(--transition-normal) var(--transition-md);
+    min-width: 0;
 }
 
-.g3-btn-badge {
-    position: absolute;
-    top: -0.25rem;
-    right: -0.25rem;
+.g3-btn-start,
+.g3-btn-end {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
-    min-width: 1.1rem;
-    height: 1.1rem;
-    padding: 0 0.25rem;
-    border-radius: 999px;
-    background: var(--color-focused);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    line-height: 1;
-    pointer-events: none;
-}
-
-.g3-btn-content {
-    margin: 0.125rem 0.5rem;
-}
-
-.g3-btn-content-start {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-left: 0;
-    margin-right: 0;
-}
-
-.g3-btn-start {
-    position: absolute;
-    left: 0.75rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.125rem;
-    height: 1.125rem;
-}
-
-.g3-btn-end-spacer {
-    display: none;
 }
 
 .g3-btn-label {
@@ -192,71 +136,91 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     text-align: center;
 }
 
-/* iOS button */
-.g3-btn-ios {
-    min-height: 44px;
-    border-radius: 12px;
-    font-weight: 600;
-    letter-spacing: 0;
-    box-shadow: none;
-}
-.g3-btn-ios:hover {
-    filter: brightness(0.98);
-}
-.g3-btn-ios:active {
-    opacity: 0.72;
-    transform: scale(0.985);
-    transition: var(--transition-fast) var(--transition-ios);
+/* A full-width button keeps its label centred and pins the start icon to the
+   leading edge, the layout of sign-in provider buttons. */
+.g3-btn-expand-block,
+.g3-btn-expand-full {
+    display: flex;
+    width: 100%;
 }
 
-/* Material button */
-.g3-btn-md {
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 0.875rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-}
-.g3-btn-md.g3-btn-solid {
-    box-shadow: var(--g3-shadow-md-elevation-1);
-}
-.g3-btn-md.g3-btn-solid:active {
-    box-shadow: var(--g3-shadow-md-elevation-2);
-}
-.g3-btn-md:active {
-    transform: scale(0.98);
-    transition: var(--transition-fast) var(--transition-md);
+.g3-btn-expand-block .g3-btn-content,
+.g3-btn-expand-full .g3-btn-content {
+    width: 100%;
 }
 
-/* -- Button Variants -- */
+.g3-btn-expand-block .g3-btn-start,
+.g3-btn-expand-full .g3-btn-start {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+}
 
+.g3-btn-expand-full {
+    border-radius: 0;
+    border-inline-width: 0;
+}
+
+.g3-btn-loading .g3-btn-label {
+    opacity: 0.6;
+}
+
+.g3-btn-loading .g3-spinner-wrapper {
+    padding: 0;
+}
+
+/* Colours */
+.g3-btn-neutral {
+    --g3-btn-color: var(--g3-color-text);
+    --g3-btn-on-color: var(--g3-color-text);
+}
+
+.g3-btn-success {
+    --g3-btn-color: var(--g3-color-success);
+}
+
+.g3-btn-warning {
+    --g3-btn-color: var(--g3-color-warning);
+}
+
+.g3-btn-danger {
+    --g3-btn-color: var(--g3-color-danger);
+}
+
+/* Fills */
 .g3-btn-solid {
-    background: var(--color-focused);
-    color: white;
+    background: var(--g3-btn-color);
+    color: var(--g3-btn-on-color);
+}
+
+/* A neutral solid button is a raised surface rather than a slab of text
+   colour. */
+.g3-btn-solid.g3-btn-neutral {
+    background: var(--g3-color-card);
+    border: 1px solid var(--g3-color-border);
+}
+
+.g3-btn-solid.g3-btn-neutral:hover:not(:disabled, [aria-disabled="true"]) {
+    background: var(--g3-color-control);
 }
 
 .g3-btn-outline {
     background: transparent;
-    color: var(--color-focused);
-    border: 2px solid var(--color-focused);
-    padding: 0;
+    color: var(--g3-btn-color);
+    border: 2px solid var(--g3-btn-color);
 }
 
 .g3-btn-clear {
     background: transparent;
-    color: var(--color-focused);
-    padding: 0;
+    color: var(--g3-btn-color);
 }
 
-.g3-btn-danger {
-    background: transparent;
-    color: var(--color-danger);
-    padding: 0;
+.g3-btn-clear:hover:not(:disabled, [aria-disabled="true"]) {
+    background: color-mix(in srgb, var(--g3-btn-color) 8%, transparent);
 }
 
-.g3-btn-ios.g3-btn-clear,
-.g3-btn-ios.g3-btn-outline,
-.g3-btn-ios.g3-btn-danger {
+/* iOS */
+.g3-btn-ios {
+    border-radius: 12px;
     font-weight: 600;
 }
 
@@ -264,95 +228,99 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     border-width: 1px;
 }
 
-/* Theme tokens, not literal white: a hardcoded light button reads as a bright
-   slab in a dark theme, which is what made these look out of place. */
-.g3-btn-neutral {
-    background: var(--color-card);
-    color: var(--color-text);
-    border: 1px solid var(--color-card-border);
+.g3-btn-ios:active:not(:disabled, [aria-disabled="true"]) {
+    opacity: 0.72;
+    transform: scale(0.985);
 }
 
-.g3-btn-neutral:hover:not(:disabled) {
-    background: var(--color-control);
+/* Material */
+.g3-btn-md {
+    border-radius: 4px;
+    font-size: 0.875rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
-/* -- Button Sizes -- */
+.g3-btn-md.g3-btn-solid:not(.g3-btn-neutral) {
+    box-shadow: var(--g3-shadow-md-elevation-1);
+}
 
+.g3-btn-md.g3-btn-solid:active:not(:disabled, [aria-disabled="true"]) {
+    box-shadow: var(--g3-shadow-md-elevation-2);
+}
+
+.g3-btn-md:active:not(:disabled, [aria-disabled="true"]) {
+    transform: scale(0.98);
+}
+
+/* Sizes */
 .g3-btn-sm {
-    font-size: 0.75rem;
-    padding: 0;
-    border-radius: 0.5rem;
-}
-
-.g3-btn-md-size {
-    font-size: 1rem;
-    padding: 0;
+    font-size: 0.875rem;
 }
 
 .g3-btn-lg {
     font-size: 1.125rem;
-    padding: 0;
 }
 
 .g3-btn-ios.g3-btn-sm {
     min-height: 32px;
     border-radius: 8px;
-    font-size: 0.875rem;
 }
+
 .g3-btn-ios.g3-btn-md-size {
     min-height: 44px;
 }
+
 .g3-btn-ios.g3-btn-lg {
     min-height: 52px;
     border-radius: 14px;
 }
+
 .g3-btn-md.g3-btn-sm {
-    min-height: 36px;
-    font-size: 0.875rem;
+    min-height: 32px;
 }
+
 .g3-btn-md.g3-btn-md-size {
     min-height: 36px;
 }
+
 .g3-btn-md.g3-btn-lg {
     min-height: 48px;
 }
-.g3-btn.g3-btn-neutral {
-    font-family: "G3 Provider Roboto", Roboto, Arial, sans-serif;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.25rem;
-    box-shadow: none;
+
+.g3-btn-expand-full.g3-btn-ios,
+.g3-btn-expand-full.g3-btn-md {
+    border-radius: 0;
 }
 
-.g3-btn:disabled {
-    opacity: 0.45;
+/* Disabled */
+.g3-btn:disabled,
+.g3-btn[aria-disabled="true"] {
     cursor: not-allowed;
+    opacity: 0.45;
     filter: grayscale(0.65);
     box-shadow: none;
-}
-
-.g3-btn:disabled:hover,
-.g3-btn:disabled:active {
     transform: none;
-    box-shadow: none;
 }
 
-.g3-btn-solid:disabled {
-    background: var(--color-card-border);
-    color: var(--color-text-secondary);
+.g3-btn-solid:disabled:not(.g3-btn-neutral),
+.g3-btn-solid[aria-disabled="true"]:not(.g3-btn-neutral) {
+    background: var(--g3-color-border);
+    color: var(--g3-color-text-secondary);
 }
 
 .g3-btn-outline:disabled,
 .g3-btn-clear:disabled,
-.g3-btn-danger:disabled {
-    color: var(--color-label-secondary);
-    border-color: var(--color-card-border);
+.g3-btn-outline[aria-disabled="true"],
+.g3-btn-clear[aria-disabled="true"] {
+    color: var(--g3-color-text-tertiary);
+    border-color: var(--g3-color-border);
 }
 
-.g3-btn-neutral:disabled {
-    background: #f1f3f4;
-    color: #8a8d91;
-    border-color: #dadce0;
+@media (prefers-reduced-motion: reduce) {
+    .g3-btn {
+        transition: none;
+    }
 }
 
 /* Info button */
@@ -366,270 +334,58 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     border: none;
     border-radius: 9999px;
     background: transparent;
-    color: var(--color-focused);
+    color: var(--g3-color-accent);
     cursor: pointer;
 }
 .g3-info-btn-ios {
-    background: color-mix(in srgb, var(--color-focused) 8%, transparent);
+    background: color-mix(in srgb, var(--g3-color-accent) 8%, transparent);
 }
 .g3-info-btn-md {
     border-radius: 0.25rem;
 }
 
-.g3-info-btn:active {
-    background: inherit;
+.g3-info-btn:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
 }
 
-/* Line */
-.g3-line {
+.g3-info-btn:active {
+    background: color-mix(in srgb, var(--g3-color-accent) 16%, transparent);
+}
+
+/* -- Divider -- */
+.g3-divider {
     display: block;
     flex-shrink: 0;
     margin: 0;
     border: none;
-    background: var(--g3-line-color, color-mix(in srgb, var(--color-label-secondary, #6b7280) 42%, transparent));
+    background: var(--g3-divider-color, color-mix(in srgb, var(--g3-color-text-tertiary) 42%, transparent));
 }
-.g3-line-h {
+.g3-divider-h {
     width: 100%;
     height: 1px;
     min-height: 1px;
 }
-.g3-line-v {
+.g3-divider-v {
     width: 1px;
     min-width: 1px;
     min-height: 1rem;
 }
-.g3-line-h.g3-line-margins {
+.g3-divider-h.g3-divider-margins {
     margin-block: 1rem;
 }
-.g3-line-v.g3-line-margins {
+.g3-divider-v.g3-divider-margins {
     margin-inline: 1rem;
 }
 
-.g3-line-demo-surface {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.g3-line-demo-surface-horizontal {
-    width: min(17rem, 100%);
-    min-height: 8rem;
-    padding: 0 1.5rem;
-}
-.g3-line-demo-surface-vertical {
-    min-height: 8rem;
-}
-.g3-line-demo-surface-vertical .g3-line {
-    align-self: stretch;
-}
-
-/* -- Demo App (kitchen-sink playground) -- */
-.g3-demo-fab {
-    /* Self-contained bottom-right placement (the Tailwind `--spacing`
-       utilities the FAB normally uses are unavailable in this context). */
-    inset: auto 1rem 1rem auto;
-}
-.g3-demo-separator {
-    margin-top: 1rem;
-}
-.g3-demo-menu {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-.g3-demo-menu-head {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.25rem 0 0.5rem;
-}
-.g3-demo-menu-name {
-    font-size: 1.0625rem;
-    font-weight: 600;
-}
-.g3-demo-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.875rem;
-    padding: 0.25rem 0.25rem 0.5rem;
-}
-.g3-demo-info-title {
-    font-size: 1.0625rem;
-    font-weight: 600;
-}
-.g3-demo-info-lead {
-    margin: -0.375rem 0 0.25rem;
-    color: var(--color-label-secondary);
-    line-height: 1.4;
-}
-.g3-demo-info-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-}
-.g3-demo-info-row .g3-badge {
-    min-width: 2.25rem;
-    justify-content: center;
-    margin-top: 0.125rem;
-}
-.g3-demo-info-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
-    min-width: 0;
-}
-.g3-demo-info-term {
-    font-weight: 600;
-}
-.g3-demo-info-desc {
-    font-size: 0.875rem;
-    color: var(--color-label-secondary);
-    line-height: 1.4;
-}
-.g3-demo-progress-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-.g3-demo-progress-row > span {
-    font-size: 0.8125rem;
-    color: var(--color-label-secondary);
-}
-.g3-demo-chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-.g3-demo-button-row {
-    display: flex;
-    gap: 0.75rem;
-    margin: 1rem 0 0.5rem;
-}
-.g3-demo-button-row > * {
-    flex: 1 1 0;
-}
-.g3-demo-section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin: 1.25rem 0 0.5rem;
-}
-.g3-demo-section-title {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--color-label-secondary);
-}
-.g3-demo-field-label {
-    margin-top: 0.75rem;
-    font-size: 0.8125rem;
-    color: var(--color-label-secondary);
-}
-.g3-demo-radio-group {
-    margin: 0.75rem 0;
-}
-.g3-demo-sheet-body {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 0.25rem 0.25rem 1.5rem;
-}
-.g3-demo-sheet-body h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 650;
-    line-height: 1.2;
-}
-.g3-demo-profile-head {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-.g3-demo-profile-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    min-width: 0;
-}
-.g3-demo-profile-name {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.0625rem;
-    font-weight: 600;
-}
-
-.g3-sheet-demo-content-root {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    width: 100%;
-    min-height: 0;
-    overflow: hidden;
-    background: var(--color-bg);
-}
-
-.g3-sheet-demo-surface .g3-sheet-content {
-    padding: 0;
-}
-
-.g3-sheet-demo-surface.g3-sheet-side .g3-sheet-content {
-    height: 100%;
-}
-
-.g3-sheet-demo-menu {
-    display: flex;
-    flex-direction: column;
-    background: var(--color-card);
-}
-
-.g3-sheet-demo-surface.g3-sheet-side .g3-sheet-demo-menu {
-    min-height: 100%;
-}
-
-.g3-sheet-demo-menu-header {
-    display: grid;
-    gap: 0.25rem;
-    padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem 1rem;
-    border-bottom: 1px solid var(--color-card-border);
-}
-
-.g3-sheet-demo-menu-header strong {
-    color: var(--color-text);
-    font-size: 1.125rem;
-}
-
-.g3-sheet-demo-menu-header > span:last-child {
-    color: var(--color-text-secondary);
-    font-size: 0.8125rem;
-    line-height: 1.35;
-}
-
-.g3-sheet-demo-menu-eyebrow {
-    color: var(--color-focused);
-    font-size: 0.6875rem;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.g3-sheet-demo-menu .g3-item {
-    background: transparent;
-}
-
-/* -- Segment / Tab Bar -- */
+/* -- Segment and tabs -- */
 
 /* iOS segment - pill-shaped active tab with a sliding checked indicator */
 .g3-segment-ios {
     position: relative;
     display: flex;
     justify-content: center;
-    background: var(
-        --ion-toolbar-segment-background,
-        var(--g3-segment-ios-background, color-mix(in srgb, var(--color-text) 7%, transparent))
-    );
+    background: var(--g3-segment-ios-background, color-mix(in srgb, var(--g3-color-text) 7%, transparent));
     border-radius: 9px;
     padding: 2px;
     overflow: hidden;
@@ -643,13 +399,10 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     left: 4px;
     width: calc((100% - 8px) / var(--g3-segment-count, 3));
     border-radius: 7px;
-    background: var(
-        --ion-toolbar-segment-background-checked,
-        color-mix(in srgb, white 12%, var(--color-card))
-    );
+    background: var(--g3-segment-ios-indicator, color-mix(in srgb, var(--g3-color-on-accent) 12%, var(--g3-color-card)));
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
     transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
-    transition: transform var(--transition-normal) var(--transition-ios), width var(--transition-normal) var(--transition-ios);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-ios), width var(--g3-transition-normal) var(--g3-transition-ios);
     will-change: transform, width;
 }
 .g3-segment-btn-ios {
@@ -673,18 +426,17 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     font-weight: 450;
     font-size: 13px;
     line-height: 28px;
-    color: var(--color-label-secondary);
+    color: var(--g3-color-text-tertiary);
     transition: color 100ms linear, opacity 100ms linear;
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.g3-segment-btn-ios[data-state="on"] {
-    border-left-color: transparent;
-    color: var(--color-label-primary);
+.g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
+    color: var(--g3-color-text);
 }
-.g3-segment-btn-ios[data-disabled="true"] {
+.g3-segment-btn-ios:disabled {
     opacity: 0.3;
     cursor: default;
     pointer-events: none;
@@ -695,7 +447,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 }
 .g3-segment-btn-ios:focus-visible,
 .g3-segment-btn-md:focus-visible {
-    outline: 2px solid var(--color-focused);
+    outline: 2px solid var(--g3-color-accent);
     outline-offset: 2px;
 }
 
@@ -705,7 +457,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     display: flex;
     justify-content: center;
     width: 100%;
-    border-bottom: 1px solid var(--color-card-border);
+    border-bottom: 1px solid var(--g3-color-border);
     contain: paint;
 }
 .g3-segment-md::after {
@@ -715,7 +467,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     bottom: 0;
     width: calc(100% / var(--g3-segment-count, 3));
     height: 2px;
-    background: var(--color-focused);
+    background: var(--g3-color-accent);
     transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
     transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1), width 320ms cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform, width;
@@ -741,17 +493,17 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     line-height: 40px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--color-label-secondary);
+    color: var(--g3-color-text-tertiary);
     transition: color 0.15s linear 0s, opacity 0.15s linear 0s;
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.g3-segment-btn-md[data-state="on"] {
-    color: var(--color-focused);
+.g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
+    color: var(--g3-color-accent);
 }
-.g3-segment-btn-md[data-disabled="true"] {
+.g3-segment-btn-md:disabled {
     opacity: 0.3;
     cursor: default;
     pointer-events: none;
@@ -790,739 +542,1216 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     width: 100%;
     border-bottom: 0;
 }
-.g3-segment-route-wrapper {
-    position: relative;
-    z-index: 1;
+
+/* The sliding indicator reads its position and width from the buttons
+   themselves, so the group needs no bookkeeping. */
+.g3-segment-standalone:has(> :nth-child(1):last-child),
+.g3-segment-toolbar:has(> :nth-child(1):last-child) {
+    --g3-segment-count: 1;
+}
+
+.g3-segment-standalone:has(> :nth-child(2):last-child),
+.g3-segment-toolbar:has(> :nth-child(2):last-child) {
+    --g3-segment-count: 2;
+}
+
+.g3-segment-standalone:has(> :nth-child(3):last-child),
+.g3-segment-toolbar:has(> :nth-child(3):last-child) {
+    --g3-segment-count: 3;
+}
+
+.g3-segment-standalone:has(> :nth-child(4):last-child),
+.g3-segment-toolbar:has(> :nth-child(4):last-child) {
+    --g3-segment-count: 4;
+}
+
+.g3-segment-standalone:has(> :nth-child(5):last-child),
+.g3-segment-toolbar:has(> :nth-child(5):last-child) {
+    --g3-segment-count: 5;
+}
+
+.g3-segment-standalone:has(> :nth-child(6):last-child),
+.g3-segment-toolbar:has(> :nth-child(6):last-child) {
+    --g3-segment-count: 6;
+}
+
+.g3-segment-standalone:has(> :nth-child(7):last-child),
+.g3-segment-toolbar:has(> :nth-child(7):last-child) {
+    --g3-segment-count: 7;
+}
+
+.g3-segment-standalone:has(> :nth-child(8):last-child),
+.g3-segment-toolbar:has(> :nth-child(8):last-child) {
+    --g3-segment-count: 8;
+}
+
+.g3-segment-standalone:has(> :nth-child(9):last-child),
+.g3-segment-toolbar:has(> :nth-child(9):last-child) {
+    --g3-segment-count: 9;
+}
+
+.g3-segment-standalone:has(> :nth-child(10):last-child),
+.g3-segment-toolbar:has(> :nth-child(10):last-child) {
+    --g3-segment-count: 10;
+}
+
+.g3-segment-standalone:has(> :nth-child(11):last-child),
+.g3-segment-toolbar:has(> :nth-child(11):last-child) {
+    --g3-segment-count: 11;
+}
+
+.g3-segment-standalone:has(> :nth-child(12):last-child),
+.g3-segment-toolbar:has(> :nth-child(12):last-child) {
+    --g3-segment-count: 12;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(2):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 1;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(3):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 2;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(4):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 3;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(5):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 4;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(6):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 5;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(7):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 6;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(8):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 7;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(9):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 8;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(10):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 9;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(11):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 10;
+}
+
+:is(.g3-segment-ios, .g3-segment-md):has(> :nth-child(12):is([aria-checked="true"], [aria-selected="true"])) {
+    --g3-segment-active: 11;
+}
+
+/* A scrollable segment sizes buttons to their labels, so the sliding
+   indicator (which assumes equal widths) gives way to a per-button one. */
+.g3-segment-scrollable {
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.g3-segment-scrollable::before,
+.g3-segment-scrollable::after {
+    display: none;
+}
+
+.g3-segment-scrollable > .g3-segment-btn-ios,
+.g3-segment-scrollable > .g3-segment-btn-md {
+    flex: 0 0 auto;
+    width: auto;
+}
+
+.g3-segment-scrollable > .g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
+    box-shadow: inset 0 -2px 0 var(--g3-color-accent);
+}
+
+.g3-segment-scrollable > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
+    background: var(--g3-color-card);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
+}
+
+.g3-tabs {
     display: flex;
-    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.g3-tab-panel[hidden] {
+    display: none;
+}
+
+.g3-tab-panel:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+/* -- Form fields --
+
+   Input, TextArea, Select, Range, and Stepper share one shell: a label, the
+   control, then helper and error text. Invalid state is `data-invalid` on the
+   shell. */
+
+.g3-field {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: 100%;
     min-width: 0;
 }
 
-.g3-switch {
-    display: inline-flex;
-    align-items: center;
-    flex-shrink: 0;
-    border: 0;
-    padding: 0;
-    appearance: none;
-    cursor: pointer;
-    outline: none;
+.g3-field-label {
+    color: var(--g3-color-text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
-.g3-switch-thumb {
-    pointer-events: none;
+
+.g3-field-required::after {
+    content: " *";
+    color: var(--g3-color-danger);
 }
-.g3-switch:focus-visible {
-    outline: 2px solid var(--color-focused);
-    outline-offset: 3px;
+
+.g3-field-helper,
+.g3-field-error {
+    font-size: 0.8125rem;
+    line-height: 1.125rem;
+    overflow-wrap: anywhere;
 }
-.g3-switch-ios {
-    -webkit-tap-highlight-color: transparent;
-    width: 51px;
-    height: 31px;
-    border-radius: 15.5px;
-    background: color-mix(in srgb, var(--color-text) 9%, transparent);
-    border: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
-    position: relative;
-    transition: background var(--transition-normal) var(--transition-ios);
+
+.g3-field-helper {
+    color: var(--g3-color-text-secondary);
 }
-.g3-switch-ios.checked {
-    background: var(--color-focused);
+
+.g3-field-error {
+    color: var(--g3-color-danger);
 }
-.g3-switch-thumb-ios {
-    width: 27px;
-    height: 27px;
-    border-radius: 50%;
-    background: var(--color-card);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.12);
+
+.g3-field-start,
+.g3-field-end {
     position: absolute;
     top: 50%;
-    left: 2px;
-    transform: translate3d(0, -50%, 0);
-    transition: transform var(--transition-normal) var(--transition-ios);
-}
-.g3-switch-ios.checked .g3-switch-thumb-ios {
-    transform: translate3d(20px, -50%, 0);
+    display: flex;
+    align-items: center;
+    color: var(--g3-color-text-tertiary);
+    transform: translateY(-50%);
 }
 
-/* Material switch */
-.g3-switch-md {
-    -webkit-tap-highlight-color: transparent;
-    width: 36px;
-    height: 14px;
-    border-radius: 7px;
-    background: color-mix(in srgb, var(--color-text) 39%, transparent);
-    position: relative;
-    transition: background 160ms cubic-bezier(0.4, 0, 0.2, 1);
+.g3-field-start {
+    inset-inline-start: 0.75rem;
+    pointer-events: none;
 }
-.g3-switch-md.checked {
-    background: color-mix(in srgb, var(--color-focused) 50%, transparent);
+
+.g3-field-end {
+    inset-inline-end: 0.5rem;
 }
-.g3-switch-thumb-md {
-    width: 20px;
-    height: 20px;
+
+.g3-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--g3-color-border);
+    background: var(--g3-color-card);
+    color: var(--g3-color-text);
+    font: inherit;
+    outline: none;
+    transition: border-color var(--g3-transition-normal) var(--g3-transition-md),
+                box-shadow var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-input::placeholder {
+    color: var(--g3-color-text-tertiary);
+    opacity: 1;
+}
+
+.g3-field-control:has(> .g3-field-start) > .g3-input {
+    padding-inline-start: 2.5rem;
+}
+
+.g3-field-control:has(> .g3-field-end) > .g3-input {
+    padding-inline-end: 2.75rem;
+}
+
+textarea.g3-input {
+    min-height: 5.5rem;
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.g3-input-ios {
+    border-width: 0.5px;
+    border-radius: 10px;
+    transition-timing-function: var(--g3-transition-ios);
+}
+
+.g3-input-md {
+    border-radius: 4px;
+}
+
+.g3-input:focus,
+.g3-input[aria-expanded="true"] {
+    border-color: var(--g3-color-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--g3-color-accent) 14%, transparent);
+}
+
+.g3-field[data-invalid="true"] .g3-input {
+    border-color: var(--g3-color-danger);
+}
+
+.g3-field[data-invalid="true"] .g3-input:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--g3-color-danger) 14%, transparent);
+}
+
+.g3-input:disabled,
+.g3-input[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.g3-input[readonly] {
+    background: var(--g3-color-bg-secondary);
+}
+
+.g3-input[type="search"]::-webkit-search-cancel-button {
+    appearance: none;
+}
+
+.g3-field-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
-    background: var(--color-card);
+    background: transparent;
+    color: var(--g3-color-text-tertiary);
+    cursor: pointer;
+}
+
+.g3-field-clear:hover,
+.g3-field-clear:focus-visible {
+    background: var(--g3-color-control);
+    outline: none;
+}
+
+/* Select */
+.g3-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.g3-select-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.g3-select-placeholder {
+    color: var(--g3-color-text-tertiary);
+}
+
+.g3-select-icon {
+    flex: 0 0 auto;
+    color: var(--g3-color-text-tertiary);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-select[aria-expanded="true"] .g3-select-icon {
+    transform: rotate(180deg);
+}
+
+.g3-select-anchor,
+.g3-select-anchor > .g3-popover-anchor {
+    display: flex;
+    width: 100%;
+}
+
+.g3-select-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0;
+}
+
+.g3-select-option {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.625rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-text);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.g3-select-option + .g3-select-option {
+    border-top: 1px solid color-mix(in srgb, var(--g3-color-border) 60%, transparent);
+}
+
+.g3-select-option:hover,
+.g3-select-option:focus-visible {
+    background: color-mix(in srgb, var(--g3-color-accent) 8%, transparent);
+    outline: none;
+}
+
+.g3-select-option[aria-selected="true"] {
+    color: var(--g3-color-accent);
+    font-weight: 600;
+}
+
+.g3-select-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.g3-select-option-description {
+    grid-column: 1;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 400;
+}
+
+.g3-select-check {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+}
+
+/* Range */
+.g3-range {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.g3-range-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    accent-color: var(--g3-color-accent);
+    cursor: pointer;
+}
+
+.g3-range-input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.g3-range-value {
+    min-width: 2.5rem;
+    color: var(--g3-color-text-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+}
+
+/* Stepper */
+.g3-stepper-field {
+    width: auto;
+}
+
+.g3-stepper {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    border: 1px solid var(--g3-color-border);
+    border-radius: 10px;
+    background: var(--g3-color-card);
+    overflow: hidden;
+}
+
+.g3-stepper-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-accent);
+    cursor: pointer;
+}
+
+.g3-stepper-button:hover:not(:disabled),
+.g3-stepper-button:focus-visible {
+    background: color-mix(in srgb, var(--g3-color-accent) 10%, transparent);
+    outline: none;
+}
+
+.g3-stepper-button:disabled {
+    color: var(--g3-color-text-tertiary);
+    cursor: not-allowed;
+}
+
+.g3-stepper-value {
+    min-width: 2.5rem;
+    padding: 0 0.5rem;
+    border-inline: 1px solid var(--g3-color-border);
+    font-variant-numeric: tabular-nums;
+    line-height: 36px;
+    text-align: center;
+}
+
+/* Searchbar */
+.g3-searchbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 0;
+}
+
+.g3-searchbar .g3-field {
+    flex: 1 1 auto;
+}
+
+.g3-searchbar-ios .g3-input {
+    min-height: 36px;
+    padding-block: 0.4375rem;
+    border: 0;
+    background: color-mix(in srgb, var(--g3-color-text) 8%, transparent);
+}
+
+.g3-searchbar-md .g3-input {
+    border-radius: 999px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    position: absolute;
-    top: -3px;
-    left: 0;
-    transition: left 160ms cubic-bezier(0.4, 0, 0.2, 1), background 160ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-.g3-switch-md.checked .g3-switch-thumb-md {
-    left: 16px;
-    background: var(--color-focused);
-}
-.g3-switch-sm.g3-switch-ios {
-    -webkit-tap-highlight-color: transparent;
-    width: 42px;
-    height: 26px;
-    border-radius: 13px;
-}
-.g3-switch-sm.g3-switch-ios .g3-switch-thumb-ios {
-    width: 22px;
-    height: 22px;
-}
-.g3-switch-sm.g3-switch-ios.checked .g3-switch-thumb-ios {
-    transform: translate3d(16px, -50%, 0);
-}
-.g3-switch-sm.g3-switch-md {
-    -webkit-tap-highlight-color: transparent;
-    width: 32px;
-    height: 12px;
-    border-radius: 6px;
-}
-.g3-switch-sm.g3-switch-md .g3-switch-thumb-md {
-    width: 18px;
-    height: 18px;
-    top: -3px;
-}
-.g3-switch-sm.g3-switch-md.checked .g3-switch-thumb-md {
-    left: 14px;
+    border-color: transparent;
 }
 
-/* -- Checkbox -- */
+.g3-searchbar-cancel {
+    flex: 0 0 auto;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-accent);
+    font: inherit;
+    cursor: pointer;
+}
+/* -- Checkbox, toggle, and radio --
 
-.g3-checkbox {
+   Each is a whole-row control: the control mark, a label, and optional
+   helper and error text laid out on a grid. State comes from ARIA
+   (`aria-checked`, `aria-invalid`) or, for radios, the native input. */
+
+.g3-control {
     box-sizing: border-box;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
         "control label"
-        ". hint"
-        ". error";
+        "control helper"
+        "control error";
     align-items: center;
-    gap: 0.25rem 0.75rem;
+    gap: 0.125rem 0.75rem;
     width: 100%;
     min-height: 44px;
+    margin: 0;
     padding: 0.625rem 0.75rem;
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: var(--color-text);
+    color: var(--g3-color-text);
     font: inherit;
-    text-align: left;
+    text-align: start;
     cursor: pointer;
     appearance: none;
-    overflow: hidden;
-    transition: opacity var(--transition-fast) var(--transition-md),
-                background var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
 }
 
-.g3-checkbox-control {
+.g3-control-md {
+    min-height: 48px;
+    border-radius: 4px;
+}
+
+/* A control with no label is just its mark. */
+.g3-control-bare {
+    display: inline-grid;
+    grid-template-areas: "control";
+    grid-template-columns: auto;
+    width: auto;
+    min-height: 0;
+    padding: 0.25rem;
+}
+
+.g3-control:focus-visible,
+.g3-control:has(> .g3-radio-input:focus-visible) {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-control:active:not(:disabled, [aria-disabled="true"]) {
+    background: color-mix(in srgb, var(--g3-color-accent) 8%, transparent);
+    transform: scale(0.995);
+}
+
+.g3-control:disabled,
+.g3-control[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.45;
+    transform: none;
+}
+
+.g3-control-mark {
     grid-area: control;
-    box-sizing: border-box;
-    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    flex: 0 0 22px;
-    border: 2px solid var(--color-card-border);
-    background: var(--color-card);
-    color: var(--color-card);
-    transition: border-color var(--transition-normal) var(--transition-md),
-                background var(--transition-normal) var(--transition-md),
-                box-shadow var(--transition-normal) var(--transition-md);
 }
 
-.g3-checkbox-mark {
-    width: 12px;
-    height: 7px;
-    border-left: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    opacity: 0;
-    transform: translateY(-1px) rotate(-45deg) scale(0.8);
-    transition: opacity var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
-}
-
-.g3-checkbox-label {
+.g3-control-label {
     grid-area: label;
     min-width: 0;
     overflow-wrap: anywhere;
-    color: var(--color-text);
     font-size: 1rem;
     line-height: 1.25rem;
 }
 
-.g3-checkbox-single-line {
-    align-items: center;
-    row-gap: 0;
-}
-
-.g3-checkbox-single-line.g3-control-label-start {
-    grid-template-areas: "label control";
-}
-
-.g3-checkbox-single-line.g3-control-label-end {
-    grid-template-areas: "control label";
-}
-.g3-checkbox-single-line .g3-checkbox-control,
-.g3-checkbox-single-line .g3-checkbox-label {
-    align-self: center;
-}
-
-.g3-checkbox-single-line .g3-checkbox-label {
-    display: flex;
-    align-items: center;
-    min-height: 22px;
-    line-height: 22px;
-    transform: translateY(1px);
-}
-
-.g3-checkbox-hint,
-.g3-checkbox-error {
+.g3-control-helper,
+.g3-control-error {
     min-width: 0;
     overflow-wrap: anywhere;
     font-size: 0.8125rem;
     line-height: 1.125rem;
 }
 
-.g3-checkbox-hint {
-    grid-area: hint;
-    color: var(--color-text-secondary);
+.g3-control-helper {
+    grid-area: helper;
+    color: var(--g3-color-text-secondary);
 }
 
-.g3-checkbox-error {
+.g3-control-error {
     grid-area: error;
-    color: var(--color-danger);
-}
-
-.g3-checkbox.checked .g3-checkbox-control,
-.g3-checkbox.indeterminate .g3-checkbox-control {
-    border-color: var(--color-focused);
-    background: var(--color-focused);
-}
-
-.g3-checkbox.checked .g3-checkbox-mark {
-    opacity: 1;
-    transform: translateY(-1px) rotate(-45deg) scale(1);
-}
-
-.g3-checkbox.indeterminate .g3-checkbox-mark {
-    width: 12px;
-    height: 2px;
-    border-left: 0;
-    border-bottom: 2px solid currentColor;
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-}
-
-.g3-checkbox.invalid .g3-checkbox-control {
-    border-color: var(--color-danger);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 12%, transparent);
-}
-
-.g3-checkbox:focus-visible {
-    outline: 2px solid var(--color-focused);
-    outline-offset: 3px;
-}
-
-.g3-checkbox:active:not(:disabled) {
-    background: color-mix(in srgb, var(--color-focused) 8%, transparent);
-    transform: scale(0.995);
-}
-
-.g3-checkbox:disabled,
-.g3-checkbox.disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
-    transform: none;
-}
-
-.g3-checkbox-ios {
-    border-radius: 10px;
-    transition-timing-function: var(--transition-ios);
-}
-
-.g3-checkbox-ios .g3-checkbox-control {
-    border-radius: 50%;
-    border-width: 2px;
-    border-color: color-mix(in srgb, var(--color-text) 23%, transparent);
-    box-shadow: none;
-}
-
-.g3-checkbox-md {
-    border-radius: 4px;
-    min-height: 48px;
-}
-
-.g3-checkbox-md .g3-checkbox-control {
-    width: 18px;
-    height: 18px;
-    flex-basis: 18px;
-    border-radius: 2px;
-    border-color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    color: var(--g3-color-danger);
 }
 
 .g3-control-label-start {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
         "label control"
-        "hint control"
+        "helper control"
         "error control";
-}
-
-.g3-control-label-end {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-        "control label"
-        "control hint"
-        "control error";
 }
 
 .g3-control-label-fixed {
     grid-template-columns: minmax(6.5rem, 40%) auto minmax(0, 1fr);
     grid-template-areas:
-        "label control hint"
+        "label control helper"
         "label control error";
 }
 
 .g3-control-label-stacked {
-    grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
         "label label"
-        "control hint"
+        "control helper"
         "control error";
     align-items: start;
 }
 
-.g3-control-label-fixed .g3-checkbox-hint,
-.g3-control-label-fixed .g3-checkbox-error,
-.g3-control-label-stacked .g3-checkbox-hint,
-.g3-control-label-stacked .g3-checkbox-error {
-    align-self: center;
+/* Checkbox */
+.g3-checkbox-box {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid color-mix(in srgb, var(--g3-color-text) 30%, transparent);
+    background: var(--g3-color-card);
+    color: var(--g3-color-on-accent);
+    transition: border-color var(--g3-transition-normal) var(--g3-transition-md),
+                background var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-checkbox-demo-stack {
-    display: grid;
-    gap: 0.75rem;
-    width: 100%;
+.g3-control-ios .g3-checkbox-box {
+    border-radius: 50%;
 }
+
+.g3-control-md .g3-checkbox-box {
+    width: 18px;
+    height: 18px;
+    border-radius: 2px;
+    border-color: color-mix(in srgb, var(--g3-color-text) 60%, transparent);
+}
+
+.g3-checkbox-check {
+    width: 12px;
+    height: 7px;
+    border-left: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    opacity: 0;
+    transform: translateY(-1px) rotate(-45deg) scale(0.8);
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-checkbox[aria-checked="true"] .g3-checkbox-box,
+.g3-checkbox[aria-checked="mixed"] .g3-checkbox-box {
+    border-color: var(--g3-color-accent);
+    background: var(--g3-color-accent);
+}
+
+.g3-checkbox[aria-checked="true"] .g3-checkbox-check {
+    opacity: 1;
+    transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+
+.g3-checkbox[aria-checked="mixed"] .g3-checkbox-check {
+    height: 2px;
+    border-left: 0;
+    opacity: 1;
+    transform: none;
+}
+
+.g3-checkbox[aria-invalid="true"] .g3-checkbox-box {
+    border-color: var(--g3-color-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--g3-color-danger) 12%, transparent);
+}
+
+/* Toggle */
+.g3-switch {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    transition: background var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-switch-thumb {
+    position: absolute;
+    top: 50%;
+    border-radius: 50%;
+    background: var(--g3-color-card);
+    pointer-events: none;
+    transform: translate3d(0, -50%, 0);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
+                background var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-switch-ios {
+    width: 51px;
+    height: 31px;
+    border-radius: 15.5px;
+    background: color-mix(in srgb, var(--g3-color-text) 12%, transparent);
+    transition-timing-function: var(--g3-transition-ios);
+}
+
+.g3-switch-ios .g3-switch-thumb {
+    left: 2px;
+    width: 27px;
+    height: 27px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-ios {
+    background: var(--g3-color-accent);
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-ios .g3-switch-thumb {
+    transform: translate3d(20px, -50%, 0);
+}
+
+.g3-switch-md {
+    width: 36px;
+    height: 14px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--g3-color-text) 39%, transparent);
+}
+
+.g3-switch-md .g3-switch-thumb {
+    left: 0;
+    width: 20px;
+    height: 20px;
+    box-shadow: var(--g3-shadow-md-elevation-1);
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-md {
+    background: color-mix(in srgb, var(--g3-color-accent) 50%, transparent);
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-md .g3-switch-thumb {
+    background: var(--g3-color-accent);
+    transform: translate3d(16px, -50%, 0);
+}
+
+.g3-switch-sm.g3-switch-ios {
+    width: 42px;
+    height: 26px;
+    border-radius: 13px;
+}
+
+.g3-switch-sm.g3-switch-ios .g3-switch-thumb {
+    width: 22px;
+    height: 22px;
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-sm.g3-switch-ios .g3-switch-thumb {
+    transform: translate3d(16px, -50%, 0);
+}
+
+.g3-switch-sm.g3-switch-md {
+    width: 32px;
+    height: 12px;
+}
+
+.g3-switch-sm.g3-switch-md .g3-switch-thumb {
+    width: 18px;
+    height: 18px;
+}
+
+.g3-toggle[aria-checked="true"] .g3-switch-sm.g3-switch-md .g3-switch-thumb {
+    transform: translate3d(14px, -50%, 0);
+}
+
+.g3-switch:dir(rtl) {
+    transform: scaleX(-1);
+}
+
+/* Radio */
+.g3-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.g3-radio-group-label {
+    padding: 0 0.75rem 0.25rem;
+    color: var(--g3-color-text-tertiary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.g3-radio-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.g3-radio {
+    position: relative;
+}
+
+.g3-radio-circle {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid color-mix(in srgb, var(--g3-color-text) 40%, transparent);
+    border-radius: 50%;
+    transition: border-color var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-radio-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--g3-color-accent);
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-radio:has(> .g3-radio-input:checked) .g3-radio-circle {
+    border-color: var(--g3-color-accent);
+}
+
+.g3-radio:has(> .g3-radio-input:checked) .g3-radio-dot {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* iOS radios are a trailing checkmark with no circle. */
+.g3-control-ios .g3-radio-circle {
+    width: 15px;
+    height: 24px;
+    border: 0;
+    border-radius: 0;
+}
+
+.g3-control-ios .g3-radio-dot {
+    width: 33%;
+    height: 50%;
+    border-right: 2px solid var(--g3-color-accent);
+    border-bottom: 2px solid var(--g3-color-accent);
+    border-radius: 0;
+    background: transparent;
+    transform: rotate(45deg) scale(0.8);
+}
+
+.g3-control-ios.g3-radio:has(> .g3-radio-input:checked) .g3-radio-dot {
+    transform: rotate(45deg) scale(1);
+}
+
+.g3-radio:has(> .g3-radio-input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-control,
+    .g3-switch,
+    .g3-switch-thumb,
+    .g3-checkbox-check,
+    .g3-radio-dot {
+        transition: none;
+    }
+}
+
 /* -- Card -- */
 
 .g3-card {
-    --g3-card-surface: var(--color-card);
+    --g3-card-surface: var(--g3-color-card);
     box-sizing: border-box;
     position: relative;
     min-width: 0;
+    padding: 1rem;
+    border: 0;
+    background: var(--g3-card-surface);
+    color: var(--g3-color-text);
 }
 
-/* iOS card: Ionic uses a rounded white surface with soft elevation, not a
-   colored outline. */
 .g3-card-ios {
-    border: 0;
+    margin-bottom: 1.5rem;
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
-    background: var(--g3-card-surface);
-    padding: 1rem;
-    margin-bottom: 1.5rem;
     transition: transform 500ms cubic-bezier(0.12, 0.72, 0.29, 1),
-                box-shadow var(--transition-normal) var(--transition-ios),
-                background var(--transition-fast) var(--transition-ios);
-}
-.g3-card-ios.g3-card-interactive:active:not(:has(.g3-info-btn:active)) {
-    background: color-mix(in srgb, var(--color-text) 3%, var(--g3-card-surface));
-    transform: scale3d(0.97, 0.97, 1);
+                box-shadow var(--g3-transition-normal) var(--g3-transition-ios),
+                background var(--g3-transition-fast) var(--g3-transition-ios);
 }
 
-/* Material card */
 .g3-card-md {
-    border: 0;
+    margin-bottom: 0.75rem;
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
-    background: var(--g3-card-surface);
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    transition: box-shadow var(--transition-normal) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md),
-                background var(--transition-fast) var(--transition-md);
-}
-.g3-card-md.g3-card-interactive:active:not(:has(.g3-info-btn:active)) {
-    box-shadow: var(--g3-shadow-md-elevation-2);
-    transform: scale(0.99);
+    transition: box-shadow var(--g3-transition-normal) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md),
+                background var(--g3-transition-fast) var(--g3-transition-md);
 }
 
-/* A nested card needs a distinct surface from the card or bottom sheet behind
-   it. Mixing the theme's text into its card color darkens light themes and
-   lightens dark themes, without knowing which preset or custom colors are in
-   use. Explicit inset cards use the same treatment. */
+/* A card inside a card or a bottom sheet needs its own surface. Mixing in the
+   text colour darkens light themes and lightens dark ones alike. */
 .g3-card .g3-card,
 .g3-sheet-bottom .g3-card,
 .g3-card-inset {
-    --g3-card-surface: color-mix(in srgb, var(--color-text) 7%, var(--color-card));
+    --g3-card-surface: color-mix(in srgb, var(--g3-color-text) 7%, var(--g3-color-card));
 }
 
 .g3-card-inset {
-    border: 0;
-    padding: 0.75rem;
     margin-bottom: 0.5rem;
+    padding: 0.75rem;
 }
-
-.g3-card-ios.g3-card-inset {
-    border-radius: 8px;
-    box-shadow: var(--g3-shadow-ios-card);
-}
-
-.g3-card-md.g3-card-inset {
-    border-radius: 4px;
-    box-shadow: var(--g3-shadow-md-elevation-1);
-}
-
-/* Selected state - tint the surface and add an outside ring without replacing
-   the platform elevation. Keep this after contextual surface rules so a
-   selected nested card still reads as selected. */
-.g3-card.g3-card-selected {
-    --g3-card-surface: color-mix(in srgb, var(--color-focused) 4%, var(--color-card));
-    background: var(--g3-card-surface);
-}
-.g3-card-inset.g3-card-selected {
-    --g3-card-surface: color-mix(in srgb, var(--color-focused) 6%, var(--color-card));
-}
-.g3-card-ios.g3-card-selected {
-    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
-}
-.g3-card-md.g3-card-selected {
-    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
-}
-.g3-card-ios.g3-card-inset.g3-card-selected {
-    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
-}
-.g3-card-md.g3-card-inset.g3-card-selected {
-    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--color-focused) 20%, transparent);
-}
-
-/* -- Settings Card -- */
 
 .g3-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem;
 }
+
+.g3-card-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
 .g3-card-title {
+    margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-}
-.g3-card-body {
-    padding-block: 0.5rem;
-}
-.g3-card-control .g3-card-body {
-    padding-block: 0;
+    line-height: 1.3;
 }
 
-/* -- Text Utilities -- */
-
-.g3-message-text {
+.g3-card-subtitle {
+    color: var(--g3-color-text-secondary);
     font-size: 0.875rem;
-    line-height: 1.25rem;
 }
 
-.g3-message-text-muted {
-    color: var(--color-text-secondary);
-}
-
-.g3-message-text-subtle {
-    color: var(--color-label-secondary);
-}
-
-.g3-message-text-success {
-    color: var(--color-success);
-}
-
-.g3-message-text-danger {
-    color: var(--color-danger);
-}
-
-.g3-message-text-warning {
-    color: var(--color-warning);
-}
-
-.g3-status-pill {
+.g3-card-end {
     display: inline-flex;
+    flex: 0 0 auto;
     align-items: center;
-    flex-shrink: 0;
-    border-radius: 999px;
-    background: var(--color-card);
-    padding: 0.25rem 0.625rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1rem;
-    color: var(--color-text-secondary);
-    box-shadow: 0 1px 2px var(--color-shadow);
-    outline: 1px solid var(--color-card-border);
+    color: var(--g3-color-text-secondary);
+    font-size: 0.875rem;
 }
-/* -- Sheet / Bottom Sheet -- */
 
-.g3-sheet {
+.g3-card-media {
+    display: grid;
+    margin: -1rem -1rem 0.75rem;
+    overflow: hidden;
+    border-start-start-radius: inherit;
+    border-start-end-radius: inherit;
+}
+
+.g3-card-media img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.g3-card-body {
+    padding-block: 0.5rem 0;
+}
+
+.g3-card-header + .g3-card-body {
+    padding-top: 0.5rem;
+}
+
+/* An interactive card's title is the button or link. Its `::after` covers the
+   whole card, so a tap anywhere activates it; other controls in the card sit
+   above that layer and keep working. */
+.g3-card-action {
+    all: unset;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.g3-card-action::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+}
+
+.g3-card-action:focus-visible::after {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-card-interactive :is(a, button, input, select, textarea, [tabindex]):not(.g3-card-action) {
+    position: relative;
+    z-index: 1;
+}
+
+.g3-card-ios.g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
+    background: color-mix(in srgb, var(--g3-color-text) 3%, var(--g3-card-surface));
+    transform: scale3d(0.97, 0.97, 1);
+}
+
+.g3-card-md.g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
+    box-shadow: var(--g3-shadow-md-elevation-2);
+    transform: scale(0.99);
+}
+
+.g3-card-interactive[aria-disabled="true"] {
+    opacity: 0.45;
+}
+
+/* Selected: a tint and an outside ring over the platform elevation. */
+.g3-card.g3-card-selected {
+    --g3-card-surface: color-mix(in srgb, var(--g3-color-accent) 5%, var(--g3-color-card));
+}
+
+.g3-card-ios.g3-card-selected {
+    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
+}
+
+.g3-card-md.g3-card-selected {
+    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-card {
+        transition: none;
+    }
+}
+
+/* -- Sheets and navigation drawers --
+
+   State lives in `data-state` ("open" / "closed"). A sheet that opens after
+   mounting also carries `.g3-sheet-enter`, which runs a keyframe entrance: a
+   transition would need its start state painted first, which a sheet inserted
+   on open never has. The exit is a transition from the painted open state.
+
+   Side sheets and drawers use logical edges. `--g3-sheet-offscreen` is where
+   a closed side surface waits, flipped for right-to-left documents. */
+
+.g3-sheet,
+.g3-drawer {
     box-sizing: border-box;
     position: fixed;
-    z-index: 90;
-    background: var(--color-card);
+    display: flex;
+    flex-direction: column;
+    background: var(--g3-color-card);
+    color: var(--g3-color-text);
+    outline: none;
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
+                visibility 0s linear var(--g3-transition-normal);
+}
+
+.g3-sheet {
+    z-index: var(--g3-z-sheet);
+}
+
+.g3-drawer {
+    z-index: var(--g3-z-fab);
+}
+
+.g3-sheet[data-state="open"],
+.g3-drawer[data-state="open"] {
     visibility: visible;
-    transition: transform var(--transition-normal) var(--transition-md), visibility 0s linear var(--transition-normal);
+    transition-delay: 0s;
+}
+
+.g3-sheet[data-state="closed"],
+.g3-drawer[data-state="closed"] {
+    box-shadow: none;
+    pointer-events: none;
+    visibility: hidden;
 }
 
 .g3-sheet-backdrop {
     display: block;
     position: fixed;
     inset: 0;
+    z-index: var(--g3-z-sheet-backdrop);
     width: 100%;
     height: 100%;
-    z-index: 80;
     margin: 0;
     padding: 0;
     border: 0;
     outline: 0;
-    -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
-    background-color: rgba(0, 0, 0, 0.5) !important;
-    transition: opacity var(--transition-normal) var(--transition-md);
-    will-change: opacity;
+    background-color: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: opacity var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-sheet-backdrop-open {
+.g3-sheet-backdrop[data-state="open"] {
     opacity: 1;
-    pointer-events: auto !important;
 }
 
-.g3-sheet-backdrop-closed {
+.g3-sheet-backdrop[data-state="closed"] {
     opacity: 0;
-    pointer-events: none !important;
-}
-
-.g3-sheet.g3-sheet-closed {
-    box-shadow: none;
     pointer-events: none;
-    visibility: hidden;
 }
 
+.g3-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.25rem 1.5rem 0;
+}
 
-.g3-sheet-open {
-    pointer-events: auto;
-    visibility: visible;
-    transition-delay: 0s;
+.g3-sheet-title {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 650;
+    line-height: 1.35;
 }
 
 .g3-sheet-content {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    min-height: 0;
     padding: 1rem 1.5rem 1.5rem;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-/* The content box is a capped flex column, so its children are flex items and
-   shrink to fit the cap by default. A child that clips its own overflow - an
-   inset List, a Card - has an automatic minimum size of zero, so it shrank
-   instead of overflowing: its last rows were cut off inside it, the content box
-   never overflowed, and there was nothing to scroll to. Children keep their
-   size, and the content box scrolls. */
-.g3-sheet-content > * {
-    flex-shrink: 0;
-}
-
-/* The cap reads a custom property so an app can size one sheet from its own
-   class. An override written as a selector had to out-rank this rule, and since
-   this stylesheet loads after the app's, an equal-weight override silently lost. */
-.g3-sheet.g3-sheet-bottom .g3-sheet-content {
-    min-height: 0;
-    max-height: var(--g3-sheet-max-height, min(50dvh, 26rem));
-}
-
-.g3-sheet.g3-sheet-left .g3-sheet-content,
-.g3-sheet.g3-sheet-right .g3-sheet-content {
-    height: 100%;
-    max-height: 100dvh;
 }
 
 .g3-sheet-content::-webkit-scrollbar {
     display: none;
-    width: 0;
-    height: 0;
 }
 
-.g3-sheet.g3-sheet-bottom {
-    right: 0;
-    bottom: 0;
-    left: 0;
+/* Children keep their size and the content box scrolls. As flex items they
+   would otherwise shrink to fit, clipping inset lists and cards inside
+   themselves with nothing left to scroll. */
+.g3-sheet-content > * {
+    flex-shrink: 0;
 }
 
-.g3-sheet.g3-sheet-left {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: var(--g3-side-sheet-width, min(18rem, 72vw));
+.g3-sheet-dismiss {
+    display: none;
 }
 
-.g3-sheet.g3-sheet-right {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: var(--g3-side-sheet-width, min(18rem, 72vw));
-}
-
-/* Where an entrance starts from. Kept in sync with the matching
-   `.g3-sheet-closed` transforms below; overridden for the wide-shell bottom
-   sheet, which is centred with an x translate of its own. */
-.g3-sheet {
+/* Bottom sheets */
+.g3-sheet-bottom {
     --g3-sheet-enter-x: 0;
     --g3-sheet-enter-y: calc(100% + max(3rem, env(safe-area-inset-bottom)));
+    inset-inline: 0;
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-.g3-sheet.g3-sheet-bottom.g3-sheet-closed {
-    transform: translate3d(0, calc(100% + max(3rem, env(safe-area-inset-bottom))), 0);
+/* The cap is a custom property so an app can size one sheet from its own
+   class or the `max_height` prop. */
+.g3-sheet-bottom .g3-sheet-content {
+    max-height: var(--g3-sheet-max-height, min(50dvh, 26rem));
 }
 
-.g3-sheet.g3-sheet-left.g3-sheet-closed {
-    transform: translateX(calc(-100% - 2rem));
+/* With detents the sheet has a fixed height: a fraction of the detent
+   ceiling, moved between fractions by the drag handle. */
+.g3-sheet-bottom[data-detent] .g3-sheet-content {
+    flex: 1 1 auto;
+    max-height: none;
 }
 
-.g3-sheet.g3-sheet-right.g3-sheet-closed {
-    transform: translateX(calc(100% + 2rem));
+.g3-sheet-bottom[data-detent] {
+    height: calc(var(--g3-sheet-detent, 1) * var(--g3-sheet-detent-max, 88dvh));
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
+                height var(--g3-transition-normal) var(--g3-transition-md),
+                visibility 0s linear var(--g3-transition-normal);
 }
 
-.g3-sheet.g3-sheet-bottom.g3-sheet-open {
-    transform: translate3d(0, var(--g3-sheet-drag-y, 0px), 0);
+.g3-sheet-bottom[data-state="closed"] {
+    transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-enter-y), 0);
 }
 
-.g3-sheet.g3-sheet-left.g3-sheet-open,
-.g3-sheet.g3-sheet-right.g3-sheet-open {
-    transform: translate3d(0, 0, 0);
+.g3-sheet-bottom[data-state="open"] {
+    transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-drag-y, 0px), 0);
 }
 
-/* Ionic-style side sheet behaviors. Overlay moves only the sheet. Push moves
-   the sheet and content together. Reveal keeps the sheet under the content and
-   moves only the content. Menu persistently reserves space beside the complete
-   page. Push/reveal/menu require the side sheet and one root content element
-   to be direct AppWrapper children. */
-.g3-sheet-side.g3-sheet-reveal.g3-sheet-closed,
-.g3-sheet-side.g3-sheet-reveal.g3-sheet-open {
-    transform: translate3d(0, 0, 0);
+.g3-sheet-bottom[data-dragging="true"] {
+    transition: none;
 }
 
-.g3-sheet-ios.g3-sheet-side {
-    background: var(--color-card);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-
-.g3-sheet-ios.g3-sheet-side.g3-sheet-reveal {
-    box-shadow: none;
-}
-
-.g3-sheet-side.g3-sheet-reveal {
-    z-index: 0;
-}
-
-.g3-sheet-backdrop.g3-sheet-side {
-    cursor: pointer;
-}
-
-.g3-sheet-backdrop.g3-sheet-push {
-    background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Reveal keeps the menu underneath the page. Its transparent dismiss target
-   covers only the shifted page, leaving the revealed menu interactive. */
-.g3-sheet-backdrop.g3-sheet-reveal {
-    background-color: transparent !important;
-    z-index: 0;
-}
-
-/* No `translate` in the closed state. A non-`none` translate makes this box
-   the containing block for every `position: fixed` descendant, which would
-   anchor Select sheets, modals, and toasts inside the app content instead of
-   the viewport for as long as a push/reveal sheet exists in the shell - open
-   or not. `none` interpolates as zero, so the open state below still
-   animates. */
-.g3-app-shell:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    position: relative;
-    z-index: 1;
-    box-shadow: none;
-    transition: translate var(--transition-normal) var(--transition-md),
-        box-shadow var(--transition-normal) var(--transition-md);
-}
-
-.g3-app-shell:has(> .g3-sheet-left:is(.g3-sheet-push, .g3-sheet-reveal).g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    translate: var(--g3-side-sheet-width) 0;
-}
-
-.g3-app-shell:has(> .g3-sheet-right:is(.g3-sheet-push, .g3-sheet-reveal).g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    translate: calc(var(--g3-side-sheet-width) * -1) 0;
-}
-
-/* Reveal keeps the menu stationary beneath the page, so the page is the
-   elevated surface. Its directional shadow falls back onto the exposed menu. */
-.g3-app-shell:has(> .g3-sheet-left.g3-sheet-reveal.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    box-shadow: -12px 0 32px var(--color-shadow), -2px 0 8px var(--color-shadow);
-}
-
-.g3-app-shell:has(> .g3-sheet-right.g3-sheet-reveal.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    box-shadow: 12px 0 32px var(--color-shadow), 2px 0 8px var(--color-shadow);
-}
-
-/* The reveal page stays visually above the stationary menu, but does not
-   consume pointer input while open. Clicks outside the menu fall through to
-   the full-shell backdrop button and dismiss it. */
-.g3-app-shell:has(> .g3-sheet-reveal.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    pointer-events: none;
-}
-
-/* iOS sheet */
-.g3-sheet-ios {
-    background: color-mix(in srgb, var(--color-card) 94%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.16);
-    transition-timing-function: var(--transition-ios);
-}
-
-.g3-sheet-ios.g3-sheet-bottom {
-    border-radius: 16px 16px 0 0;
-}
-
-.g3-sheet-ios.g3-sheet-left {
-    border-radius: 0 16px 16px 0;
-}
-
-.g3-sheet-ios.g3-sheet-right {
-    border-radius: 16px 0 0 16px;
-}
-
-.g3-sheet-handle-wrap-ios {
+.g3-sheet-handle {
     display: flex;
+    flex: 0 0 auto;
     align-items: center;
     justify-content: center;
     width: 100%;
@@ -1538,94 +1767,287 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     -webkit-tap-highlight-color: transparent;
 }
 
-.g3-sheet-handle-ios {
+.g3-sheet-handle:active {
+    cursor: grabbing;
+}
+
+.g3-sheet-handle:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: -4px;
+    border-radius: 0.75rem;
+}
+
+.g3-sheet-handle-bar {
     width: 32px;
     height: 4px;
     border-radius: 2px;
-    background: color-mix(in srgb, var(--color-text) 24%, transparent);
-    margin: 0 auto;
+    background: color-mix(in srgb, var(--g3-color-text) 24%, transparent);
 }
 
-/* Material sheet */
+/* Side sheets and drawers */
+.g3-sheet-side,
+.g3-drawer {
+    top: 0;
+    bottom: 0;
+    width: var(--g3-side-sheet-width, min(18rem, 72vw));
+}
+
+.g3-sheet-start,
+.g3-drawer-start {
+    --g3-sheet-offscreen: calc(-100% - 2rem);
+    inset-inline-start: 0;
+}
+
+.g3-sheet-end,
+.g3-drawer-end {
+    --g3-sheet-offscreen: calc(100% + 2rem);
+    inset-inline-end: 0;
+}
+
+.g3-sheet-start:dir(rtl),
+.g3-drawer-start:dir(rtl) {
+    --g3-sheet-offscreen: calc(100% + 2rem);
+}
+
+.g3-sheet-end:dir(rtl),
+.g3-drawer-end:dir(rtl) {
+    --g3-sheet-offscreen: calc(-100% - 2rem);
+}
+
+.g3-sheet-side .g3-sheet-content,
+.g3-drawer .g3-sheet-content {
+    flex: 1 1 auto;
+    padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.g3-sheet-side[data-state="closed"],
+.g3-drawer[data-state="closed"] {
+    transform: translate3d(var(--g3-sheet-offscreen), 0, 0);
+}
+
+.g3-sheet-side[data-state="open"],
+.g3-drawer[data-state="open"] {
+    transform: translate3d(0, 0, 0);
+}
+
+/* Reveal keeps the sheet still beneath the page, which moves away from it. */
+.g3-sheet-reveal[data-state] {
+    z-index: 0;
+    transform: none;
+    box-shadow: none;
+}
+
+.g3-sheet-backdrop.g3-sheet-reveal {
+    z-index: 0;
+    background-color: transparent;
+}
+
+/* Push and Reveal move the page: the one element beside the sheet in the app
+   shell. Only `translate` moves it; a closed state with a non-`none`
+   translate would make the page the containing block for every fixed
+   descendant, trapping Select sheets and dialogs inside it. */
+.g3-app:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    position: relative;
+    z-index: 1;
+    transition: translate var(--g3-transition-normal) var(--g3-transition-md),
+                box-shadow var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-app:has(> .g3-sheet-start:is(.g3-sheet-push, .g3-sheet-reveal)[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    translate: var(--g3-side-sheet-width) 0;
+}
+
+.g3-app:has(> .g3-sheet-end:is(.g3-sheet-push, .g3-sheet-reveal)[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    translate: calc(var(--g3-side-sheet-width) * -1) 0;
+}
+
+.g3-app:dir(rtl):has(> .g3-sheet-start:is(.g3-sheet-push, .g3-sheet-reveal)[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    translate: calc(var(--g3-side-sheet-width) * -1) 0;
+}
+
+.g3-app:dir(rtl):has(> .g3-sheet-end:is(.g3-sheet-push, .g3-sheet-reveal)[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    translate: var(--g3-side-sheet-width) 0;
+}
+
+/* During Reveal the page is the raised surface and casts its shadow onto the
+   sheet. It ignores pointer input, so a tap beside the sheet reaches the
+   backdrop and closes it. */
+.g3-app:has(> .g3-sheet-reveal[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    box-shadow: 0 0 32px var(--g3-color-shadow), 0 0 8px var(--g3-color-shadow);
+    pointer-events: none;
+}
+
+.g3-sheet-push[data-state="open"] {
+    box-shadow: 0 0 28px var(--g3-color-shadow), 0 0 8px var(--g3-color-shadow);
+}
+
+/* A drawer is persistent navigation. The page reflows into the remaining
+   width instead of being covered. */
+.g3-drawer {
+    border-radius: 0;
+}
+
+.g3-drawer-start {
+    box-shadow: 1px 0 0 var(--g3-color-border),
+        4px 0 16px color-mix(in srgb, var(--g3-color-shadow) 45%, transparent);
+}
+
+.g3-drawer-end {
+    box-shadow: -1px 0 0 var(--g3-color-border),
+        -4px 0 16px color-mix(in srgb, var(--g3-color-shadow) 45%, transparent);
+}
+
+.g3-app:has(> .g3-drawer)
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    width: 100%;
+    min-width: 0;
+    margin-inline: 0;
+    transition: width var(--g3-transition-normal) var(--g3-transition-md),
+                margin var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-app:has(> .g3-drawer[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    width: calc(100% - var(--g3-side-sheet-width));
+}
+
+.g3-app:has(> .g3-drawer-start[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    margin-inline-start: var(--g3-side-sheet-width);
+}
+
+.g3-app:has(> .g3-drawer-end[data-state="open"])
+    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+    margin-inline-end: var(--g3-side-sheet-width);
+}
+
+/* iOS */
+.g3-sheet-ios {
+    background: color-mix(in srgb, var(--g3-color-card) 94%, transparent);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.16);
+    transition-timing-function: var(--g3-transition-ios);
+}
+
+.g3-sheet-ios.g3-sheet-bottom {
+    border-radius: 16px 16px 0 0;
+}
+
+.g3-sheet-ios.g3-sheet-side {
+    background: var(--g3-color-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.g3-sheet-ios.g3-sheet-start:not(.g3-sheet-reveal) {
+    border-start-end-radius: 16px;
+    border-end-end-radius: 16px;
+}
+
+.g3-sheet-ios.g3-sheet-end:not(.g3-sheet-reveal) {
+    border-start-start-radius: 16px;
+    border-end-start-radius: 16px;
+}
+
+/* Material */
 .g3-sheet-md {
-    background: var(--color-card);
     box-shadow: var(--g3-shadow-md-elevation-2);
-    transition-timing-function: var(--transition-md);
+    transition-timing-function: var(--g3-transition-md);
 }
 
 .g3-sheet-md.g3-sheet-bottom {
     border-radius: 4px 4px 0 0;
 }
 
-.g3-sheet-md.g3-sheet-left {
-    border-radius: 0 4px 4px 0;
+.g3-sheet-md.g3-sheet-start:not(.g3-sheet-reveal) {
+    border-start-end-radius: 4px;
+    border-end-end-radius: 4px;
 }
 
-.g3-sheet-md.g3-sheet-right {
-    border-radius: 4px 0 0 4px;
+.g3-sheet-md.g3-sheet-end:not(.g3-sheet-reveal) {
+    border-start-start-radius: 4px;
+    border-end-start-radius: 4px;
 }
 
-/* Compact push menus sit above a dimmed page while moving it, so the menu
-   keeps an edge shadow. Wide-shell push menus become flat navigation rails in
-   the responsive container query below. Reveal never elevates the menu. */
-.g3-sheet.g3-sheet-left.g3-sheet-push.g3-sheet-open {
-    box-shadow: 8px 0 28px var(--color-shadow), 2px 0 8px var(--color-shadow);
+/* Entrance */
+@keyframes g3-sheet-enter-bottom {
+    from {
+        transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-enter-y), 0);
+    }
 }
 
-.g3-sheet.g3-sheet-right.g3-sheet-push.g3-sheet-open {
-    box-shadow: -8px 0 28px var(--color-shadow), -2px 0 8px var(--color-shadow);
+@keyframes g3-sheet-enter-side {
+    from {
+        transform: translate3d(var(--g3-sheet-offscreen), 0, 0);
+    }
 }
 
-.g3-sheet.g3-sheet-side.g3-sheet-reveal {
-    box-shadow: none;
+@keyframes g3-sheet-enter-backdrop {
+    from {
+        opacity: 0;
+    }
 }
 
-/* Menu is a persistent navigation layout at every shell width. Unlike Push,
-   it never renders a dismiss backdrop or moves part of the page off-screen;
-   the page reflows into the remaining width instead. Because the page sits
-   flush beside it - header included - the rail carries its own hairline edge
-   and a soft shadow so the seam stays readable on same-coloured surfaces. */
-.g3-sheet.g3-sheet-side.g3-sheet-menu {
-    border-radius: 0;
-    box-shadow: none;
+.g3-sheet-enter.g3-sheet-bottom[data-state="open"] {
+    animation: g3-sheet-enter-bottom var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-sheet.g3-sheet-left.g3-sheet-menu {
-    box-shadow: 1px 0 0 var(--color-card-border),
-        4px 0 16px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+.g3-sheet-enter:is(.g3-sheet-side:not(.g3-sheet-reveal), .g3-drawer)[data-state="open"] {
+    animation: g3-sheet-enter-side var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-sheet.g3-sheet-right.g3-sheet-menu {
-    box-shadow: -1px 0 0 var(--color-card-border),
-        -4px 0 16px color-mix(in srgb, var(--color-shadow) 45%, transparent);
+.g3-sheet-backdrop.g3-sheet-enter[data-state="open"] {
+    animation: g3-sheet-enter-backdrop var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-app-shell:has(> .g3-sheet-side.g3-sheet-menu)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    width: 100%;
-    min-width: 0;
-    margin-inline: 0;
-    transition: width var(--transition-normal) var(--transition-md),
-        margin-left var(--transition-normal) var(--transition-md),
-        margin-right var(--transition-normal) var(--transition-md);
+@media (prefers-reduced-motion: reduce) {
+    .g3-sheet,
+    .g3-drawer,
+    .g3-sheet-backdrop {
+        transition-duration: 0s;
+        animation: none;
+    }
 }
 
-.g3-app-shell:has(> .g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)),
-.g3-app-shell:has(> .g3-sheet-right.g3-sheet-menu.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    width: calc(100% - var(--g3-side-sheet-width));
+/* Wide shells: bottom sheets float as a centred card. */
+@container g3-app-shell (min-width: 48rem) {
+    .g3-sheet-bottom {
+        --g3-sheet-enter-x: -50%;
+        --g3-sheet-enter-y: calc(100% + 4.5rem);
+        right: auto;
+        bottom: 1.5rem;
+        left: 50%;
+        width: min(36rem, calc(100% - 3rem));
+        padding-bottom: 0;
+    }
+
+    .g3-sheet-ios.g3-sheet-bottom,
+    .g3-sheet-md.g3-sheet-bottom {
+        border-radius: 1rem;
+        box-shadow: 0 18px 54px color-mix(in srgb, var(--g3-color-shadow) 68%, transparent);
+    }
+
+    .g3-sheet-md.g3-sheet-bottom {
+        border-radius: 0.75rem;
+    }
+
+    .g3-sheet-bottom .g3-sheet-content {
+        max-height: var(--g3-sheet-max-height, min(70dvh, 30rem));
+        padding-bottom: 1rem;
+    }
+
+    .g3-sheet-bottom[data-detent] {
+        --g3-sheet-detent-max: calc(100dvh - 6rem);
+    }
 }
 
-.g3-app-shell:has(> .g3-sheet-left.g3-sheet-menu.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    margin-left: var(--g3-side-sheet-width);
-}
-
-.g3-app-shell:has(> .g3-sheet-right.g3-sheet-menu.g3-sheet-open)
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay, .g3-toast)) {
-    margin-right: var(--g3-side-sheet-width);
-}
 /* -- Spinner -- */
 
 @keyframes g3-spin {
@@ -1648,13 +2070,29 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 .g3-spinner {
     width: 60px;
     height: 60px;
-    border: 4px solid var(--color-bg-secondary);
-    border-top-color: var(--color-focused);
+    border: 4px solid var(--g3-color-bg-secondary);
+    border-top-color: var(--g3-color-accent);
     border-radius: 50%;
     animation: g3-spin 0.8s linear infinite;
 }
 
-/* -- Fab Bar -- */
+.g3-spinner-md {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+}
+
+.g3-spinner-sm {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-spinner {
+        animation-duration: 2.4s;
+    }
+}
 
 /* -- Fab -- */
 
@@ -1662,7 +2100,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     --g3-fab-x: 0;
     --g3-fab-y: 0;
     position: absolute;
-    z-index: 39;
+    z-index: var(--g3-z-fab);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1709,7 +2147,19 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     bottom: -28px;
 }
 
+.g3-fab:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 3px;
+}
+
+.g3-fab:disabled,
+.g3-fab[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .g3-fab {
+    text-decoration: none;
     -webkit-tap-highlight-color: transparent;
     border: none;
     padding: 0;
@@ -1721,8 +2171,8 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--color-focused);
-    color: white;
+    background: var(--g3-color-accent);
+    color: var(--g3-color-on-accent);
     box-shadow: var(--g3-shadow-ios-card);
     display: flex;
     align-items: center;
@@ -1731,8 +2181,8 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform var(--transition-normal) var(--transition-ios),
-                box-shadow var(--transition-normal) var(--transition-ios);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-ios),
+                box-shadow var(--g3-transition-normal) var(--g3-transition-ios);
 }
 /* Material Fab */
 .g3-fab-md {
@@ -1740,8 +2190,8 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--color-focused);
-    color: white;
+    background: var(--g3-color-accent);
+    color: var(--g3-color-on-accent);
     box-shadow: var(--g3-shadow-md-fab);
     display: flex;
     align-items: center;
@@ -1750,7 +2200,7 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
     font-size: 0.875rem;
     font-weight: 400;
     cursor: pointer;
-    transition: box-shadow var(--transition-normal) var(--transition-md);
+    transition: box-shadow var(--g3-transition-normal) var(--g3-transition-md);
 }
 /* Mini FAB - smaller size (40px) */
 .g3-fab-small {
@@ -1761,39 +2211,36 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 
 /* Translucent FAB for iOS with backdrop-filter */
 .g3-fab-translucent {
-    background: color-mix(in srgb, var(--color-card) 85%, transparent);
+    background: color-mix(in srgb, var(--g3-color-card) 85%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    color: var(--color-focused);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: var(--g3-color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Edge mode - overlap header/footer by reducing margin/padding */
-.g3-fab-edge {
-    transform: translateY(-50%);
-}
 
 /* -- FabList -- */
 
-/* Base fab list container */
 .g3-fab-list {
     position: absolute;
     display: flex;
+    align-items: center;
     flex-direction: column;
     gap: 0.5rem;
 }
 
 /* Platform-specific fab list styles */
-.g3-fab-list-ios {
-    align-items: center;
-}
-.g3-fab-list-md {
-    align-items: center;
-}
 
 /* FabList positioning by side */
 .g3-fab-list[aria-hidden="true"] {
+    visibility: hidden;
+    opacity: 0;
     pointer-events: none;
+}
+
+.g3-fab-list {
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md), visibility 0s linear var(--g3-transition-fast);
 }
 .g3-fab-list[aria-hidden="false"] {
     pointer-events: auto;
@@ -1825,91 +2272,87 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
 
 /* -- Modal -- */
 
-.g3-modal {
-    box-sizing: border-box;
-}
-
-/* iOS modal */
-.g3-modal-ios {
-    border-radius: 14px;
-    box-shadow: var(--g3-shadow-ios-float);
-    padding: 1.5rem;
-}
-
-/* Material modal */
-.g3-modal-md {
-    border-radius: 4px;
-    box-shadow: var(--g3-shadow-md-elevation-2);
-    padding: 1.25rem;
-}
-
-
-
 .g3-modal-overlay {
     --g3-modal-duration: 220ms;
     position: fixed;
     inset: 0;
-    z-index: 90;
-    background: rgba(0, 0, 0, 0.7);
+    z-index: var(--g3-z-modal);
+    background: rgba(0, 0, 0, 0.6);
     animation: g3-modal-backdrop-in var(--g3-modal-duration) ease-out both;
 }
-.g3-modal {
-    animation: g3-modal-in var(--g3-modal-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
-    background: var(--color-surface);
-    color: var(--color-text);
-}
+
 .g3-modal-overlay[data-state="closed"] {
     pointer-events: none;
     animation: g3-modal-backdrop-out var(--g3-modal-duration) ease-in both;
 }
-.g3-modal[data-state="closed"],
-.g3-modal-overlay[data-state="closed"] .g3-modal {
-    animation: g3-modal-out var(--g3-modal-duration) ease-in both;
-}
-.g3-modal-card {
+
+.g3-modal {
+    box-sizing: border-box;
     position: fixed;
-    z-index: 50;
     top: 50%;
     left: 50%;
-    width: min(320px, calc(100% - 2rem));
-    max-height: calc(100dvh - 2rem);
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    width: min(20rem, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
     overflow-y: auto;
+    background: var(--g3-color-surface);
+    color: var(--g3-color-text);
+    outline: none;
     transform: translate(-50%, -50%);
+    animation: g3-modal-in var(--g3-modal-duration) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+.g3-modal-overlay[data-state="closed"] .g3-modal {
+    animation: g3-modal-out var(--g3-modal-duration) ease-in both;
+}
+
+.g3-modal-wide {
+    width: min(32rem, calc(100% - 2rem));
+}
+
+.g3-modal-ios {
+    padding: 1.5rem;
+    border-radius: 14px;
+    box-shadow: var(--g3-shadow-ios-float);
+}
+
+.g3-modal-md {
+    padding: 1.25rem;
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-2);
+}
+
 .g3-modal-title {
-    width: auto;
     margin: 0;
     font-size: 1.125rem;
-    line-height: 1.35;
     font-weight: 700;
+    line-height: 1.35;
 }
-.g3-modal-description {
+
+.g3-modal-body {
     margin: 0;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     line-height: 1.45;
 }
+
 .g3-modal-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.75rem;
 }
-.g3-modal-button {
+
+.g3-modal-actions .g3-btn {
     min-width: 5.25rem;
-}
-.g3-modal-button-label {
-    margin: 0.125rem 0.5rem;
 }
 
 @keyframes g3-modal-backdrop-in {
     from { background: rgba(0, 0, 0, 0); }
-    to { background: rgba(0, 0, 0, 0.7); }
 }
 
 @keyframes g3-modal-backdrop-out {
-    from { background: rgba(0, 0, 0, 0.7); }
     to { background: rgba(0, 0, 0, 0); }
 }
 
@@ -1918,154 +2361,46 @@ body.g3-overlay-scroll-locked:has(.g3-sheet-side.g3-sheet-menu.g3-sheet-open):no
         opacity: 0;
         transform: translate(-50%, calc(-50% + 0.75rem)) scale(0.98);
     }
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
 }
 
 @keyframes g3-modal-out {
-    from {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
     to {
         opacity: 0;
         transform: translate(-50%, calc(-50% + 2rem)) scale(0.985);
     }
 }
-/* -- Select -- */
 
-.g3-select-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    max-width: 100%;
-    border: 1px solid var(--color-card-border);
-    background: var(--color-card);
-    color: var(--color-text);
-    line-height: 1;
-    white-space: nowrap;
-    cursor: pointer;
-}
-/* Material: sharper corners, standard 44px control height. */
-.g3-select-btn-md {
-    min-height: 44px;
-    padding: 0.625rem 0.75rem;
-    border-radius: 0.25rem;
-}
-/* iOS: rounded corners and a more compact height so the control keeps
-   breathing room inside a 44px header row instead of touching the edges. */
-.g3-select-btn-ios {
-    min-height: 36px;
-    padding: 0.4375rem 0.625rem;
-    border-radius: 10px;
-}
-.g3-select-value {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.g3-select-icon {
-    /* The chevron sits after a flexible label, so it must not be the thing
-       that gives way when the trigger runs out of room. */
-    flex-shrink: 0;
-    transition: transform var(--transition-normal) var(--transition-md);
-}
-.g3-select-btn-md[aria-expanded="true"] .g3-select-icon {
-    transform: rotate(180deg);
-}
-.g3-select-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-.g3-select-btn:focus-visible {
-    outline: 2px solid var(--color-focused);
-    outline-offset: 2px;
-}
-.g3-select-option {
-    width: 100%;
-    min-height: 44px;
-    padding: 0.75rem 1rem;
-    border: 0;
-    background: transparent;
-    color: var(--color-text);
-    text-align: center;
-    cursor: pointer;
-}
-.g3-select-option:hover,
-.g3-select-option:focus-visible {
-    background: color-mix(in srgb, var(--color-focused) 8%, transparent);
-    outline: none;
-}
-.g3-select-option-selected {
-    color: var(--color-focused);
-    font-weight: 600;
-}
-.g3-select-separator {
-    width: 100%;
-    height: 1px;
-    background: var(--color-card-border);
-}
-.g3-select-sheet.g3-sheet-bottom .g3-sheet-content {
-    min-height: 0;
-    max-height: min(60dvh, 20rem);
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-}
-/* -- Field -- */
-
-.g3-field-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    color: var(--color-label-secondary);
-    margin-bottom: 0.25rem;
+@media (prefers-reduced-motion: reduce) {
+    .g3-modal-overlay,
+    .g3-modal {
+        animation-duration: 0s;
+    }
 }
 
-.g3-field {
-    box-sizing: border-box;
-    width: 100%;
-    color: var(--color-text);
-    outline: none;
-}
+@container g3-app-shell (min-width: 48rem) {
+    .g3-modal {
+        width: min(24rem, calc(100% - 4rem));
+        max-height: calc(100dvh - 4rem);
+        gap: 1.125rem;
+    }
 
-textarea.g3-field {
-    resize: vertical;
-    font-family: inherit;
-    line-height: 1.4;
-}
+    .g3-modal-wide {
+        width: min(36rem, calc(100% - 4rem));
+    }
 
-/* iOS field */
-.g3-field-ios {
-    min-height: 44px;
-    padding: 0.75rem 1rem;
-    border: 0.5px solid var(--color-card-border);
-    border-radius: 10px;
-    background: var(--color-card);
-    transition: border-color var(--transition-normal) var(--transition-ios),
-                box-shadow var(--transition-normal) var(--transition-ios);
-}
-.g3-field-ios:focus {
-    border-color: var(--color-focused);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-focused) 12%, transparent);
-    background: var(--color-card);
-}
+    .g3-modal-ios {
+        padding: 1.75rem;
+        border-radius: 1rem;
+    }
 
-/* Material field */
-.g3-field-md {
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--color-card-border);
-    border-radius: 0.25rem;
-    background: var(--color-card);
-    transition: border-color var(--transition-normal) var(--transition-md),
-                box-shadow var(--transition-normal) var(--transition-md);
-}
-.g3-field-md:focus {
-    border-color: var(--color-focused);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-focused) 12%, transparent);
+    .g3-modal-md {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+    }
+
+    .g3-modal-title {
+        font-size: 1.25rem;
+    }
 }
 
 /* -- Header -- */
@@ -2078,7 +2413,7 @@ textarea.g3-field {
 }
 
 /* Platform-specific header styles */
-/* No backdrop-filter: the background is an opaque `--color-card`, so blurring
+/* No backdrop-filter: the background is an opaque `--g3-color-card`, so blurring
    what sits behind it is invisible, and a filtered header becomes the
    containing block for every `position: fixed` descendant - which anchors a
    header Select sheet to the header instead of the viewport. Translucent iOS
@@ -2086,13 +2421,13 @@ textarea.g3-field {
    pair it with a color-mix background and hold no fixed children. */
 .g3-header-ios {
     padding-top: env(safe-area-inset-top);
-    background: var(--color-card);
-    border-bottom: 0.5px solid var(--color-card-border);
+    background: var(--g3-color-card);
+    border-bottom: 0.5px solid var(--g3-color-border);
     box-shadow: none;
 }
 .g3-header-md {
-    background: var(--color-card);
-    box-shadow: 0 2px 8px var(--color-shadow);
+    background: var(--g3-color-card);
+    box-shadow: 0 2px 8px var(--g3-color-shadow);
 }
 
 .g3-header-row {
@@ -2176,38 +2511,25 @@ textarea.g3-field {
     font-size: 17px;
 }
 
-.g3-header-end-text {
-    display: inline-flex;
-    align-items: center;
-    height: 1.75rem;
-    margin: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1;
-    white-space: nowrap;
-}
+/* -- App shell and Content -- */
 
-/* -- Body / App Shell -- */
+/* Every AppWrapper root, with or without the shell layout. Sheets and
+   drawers resize or move its other children. */
+.g3-app {
+    --g3-side-sheet-width: min(18rem, 72vw);
+    isolation: isolate;
+}
 
 .g3-app-shell {
     --g3-side-sheet-width: min(18rem, 72cqw);
-    isolation: isolate;
     container-name: g3-app-shell;
     container-type: inline-size;
     display: flex;
     flex-direction: column;
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: var(--g3-color-bg);
+    color: var(--g3-color-text);
     overflow: hidden;
     height: 100dvh;
-}
-
-.g3-shell-ios {
-    background: var(--color-bg);
-}
-
-.g3-shell-md {
-    background: var(--color-bg);
 }
 
 /* Opt-in: disable text selection/highlighting across the whole shell, so
@@ -2225,7 +2547,7 @@ textarea.g3-field {
     user-select: text;
 }
 
-.g3-body {
+.g3-content {
     position: relative;
     display: flex;
     flex: 1 1 auto;
@@ -2234,60 +2556,41 @@ textarea.g3-field {
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: var(--color-bg);
+    background: var(--g3-color-bg);
 }
 
-
-.g3-body-content {
+.g3-content-scroll {
     position: relative;
     flex: 1 1 auto;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
-    padding: var(--g3-body-padding, 1.5rem);
+    padding: var(--g3-content-padding, 1.5rem);
 }
 
-.g3-body-content-no-padding {
-    --g3-body-padding: 0;
+.g3-content-scroll[data-padding="false"] {
+    --g3-content-padding: 0;
 }
 
-.g3-body-footer-spacer {
+.g3-content-footer-spacer {
     min-height: 1.5rem;
 }
 
-.g3-body > .g3-fab-container {
+.g3-content > .g3-fab-container {
     position: absolute;
-}.g3-body-ios {
-    background: var(--color-bg);
 }
-.g3-app-shell .g3-body-content,
-.g3-app-shell .overflow-x-scroll {
+.g3-app-shell .g3-content-scroll {
     scrollbar-width: none;
     -ms-overflow-style: none;
     scrollbar-gutter: auto;
 }
-.g3-shell-md .g3-body-content {
-    scrollbar-width: none;
-}
-.g3-app-shell .g3-body-content::-webkit-scrollbar,
-.g3-app-shell .overflow-x-scroll::-webkit-scrollbar {
+.g3-app-shell .g3-content-scroll::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
 }
 
-.g3-body-md {
-    background: var(--color-bg);
-}
-
-/* -- Route Sheet Surface -- */
-
-
 /* -- Utility -- */
-
-.g3-fade-in {
-    animation: g3-fade-in 0.2s ease;
-}
 
 @keyframes g3-fade-in {
     from { opacity: 0; }
@@ -2313,33 +2616,33 @@ textarea.g3-field {
 }
 
 .g3-badge-neutral {
-    background: var(--color-control);
-    color: var(--color-text);
-    border-color: var(--color-card-border);
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
+    border-color: var(--g3-color-border);
 }
 
 .g3-badge-accent {
-    background: color-mix(in srgb, var(--color-focused) 14%, transparent);
-    color: var(--color-focused);
-    border-color: color-mix(in srgb, var(--color-focused) 28%, transparent);
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, transparent);
+    color: var(--g3-color-accent);
+    border-color: color-mix(in srgb, var(--g3-color-accent) 28%, transparent);
 }
 
 .g3-badge-success {
-    background: color-mix(in srgb, var(--color-success) 14%, transparent);
-    color: var(--color-success);
-    border-color: color-mix(in srgb, var(--color-success) 30%, transparent);
+    background: color-mix(in srgb, var(--g3-color-success) 14%, transparent);
+    color: var(--g3-color-success);
+    border-color: color-mix(in srgb, var(--g3-color-success) 30%, transparent);
 }
 
 .g3-badge-warning {
-    background: color-mix(in srgb, var(--color-warning) 16%, transparent);
-    color: var(--color-warning);
-    border-color: color-mix(in srgb, var(--color-warning) 32%, transparent);
+    background: color-mix(in srgb, var(--g3-color-warning) 16%, transparent);
+    color: var(--g3-color-warning);
+    border-color: color-mix(in srgb, var(--g3-color-warning) 32%, transparent);
 }
 
 .g3-badge-danger {
-    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
-    color: var(--color-danger);
-    border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
+    background: color-mix(in srgb, var(--g3-color-danger) 14%, transparent);
+    color: var(--g3-color-danger);
+    border-color: color-mix(in srgb, var(--g3-color-danger) 30%, transparent);
 }
 
 .g3-avatar {
@@ -2349,9 +2652,9 @@ textarea.g3-field {
     flex: 0 0 auto;
     overflow: hidden;
     border-radius: 999px;
-    background: var(--color-control);
-    color: var(--color-text);
-    border: 1px solid var(--color-card-border);
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
+    border: 1px solid var(--g3-color-border);
     font-weight: 700;
     line-height: 1;
 }
@@ -2398,9 +2701,9 @@ textarea.g3-field {
     max-width: 100%;
     padding: 0 0.75rem;
     border-radius: 999px;
-    border: 1px solid var(--color-card-border);
-    background: var(--color-control);
-    color: var(--color-text);
+    border: 1px solid var(--g3-color-border);
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
@@ -2414,24 +2717,32 @@ textarea.g3-field {
     line-height: 1.4;
     cursor: pointer;
     white-space: nowrap;
-    transition: background var(--transition-fast) var(--transition-md),
-                border-color var(--transition-fast) var(--transition-md),
-                color var(--transition-fast) var(--transition-md),
-                opacity var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
+    transition: background var(--g3-transition-fast) var(--g3-transition-md),
+                border-color var(--g3-transition-fast) var(--g3-transition-md),
+                color var(--g3-transition-fast) var(--g3-transition-md),
+                opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
 }
 
-.g3-chip:active {
+.g3-chip-static {
+    cursor: default;
+}
+
+.g3-chip:is(button):focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-chip:is(button):active:not(:disabled) {
     transform: scale(0.98);
 }
 
-.g3-chip-selected {
-    background: color-mix(in srgb, var(--color-focused) 12%, var(--color-control));
-    color: var(--color-focused);
-    border-color: color-mix(in srgb, var(--color-focused) 38%, var(--color-card-border));
+.g3-chip[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--g3-color-accent) 12%, var(--g3-color-control));
+    color: var(--g3-color-accent);
+    border-color: color-mix(in srgb, var(--g3-color-accent) 38%, var(--g3-color-border));
 }
 
-.g3-chip-disabled,
 .g3-chip:disabled {
     cursor: not-allowed;
     opacity: 0.5;
@@ -2466,15 +2777,15 @@ textarea.g3-field {
     height: 100%;
     overflow: hidden;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--color-focused) 14%, var(--color-control));
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-control));
 }
 
 .g3-progress-fill {
     width: var(--g3-progress-value, 0%);
     height: 100%;
     border-radius: inherit;
-    background: var(--color-focused);
-    transition: width var(--transition-normal) var(--transition-md);
+    background: var(--g3-color-accent);
+    transition: width var(--g3-transition-normal) var(--g3-transition-md);
 }
 
 .g3-progress-indeterminate .g3-progress-fill {
@@ -2487,7 +2798,7 @@ textarea.g3-field {
     display: block;
     overflow: hidden;
     border-radius: 0.25rem;
-    background: color-mix(in srgb, var(--color-text) 10%, var(--color-control));
+    background: color-mix(in srgb, var(--g3-color-text) 10%, var(--g3-color-control));
     animation: g3-skeleton-pulse 1.2s ease-in-out infinite;
 }
 
@@ -2511,24 +2822,6 @@ textarea.g3-field {
 .g3-skeleton-row {
     width: 100%;
     height: 2.75rem;
-}
-
-.g3-primitives-demo-stack {
-    display: grid;
-    gap: 1rem;
-    width: 100%;
-}
-
-.g3-primitives-demo-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.g3-primitives-demo-skeletons {
-    display: grid;
-    gap: 0.5rem;
 }
 
 @keyframes g3-progress-indeterminate {
@@ -2562,175 +2855,12 @@ textarea.g3-field {
     }
 }
 
-/* -- Radio -- */
-
-.g3-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.g3-radio {
-    box-sizing: border-box;
-    position: relative;
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: "control label";
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-    min-height: 44px;
-    padding: 0.625rem 0.75rem;
-    border: 0;
-    background: transparent;
-    color: var(--color-text);
-    appearance: none;
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
-    transition: background var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
-}
-
-.g3-radio-input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-}
-
-.g3-radio-control {
-    grid-area: control;
-    box-sizing: border-box;
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: 2px solid var(--color-card-border);
-    border-radius: 999px;
-    background: var(--color-card);
-    color: var(--color-focused);
-    transition: border-color var(--transition-fast) var(--transition-md),
-                box-shadow var(--transition-fast) var(--transition-md);
-}
-
-.g3-radio-mark {
-    width: 10px;
-    height: 10px;
-    border-radius: 999px;
-    background: var(--color-focused);
-    opacity: 0;
-    transform: scale(0.4);
-    transition: opacity var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
-}
-
-.g3-radio-label {
-    grid-area: label;
-    min-width: 0;
-    overflow-wrap: anywhere;
-    color: var(--color-text);
-    font-size: 1rem;
-    line-height: 1.25rem;
-}
-
-.g3-radio.checked .g3-radio-control {
-    border-color: var(--color-focused);
-}
-
-.g3-radio.checked .g3-radio-mark {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.g3-radio:focus-within {
-    outline: 2px solid var(--color-focused);
-    outline-offset: 3px;
-}
-
-.g3-radio:active:not(.disabled) {
-    transform: scale(0.995);
-}
-
-.g3-radio.disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.g3-radio-ios {
-    border-radius: 10px;
-    transition-timing-function: var(--transition-ios);
-}
-
-.g3-radio-ios .g3-radio-control {
-    width: 15px;
-    height: 24px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
-.g3-radio-ios .g3-radio-mark {
-    width: 33%;
-    height: 50%;
-    border-right: 2px solid var(--color-focused);
-    border-bottom: 2px solid var(--color-focused);
-    border-radius: 0;
-    background: transparent;
-    transform: rotate(45deg) scale(0.8);
-}
-.g3-radio-ios.checked .g3-radio-mark {
-    transform: rotate(45deg) scale(1);
-}
-
-.g3-radio-md {
-    border-radius: 4px;
-    min-height: 48px;
-}
-
-.g3-control-label-start.g3-radio {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "label control";
-}
-
-.g3-control-label-end.g3-radio {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas: "control label";
-}
-
-.g3-control-label-fixed.g3-radio {
-    grid-template-columns: minmax(6.5rem, 40%) auto minmax(0, 1fr);
-    grid-template-areas: "label control .";
-}
-
-.g3-control-label-stacked.g3-radio {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-        "label label"
-        "control .";
-    align-items: start;
-}
-.g3-radio-demo-stack {
-    display: grid;
-    gap: 0.75rem;
-    width: 100%;
-}
-
 /* -- List and swipe item -- */
 
 .g3-list {
-    --g3-list-surface: var(--color-card);
+    --g3-list-surface: var(--g3-color-card);
     width: 100%;
-    color: var(--color-text);
+    color: var(--g3-color-text);
     -webkit-user-select: none;
     user-select: none;
 }
@@ -2745,7 +2875,7 @@ textarea.g3-field {
    Without this it inherits the parent card fill and its toggles/rows merge
    into the container instead of reading as a distinct control group. */
 .g3-card .g3-list-inset {
-    --g3-list-surface: color-mix(in srgb, var(--color-text) 9%, var(--color-card));
+    --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 9%, var(--g3-color-card));
     background: var(--g3-list-surface);
 }
 
@@ -2777,14 +2907,14 @@ textarea.g3-field {
     padding: 0.75rem 1rem;
     border: 0;
     background: var(--g3-list-surface);
-    color: var(--color-text);
+    color: var(--g3-color-text);
     text-align: left;
     text-decoration: none;
     font: inherit;
 }
 
 .g3-list[data-lines="full"] .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
-    border-bottom: 1px solid var(--color-card-border);
+    border-bottom: 1px solid var(--g3-color-border);
 }
 
 .g3-list[data-lines="inset"] .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none)::after {
@@ -2794,7 +2924,7 @@ textarea.g3-field {
     bottom: 0;
     left: 1rem;
     height: 1px;
-    background: var(--color-card-border);
+    background: var(--g3-color-border);
 }
 
 .g3-list[data-lines="none"] .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
@@ -2817,8 +2947,8 @@ textarea.g3-field {
     content: none;
 }
 
-.g3-list[data-lines="inset"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-item-divider))::after,
-.g3-list[data-lines="full"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-item-divider))::after {
+.g3-list[data-lines="inset"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-list-header-row))::after,
+.g3-list[data-lines="full"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-list-header-row))::after {
     content: "";
     position: absolute;
     z-index: 2;
@@ -2826,11 +2956,11 @@ textarea.g3-field {
     bottom: 0;
     left: 0;
     height: 1px;
-    background: var(--color-card-border);
+    background: var(--g3-color-border);
     pointer-events: none;
 }
 
-.g3-list[data-lines="inset"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-item-divider))::after {
+.g3-list[data-lines="inset"] > .g3-swipe-item:not(:last-child):not(:has(+ .g3-list-header-row))::after {
     right: 1rem;
     left: 1rem;
 }
@@ -2857,7 +2987,7 @@ textarea.g3-field {
 
 .g3-item-button:focus-visible,
 .g3-swipe-action:focus-visible {
-    outline: 2px solid var(--color-focused);
+    outline: 2px solid var(--g3-color-accent);
     outline-offset: -2px;
 }
 
@@ -2866,7 +2996,7 @@ textarea.g3-field {
 }
 
 .g3-item-selected {
-    background: color-mix(in srgb, var(--color-focused) 8%, var(--color-card));
+    background: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
 
 .g3-item-disabled {
@@ -2875,7 +3005,7 @@ textarea.g3-field {
 }
 
 .g3-item-lines-full {
-    border-bottom: 1px solid var(--color-card-border);
+    border-bottom: 1px solid var(--g3-color-border);
 }
 
 .g3-item-lines-inset::after {
@@ -2885,7 +3015,7 @@ textarea.g3-field {
     bottom: 0;
     left: 1rem;
     height: 1px;
-    background: var(--color-card-border);
+    background: var(--g3-color-border);
 }
 
 .g3-item-lines-none {
@@ -2904,11 +3034,11 @@ textarea.g3-field {
     content: none;
 }
 
-.g3-list > :is(.g3-item-row, .g3-swipe-item):has(+ .g3-item-divider) .g3-item {
+.g3-list > :is(.g3-item-row, .g3-swipe-item):has(+ .g3-list-header-row) .g3-item {
     border-bottom: 0;
 }
 
-.g3-list > :is(.g3-item-row, .g3-swipe-item):has(+ .g3-item-divider) .g3-item::after {
+.g3-list > :is(.g3-item-row, .g3-swipe-item):has(+ .g3-list-header-row) .g3-item::after {
     display: none;
     content: none;
 }
@@ -2931,7 +3061,7 @@ textarea.g3-field {
 
 .g3-item-overline {
     overflow: hidden;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1rem;
@@ -2950,7 +3080,7 @@ textarea.g3-field {
 
 .g3-item-description {
     overflow: hidden;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.875rem;
     line-height: 1.2rem;
     text-overflow: ellipsis;
@@ -2958,14 +3088,14 @@ textarea.g3-field {
 }
 
 .g3-item-metadata {
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.8125rem;
     white-space: nowrap;
 }
 
 .g3-item-detail {
     flex: 0 0 auto;
-    color: var(--color-label-secondary);
+    color: var(--g3-color-text-tertiary);
     fill: none;
 }
 
@@ -2982,11 +3112,11 @@ textarea.g3-field {
     height: 22px;
     flex: 0 0 22px;
     border-radius: 50%;
-    border: 2px solid var(--color-card-border);
-    background: var(--color-card);
-    color: var(--color-card);
-    transition: border-color var(--transition-normal) var(--transition-md),
-                background var(--transition-normal) var(--transition-md);
+    border: 2px solid var(--g3-color-border);
+    background: var(--g3-color-card);
+    color: var(--g3-color-card);
+    transition: border-color var(--g3-transition-normal) var(--g3-transition-md),
+                background var(--g3-transition-normal) var(--g3-transition-md);
 }
 
 .g3-item-check-mark {
@@ -2996,24 +3126,29 @@ textarea.g3-field {
     border-bottom: 2px solid currentColor;
     opacity: 0;
     transform: translateY(-1px) rotate(-45deg) scale(0.8);
-    transition: opacity var(--transition-fast) var(--transition-md),
-                transform var(--transition-fast) var(--transition-md);
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md);
 }
 
-.g3-item-check.checked {
-    border-color: var(--color-focused);
-    background: var(--color-focused);
+[aria-checked="true"] > .g3-item-check {
+    border-color: var(--g3-color-accent);
+    background: var(--g3-color-accent);
 }
 
-.g3-item-check.checked .g3-item-check-mark {
+[aria-checked="true"] > .g3-item-check .g3-item-check-mark {
     opacity: 1;
     transform: translateY(-1px) rotate(-45deg) scale(1);
 }
 
-.g3-item-divider {
+.g3-list-header {
+    margin: 0;
+    font: inherit;
+}
+
+.g3-list-header-row {
     padding: 0.5rem 1rem;
-    background: var(--color-bg-secondary);
-    color: var(--color-text-secondary);
+    background: var(--g3-color-bg-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -3028,9 +3163,9 @@ textarea.g3-field {
     max-height: var(--g3-swipe-row-max-height, 7.5rem);
     overflow: hidden;
     isolation: isolate;
-    background: var(--color-card);
+    background: var(--g3-color-card);
     touch-action: pan-y;
-    transition: max-height 180ms var(--transition-md), margin 180ms var(--transition-md), opacity 140ms ease;
+    transition: max-height 180ms var(--g3-transition-md), margin 180ms var(--g3-transition-md), opacity 140ms ease;
 }
 
 .g3-swipe-actions {
@@ -3054,7 +3189,7 @@ textarea.g3-field {
    keeps the colour underneath until the content has covered it. */
 .g3-swipe-actions[aria-hidden="true"] {
     visibility: hidden;
-    transition-delay: var(--transition-normal);
+    transition-delay: var(--g3-transition-normal);
 }
 
 .g3-swipe-actions-start {
@@ -3087,11 +3222,11 @@ textarea.g3-field {
 }
 
 .g3-swipe-content {
-    --g3-swipe-edge: var(--color-card);
+    --g3-swipe-edge: var(--g3-color-card);
     position: relative;
     z-index: 1;
     overflow: hidden;
-    background: var(--color-card);
+    background: var(--g3-color-card);
     transform: translate3d(var(--g3-swipe-offset, 0px), 0, 0);
     /* The release, not the drag. A row that is let go past the activation point
        has much further to travel than one let go just short of it, and a single
@@ -3120,7 +3255,7 @@ textarea.g3-field {
 
 /* Keep the guard the same colour as the row it is guarding. */
 .g3-swipe-content:has(.g3-item-selected) {
-    --g3-swipe-edge: color-mix(in srgb, var(--color-focused) 8%, var(--color-card));
+    --g3-swipe-edge: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
 
 .g3-swipe-item[data-state="exiting"] .g3-swipe-content {
@@ -3144,27 +3279,67 @@ textarea.g3-field {
     min-width: var(--g3-swipe-action-width, 88px);
     margin: 0;
     border: 0;
-    background: var(--color-control);
-    color: var(--color-text);
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
     font: inherit;
     font-weight: 700;
     opacity: clamp(0.72, calc(0.72 + (var(--g3-swipe-progress, 0) * 0.28)), 1);
 }
 
+.g3-swipe-action-neutral {
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
+}
+
+.g3-swipe-action-accent,
+.g3-swipe-action-success,
+.g3-swipe-action-warning,
+.g3-swipe-action-danger {
+    color: var(--g3-color-on-accent);
+}
+
 .g3-swipe-action-accent {
-    background: var(--color-focused);
-    color: white;
+    background: var(--g3-color-accent);
 }
 
-.g3-swipe-action-destructive {
-    background: var(--color-danger);
-    color: white;
+.g3-swipe-action-success {
+    background: var(--g3-color-success);
 }
 
-.g3-list-demo-stack {
-    display: grid;
-    gap: 0.75rem;
-    width: 100%;
+.g3-swipe-action-warning {
+    background: var(--g3-color-warning);
+}
+
+.g3-swipe-action-danger {
+    background: var(--g3-color-danger);
+}
+
+.g3-swipe-action:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: -2px;
+}
+
+/* The keyboard route to the actions: invisible until focused. */
+.g3-swipe-toggle {
+    position: absolute;
+    inset-block: 0.5rem;
+    inset-inline-end: 0.5rem;
+    z-index: 1;
+    padding: 0 0.75rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
+    font: inherit;
+    font-size: 0.8125rem;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.g3-swipe-toggle:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    outline: 2px solid var(--g3-color-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3180,9 +3355,13 @@ textarea.g3-field {
 }
 /* -- Toast, accordion, and refresher -- */
 
+.g3-toast-host {
+    display: contents;
+}
+
 .g3-toast {
     position: fixed;
-    z-index: 80;
+    z-index: var(--g3-z-toast);
     left: max(1rem, env(safe-area-inset-left));
     right: max(1rem, env(safe-area-inset-right));
     display: grid;
@@ -3194,16 +3373,16 @@ textarea.g3-field {
     /* Colour is carried by the leading status dot + a whisper of surface tint,
        not by a coloured outline or the old left accent bar. This matches the
        card treatment used by items, cards and the accordion. */
-    --g3-toast-accent-color: var(--color-label-secondary);
-    --g3-toast-surface: var(--color-card);
-    border: 1px solid var(--color-card-border);
+    --g3-toast-accent-color: var(--g3-color-text-tertiary);
+    --g3-toast-surface: var(--g3-color-card);
+    border: 1px solid var(--g3-color-border);
     background: var(--g3-toast-surface);
-    color: var(--color-text);
+    color: var(--g3-color-text);
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
     transform: translate3d(0, 0.5rem, 0) scale(0.98);
-    transition: opacity var(--transition-normal) var(--transition-md), transform var(--transition-normal) var(--transition-md);
+    transition: opacity var(--g3-transition-normal) var(--g3-transition-md), transform var(--g3-transition-normal) var(--g3-transition-md);
 }
 
 /* Leading status dot — the primary colour signal. */
@@ -3245,9 +3424,9 @@ textarea.g3-field {
    shadow — no hard border weight. */
 .g3-toast-ios {
     border-radius: 0.875rem;
-    border-color: color-mix(in srgb, var(--color-card-border) 60%, transparent);
+    border-color: color-mix(in srgb, var(--g3-color-border) 60%, transparent);
     background: color-mix(in srgb, var(--g3-toast-surface) 82%, transparent);
-    box-shadow: 0 8px 30px color-mix(in srgb, var(--color-shadow) 80%, transparent);
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--g3-color-shadow) 80%, transparent);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
@@ -3262,23 +3441,23 @@ textarea.g3-field {
 /* Colour is applied as the status accent (drives the dot) plus a faint surface
    tint, so it reads on both light and dark themes without a coloured outline. */
 .g3-toast-accent {
-    --g3-toast-accent-color: var(--color-focused);
-    --g3-toast-surface: color-mix(in srgb, var(--color-focused) 8%, var(--color-card));
+    --g3-toast-accent-color: var(--g3-color-accent);
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
 
 .g3-toast-success {
-    --g3-toast-accent-color: var(--color-success);
-    --g3-toast-surface: color-mix(in srgb, var(--color-success) 8%, var(--color-card));
+    --g3-toast-accent-color: var(--g3-color-success);
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-success) 8%, var(--g3-color-card));
 }
 
 .g3-toast-warning {
-    --g3-toast-accent-color: var(--color-warning);
-    --g3-toast-surface: color-mix(in srgb, var(--color-warning) 8%, var(--color-card));
+    --g3-toast-accent-color: var(--g3-color-warning);
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-warning) 8%, var(--g3-color-card));
 }
 
 .g3-toast-danger {
-    --g3-toast-accent-color: var(--color-danger);
-    --g3-toast-surface: color-mix(in srgb, var(--color-danger) 8%, var(--color-card));
+    --g3-toast-accent-color: var(--g3-color-danger);
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-danger) 8%, var(--g3-color-card));
 }
 
 .g3-toast-message {
@@ -3302,8 +3481,8 @@ textarea.g3-field {
     place-items: center;
     border: 0;
     border-radius: 999px;
-    background: var(--color-control);
-    color: var(--color-text);
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
     font: inherit;
     line-height: 1;
 }
@@ -3343,7 +3522,7 @@ textarea.g3-field {
 .g3-accordion-group {
     overflow: hidden;
     width: 100%;
-    background: var(--color-card);
+    background: var(--g3-color-card);
 }
 
 .g3-accordion-group-ios {
@@ -3359,11 +3538,16 @@ textarea.g3-field {
 }
 
 .g3-accordion-item + .g3-accordion-item {
-    border-top: 1px solid var(--color-card-border);
+    border-top: 1px solid var(--g3-color-border);
 }
 
-.g3-accordion-item-disabled {
+.g3-accordion-item[data-disabled="true"] {
     opacity: 0.45;
+}
+
+.g3-accordion-heading {
+    margin: 0;
+    font: inherit;
 }
 
 .g3-accordion-header {
@@ -3376,14 +3560,14 @@ textarea.g3-field {
     padding: 0.875rem 1rem;
     border: 0;
     background: transparent;
-    color: var(--color-text);
+    color: var(--g3-color-text);
     text-align: left;
     font: inherit;
 }
 
 .g3-accordion-header:focus-visible,
 .g3-toast-close:focus-visible {
-    outline: 2px solid var(--color-focused);
+    outline: 2px solid var(--g3-color-accent);
     outline-offset: -2px;
 }
 
@@ -3404,7 +3588,7 @@ textarea.g3-field {
 
 .g3-accordion-description {
     overflow: hidden;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.875rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3413,8 +3597,8 @@ textarea.g3-field {
 .g3-accordion-chevron {
     display: inline-flex;
     flex: 0 0 auto;
-    color: var(--color-label-secondary);
-    transition: transform var(--transition-fast) var(--transition-md);
+    color: var(--g3-color-text-tertiary);
+    transition: transform var(--g3-transition-fast) var(--g3-transition-md);
 }
 
 .g3-accordion-item[data-state="open"] .g3-accordion-chevron {
@@ -3425,7 +3609,7 @@ textarea.g3-field {
     display: grid;
     grid-template-rows: 1fr;
     opacity: 1;
-    transition: grid-template-rows var(--transition-normal) var(--transition-md), opacity var(--transition-fast) ease;
+    transition: grid-template-rows var(--g3-transition-normal) var(--g3-transition-md), opacity var(--g3-transition-fast) ease;
 }
 
 .g3-accordion-panel[data-state="closed"] {
@@ -3437,7 +3621,7 @@ textarea.g3-field {
     min-height: 0;
     overflow: hidden;
     padding: 0 1rem 1rem;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     font-size: 0.9375rem;
     line-height: 1.4;
 }
@@ -3470,15 +3654,15 @@ textarea.g3-field {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    color: var(--color-text-secondary);
+    color: var(--g3-color-text-secondary);
     opacity: clamp(0, var(--g3-refresher-progress), 1);
     /* Slide down out of its hidden slot as the pull grows, but stop once it
        reaches its resting spot (one indicator-height) — extra elastic pull only
        stretches the content, and the resting spot is exactly where the
        refreshing state sits, so there's no jump on release. */
     transform: translate3d(0, calc(min(var(--g3-refresher-pull), var(--g3-refresher-indicator-h)) - var(--g3-refresher-indicator-h)), 0);
-    transition: transform var(--transition-normal) var(--transition-md),
-                opacity var(--transition-fast) var(--transition-md);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
+                opacity var(--g3-transition-fast) var(--g3-transition-md);
     pointer-events: none;
 }
 
@@ -3489,8 +3673,8 @@ textarea.g3-field {
 .g3-refresher-spinner {
     width: 1rem;
     height: 1rem;
-    border: 2px solid color-mix(in srgb, var(--color-focused) 25%, transparent);
-    border-top-color: var(--color-focused);
+    border: 2px solid color-mix(in srgb, var(--g3-color-accent) 25%, transparent);
+    border-top-color: var(--g3-color-accent);
     border-radius: 999px;
     animation: g3-spin 0.8s linear infinite;
 }
@@ -3502,7 +3686,7 @@ textarea.g3-field {
 
 .g3-refresher-content {
     transform: translate3d(0, var(--g3-refresher-pull), 0);
-    transition: transform var(--transition-normal) var(--transition-md);
+    transition: transform var(--g3-transition-normal) var(--g3-transition-md);
 }
 
 /* While the finger is actively dragging, follow the pointer 1:1 instead of
@@ -3542,93 +3726,52 @@ textarea.g3-field {
     }
 }
 
-/* -- Navbar -- */
+/* -- TabLayout and navigation -- */
 
-.g3-navbar {
+.g3-tab-layout {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: var(--g3-color-bg);
+    color: var(--g3-color-text);
 }
 
-.g3-navbar > .g3-body {
+.g3-tab-layout > .g3-content {
     min-height: 0;
 }
 
-
-.g3-body-content {
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: var(--g3-body-padding, 1.5rem);
-}
-
-.g3-body-content-no-padding {
-    --g3-body-padding: 0;
-}
-
-.g3-body-footer-spacer {
-    min-height: 1.5rem;
-}
-
-.g3-body > .g3-fab-container {
-    position: absolute;
-}.g3-navbar-tab-bar {
+/* Bottom bar: the compact look of every Nav, and NavBar's only look. */
+.g3-nav {
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     align-items: stretch;
-    gap: 0;
     padding: 0.375rem max(0.5rem, env(safe-area-inset-left)) max(0.375rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-right));
-    border-top: 1px solid var(--color-card-border);
-    background: color-mix(in srgb, var(--color-card) 96%, transparent);
-    box-shadow: 0 -8px 22px color-mix(in srgb, var(--color-shadow) 36%, transparent);
+    border-top: 1px solid var(--g3-color-border);
+    background: color-mix(in srgb, var(--g3-color-card) 96%, transparent);
+    box-shadow: 0 -8px 22px color-mix(in srgb, var(--g3-color-shadow) 36%, transparent);
 }
 
-/* A rail-only bar is hidden on compact shells; the desktop shell query below
-   shows it as a rail. */
-.g3-navbar-tab-bar-rail-only {
-    display: none;
-}
-
-.g3-navbar-ios .g3-navbar-tab-bar {
+.g3-nav-ios {
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
 }
 
-.g3-navbar-md .g3-navbar-tab-bar {
+.g3-nav-md {
     padding: 0.25rem max(0.25rem, env(safe-area-inset-left)) max(0.125rem, env(safe-area-inset-bottom)) max(0.25rem, env(safe-area-inset-right));
-    background: var(--color-card);
-    box-shadow: 0 -2px 8px color-mix(in srgb, var(--color-shadow) 18%, transparent);
+    background: var(--g3-color-card);
+    box-shadow: 0 -2px 8px color-mix(in srgb, var(--g3-color-shadow) 18%, transparent);
 }
 
-.g3-navbar-md .g3-navbar-tab {
-    min-height: 4rem;
-    padding-top: 0.45rem;
-    padding-bottom: 0.2rem;
-    border-radius: 0.75rem;
+/* An AdaptiveNav that only exists as a wide-shell rail. */
+.g3-nav-compact-hidden {
+    display: none;
 }
 
-.g3-navbar-md .g3-navbar-tab-selected {
-    background: transparent;
-}
-
-.g3-navbar-md .g3-navbar-tab-selected::after {
-    content: "";
-    position: absolute;
-    right: 22%;
-    bottom: 0.5rem;
-    left: 22%;
-    height: 3px;
-    border-radius: 999px;
-    background: currentColor;
-}
-
-.g3-navbar-tab {
+.g3-nav-item {
     position: relative;
     display: grid;
     min-width: 0;
@@ -3641,44 +3784,66 @@ textarea.g3-field {
     border: 0;
     border-radius: 0.75rem;
     background: transparent;
-    color: var(--color-label-secondary);
+    color: var(--g3-color-text-tertiary);
     font: inherit;
+    text-decoration: none;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
-.g3-navbar-tab::before {
+.g3-nav-item::before {
     content: "";
     position: absolute;
     inset: 0.25rem;
     z-index: 0;
     border-radius: 0.75rem;
-    background: color-mix(in srgb, var(--color-focused) 12%, transparent);
+    background: color-mix(in srgb, var(--g3-color-accent) 12%, transparent);
     opacity: 0;
     transition: opacity 220ms ease-out;
 }
 
-.g3-navbar-tab:active:not(:disabled)::before {
+.g3-nav-item:active:not([aria-disabled="true"], :disabled)::before {
     opacity: 1;
 }
 
-.g3-navbar-tab:focus-visible {
-    outline: 2px solid var(--color-focused);
+.g3-nav-item:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
     outline-offset: -2px;
 }
 
-.g3-navbar-tab-selected {
-    color: var(--color-focused);
-    background: color-mix(in srgb, var(--color-focused) 10%, transparent);
+.g3-nav-item[aria-current="page"] {
+    color: var(--g3-color-accent);
+    background: color-mix(in srgb, var(--g3-color-accent) 10%, transparent);
 }
 
-.g3-navbar-tab-disabled,
-.g3-navbar-tab:disabled {
+.g3-nav-item:disabled,
+.g3-nav-item[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.45;
 }
 
-.g3-navbar-tab-icon {
+.g3-nav-md .g3-nav-item {
+    min-height: 4rem;
+    padding-top: 0.45rem;
+    padding-bottom: 0.2rem;
+}
+
+.g3-nav-md .g3-nav-item[aria-current="page"] {
+    background: transparent;
+}
+
+.g3-nav-md .g3-nav-item[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    right: 22%;
+    bottom: 0.5rem;
+    left: 22%;
+    height: 3px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.g3-nav-item-icon {
     position: relative;
     z-index: 1;
     display: inline-flex;
@@ -3688,7 +3853,25 @@ textarea.g3-field {
     height: 1.5rem;
 }
 
-.g3-navbar-tab-label {
+.g3-nav-item-badge {
+    position: absolute;
+    top: -0.375rem;
+    inset-inline-start: calc(100% - 0.5rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background: var(--g3-color-danger);
+    color: var(--g3-color-on-accent);
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.g3-nav-item-label {
     position: relative;
     z-index: 1;
     overflow: hidden;
@@ -3700,130 +3883,794 @@ textarea.g3-field {
     white-space: nowrap;
 }
 
+/* NavRail is a rail at every width. */
+.g3-tab-layout:has(> .g3-nav-rail) {
+    --g3-nav-rail-width: 4rem;
+    display: grid;
+    grid-template-columns: var(--g3-nav-rail-width) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    width: 100%;
+    /* Visible, so the rail's hover labels can extend over the page. The
+       content area does its own scrolling. */
+    overflow: visible;
+}
+
+.g3-tab-layout:has(> .g3-nav-rail) > .g3-header {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.g3-tab-layout:has(> .g3-nav-rail) > .g3-content {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+}
+
+.g3-nav-rail {
+    position: relative;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 0;
+    padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+    /* Both axes stay visible: `overflow-y: auto` would turn overflow-x to
+       auto too and clip the hover labels. */
+    overflow: visible;
+    border-top: 0;
+    border-inline-end: 1px solid var(--g3-color-border);
+    background: var(--g3-color-card);
+    box-shadow: 8px 0 22px color-mix(in srgb, var(--g3-color-shadow) 24%, transparent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.g3-tab-layout > .g3-nav-rail {
+    grid-column: 1;
+    grid-row: 1 / -1;
+}
+
+/* Persistent chrome for g3-route-transitions: the rail stays put while pages
+   slide and sheets rise beside it. */
+.route-transition-overlay-region .g3-tab-layout > .g3-nav-rail {
+    view-transition-name: persistent;
+}
+
+/* A flexible spacer pushes secondary destinations to the bottom. */
+.g3-nav-rail::before {
+    content: "";
+    order: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.g3-nav-rail .g3-nav-item-secondary {
+    order: 2;
+}
+
+.g3-nav-rail .g3-nav-item {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    grid-template-rows: 1fr;
+    overflow: visible;
+    border-radius: 50%;
+    background: var(--g3-color-control);
+    transition: border-radius var(--g3-transition-normal) var(--g3-transition-md),
+                background var(--g3-transition-normal) var(--g3-transition-md),
+                color var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-nav-rail .g3-nav-item::before {
+    inset: 0;
+    border-radius: inherit;
+}
+
+.g3-nav-rail .g3-nav-item:hover:not([aria-disabled="true"], :disabled)::before {
+    opacity: 1;
+}
+
+.g3-nav-rail .g3-nav-item[aria-current="page"] {
+    border-radius: 1rem;
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+}
+
+.g3-nav-rail .g3-nav-item[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    top: 0.5rem;
+    right: auto;
+    bottom: 0.5rem;
+    left: -0.5rem;
+    width: 3px;
+    height: auto;
+    border-radius: 0 999px 999px 0;
+    background: currentColor;
+}
+
+.g3-nav-rail .g3-nav-item-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.g3-nav-rail .g3-nav-item-label {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 0.75rem);
+    z-index: 30;
+    width: max-content;
+    max-width: 12rem;
+    padding: 0.375rem 0.625rem;
+    overflow: hidden;
+    border: 1px solid var(--g3-color-border);
+    border-radius: 0.375rem;
+    background: var(--g3-color-card);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--g3-color-shadow) 42%, transparent);
+    color: var(--g3-color-text);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    text-overflow: ellipsis;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-0.25rem, -50%);
+    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+    pointer-events: none;
+}
+
+.g3-nav-rail .g3-nav-item:hover .g3-nav-item-label,
+.g3-nav-rail .g3-nav-item:focus-visible .g3-nav-item-label {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
+}
+
+/* -- Back button -- */
+
+.g3-back-button {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-accent);
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.g3-back-button:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: -2px;
+    border-radius: 0.5rem;
+}
+
+.g3-back-button-icon {
+    display: inline-flex;
+}
+
+.g3-back-button-ios {
+    gap: 0;
+    margin-inline-start: -0.25rem;
+    font-size: 17px;
+}
+
+.g3-back-button-ios:active {
+    opacity: 0.4;
+}
+
+.g3-back-button-md {
+    justify-content: center;
+    width: 44px;
+    border-radius: 50%;
+    color: var(--g3-color-text);
+}
+
+.g3-back-button-md:active {
+    background: color-mix(in srgb, var(--g3-color-text) 10%, transparent);
+}
+
+/* -- Popover and menu -- */
+
+.g3-popover-anchor {
+    position: relative;
+    display: inline-flex;
+}
+
+/* Catches taps outside an open popover. Transparent: a popover does not dim
+   the page. */
+.g3-popover-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--g3-z-modal) - 1);
+}
+
+.g3-popover {
+    box-sizing: border-box;
+    position: absolute;
+    z-index: var(--g3-z-modal);
+    min-width: max(100%, 12rem);
+    max-width: min(22rem, calc(100vw - 2rem));
+    max-height: min(60dvh, 26rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid var(--g3-color-border);
+    background: var(--g3-color-surface);
+    color: var(--g3-color-text);
+    outline: none;
+    transform-origin: top;
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md),
+                visibility 0s linear var(--g3-transition-fast);
+}
+
+.g3-popover[data-placement^="bottom"] {
+    top: calc(100% + 0.375rem);
+}
+
+.g3-popover[data-placement^="top"] {
+    bottom: calc(100% + 0.375rem);
+    transform-origin: bottom;
+}
+
+.g3-popover[data-placement$="start"] {
+    inset-inline-start: 0;
+}
+
+.g3-popover[data-placement$="end"] {
+    inset-inline-end: 0;
+}
+
+.g3-popover[data-state="open"] {
+    opacity: 1;
+    transform: scale(1);
+    visibility: visible;
+    transition-delay: 0s;
+}
+
+.g3-popover[data-state="closed"] {
+    opacity: 0;
+    transform: scale(0.96);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.g3-popover-ios {
+    border-radius: 13px;
+    box-shadow: var(--g3-shadow-ios-float);
+}
+
+.g3-popover-md {
+    border: 0;
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow-md-elevation-2);
+}
+
+.g3-popover-content {
+    padding: 1rem;
+}
+
+/* On compact shells a sheet popover becomes a bottom sheet. */
+.g3-popover-sheet {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    max-width: none;
+    min-width: 0;
+    max-height: min(60dvh, 26rem);
+    padding-bottom: env(safe-area-inset-bottom);
+    border-width: 0;
+    border-radius: 16px 16px 0 0;
+    transform-origin: bottom;
+}
+
+.g3-popover-sheet[data-placement] {
+    top: auto;
+}
+
+.g3-popover-sheet[data-state="closed"] {
+    transform: translate3d(0, 100%, 0);
+}
+
+.g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.g3-menu {
+    padding: 0.25rem 0;
+}
+
+.g3-menu-item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-text);
+    font: inherit;
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.g3-menu-item:hover,
+.g3-menu-item:focus-visible {
+    background: color-mix(in srgb, var(--g3-color-accent) 10%, transparent);
+    outline: none;
+}
+
+.g3-menu-item:disabled,
+.g3-menu-item[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.g3-menu-item-danger {
+    color: var(--g3-color-danger);
+}
+
+.g3-menu-item-accent {
+    color: var(--g3-color-accent);
+}
+
+.g3-menu-item-start,
+.g3-menu-item-end {
+    display: inline-flex;
+    flex: 0 0 auto;
+}
+
+.g3-menu-item-label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.g3-menu-item-end {
+    color: var(--g3-color-text-tertiary);
+    font-size: 0.8125rem;
+}
+
+.g3-popover-ios .g3-menu-item + .g3-menu-item {
+    border-top: 0.5px solid var(--g3-color-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-popover {
+        transition-duration: 0s;
+    }
+}
+
+@container g3-app-shell (min-width: 48rem) {
+    .g3-popover-sheet {
+        position: absolute;
+        bottom: auto;
+        inset-inline: auto;
+        min-width: max(100%, 12rem);
+        max-width: min(22rem, calc(100vw - 2rem));
+        padding-bottom: 0;
+        border-width: 1px;
+        transform-origin: top;
+    }
+
+    .g3-popover-sheet[data-placement^="bottom"] {
+        top: calc(100% + 0.375rem);
+    }
+
+    .g3-popover-sheet[data-placement^="top"] {
+        top: auto;
+        bottom: calc(100% + 0.375rem);
+    }
+
+    .g3-popover-sheet[data-placement$="start"] {
+        inset-inline-start: 0;
+    }
+
+    .g3-popover-sheet[data-placement$="end"] {
+        inset-inline-end: 0;
+    }
+
+    .g3-popover-sheet.g3-popover-ios {
+        border-radius: 13px;
+    }
+
+    .g3-popover-sheet.g3-popover-md {
+        border-width: 0;
+        border-radius: 4px;
+    }
+
+    .g3-popover-sheet[data-state="closed"] {
+        transform: scale(0.96);
+    }
+
+    .g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
+        background: transparent;
+    }
+}
+
+/* -- Action sheet -- */
+
+.g3-action-sheet .g3-sheet-content {
+    gap: 0.75rem;
+    padding-top: 0.5rem;
+}
+
+.g3-action-sheet .g3-sheet-header {
+    justify-content: center;
+    padding-top: 1rem;
+}
+
+.g3-action-sheet .g3-sheet-title {
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.g3-action-sheet-message {
+    margin: 0;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    text-align: center;
+}
+
+.g3-action-sheet-group {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 13px;
+    background: var(--g3-color-surface);
+}
+
+.g3-action-sheet-button {
+    min-height: 52px;
+    padding: 0.75rem 1rem;
+    border: 0;
+    background: transparent;
+    color: var(--g3-color-accent);
+    font: inherit;
+    font-size: 1.0625rem;
+    cursor: pointer;
+}
+
+.g3-action-sheet-group > .g3-action-sheet-button + .g3-action-sheet-button {
+    border-top: 0.5px solid var(--g3-color-border);
+}
+
+.g3-action-sheet-button:hover,
+.g3-action-sheet-button:focus-visible {
+    background: color-mix(in srgb, var(--g3-color-accent) 8%, transparent);
+    outline: none;
+}
+
+.g3-action-sheet-button:disabled {
+    color: var(--g3-color-text-tertiary);
+    cursor: not-allowed;
+}
+
+.g3-action-sheet-button-danger {
+    color: var(--g3-color-danger);
+}
+
+.g3-action-sheet-cancel {
+    border-radius: 13px;
+    background: var(--g3-color-surface);
+    font-weight: 600;
+}
+
+/* Material action sheets are a flat list with left-aligned text. */
+.g3-sheet-md.g3-action-sheet .g3-action-sheet-group,
+.g3-sheet-md.g3-action-sheet .g3-action-sheet-cancel {
+    border-radius: 0;
+    background: transparent;
+}
+
+.g3-sheet-md.g3-action-sheet .g3-action-sheet-button {
+    color: var(--g3-color-text);
+    text-align: start;
+}
+
+.g3-sheet-md.g3-action-sheet .g3-action-sheet-button-danger {
+    color: var(--g3-color-danger);
+}
+
+.g3-sheet-md.g3-action-sheet .g3-action-sheet-group > .g3-action-sheet-button + .g3-action-sheet-button {
+    border-top: 0;
+}
+
+/* -- Layout, text, media -- */
+
+.g3-stack {
+    --g3-gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--g3-gap);
+    min-width: 0;
+}
+
+.g3-stack-row {
+    flex-direction: row;
+}
+
+.g3-stack-wrap {
+    flex-wrap: wrap;
+}
+
+.g3-stack[data-align="start"] { align-items: flex-start; }
+.g3-stack[data-align="center"] { align-items: center; }
+.g3-stack[data-align="end"] { align-items: flex-end; }
+.g3-stack[data-align="baseline"] { align-items: baseline; }
+.g3-stack[data-justify="center"] { justify-content: center; }
+.g3-stack[data-justify="end"] { justify-content: flex-end; }
+.g3-stack[data-justify="between"] { justify-content: space-between; }
+
+.g3-grid {
+    --g3-gap: 0.75rem;
+    display: grid;
+    grid-template-columns: var(--g3-grid-columns);
+    gap: var(--g3-gap);
+}
+
+:is(.g3-stack, .g3-grid)[data-gap="none"] { --g3-gap: 0; }
+:is(.g3-stack, .g3-grid)[data-gap="xs"] { --g3-gap: 0.25rem; }
+:is(.g3-stack, .g3-grid)[data-gap="sm"] { --g3-gap: 0.5rem; }
+:is(.g3-stack, .g3-grid)[data-gap="lg"] { --g3-gap: 1rem; }
+:is(.g3-stack, .g3-grid)[data-gap="xl"] { --g3-gap: 1.5rem; }
+
+.g3-text {
+    margin: 0;
+    color: var(--g3-color-text);
+}
+
+.g3-text-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.g3-text-heading {
+    font-size: 1.125rem;
+    font-weight: 650;
+    line-height: 1.3;
+}
+
+.g3-text-body {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.g3-text-caption {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.g3-text-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.g3-text-overline {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.g3-text-secondary { color: var(--g3-color-text-secondary); }
+.g3-text-tertiary { color: var(--g3-color-text-tertiary); }
+.g3-text-accent { color: var(--g3-color-accent); }
+.g3-text-neutral { color: var(--g3-color-text); }
+.g3-text-success { color: var(--g3-color-success); }
+.g3-text-warning { color: var(--g3-color-warning); }
+.g3-text-danger { color: var(--g3-color-danger); }
+
+.g3-text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.g3-img {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: var(--g3-color-control);
+}
+
+.g3-img img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transition: opacity var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+.g3-img-contain img {
+    object-fit: contain;
+}
+
+.g3-img[data-state="loading"] {
+    animation: g3-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.g3-img[data-state="loading"] img {
+    opacity: 0;
+}
+
+.g3-img[data-state="error"] img {
+    visibility: hidden;
+}
+
+.g3-tooltip-anchor {
+    position: relative;
+    display: inline-flex;
+}
+
+.g3-tooltip {
+    position: absolute;
+    left: 50%;
+    z-index: var(--g3-z-toast);
+    width: max-content;
+    max-width: 16rem;
+    padding: 0.375rem 0.625rem;
+    border-radius: 0.375rem;
+    background: var(--g3-color-text);
+    color: var(--g3-color-bg);
+    font-size: 0.75rem;
+    line-height: 1.3;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 0.25rem);
+    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+}
+
+.g3-tooltip[data-placement="top"] {
+    bottom: calc(100% + 0.375rem);
+}
+
+.g3-tooltip[data-placement="bottom"] {
+    top: calc(100% + 0.375rem);
+    transform: translate(-50%, -0.25rem);
+}
+
+.g3-tooltip-anchor:hover > .g3-tooltip,
+.g3-tooltip-anchor:focus-within > .g3-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.g3-infinite-scroll {
+    display: flex;
+    justify-content: center;
+    min-height: 1px;
+}
+
+.g3-infinite-scroll .g3-spinner-wrapper {
+    padding: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-img[data-state="loading"] {
+        animation: none;
+    }
+
+    .g3-tooltip {
+        transition: none;
+    }
+}
+
 /* -- Responsive desktop shell --
 
    Query the shell's own width instead of the browser viewport. This lets the
    same component tree adapt automatically while embedded/narrow app shells
    continue to render with mobile chrome inside a wide desktop page. */
 @container g3-app-shell (min-width: 48rem) {
-    /* The transitions feature adds .route-transition-base-region to Navbar and its
-       stylesheet intentionally loads after this one. The extra shell
-       specificity keeps that generic transition layout from resetting the
-       responsive rail back to display:flex. */
-    .g3-app-shell .g3-navbar {
-        --g3-navbar-rail-width: 4rem;
+    /* AdaptiveNav becomes a rail on wide shells. */
+    .g3-tab-layout:has(> .g3-nav-adaptive) {
+        --g3-nav-rail-width: 4rem;
         display: grid;
-        grid-template-columns: var(--g3-navbar-rail-width) minmax(0, 1fr);
+        grid-template-columns: var(--g3-nav-rail-width) minmax(0, 1fr);
         grid-template-rows: auto minmax(0, 1fr);
         width: 100%;
-        /* The base class sets overflow-hidden for the mobile layout, which
-           would clip the rail's hover labels where they extend over the page.
-           Scrolling is owned by .g3-body-content, so the shell can stay
-           visible here. */
+        /* Visible, so the rail's hover labels can extend over the page. The
+           content area does its own scrolling. */
         overflow: visible;
     }
 
-    .g3-navbar > .g3-header {
+    .g3-tab-layout:has(> .g3-nav-adaptive) > .g3-header {
         grid-column: 2;
         grid-row: 1;
     }
 
-    .g3-navbar > .g3-body {
+    .g3-tab-layout:has(> .g3-nav-adaptive) > .g3-content {
         grid-column: 2;
         grid-row: 2;
         width: auto;
     }
 
-    .g3-navbar > .g3-navbar-tab-bar {
+    .g3-nav-adaptive {
         position: relative;
         z-index: 20;
-        grid-column: 1;
-        grid-row: 1 / -1;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 0.375rem;
         min-height: 0;
         padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
-        /* Both axes must stay visible. `overflow-y: auto` makes overflow-x
-           compute to auto as well, which turns the rail into a clipping
-           context and hides the hover labels behind the page content. */
+        /* Both axes stay visible: `overflow-y: auto` would turn overflow-x to
+           auto too and clip the hover labels. */
         overflow: visible;
         border-top: 0;
-        border-right: 1px solid var(--color-card-border);
-        background: var(--color-card);
-        box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
+        border-inline-end: 1px solid var(--g3-color-border);
+        background: var(--g3-color-card);
+        box-shadow: 8px 0 22px color-mix(in srgb, var(--g3-color-shadow) 24%, transparent);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
-    /* Inside a transitions-enabled app shell, the rail is persistent chrome:
-       g3-route-transitions captures it on its own, so it stays put while
-       pages slide and sheets rise beside it, instead of moving or dimming
-       with the page. The bottom bar on compact shells is deliberately left in
-       the page, where a full-screen sheet covers it. */
-    .route-transition-overlay-region .g3-navbar > .g3-navbar-tab-bar {
+    .g3-tab-layout > .g3-nav-adaptive {
+        grid-column: 1;
+        grid-row: 1 / -1;
+    }
+
+    /* Persistent chrome for g3-route-transitions: the rail stays put while pages
+       slide and sheets rise beside it. */
+    .route-transition-overlay-region .g3-tab-layout > .g3-nav-adaptive {
         view-transition-name: persistent;
     }
 
-    /* A flexible rail spacer groups marked account/settings destinations at
-       the bottom while unmarked primary destinations remain at the top. */
-    .g3-navbar > .g3-navbar-tab-bar::before {
+    /* A flexible spacer pushes secondary destinations to the bottom. */
+    .g3-nav-adaptive::before {
         content: "";
         order: 1;
         flex: 1 1 auto;
         min-height: 0;
     }
 
-    .g3-navbar-tab-desktop-bottom {
+    .g3-nav-adaptive .g3-nav-item-secondary {
         order: 2;
     }
 
-    .g3-navbar-ios .g3-navbar-tab-bar,
-    .g3-navbar-md .g3-navbar-tab-bar {
-        padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
-        background: var(--color-card);
-        box-shadow: 8px 0 22px color-mix(in srgb, var(--color-shadow) 24%, transparent);
-        backdrop-filter: none;
-        -webkit-backdrop-filter: none;
-    }
-
-    .g3-navbar-tab {
+    .g3-nav-adaptive .g3-nav-item {
         flex: 0 0 auto;
-        display: grid;
         width: 2.5rem;
         min-width: 2.5rem;
         min-height: 2.5rem;
+        padding: 0;
         grid-template-rows: 1fr;
         overflow: visible;
         border-radius: 50%;
-        background: var(--color-control);
-        transition: border-radius var(--transition-normal) var(--transition-md),
-                    background var(--transition-normal) var(--transition-md),
-                    color var(--transition-normal) var(--transition-md);
+        background: var(--g3-color-control);
+        transition: border-radius var(--g3-transition-normal) var(--g3-transition-md),
+                    background var(--g3-transition-normal) var(--g3-transition-md),
+                    color var(--g3-transition-normal) var(--g3-transition-md);
     }
 
-    .g3-navbar-md .g3-navbar-tab {
-        min-height: 2.5rem;
-        padding: 0;
-        border-radius: 50%;
-    }
-
-    .g3-navbar-tab::before {
+    .g3-nav-adaptive .g3-nav-item::before {
         inset: 0;
         border-radius: inherit;
     }
 
-    .g3-navbar-tab:hover:not(:disabled)::before,
-    .g3-navbar-tab:active:not(:disabled)::before {
+    .g3-nav-adaptive .g3-nav-item:hover:not([aria-disabled="true"], :disabled)::before {
         opacity: 1;
     }
 
-    .g3-navbar-tab-selected,
-    .g3-navbar-md .g3-navbar-tab-selected {
+    .g3-nav-adaptive .g3-nav-item[aria-current="page"] {
         border-radius: 1rem;
-        background: color-mix(in srgb, var(--color-focused) 14%, var(--color-card));
+        background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
     }
 
-    .g3-navbar .g3-navbar-tab-selected::after {
+    .g3-nav-adaptive .g3-nav-item[aria-current="page"]::after {
         content: "";
         position: absolute;
         top: 0.5rem;
@@ -3836,12 +4683,12 @@ textarea.g3-field {
         background: currentColor;
     }
 
-    .g3-navbar-tab-icon {
+    .g3-nav-adaptive .g3-nav-item-icon {
         width: 1.25rem;
         height: 1.25rem;
     }
 
-    .g3-navbar-tab-label {
+    .g3-nav-adaptive .g3-nav-item-label {
         position: absolute;
         top: 50%;
         left: calc(100% + 0.75rem);
@@ -3850,11 +4697,11 @@ textarea.g3-field {
         max-width: 12rem;
         padding: 0.375rem 0.625rem;
         overflow: hidden;
-        border: 1px solid var(--color-card-border);
+        border: 1px solid var(--g3-color-border);
         border-radius: 0.375rem;
-        background: var(--color-card);
-        box-shadow: 0 6px 18px color-mix(in srgb, var(--color-shadow) 42%, transparent);
-        color: var(--color-text);
+        background: var(--g3-color-card);
+        box-shadow: 0 6px 18px color-mix(in srgb, var(--g3-color-shadow) 42%, transparent);
+        color: var(--g3-color-text);
         font-size: 0.75rem;
         line-height: 1rem;
         text-overflow: ellipsis;
@@ -3865,8 +4712,8 @@ textarea.g3-field {
         pointer-events: none;
     }
 
-    .g3-navbar-tab:hover .g3-navbar-tab-label,
-    .g3-navbar-tab:focus-visible .g3-navbar-tab-label {
+    .g3-nav-adaptive .g3-nav-item:hover .g3-nav-item-label,
+    .g3-nav-adaptive .g3-nav-item:focus-visible .g3-nav-item-label {
         opacity: 1;
         visibility: visible;
         transform: translate(0, -50%);
@@ -3918,76 +4765,6 @@ textarea.g3-field {
         margin-inline: 0;
     }
 
-    /* Bottom sheets stay recognisably sheet-like on a wide shell, but no
-       longer span the full display. This mirrors Ionic's compact tablet and
-       desktop overlay treatment while preserving the same component state. */
-    .g3-sheet.g3-sheet-bottom {
-        right: auto;
-        bottom: 1.5rem;
-        left: 50%;
-        width: min(36rem, calc(100% - 3rem));
-    }
-
-    .g3-sheet.g3-sheet-bottom.g3-sheet-open {
-        transform: translate3d(-50%, var(--g3-sheet-drag-y, 0px), 0);
-    }
-
-    .g3-sheet.g3-sheet-bottom.g3-sheet-closed {
-        transform: translate3d(-50%, calc(100% + 4.5rem), 0);
-    }
-
-    .g3-sheet.g3-sheet-bottom {
-        --g3-sheet-enter-x: -50%;
-        --g3-sheet-enter-y: calc(100% + 4.5rem);
-    }
-
-    .g3-sheet-ios.g3-sheet-bottom,
-    .g3-sheet-md.g3-sheet-bottom {
-        border-radius: 1rem;
-        box-shadow: 0 18px 54px color-mix(in srgb, var(--color-shadow) 68%, transparent);
-    }
-
-    .g3-sheet-md.g3-sheet-bottom {
-        border-radius: 0.75rem;
-    }
-
-    .g3-sheet.g3-sheet-bottom .g3-sheet-content {
-        max-height: var(--g3-sheet-max-height, min(70dvh, 30rem));
-        padding-bottom: 1rem;
-    }
-
-    .g3-select-sheet.g3-sheet-bottom .g3-sheet-content {
-        max-height: min(70dvh, 30rem);
-        padding-bottom: 1rem;
-    }
-
-    .g3-select-sheet .g3-select-option {
-        padding-inline: 1.25rem;
-        text-align: left;
-    }
-
-    /* Alert-width dialogs read as cramped on desktop. Keep confirmations
-       compact while giving generic modal content enough room to breathe. */
-    .g3-modal-card {
-        width: min(30rem, calc(100% - 4rem));
-        max-height: calc(100dvh - 4rem);
-        gap: 1.125rem;
-    }
-
-    .g3-modal-ios {
-        padding: 1.75rem;
-        border-radius: 1rem;
-    }
-
-    .g3-modal-md {
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-    }
-
-    .g3-modal-title {
-        font-size: 1.25rem;
-    }
-
     /* Toasts use a readable snackbar width on desktop instead of stretching
        between both viewport gutters. Preserve each vertical position while
        centring the component on the inline axis. */
@@ -4010,33 +4787,29 @@ textarea.g3-field {
         transform: translate3d(-50%, -50%, 0) scale(1);
     }
 
-    .g3-body-content {
-        --g3-body-padding: clamp(1.5rem, 3vw, 2.5rem);
+    .g3-content-scroll {
+        --g3-content-padding: clamp(1.5rem, 3vw, 2.5rem);
     }
 
-    .g3-body-content[data-padding="false"],
-    .g3-body-content-no-padding {
-        --g3-body-padding: 0;
+    .g3-content-scroll[data-padding="false"] {
+        --g3-content-padding: 0;
     }
 
-    .g3-app-shell .g3-body-content,
-    .g3-app-shell .overflow-x-scroll {
+    .g3-app-shell .g3-content-scroll {
         scrollbar-width: thin;
-        scrollbar-color: var(--color-card-border) transparent;
+        scrollbar-color: var(--g3-color-border) transparent;
     }
 
-    .g3-app-shell .g3-body-content::-webkit-scrollbar,
-    .g3-app-shell .overflow-x-scroll::-webkit-scrollbar {
+    .g3-app-shell .g3-content-scroll::-webkit-scrollbar {
         display: block;
         width: 0.625rem;
         height: 0.625rem;
     }
 
-    .g3-app-shell .g3-body-content::-webkit-scrollbar-thumb,
-    .g3-app-shell .overflow-x-scroll::-webkit-scrollbar-thumb {
+    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-thumb {
         border: 0.1875rem solid transparent;
         border-radius: 999px;
-        background: var(--color-card-border);
+        background: var(--g3-color-border);
         background-clip: padding-box;
     }
 }
@@ -4112,116 +4885,41 @@ textarea.g3-field {
 }
 
 .g3-info-btn-icon {
-    color: var(--color-focused);
+    color: var(--g3-color-accent);
 }
 
-.g3-select-option-list {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.g3-field-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.g3-field-control {
-    position: relative;
-}
-
-.g3-field-trailing {
-    position: absolute;
-}
-
-.g3-card-image {
-    margin-bottom: 0.5rem;
-    justify-items: center;
-}
-
-.g3-card-right-text {
-    font-size: 0.875rem;
-    line-height: calc(1.25 / 0.875);
-    white-space: nowrap;
-}
-
-.g3-body-error {
+.g3-content-error {
+    color: var(--g3-color-danger);
+    text-align: center;
     display: flex;
     align-items: center;
     justify-content: center;
     padding-block: 2rem;
 }
 
-.g3-btn-expand {
-    width: 100%;
-}
-
-.g3-sheet-handle-wrap-ios:active {
-    cursor: grabbing;
-}
-
 /* Opt-in horizontal scrolling for a segment group with more buttons than fit. */
-.g3-segment-scrollable {
-    overflow-x: auto;
+
 }
 
-/* -- Sheet entrance --
+/* -- g3-route-transitions integration --
 
-   Keyframes, not a transition. A transition only runs when its start value has
-   already been painted, which is never true for a sheet inserted on open - the
-   component used to buy that painted frame with a `requestAnimationFrame` round
-   trip through `document::eval`, so nothing moved until Rust and JS had spoken
-   twice. That is cheap in wasm and not cheap in a mobile webview. Keyframes run
-   on the frame the class lands, so an open is immediate everywhere.
-
-   Only `.g3-sheet-enter` sheets animate: one that mounts open is layout, not a
-   presentation. The exit stays a transition on `.g3-sheet-closed`, which is
-   sound because the open state has been painted by the time it runs. */
-@keyframes g3-sheet-enter-bottom {
-    from {
-        transform: translate3d(var(--g3-sheet-enter-x), var(--g3-sheet-enter-y), 0);
-    }
+   Outside the `g3` layer on purpose. g3-route-transitions ships unlayered
+   rules for its regions (`display: flex` on the base region, among others),
+   and unlayered rules beat every layered one. These few declarations keep the
+   app layout intact when the `transitions` feature marks g3 elements as
+   regions. */
+:root,
+.g3-app-shell,
+.g3-theme-provider {
+    --route-transition-bg: var(--g3-color-bg);
 }
 
-@keyframes g3-sheet-enter-left {
-    from {
-        transform: translateX(calc(-100% - 2rem));
-    }
+.g3-tab-layout.route-transition-base-region:has(> .g3-nav-rail) {
+    display: grid;
 }
 
-@keyframes g3-sheet-enter-right {
-    from {
-        transform: translateX(calc(100% + 2rem));
-    }
-}
-
-@keyframes g3-sheet-enter-backdrop {
-    from {
-        opacity: 0;
-    }
-}
-
-.g3-sheet-enter.g3-sheet-bottom.g3-sheet-open {
-    animation: g3-sheet-enter-bottom var(--transition-normal) var(--transition-md);
-}
-
-/* Reveal keeps the sheet still and moves the page over it, so its open and
-   closed transforms are identical and there is nothing to animate from. */
-.g3-sheet-enter.g3-sheet-left.g3-sheet-open:not(.g3-sheet-reveal) {
-    animation: g3-sheet-enter-left var(--transition-normal) var(--transition-md);
-}
-
-.g3-sheet-enter.g3-sheet-right.g3-sheet-open:not(.g3-sheet-reveal) {
-    animation: g3-sheet-enter-right var(--transition-normal) var(--transition-md);
-}
-
-.g3-sheet-backdrop.g3-sheet-enter.g3-sheet-backdrop-open {
-    animation: g3-sheet-enter-backdrop var(--transition-normal) var(--transition-md);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .g3-sheet-enter.g3-sheet-open,
-    .g3-sheet-backdrop.g3-sheet-enter.g3-sheet-backdrop-open {
-        animation: none;
+@container g3-app-shell (min-width: 48rem) {
+    .g3-tab-layout.route-transition-base-region:has(> .g3-nav-adaptive) {
+        display: grid;
     }
 }

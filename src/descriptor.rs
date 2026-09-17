@@ -37,6 +37,7 @@ pub fn component_descriptors() -> Vec<ComponentDescriptor> {
 pub fn component_playground_demos() -> Vec<ComponentPlaygroundDemo> {
     crate::components::component_playground_demos()
 }
+/// Frames a playground demo: its controls above a device-sized preview.
 #[cfg(feature = "playground")]
 #[component]
 pub fn PlaygroundDemoFrame(
@@ -46,7 +47,7 @@ pub fn PlaygroundDemoFrame(
     center: Option<bool>,
     class: Option<String>,
 ) -> Element {
-    crate::components::overlay_scroll::disable_body_scroll_lock_for_subtree();
+    crate::components::overlay::disable_body_scroll_lock_for_subtree();
     let preview_cls = crate::theme::merge_classes("g3-playground-preview", class.as_deref());
     let mode = crate::theme::use_component_mode(None);
     let body_cls = if center.unwrap_or(true) {
@@ -57,12 +58,12 @@ pub fn PlaygroundDemoFrame(
     rsx! {
         div { class: "g3-playground-demo-stack",
             if let Some(controls) = controls {
-                crate::Card { class: "playground-controls-pane", {controls} }
+                div { class: "playground-controls-pane", {controls} }
             }
             div { class: preview_cls,
                 if app.unwrap_or(true) {
-                    crate::components::AppWrapper { mode, class: "g3-playground-device-app",
-                        crate::components::Body { class: body_cls, has_footer_space: false, {children} }
+                    crate::AppWrapper { mode, class: "g3-playground-device-app",
+                        crate::Content { class: body_cls, footer_space: false, {children} }
                     }
                 } else {
                     div { class: "g3-playground-raw-surface", {children} }

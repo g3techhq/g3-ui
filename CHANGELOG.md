@@ -4,43 +4,140 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - Unreleased
 
-### Added
+0.4 reworks the public API for use as a general-purpose library. Most
+components are renamed, several are split, and the stylesheet moves into a
+cascade layer. The README has a table of the most common renames.
 
-- `NavbarTabBar` takes `visibility: NavbarTabBarVisibility`. `Always`, the
-  default, keeps today's behavior. `RailOnly` hides the bar on compact
-  shells and shows it only as the desktop rail. Full-screen routes such as
-  routed sheets use it to keep the rail beside them on desktop while still
-  covering the bottom tabs on phones.
+### Removed
 
-### Fixed
-
-- With the `transitions` feature, the desktop rail no longer dims and
-  scales with the page when a routed sheet opens, and the sheet no longer
-  leaves an empty rail-width gap. Inside `G3AppWrapper`, the rail is
-  route-transition persistent chrome, which stays in place above the
-  rising sheet.
+- **Breaking:** the `G3`-prefixed aliases. Use the unprefixed names; import
+  one under an alias if it collides with a local name.
+- **Breaking:** `g3_ui::prelude` no longer re-exports `dioxus::prelude`.
+- **Breaking:** the `*_styles.rs` class-name constants. Class names are
+  internal; style components through their `class` prop, `data-state`, and
+  ARIA attributes.
+- **Breaking:** `SheetButton` (use `InfoButton { sheet, .. }`), `ItemKind`
+  (an `Item` now infers its element from its props), `RefresherState`,
+  `can_refresh`, and `Card`'s `RightSlot` and `top_margin`.
 
 ### Changed
 
+- **Breaking:** renamed components:
+  - `Body` → `Content`, with `loading` and `error` fallbacks.
+  - `Navbar` → `TabLayout`.
+  - `Field` → `Input` and `TextArea`.
+  - `Line` → `Divider`.
+  - `ItemDivider` → `ListHeader`.
+  - `FabContainer` → `FabMenu`.
+- **Breaking:** `Sheet` is split by placement. `BottomSheet` rises from the
+  bottom and supports `detents`. `SideSheet` takes a logical `SheetEdge`
+  and a `SideSheetBehavior` of `Overlay`, `Push`, or `Reveal`.
+  `NavigationDrawer` replaces the `Menu` side-sheet type; it is persistent
+  navigation, not a dialog.
+- **Breaking:** `NavbarTabBar` and `NavbarTab` are replaced by
+  `AdaptiveNav`, which is a bottom bar on phones and a rail on wide shells,
+  the fixed forms `NavBar` and `NavRail`, and `NavItem`. The old
+  `visibility: RailOnly` is `AdaptiveNav { compact: AdaptiveNavCompact::Hidden }`,
+  and `desktop_placement: Bottom` is `group: NavItemGroup::Secondary`.
+  `NavItem` takes `to` or `href` and marks the current item with
+  `aria-current`.
+- **Breaking:** consistent prop names across components:
+  - `is_open` → `open`.
+  - `active` and `index` → `value`.
+  - `Button`'s `style: ButtonStyle` → `fill: ButtonFill`.
+  - `disable_text_selection` → `text_selection`.
+  - `FabSize::Normal` → `FabSize::Regular`.
+  - `SwipeState::full` → `committed`.
+- **Breaking:** colour variants share one `Color` enum (`Accent`,
+  `Neutral`, `Success`, `Warning`, `Danger`) across `Button`, `Badge`,
+  `Toast`, `MenuItem`, `SwipeAction`, and `Text`.
+- **Breaking:** `Select`, `RadioGroup`/`Radio`, `SegmentGroup`/`SegmentButton`,
+  and `AccordionGroup` are generic over their value type instead of using
+  strings or indexes.
+- **Breaking:** value signals are optional. Without one, a component keeps
+  its own state. Change callbacks receive the new value (`EventHandler<T>`),
+  not a DOM event.
+- **Breaking:** `Theme` fields are renamed to match their tokens: `focused` →
+  `accent`, `card_border` → `border`, and `label_secondary` →
+  `text_tertiary`. `label_primary` and `card_inset` are removed. New fields
+  are `on_accent`, `surface`, `control`, `success`, `warning`, and `danger`.
+  `with_focused` is now `with_accent`.
+- **Breaking:** CSS custom properties use a `--g3-` prefix
+  (`--g3-color-accent`, `--g3-transition-normal`, `--g3-nav-rail-width`).
+- **Breaking:** the stylesheet is in the `g3` cascade layer and no longer uses
+  `!important`, so any unlayered app rule overrides it. Component state is
+  exposed through `data-state` and ARIA attributes rather than modifier
+  classes. Overlays use a shared z-index scale (`--g3-z-*`).
+- **Breaking:** `ConfirmModal`'s `on_confirm` is an `EventHandler<()>`, and
+  the modal is an `alertdialog`.
+- `Card` is a single stretched link or button when it has `onclick`, `to`,
+  or `href`, so controls inside it stay separately focusable.
+- `Chip` renders a plain `span` unless it is pressable.
+- `Button`, `FabButton`, and `Input` pass other HTML attributes through to
+  their element.
+- Changing `AppWrapper`'s or `ThemeProvider`'s `mode` now updates the
+  subtree.
 - The `transitions` feature now depends on `g3-route-transitions` 0.4 and
-  uses its region vocabulary. `G3AppWrapper` marks the shell with
+  uses its region vocabulary. `AppWrapper` marks the shell with
   `ROUTE_TRANSITION_OVERLAY_REGION_CLASS` and loads `RouteTransitionStyles`.
-  `G3Navbar` marks itself with `ROUTE_TRANSITION_BASE_REGION_CLASS`.
-- **Breaking:** renamed `G3AppWrapper`'s `route_transition_root` prop to
+  `TabLayout` marks itself with `ROUTE_TRANSITION_BASE_REGION_CLASS`.
+- **Breaking:** renamed `AppWrapper`'s `route_transition_root` prop to
   `route_transition_overlay`. "Root" now names a route layer
   (`layer = stack_root`) in `g3-route-transitions`, and this prop controls
   the overlay region.
-- The playground migrated to `#[derive(RouteTransitions)]`. The removed
-  morph transition on the article detail route is replaced by a
-  `forward_to` drill-down into a `stack_page`.
+- The minimum supported Rust version is 1.88.
+
+### Added
+
+- `use_toast`, `use_alert`, and `use_action_sheet` open overlays from code.
+  `AppWrapper` hosts them. Alerts and action sheets return a future that
+  resolves to the user's answer.
+- New components:
+  - Overlays: `Alert`, `ActionSheet`, `Popover`, and `Menu`/`MenuItem`.
+  - Navigation: `Tabs`/`TabList`/`Tab`/`TabPanel` and a router-aware
+    `BackButton`.
+  - Forms: `Range`, `Stepper`, and `Searchbar`.
+  - Content and layout: `Text`, `Img`, `Tooltip`, `Stack`, and `Grid`.
+  - Feedback: `InfiniteScroll`.
+- `Theme::system()` and `Theme::adaptive(light, dark)` follow the operating
+  system's colour scheme through CSS `light-dark()`.
+- `Strings` holds every built-in label, for translation.
+- `use_theme`, `use_strings`, and `use_component_mode` read the values in
+  effect.
+- `Button` takes `loading`, `button_type`, `to`, `href`, `new_tab`, `start`,
+  and `end`.
+- `Input` takes `clearable`, `start`, `end`, and `debounce_ms`, and supports
+  date and time types.
+- `SwipeItem` works with a mouse and the keyboard, and has a "Show actions"
+  button for assistive technology.
+- `Modal` takes a `role` (`ModalRole`) and `size` (`ModalSize`).
+- `Toast` takes an `action`, `closable`, and `ToastDuration::Persistent`.
+- Sheets, modals, and popovers trap focus, close on Escape, restore focus
+  when they close, and lock page scrolling while open.
+- Arrow keys move between radios, segments, and tabs.
+- Every public item is documented, and docs.rs builds with the
+  `transitions` feature.
+
+### Fixed
+
+- The desktop rail no longer dims and scales with the page when a routed
+  sheet opens, and the sheet no longer leaves an empty rail-width gap. With
+  the `transitions` feature, the rail is route-transition persistent chrome,
+  which stays in place above the rising sheet.
+- `SideSheet` push and reveal and `NavigationDrawer` resize the page even
+  when `AppWrapper` has `layout: false`.
+- Generated element ids are unique, so labels, descriptions, and
+  accordion panels no longer collide when a component is used twice.
 
 ### Documentation
 
-- The route-transition section now lists the region each component
-  provides, where to add `RouteTransitionPage`, and the layout rules for
-  sheet routes, segmented screens, and nested wrappers.
+- The README covers the 0.4 API, overlays opened from code, styling, and
+  upgrading from 0.3.
+- The route-transition section lists the region each component provides,
+  where to add `RouteTransitionPage`, and the layout rules for sheet routes,
+  segmented screens, and nested wrappers.
 
 ## [0.3.0] - 2026-09-13
 

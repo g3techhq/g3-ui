@@ -1,162 +1,285 @@
-//! Select component - dropdown picker using a responsive sheet interface.
-use super::Sheet;
-use super::select_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! A single-choice picker.
+use super::field::{FieldShell, described_by, is_invalid};
+use super::popover::{PopoverFrame, PopoverPlacement};
+use crate::state::use_element_id;
+use crate::theme::{ComponentMode, classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
-use dioxus_icons::lucide::ChevronDown;
-/// One option in a `G3Select`. Construct with `SelectOption::new`, then
-/// optionally give it display text that differs from its value.
-#[derive(Clone, PartialEq)]
-pub struct SelectOption {
-    option_value: String,
-    text: Option<String>,
+use dioxus_icons::lucide::{Check, ChevronDown};
+
+/// One choice in a [`Select`].
+///
+/// ```
+/// use g3_ui::SelectOption;
+///
+/// let option = SelectOption::new("gb", "United Kingdom").description("GBP");
+/// # let _ = option;
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub struct SelectOption<T> {
+    /// The value chosen.
+    pub value: T,
+    /// Text shown for it.
+    pub label: String,
+    /// Secondary text under the label.
+    pub description: Option<String>,
+    /// Whether it can be chosen.
+    pub disabled: bool,
 }
-impl From<&str> for SelectOption {
+
+impl<T> SelectOption<T> {
+    /// An option with a value and its display text.
+    pub fn new(value: T, label: impl Into<String>) -> Self {
+        Self {
+            value,
+            label: label.into(),
+            description: None,
+            disabled: false,
+        }
+    }
+
+    /// Add secondary text.
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    /// Make the option unavailable.
+    pub fn disabled(mut self) -> Self {
+        self.disabled = true;
+        self
+    }
+}
+
+impl From<&str> for SelectOption<String> {
     fn from(value: &str) -> Self {
-        Self {
-            option_value: value.to_string(),
-            text: None,
-        }
+        Self::new(value.to_string(), value)
     }
 }
-impl From<String> for SelectOption {
+
+impl From<String> for SelectOption<String> {
     fn from(value: String) -> Self {
-        Self {
-            option_value: value,
-            text: None,
-        }
+        Self::new(value.clone(), value)
     }
 }
-impl From<(&str, &str)> for SelectOption {
-    fn from(value: (&str, &str)) -> Self {
-        Self {
-            option_value: value.0.to_string(),
-            text: Some(value.1.to_string()),
-        }
+
+impl<T, L: Into<String>> From<(T, L)> for SelectOption<T> {
+    fn from((value, label): (T, L)) -> Self {
+        Self::new(value, label)
     }
 }
-impl From<(String, String)> for SelectOption {
-    fn from(value: (String, String)) -> Self {
-        Self {
-            option_value: value.0,
-            text: Some(value.1),
-        }
-    }
-}
+
+/// A field that picks one value from a list. Like Ionic's `ion-select`.
+///
+/// The list opens as a bottom sheet on compact shells and as a dropdown on
+/// wide ones. The trigger shows the chosen option's label, or `placeholder`
+/// when the value matches no option.
+///
+/// The value type is anything comparable, so enums work directly:
+///
+/// ```rust,ignore
+/// let tees = use_signal(|| Tees::White);
+/// rsx! {
+///     Select {
+///         label: "Tees",
+///         value: tees,
+///         options: vec![
+///             SelectOption::new(Tees::White, "White"),
+///             SelectOption::new(Tees::Yellow, "Yellow"),
+///         ],
+///     }
+/// }
+/// ```
 #[component]
-pub fn Select(
-    value: Signal<String>,
+pub fn Select<T: Clone + PartialEq + 'static>(
+    /// The chosen value. When not given the select keeps its own, starting at
+    /// `default_value` or the first option.
+    value: Option<Signal<T>>,
+    /// Starting value when `value` is not given.
+    default_value: Option<T>,
+    /// The choices.
+    options: Vec<SelectOption<T>>,
+    /// Visible label, which also names the field and the list.
+    label: Option<String>,
+    /// Accessible name when there is no visible label.
+    aria_label: Option<String>,
+    /// Trigger text when the value matches no option. Defaults to
+    /// [`Strings::select_placeholder`](crate::Strings::select_placeholder).
+    placeholder: Option<String>,
+    /// Help text below the field.
+    helper: Option<String>,
+    /// Error text below the field.
+    error: Option<String>,
+    /// Mark the field required.
+    required: Option<bool>,
+    /// Disable the field.
     disabled: Option<bool>,
+    /// Called with the value the user picks.
+    onchange: Option<EventHandler<T>>,
+    /// Element id of the trigger. Generated when not given.
+    id: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
-    options: Vec<SelectOption>,
+    /// Extra classes for the field wrapper.
     class: Option<String>,
-    onchange: Option<EventHandler<String>>,
 ) -> Element {
-    let mut is_open = use_signal(|| false);
-    let resolved_mode = use_component_mode(mode);
-    let mode_cls = match resolved_mode {
-        ComponentMode::Ios => s::SELECT_BTN_IOS,
-        ComponentMode::Md => s::SELECT_BTN_MD,
+    let mode = use_component_mode(mode);
+    let strings = use_strings();
+    let id = use_element_id("select", id);
+    let list_id = format!("{id}-list");
+    let initial = default_value.or_else(|| options.first().map(|option| option.value.clone()));
+    let local = use_signal(|| initial);
+    let mut open = use_signal(|| false);
+    let current: Option<T> = match value {
+        Some(value) => Some(value()),
+        None => local(),
+    };
+    let chosen = options
+        .iter()
+        .find(|option| Some(&option.value) == current.as_ref());
+    let placeholder = placeholder.unwrap_or(strings.select_placeholder);
+    let describedby = described_by(&id, &helper, &error);
+    let invalid = is_invalid(&error);
+    let labelledby = label.as_ref().map(|_| format!("{id}-label {id}-value"));
+    let list_label = label.clone().or(aria_label.clone());
+    let trigger = rsx! {
+        button {
+            id: id.clone(),
+            r#type: "button",
+            class: classes(["g3-input", "g3-select", mode.pick("g3-input-ios", "g3-input-md")]),
+            disabled,
+            aria_haspopup: "listbox",
+            aria_expanded: open().to_string(),
+            aria_controls: list_id.clone(),
+            aria_label,
+            aria_labelledby: labelledby,
+            aria_describedby: describedby,
+            aria_invalid: invalid.then_some("true"),
+            onclick: move |_| open.toggle(),
+            match chosen {
+                Some(option) => rsx! {
+                    span { id: format!("{id}-value"), class: "g3-select-value", "{option.label}" }
+                },
+                None => rsx! {
+                    span { id: format!("{id}-value"), class: "g3-select-value g3-select-placeholder", "{placeholder}" }
+                },
+            }
+            ChevronDown { class: "g3-select-icon", size: 16 }
+        }
     };
     rsx! {
-        button {
-            class: merge_classes(format!("{} {mode_cls}", s::SELECT_BTN), class
-                    .as_deref()),
-            r#type: "button",
-            aria_haspopup: "listbox",
-            aria_expanded: is_open().to_string(),
-            disabled: disabled.unwrap_or_default(),
-            onclick: move |_| is_open.set(true),
-            span { class: s::SELECT_VALUE, "{value()}" }
-            ChevronDown {
-                class: s::SELECT_ICON,
-                size: 16,
-            }
-        }
-        Sheet {
-            is_open,
-            mode,
-            class: s::SELECT_SHEET,
-            draggable: false,
-            div { class: s::OPTION_LIST, role: "listbox",
-                for (index, option) in options.into_iter().enumerate() {
-                    SelectOptionComponent {
-                        value,
-                        is_open,
-                        option_value: option.option_value,
-                        text: option.text,
-                        is_first: index == 0,
-                        onchange,
+        FieldShell {
+            id: id.clone(),
+            label,
+            required: required.unwrap_or(false),
+            helper,
+            error,
+            class,
+            div { class: "g3-select-anchor",
+                PopoverFrame {
+                    open,
+                    trigger,
+                    placement: PopoverPlacement::BottomStart,
+                    sheet_on_compact: true,
+                    role: "listbox",
+                    roving: Some("[role=option]"),
+                    id: list_id,
+                    aria_label: list_label,
+                    mode,
+                    class: "g3-select-list",
+                    for option in options {
+                        SelectOptionRow {
+                            option: option.clone(),
+                            selected: Some(&option.value) == current.as_ref(),
+                            onpick: move |picked: T| {
+                                match value {
+                                    Some(mut value) => value.set(picked.clone()),
+                                    None => {
+                                        let mut local = local;
+                                        local.set(Some(picked.clone()));
+                                    }
+                                }
+                                open.set(false);
+                                if let Some(onchange) = onchange {
+                                    onchange.call(picked);
+                                }
+                            },
+                        }
                     }
                 }
             }
         }
     }
 }
+
 #[component]
-fn SelectOptionComponent(
-    mut value: Signal<String>,
-    is_open: Signal<bool>,
-    option_value: String,
-    text: Option<String>,
-    is_first: bool,
-    onchange: Option<EventHandler<String>>,
+fn SelectOptionRow<T: Clone + PartialEq + 'static>(
+    option: SelectOption<T>,
+    selected: bool,
+    onpick: EventHandler<T>,
 ) -> Element {
-    let is_selected = value() == option_value;
-    let option_cls = merge_classes(s::OPTION, is_selected.then_some(s::OPTION_SELECTED));
+    let SelectOption {
+        value,
+        label,
+        description,
+        disabled,
+    } = option;
     rsx! {
-        if !is_first {
-            div {
-                class: s::SEPARATOR,
-                role: "separator",
-                aria_orientation: "horizontal",
-            }
-        }
         button {
-            class: option_cls,
             r#type: "button",
+            class: "g3-select-option",
             role: "option",
-            aria_selected: is_selected.to_string(),
-            onclick: move |_| {
-                value.set(option_value.clone());
-                if let Some(onchange) = onchange {
-                    onchange.call(option_value.clone());
+            tabindex: "-1",
+            aria_selected: selected.to_string(),
+            disabled,
+            onclick: move |_| onpick.call(value.clone()),
+            span { "{label}" }
+            if selected {
+                span { class: "g3-select-check", aria_hidden: "true",
+                    Check { size: 18 }
                 }
-                is_open.set(false);
-            },
-            if let Some(text) = text {
-                "{text}"
-            } else {
-                "{option_value}"
+            }
+            if let Some(description) = description {
+                span { class: "g3-select-option-description", "{description}" }
             }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn SelectPlaygroundDemo() -> Element {
-    let value = use_signal(|| "Stroke".to_string());
+fn SelectPlaygroundDemo() -> Element {
+    let club = use_signal(|| "Driver".to_string());
     let disabled = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
+                crate::Checkbox { checked: disabled, label: "Disabled" }
             },
             Select {
-                value,
+                label: "Club",
+                value: club,
                 disabled: disabled(),
+                helper: format!("Selected: {club}"),
                 options: vec![
-                    SelectOption::from(("Stroke", "Stroke play")),
-                    SelectOption::from(("Match", "Match play")),
-                    SelectOption::from(("Skins", "Skins")),
+                    SelectOption::from("Driver"),
+                    SelectOption::from("Iron").description("3 through 9"),
+                    SelectOption::from("Wedge"),
+                    SelectOption::from("Putter").disabled(),
                 ],
+            }
+            Select::<u8> {
+                label: "Tee time",
+                placeholder: "Choose a time",
+                options: vec![SelectOption::new(8, "8:00"), SelectOption::new(9, "9:00")],
+                default_value: 0,
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Select",
-    description: "Button-triggered picker backed by a responsive sheet.",
+    description: "Single-choice picker: a sheet on phones, a dropdown on wide shells.",
     demo: SelectPlaygroundDemo,
     source: "src/components/select.rs",
 }

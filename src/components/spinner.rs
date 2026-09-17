@@ -1,29 +1,59 @@
-//! Spinner component - loading indicator with CSS animation.
-use super::spinner_styles as s;
-use crate::theme::merge_classes;
+//! A loading indicator.
+use crate::theme::{classes, merge_classes, use_strings};
 use dioxus::prelude::*;
+
+/// Spinner size.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum SpinnerSize {
+    /// 20px, for inline use in buttons and rows.
+    Sm,
+    /// 32px.
+    Md,
+    /// 60px, for whole-page loading.
+    #[default]
+    Lg,
+}
+
+/// A spinning loading indicator, announced to screen readers as a status.
 #[component]
-pub fn Spinner(class: Option<String>, center: Option<bool>) -> Element {
-    let wrapper_cls = if center.unwrap_or(false) {
-        format!("{} {}", s::WRAPPER, s::CENTERED)
-    } else {
-        s::WRAPPER.to_string()
+pub fn Spinner(
+    /// Size. Defaults to [`SpinnerSize::Lg`].
+    size: Option<SpinnerSize>,
+    /// Fill the parent and centre the spinner in it.
+    center: Option<bool>,
+    /// What is loading, for screen readers. Defaults to
+    /// [`Strings::loading`](crate::Strings::loading).
+    label: Option<String>,
+    /// Extra classes for the wrapper.
+    class: Option<String>,
+) -> Element {
+    let label = label.unwrap_or_else(|| use_strings().loading);
+    let size_cls = match size.unwrap_or_default() {
+        SpinnerSize::Sm => "g3-spinner-sm",
+        SpinnerSize::Md => "g3-spinner-md",
+        SpinnerSize::Lg => "",
     };
+    let wrapper_cls = classes([
+        "g3-spinner-wrapper",
+        if center.unwrap_or(false) {
+            "g3-spinner-centered"
+        } else {
+            ""
+        },
+    ]);
     rsx! {
-        div {
-            class: merge_classes(wrapper_cls, class.as_deref()),
-            role: "status",
-            aria_live: "polite",
-            aria_label: "Loading spinner",
-            div { class: s::SPINNER, aria_hidden: "true" }
-            span { class: s::SR_ONLY, "Loading" }
+        div { class: merge_classes(wrapper_cls, class.as_deref()), role: "status",
+            div { class: classes(["g3-spinner", size_cls]), aria_hidden: "true" }
+            span { class: "g3-sr-only", "{label}" }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn SpinnerPlaygroundDemo() -> Element {
+fn SpinnerPlaygroundDemo() -> Element {
     let center = use_signal(|| true);
+    let size = use_signal(|| SpinnerSize::Lg);
     let box_cls = if center() {
         "g3-playground-spinner-box g3-playground-spinner-box-centered"
     } else {
@@ -32,14 +62,20 @@ pub fn SpinnerPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::Checkbox { checked: center, label: "Center".to_string() }
+                crate::Checkbox { checked: center, label: "Center" }
+                crate::SegmentGroup { value: size,
+                    crate::SegmentButton { value: SpinnerSize::Sm, "Sm" }
+                    crate::SegmentButton { value: SpinnerSize::Md, "Md" }
+                    crate::SegmentButton { value: SpinnerSize::Lg, "Lg" }
+                }
             },
             div { class: box_cls,
-                Spinner { center: center() }
+                Spinner { center: center(), size: size() }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Spinner",
     description: "Accessible loading indicator.",

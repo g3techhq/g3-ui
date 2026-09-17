@@ -16,143 +16,221 @@ Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](ht
   >
 </p>
 
-`g3-ui` is a flat, `G3`-prefixed component library for building responsive apps (bottom-tab
-navigation that becomes a desktop rail, sheets, cards, swipeable lists) that compile to web (WASM), desktop (Wry), and native
-mobile targets through Dioxus. Every interactive component ships with iOS/Material Design (MD)
-adaptive styling, CSS-variable theming, and WAI-ARIA attributes out of the box. The Rust crate name
-is `g3_ui`.
+`g3-ui` is a component library for responsive apps that compile to web (WASM), desktop (Wry), and
+native mobile through Dioxus. It covers bottom tabs that become a desktop rail, sheets, dialogs,
+forms, and swipeable lists. Every component has iOS and Material Design (MD) styling,
+CSS-variable theming, and WAI-ARIA semantics. The Rust crate name is `g3_ui`.
 
 ## Install
 
 ```toml
 [dependencies]
 dioxus = { version = "0.7.9", features = ["router"] }
-g3-ui = "0.2"
+g3-ui = "0.4"
 ```
 
 Enable the optional route-transition integration when your app also uses `g3-route-transitions`:
 
 ```toml
 [dependencies]
-g3-ui = { version = "0.2", features = ["transitions"] }
+g3-ui = { version = "0.4", features = ["transitions"] }
 g3-route-transitions = "0.4"
 ```
 
+The minimum supported Rust version is 1.88.
+
 ## Quick Start
 
-`G3AppWrapper` loads the component stylesheet, resolves the platform mode (iOS vs. MD), and applies
-theme tokens to the root shell. Everything else nests inside it.
+`AppWrapper` loads the stylesheet, resolves the platform mode, applies the theme, and hosts the
+toasts, alerts, and action sheets opened from code. Everything else nests inside it.
 
 ```rust,ignore
 use dioxus::prelude::*;
-use g3_ui::{G3AppWrapper, G3Body, G3Button, G3Card, G3Header, Theme};
+use g3_ui::prelude::*;
 
 #[component]
 fn App() -> Element {
     rsx! {
-        G3AppWrapper { theme: Theme::default_light(),
-            G3Header { title: "Games" }
-            G3Body {
-                G3Card { title: "Pending game",
+        AppWrapper { theme: Theme::system(),
+            Header { title: "Games" }
+            Content {
+                Card { title: "Pending game",
                     "Invite players and choose a format."
                 }
-                G3Button { onclick: |_| {}, "Create game" }
+                Button { onclick: |_| {}, "Create game" }
             }
         }
     }
 }
 ```
 
-For broad imports, use the prelude:
-
-```rust,ignore
-use g3_ui::prelude::*;
-```
-
-## Component Names
-
-Every component exports two names: a concise name (`Button`, `Card`, `Sheet`) and a `G3`-prefixed
-alias (`G3Button`, `G3Card`, `G3Sheet`). **Prefer the `G3`-prefixed names in downstream apps** —
-they avoid collisions with local components and match what the rest of this document uses.
+`g3_ui::prelude` exports the components and theme items only. Import `dioxus::prelude` yourself.
+Component names are unprefixed. If one collides with a local name, import it under an alias
+(`use g3_ui::Button as UiButton;`) or write the path (`g3_ui::Button { .. }`).
 
 ## Components
 
 | Category | Components |
 | --- | --- |
-| App shell & layout | `G3AppWrapper`, `G3Header`, `G3Body`, `G3Navbar`, `G3NavbarTab`, `G3NavbarTabBar` |
-| Actions | `G3Button`, `G3Fab`, `G3FabButton`, `G3FabList`, `G3FabContainer`, `G3InfoButton`, `G3SheetButton` |
-| Form inputs | `G3Field`, `G3Select`, `G3Checkbox`, `G3Radio`, `G3RadioGroup`, `G3Toggle` |
-| Content & data display | `G3Card`, `G3List`, `G3Item`, `G3ItemDivider`, `G3SwipeItem`, `G3SwipeAction`, `G3Line`, `G3Avatar`, `G3Badge`, `G3Chip`, `G3Progress`, `G3Skeleton` |
-| Disclosure & grouping | `G3AccordionGroup`, `G3AccordionItem`, `G3SegmentGroup`, `G3SegmentButton` |
-| Overlays | `G3Sheet`, `G3Modal`, `G3ConfirmModal`, `G3Toast` |
-| Feedback | `G3Spinner`, `G3Refresher` |
+| App shell | `AppWrapper`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
+| Navigation | `AdaptiveNav`, `NavBar`, `NavRail`, `NavItem`, `NavigationDrawer`, `Tabs`, `TabList`, `Tab`, `TabPanel`, `SegmentGroup`, `SegmentButton` |
+| Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
+| Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar` |
+| Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider` |
+| Layout | `Stack`, `Grid` |
+| Disclosure | `AccordionGroup`, `AccordionItem` |
+| Overlays | `BottomSheet`, `SideSheet`, `Modal`, `Alert`, `ConfirmModal`, `ActionSheet`, `Toast` |
+| Feedback | `Progress`, `Skeleton`, `Spinner`, `Refresher`, `InfiniteScroll` |
 
-See [docs.rs/g3-ui](https://docs.rs/g3-ui) for the full prop reference, or run the [playground](#playground)
-to browse every component live.
+[docs.rs/g3-ui](https://docs.rs/g3-ui) has the full prop reference. The [playground](#playground)
+shows every component live.
 
-## Controlling Component State
+## Component State
 
-Stateful components own a `Signal<T>` you pass in — the component reads and writes it directly, so
-there's no separate `value`/`onchange` round trip to wire up yourself:
+A component with a value takes an optional `Signal<T>` and reads and writes it directly. Leave
+the signal out and the component keeps its own state. An optional `onchange` or `on_*` callback
+reports changes when you need a side effect as well:
 
 ```rust,ignore
-let mut checked = use_signal(|| false);
-let mut name = use_signal(String::new);
+let checked = use_signal(|| false);
+let name = use_signal(String::new);
+let format = use_signal(|| None::<Format>);
 
 rsx! {
-    G3Toggle { checked }
-    G3Field { label: "Name", value: name }
+    Toggle { checked, label: "Notifications" }
+    Input { label: "Name", value: name, onchange: move |name| save(name) }
+    RadioGroup { value: format, label: "Format",
+        Radio { value: Format::Stroke, label: "Stroke play" }
+        Radio { value: Format::Match, label: "Match play" }
+    }
 }
 ```
 
-Every stateful component (`G3Checkbox`, `G3Toggle`, `G3Field`, `G3Select`, `G3Sheet`, `G3Modal`,
-`G3ConfirmModal`, `G3Toast`, `G3AccordionGroup`, `G3SegmentGroup`, `G3RadioGroup`) follows this
-pattern. An optional `onchange` callback is available on most of them if you need a side effect
-(analytics, validation, syncing to a store) beyond the signal update the component already makes
-for you.
+`Select`, `RadioGroup`, `SegmentGroup`, `Tabs`, and `AccordionGroup` are generic over the value
+type, so options can be your own enums instead of strings or indexes.
+
+## Overlays From Code
+
+Toasts, alerts, and action sheets can be opened from an event handler without declaring them in
+markup. `AppWrapper` renders them one at a time. Alerts and action sheets return a future with
+the user's answer:
+
+```rust,ignore
+let toast = use_toast();
+let alerts = use_alert();
+
+let delete = move |_| async move {
+    if alerts.confirm("Delete round?", "This cannot be undone.").await {
+        remove_round();
+        toast.success("Round deleted");
+    }
+};
+```
+
+`use_action_sheet()` works the same way and resolves to the chosen button's index. Each overlay is
+also a component (`Toast`, `Alert`, `ActionSheet`) that takes an `open` signal, for cases where the
+markup should own it.
 
 ## Modes and Themes
 
-Components support Ionic-style `ios` and `md` modes. The mode is resolved once when a component
-initializes (prop → `G3ThemeProvider`/`G3AppWrapper` context → global default) and does not change
-reactively afterwards — this mirrors Ionic's own `mode` semantics.
+Components have Ionic-style `Ios` and `Md` modes. A component takes the first mode it finds: its
+own `mode` prop, the nearest `AppWrapper` or `ThemeProvider`, then the global default set by
+`set_mode` or `init_auto_mode`. Changing the provider's `mode` prop updates the subtree.
 
 ```rust,ignore
-use g3_ui::{ComponentMode, G3AppWrapper};
-
-rsx! {
-    G3AppWrapper { mode: ComponentMode::Ios, "..." }
+fn main() {
+    g3_ui::init_auto_mode(); // iOS look on Apple platforms, MD elsewhere
+    dioxus::launch(App);
 }
 ```
 
-Theme colors are CSS custom properties generated from a `Theme` value. `Theme::default_light()` and
-`Theme::default_dark()` are the two built-in presets; every field is public, so build a custom theme
-with struct-update syntax or the `with_focused` helper:
+Colours are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The presets are
+`Theme::default_light()`, `Theme::default_dark()`, and `Theme::system()`, which follows the
+operating system through CSS `light-dark()`. Every field is public:
 
 ```rust,ignore
-let theme = Theme::default_light().with_focused("#22c55e");
+let brand = Theme::system().with_accent("#1f7a4d");
 
 let custom = Theme {
     bg: "#0b1020".into(),
     card: "#151b2e".into(),
     ..Theme::default_dark()
 };
+
+let paired = Theme::adaptive(light_brand, dark_brand);
 ```
 
-Pass a `Theme` to `G3AppWrapper` (or `G3ThemeProvider` if you're not using the app shell) to apply
-it to everything nested inside. The theme is written as CSS custom properties on the shell element,
-so switching it at runtime is reactive — drive the `theme` prop from a signal and the whole tree
-re-themes without a remount:
+The theme is written as inline custom properties on the wrapper, so passing a different `Theme`
+re-themes the tree in place. `use_theme()` returns the theme in effect for code that needs the
+values.
+
+Built-in component text such as "Close" and "Cancel" comes from `Strings`. Pass translated
+strings to `AppWrapper { strings, .. }`.
+
+## Responsive App Shell
+
+`AppWrapper` measures its own width with a CSS container query rather than the browser viewport,
+so an app embedded in a narrow frame keeps its phone layout. At `48rem` and wider:
+
+- `AdaptiveNav` inside a `TabLayout` moves from the bottom edge to a rail beside the page.
+  `NavBar` and `NavRail` are the fixed forms, for apps that decide the layout themselves.
+- Bottom sheets become floating panels, `Select` and `Popover` open as anchored menus instead of
+  sheets, and modals widen.
+- Toasts become a centred snackbar.
+
+At `64rem` the `Header` toolbar moves inline with the title.
 
 ```rust,ignore
-let dark = use_signal(|| false);
-let theme = if dark() { Theme::default_dark() } else { Theme::default_light() };
-
 rsx! {
-    G3AppWrapper { theme,
-        G3Toggle { checked: dark }   // flip to re-theme live
-        // ...
+    TabLayout {
+        Header { title: "Rounds" }
+        Content { /* page */ }
+        AdaptiveNav {
+            NavItem { label: "Rounds", icon: rsx! { Flag {} }, to: Route::Rounds {}, selected: true }
+            NavItem { label: "Profile", icon: rsx! { User {} }, to: Route::Profile {},
+                group: NavItemGroup::Secondary }
+        }
     }
+}
+```
+
+`NavItemGroup::Secondary` moves an item to the bottom of the rail; the phone tab bar keeps the
+declared order. `AdaptiveNav { compact: AdaptiveNavCompact::Hidden }` shows only the rail and
+hides the phone tab bar, for full-screen routes. Set `--g3-nav-rail-width` to widen the rail.
+
+## Sheets and Drawers
+
+`BottomSheet` rises from the bottom edge. It can snap between heights:
+
+```rust,ignore
+BottomSheet { open: filters_open, title: "Filters", detents: vec![0.4, 0.9],
+    /* content */
+}
+```
+
+`SideSheet` slides in from the start or end edge. `SideSheetBehavior::Overlay` covers the page,
+`Push` moves the page aside, and `Reveal` moves the page to uncover a sheet that stays still.
+Both edges are logical, so `SheetEdge::Start` is on the right in a right-to-left document.
+
+`NavigationDrawer` is persistent navigation beside the page, like Ionic's split pane. It is not a
+dialog: the page narrows to make room, and nothing is dimmed or trapped. For `Push`, `Reveal`, and
+`NavigationDrawer`, render the sheet and one page element as direct children of `AppWrapper`.
+
+A sheet normally opens over a scrim that closes it when tapped. `backdrop: SheetBackdrop::None`
+leaves the page behind visible and interactive, for something like comments beside a video. The
+sheet is then no longer modal, and a bottom sheet closes only when dragged down.
+
+Android Back should still close a sheet with no scrim. Every open dismissible sheet renders a
+hidden `[data-g3-sheet-dismiss]` control, and `open_sheet_count()` reports how many are open.
+Claim Back while the count is above zero, then click the topmost sheet's control:
+
+```js
+const dismiss = [
+    ...document.querySelectorAll('.g3-sheet[data-state="open"] [data-g3-sheet-dismiss]'),
+].pop();
+if (dismiss) {
+    event.preventDefault();
+    dismiss.click();
 }
 ```
 
@@ -164,24 +242,24 @@ snapshot regions for you:
 
 | Component | Region | Effect |
 |---|---|---|
-| `G3AppWrapper` | overlay (plus the stylesheet) | Rises and falls for routed sheets |
-| `G3Navbar` | base | Stays put during navigation and dims under a sheet |
-| `G3Body` content | segment | Slides for ordered peer routes such as segmented tabs |
-| `G3NavbarTabBar` as a desktop rail | persistent | Stays in place, above a rising sheet (the compact bottom bar stays part of the base) |
+| `AppWrapper` | overlay (plus the stylesheet) | Rises and falls for routed sheets |
+| `TabLayout` | base | Stays put during navigation and dims under a sheet |
+| `Content` | segment | Slides for ordered peer routes such as segmented tabs |
+| `AdaptiveNav` or `NavRail` as a rail | persistent | Stays in place above a rising sheet (the phone tab bar stays part of the base) |
 
-Add `RouteTransitionPage` yourself, around each page's header and body, to
-get stack push/pop motion:
+Add `RouteTransitionPage` yourself, around each page's header and content, to get stack push and
+pop motion:
 
 ```rust,ignore
 use g3_route_transitions::RouteTransitionPage;
 
 rsx! {
-    G3Navbar {
+    TabLayout {
         RouteTransitionPage {
-            G3Header { title: "Rounds" }
-            G3Body { /* page content */ }
+            Header { title: "Rounds" }
+            Content { /* page content */ }
         }
-        G3NavbarTabBar { /* persistent tabs stay still */ }
+        AdaptiveNav { /* persistent tabs stay still */ }
     }
 }
 ```
@@ -189,124 +267,60 @@ rsx! {
 Layout rules:
 
 - **Sheet routes:** a route declared with `layer = sheet` must render
-  `G3Navbar { route_transition_base: false, .. }` (or no navbar) and no
-  `RouteTransitionPage`. Otherwise its content is captured outside the
-  rising overlay. To keep the desktop rail beside the sheet, render the
-  same tabs with `visibility: G3NavbarTabBarVisibility::RailOnly`. Phones
-  hide them, so the sheet still covers the bottom tabs.
+  `TabLayout { route_transition_base: false, .. }` (or no tab layout) and no
+  `RouteTransitionPage`. Otherwise its content is captured outside the rising
+  overlay. To keep the desktop rail beside the sheet, render the same tabs with
+  `AdaptiveNav { compact: AdaptiveNavCompact::Hidden, .. }`. Phones hide them,
+  so the sheet still covers the bottom tabs.
 - **Segmented screens:** leave `RouteTransitionPage` out of screens whose
-  `G3Body` should slide by itself. Inside a page, the whole page moves
-  instead.
-- **Nested wrappers:** `G3AppWrapper` is the overlay region by default. If a
+  `Content` should slide by itself. Inside a page, the whole page moves instead.
+- **Nested wrappers:** `AppWrapper` is the overlay region by default. If a
   documentation shell or other non-navigating wrapper contains a second app
   wrapper, set `route_transition_overlay: false` on the outer one. A document
   may only have one overlay region.
 
-See the `g3-route-transitions` README for the route metadata that decides
-which transition runs.
+See the `g3-route-transitions` README for the route metadata that decides which transition runs.
 
-Without the feature, `g3-ui` does not depend on `g3-route-transitions` and
-does not emit route-transition marker classes.
+Without the feature, `g3-ui` does not depend on `g3-route-transitions` and does not emit
+route-transition marker classes.
 
-## Responsive App Shell
+## Styling
 
-`G3AppWrapper` measures its own available width with a CSS container query. At `48rem` and wider,
-the same `G3Navbar` tree automatically moves `G3NavbarTabBar` from the bottom edge to a compact left
-navigation rail. `G3Header` keeps its start, title, end, and optional segmented-toolbar slots across
-both layouts. Compact desktop headers retain a roomy second toolbar row; at `64rem` the toolbar moves
-inline with the title and actions. Desktop spacing and scrollbars are applied automatically. Bottom
-sheets become compact floating sheets, select options use a desktop-friendly aligned menu, and modal
-dialogs gain a more comfortable desktop width. Toasts also collapse to a readable centred snackbar
-instead of spanning the screen. No resize listener or duplicate responsive state is required.
+All rules live in the `g3` cascade layer, so any unlayered rule in your stylesheet overrides them
+without extra specificity or `!important`. Components accept a `class` prop. `Button`,
+`FabButton`, and `Input` also pass any other HTML attribute through, such as `aria_haspopup` or
+`data-*`. Component state is exposed as `data-state` and
+ARIA attributes (`[data-state="open"]`, `[aria-checked="true"]`) rather than modifier classes.
 
-Because the query follows the shell rather than the browser viewport, a narrow embedded app remains
-in its mobile layout even when it is displayed inside a wide desktop page. Override
-`--g3-navbar-rail-width` on `G3Navbar` if an application needs a wider desktop rail.
+## Upgrading From 0.3
 
-Secondary destinations such as profile or settings can stay at the end of the mobile tab bar while
-moving to the bottom of the desktop rail:
+0.4 renames most of the API. [CHANGELOG.md](CHANGELOG.md) lists every change; the common ones are:
 
-```rust,ignore
-G3NavbarTab {
-    label: "Profile".to_string(),
-    desktop_placement: G3NavbarTabDesktopPlacement::Bottom,
-    // icon, selected, and onclick omitted
-}
-```
-
-The placement only changes the wide rail. Compact bottom tabs retain their declared order.
-
-## Sheet Backdrop
-
-A sheet normally opens over a dimming scrim, and tapping the scrim closes it. Pass
-`G3SheetBackdrop::None` for a sheet that sits over a page the viewer is still using, such as
-comments below a playing video. There is no scrim and no tint, the page behind stays interactive
-and scrollable, and a bottom sheet closes only when its handle is dragged down:
-
-```rust,ignore
-G3Sheet {
-    is_open: comments_open,
-    backdrop: G3SheetBackdrop::None,
-    // sheet content
-}
-```
-
-With `draggable: false` as well, nothing on screen closes the sheet; the app has to set `is_open`
-to `false` itself.
-
-A platform Back button should still close a sheet with no backdrop. Every open dismissible sheet
-renders a hidden `[data-g3-sheet-dismiss]` control for that, and `open_sheet_count()` reports how
-many are open, including sheets whose `is_open` signal a page keeps privately. Pass the count to
-`use_native_back_navigation_with_interception` so Back is claimed while a sheet is up, and click
-the last open sheet's control to close it:
-
-```js
-const dismiss = [
-    ...document.querySelectorAll(".g3-sheet.g3-sheet-open [data-g3-sheet-dismiss]"),
-].pop();
-if (dismiss) {
-    event.preventDefault();
-    dismiss.click();
-}
-```
-
-## Side Sheets
-
-Side sheets support Ionic-style overlay, push, reveal, and persistent menu behavior on either edge.
-The edge owns its behavior in `G3SheetPlacement`, so invalid bottom-sheet/type combinations cannot
-be constructed:
-
-```rust,ignore
-G3Sheet {
-    is_open: menu_open,
-    placement: G3SheetPlacement::Left(G3SideSheetType::Menu),
-    // menu content
-}
-```
-
-`Overlay` moves the sheet above the page, `Push` moves both the sheet and page beneath a dismissible
-scrim, and `Reveal` keeps the sheet stationary while the page moves away. `Menu` is always a square,
-flat navigation rail and resizes the page into the remaining width, without clipping or disabling
-page scrolling and without rendering a dismiss scrim. An app-owned hamburger button should toggle
-its `is_open` signal.
-
-For `Push`, `Reveal`, and `Menu`, render the sheet and one root page element as direct children of
-`G3AppWrapper`; this mirrors Ionic's menu/content sibling structure. `Reveal` casts the moving page's
-shadow back onto the exposed sheet.
+| 0.3 | 0.4 |
+| --- | --- |
+| `G3`-prefixed aliases | unprefixed names only |
+| `G3Body` | `Content` |
+| `G3Navbar`, `G3NavbarTabBar`, `G3NavbarTab` | `TabLayout`, `AdaptiveNav`, `NavItem` |
+| `G3Sheet` with `SheetPlacement` | `BottomSheet`, `SideSheet`, `NavigationDrawer` |
+| `G3Field` | `Input`, `TextArea` |
+| `G3Line`, `G3ItemDivider` | `Divider`, `ListHeader` |
+| `G3SheetButton` | `InfoButton { sheet, .. }` |
+| `G3FabContainer` | `FabMenu` |
+| `ButtonStyle` / `style:` | `ButtonFill` / `fill:` |
+| `is_open`, `active` props | `open`, `value` |
+| `--color-*` variables | `--g3-color-*` |
+| `Theme::with_focused`, `focused` | `Theme::with_accent`, `accent` |
 
 ## Playground
 
 The [deployed interactive component gallery](https://g3ui.g3tech.net/) is built from `playground/`
-inside this repository. It renders every registered component with live controls. Use the MD/iOS
-mode switch alongside the Mobile, Desktop, and Compare viewport controls to inspect the same
-component tree in compact- and wide-shell frames. Every demo has a stable URL such as
-`/components/button`, so documentation can link directly to a specific component instead of
-dropping readers on the gallery home screen.
+inside this repository. It renders every component with live controls. Switch between MD and iOS,
+and between Mobile and Desktop frames, to see the same tree in a compact and a wide shell. Every
+demo has a stable URL such as `/components/button`.
 
 The deployed [`/transitions` showcase](https://g3ui.g3tech.net/transitions) composes the real app
-shell, header, body, navbar, cards, lists, buttons, and segmented controls with
-`g3-route-transitions`, including a routed sheet. Navigation between
-component demos is routed as well, using the same integration a consuming application uses.
+shell, header, content, navigation, cards, lists, buttons, and segmented controls with
+`g3-route-transitions`, including a routed sheet.
 
 When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent
 `[patch.crates-io]` block in `.cargo/config.toml`. Cargo then redirects every
@@ -319,15 +333,15 @@ cd playground
 dx serve
 ```
 
-To just type-check the playground without launching a dev server:
+To type-check the playground without launching a dev server:
 
 ```powershell
 cargo check --manifest-path playground/Cargo.toml
 ```
 
-To regenerate the transition showcase media while the playground is already running on port 8080,
-install the optional capture dependency and run the recording recipe. The tour deliberately settles
-for more than a second between animations so each transition is readable.
+To regenerate the transition showcase media while the playground is running on port 8080, install
+the optional capture dependency and run the recording recipe. The tour pauses for more than a
+second between animations so each transition is readable.
 
 ```powershell
 npm ci --prefix playground

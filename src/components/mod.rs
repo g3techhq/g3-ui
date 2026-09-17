@@ -1,134 +1,161 @@
-//! Flat component module for g3-ui.
+//! Every component, in a flat module tree.
 mod accordion;
-mod accordion_styles;
+mod action_sheet;
+mod alert;
 mod app_wrapper;
-mod body;
-pub(crate) mod body_styles;
+mod avatar;
+mod back_button;
+mod badge;
+mod bottom_sheet;
 mod button;
-pub(crate) mod button_styles;
 mod card;
-mod card_styles;
 mod checkbox;
-mod checkbox_styles;
+mod chip;
+mod color;
 mod confirm_modal;
-mod demo_app;
-mod fab;
-mod fab_styles;
-mod field;
-mod field_styles;
-mod header;
-pub(crate) mod header_styles;
-mod info_button;
-mod info_button_styles;
-mod line;
-mod line_styles;
-mod list;
-mod list_styles;
-mod modal;
-mod modal_styles;
-mod navbar;
-pub(crate) mod navbar_styles;
-pub(crate) mod overlay_scroll;
-mod primitives;
-mod primitives_styles;
-mod radio;
-mod radio_styles;
-mod refresher;
-mod refresher_styles;
-mod segment;
-mod segment_styles;
-mod select;
-mod select_styles;
-mod sheet;
-mod sheet_button;
-mod sheet_styles;
-mod shell_styles;
-mod spinner;
-mod spinner_styles;
-mod toast;
-mod toast_styles;
-mod toggle;
-mod toggle_styles;
-use crate::ComponentDescriptor;
-pub use accordion::*;
-pub use app_wrapper::*;
-pub use body::*;
-pub use button::*;
-pub use card::*;
-pub use checkbox::*;
-pub use confirm_modal::*;
-pub use fab::*;
-pub use field::*;
-pub use header::*;
-pub use info_button::*;
-pub use line::*;
-pub use list::*;
-pub use modal::*;
-pub use navbar::*;
-pub use primitives::*;
-pub use radio::*;
-pub use refresher::*;
-pub use segment::*;
-pub use select::*;
-pub use sheet::*;
-pub use sheet_button::*;
-pub use spinner::*;
-pub use toast::*;
-pub use toggle::*;
-pub fn component_descriptors() -> Vec<ComponentDescriptor> {
-    vec![
-        demo_app::DESCRIPTOR,
-        accordion::DESCRIPTOR,
-        button::DESCRIPTOR,
-        toast::DESCRIPTOR,
-        toggle::DESCRIPTOR,
-        field::DESCRIPTOR,
-        spinner::DESCRIPTOR,
-        line::DESCRIPTOR,
-        list::DESCRIPTOR,
-        refresher::DESCRIPTOR,
-        segment::DESCRIPTOR,
-        card::DESCRIPTOR,
-        checkbox::DESCRIPTOR,
-        sheet::DESCRIPTOR,
-        select::DESCRIPTOR,
-        confirm_modal::DESCRIPTOR,
-        navbar::DESCRIPTOR,
-        primitives::DESCRIPTOR,
-        radio::DESCRIPTOR,
-        header::DESCRIPTOR,
-        body::DESCRIPTOR,
-        fab::DESCRIPTOR,
-        sheet_button::DESCRIPTOR,
-        app_wrapper::DESCRIPTOR,
-    ]
-}
+mod content;
 #[cfg(feature = "playground")]
-pub fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
-    vec![
-        demo_app::PLAYGROUND,
-        accordion::PLAYGROUND,
-        button::PLAYGROUND,
-        toast::PLAYGROUND,
-        toggle::PLAYGROUND,
-        field::PLAYGROUND,
-        spinner::PLAYGROUND,
-        line::PLAYGROUND,
-        list::PLAYGROUND,
-        refresher::PLAYGROUND,
-        segment::PLAYGROUND,
-        card::PLAYGROUND,
-        checkbox::PLAYGROUND,
-        sheet::PLAYGROUND,
-        select::PLAYGROUND,
-        confirm_modal::PLAYGROUND,
-        navbar::PLAYGROUND,
-        primitives::PLAYGROUND,
-        radio::PLAYGROUND,
-        header::PLAYGROUND,
-        body::PLAYGROUND,
-        fab::PLAYGROUND,
-        sheet_button::PLAYGROUND,
-        app_wrapper::PLAYGROUND,
-    ]
+mod demo_app;
+mod divider;
+mod fab;
+mod field;
+mod header;
+mod infinite_scroll;
+mod info_button;
+mod keyboard;
+mod layout;
+mod list;
+mod media;
+mod modal;
+mod nav;
+mod navigation_drawer;
+pub(crate) mod overlay;
+mod overlay_host;
+mod popover;
+pub(crate) mod pressable;
+mod progress;
+mod radio;
+mod range;
+mod refresher;
+mod searchbar;
+mod segment;
+mod select;
+mod sheet;
+mod side_sheet;
+mod skeleton;
+mod spinner;
+mod swipe;
+mod tab_layout;
+mod tabs;
+mod text;
+mod toast;
+mod toggle;
+
+pub use accordion::{AccordionGroup, AccordionItem};
+pub use action_sheet::{ActionSheet, ActionSheetButton};
+pub use alert::{Alert, AlertButton, AlertButtonRole, AlertInput, AlertResult};
+pub use app_wrapper::AppWrapper;
+pub use avatar::{Avatar, AvatarSize};
+pub use back_button::BackButton;
+pub use badge::Badge;
+pub use bottom_sheet::BottomSheet;
+pub use button::{Button, ButtonExpand, ButtonFill, ButtonSize};
+pub use card::Card;
+pub use checkbox::{Checkbox, ControlLabelPlacement};
+pub use chip::Chip;
+pub use color::Color;
+pub use confirm_modal::ConfirmModal;
+pub use content::Content;
+pub use divider::{Divider, DividerOrientation};
+pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
+#[cfg(test)]
+pub(crate) use field::within_typing_limits as field_limits;
+pub use field::{Input, InputType, TextArea};
+pub use header::Header;
+pub(crate) use header::HeaderToolbarContext;
+pub use infinite_scroll::InfiniteScroll;
+pub use info_button::InfoButton;
+pub use layout::{Grid, GridColumns, Space, Stack, StackAlign, StackJustify};
+pub use list::{Item, ItemDetail, List, ListHeader, ListLines};
+pub use media::{Img, ImgFit, Tooltip, TooltipPlacement};
+pub use modal::{Modal, ModalRole, ModalSize};
+pub use nav::{AdaptiveNav, AdaptiveNavCompact, NavBar, NavItem, NavItemGroup, NavRail};
+pub use navigation_drawer::NavigationDrawer;
+pub use overlay_host::{
+    ActionSheetOptions, ActionSheets, AlertOptions, Alerts, ToastId, ToastOptions, Toaster,
+    use_action_sheet, use_alert, use_toast,
+};
+pub use popover::{Menu, MenuItem, Popover, PopoverPlacement};
+pub use pressable::ButtonType;
+pub use progress::Progress;
+pub use radio::{Radio, RadioGroup};
+pub use range::{Range, Stepper};
+pub use refresher::Refresher;
+pub use searchbar::Searchbar;
+pub use segment::{SegmentButton, SegmentGroup};
+pub use select::{Select, SelectOption};
+pub use sheet::{SheetBackdrop, SheetEdge, SideSheetBehavior, open_sheet_count};
+pub use side_sheet::SideSheet;
+pub use skeleton::{Skeleton, SkeletonShape};
+pub use spinner::{Spinner, SpinnerSize};
+pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
+pub use tab_layout::TabLayout;
+pub use tabs::{Tab, TabList, TabPanel, Tabs};
+pub use text::{Text, TextTone, TextVariant};
+pub use toast::{Toast, ToastDuration, ToastPosition};
+pub use toggle::{Toggle, ToggleSize};
+
+/// Declares the gallery: every module that registers a playground entry, in
+/// the order the gallery lists them.
+macro_rules! gallery {
+    ($($module:ident),* $(,)?) => {
+        pub(crate) fn component_descriptors() -> Vec<crate::ComponentDescriptor> {
+            vec![$($module::DESCRIPTOR),*]
+        }
+
+        #[cfg(feature = "playground")]
+        pub(crate) fn component_playground_demos() -> Vec<crate::ComponentPlaygroundDemo> {
+            vec![demo_app::PLAYGROUND, $($module::PLAYGROUND),*]
+        }
+    };
 }
+
+gallery![
+    app_wrapper,
+    content,
+    header,
+    nav,
+    navigation_drawer,
+    button,
+    fab,
+    info_button,
+    popover,
+    field,
+    select,
+    checkbox,
+    toggle,
+    radio,
+    range,
+    searchbar,
+    card,
+    list,
+    layout,
+    media,
+    avatar,
+    badge,
+    chip,
+    divider,
+    progress,
+    skeleton,
+    spinner,
+    accordion,
+    segment,
+    tabs,
+    bottom_sheet,
+    side_sheet,
+    alert,
+    confirm_modal,
+    toast,
+    refresher,
+    infinite_scroll,
+];

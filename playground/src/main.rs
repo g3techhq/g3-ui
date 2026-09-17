@@ -5,8 +5,9 @@ use g3_route_transitions::{
     Platform, RouteTransitions, animated_navigate, set_platform, use_browser_history_transitions,
 };
 use g3_ui::{
-    AppWrapper, ComponentMode, ComponentPlaygroundDemo, G3Theme, SegmentButton, SegmentGroup,
-    Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
+    AppWrapper, Button, ButtonFill, ButtonSize, ComponentMode, ComponentPlaygroundDemo, Header,
+    Item, List, ListLines, NavigationDrawer, SegmentButton, SegmentGroup, Select, SelectOption,
+    SideSheet, Theme as G3Theme, ThemeProvider, component_playground_demos,
 };
 use gloo_timers::future::TimeoutFuture;
 use manganis::{AssetOptions, asset};
@@ -66,7 +67,7 @@ enum Route {
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlaygroundTheme {
     Blue,
     Green,
@@ -74,14 +75,6 @@ pub enum PlaygroundTheme {
     Forest,
 }
 impl PlaygroundTheme {
-    fn from_value(value: &str) -> Self {
-        match value {
-            "Green" | "green" | "Fairway" | "fairway" => Self::Green,
-            "Night" | "night" | "Twilight" | "twilight" => Self::Night,
-            "Forest" | "forest" | "Terminal" | "terminal" => Self::Forest,
-            _ => Self::Blue,
-        }
-    }
     fn label(self) -> &'static str {
         match self {
             Self::Blue => "Blue",
@@ -98,60 +91,52 @@ impl PlaygroundTheme {
     fn to_theme(self) -> G3Theme {
         match self {
             Self::Blue => G3Theme {
-                focused: "#2563eb".into(),
+                accent: "#2563eb".into(),
                 bg: "#eef5ff".into(),
                 bg_secondary: "#dbeafe".into(),
-                card_inset: "#f8fbff".into(),
                 control: "#eaf2ff".into(),
-                card_border: "rgba(37, 99, 235, 0.2)".into(),
-                label_primary: "#102033".into(),
-                label_secondary: "#496278".into(),
+                border: "rgba(37, 99, 235, 0.2)".into(),
+                text_tertiary: "#496278".into(),
                 text: "#102033".into(),
                 text_secondary: "#53677f".into(),
                 shadow: "rgba(30, 64, 175, 0.16)".into(),
                 ..G3Theme::default_light()
             },
             Self::Green => G3Theme {
-                focused: "#1f7a4d".into(),
+                accent: "#1f7a4d".into(),
                 bg: "#edf7f0".into(),
                 bg_secondary: "#dceee2".into(),
-                card_inset: "#f5fbf7".into(),
                 control: "#e5f3ea".into(),
-                card_border: "rgba(31, 122, 77, 0.24)".into(),
-                label_primary: "#12251a".into(),
-                label_secondary: "#4d6657".into(),
+                border: "rgba(31, 122, 77, 0.24)".into(),
+                text_tertiary: "#4d6657".into(),
                 text: "#12251a".into(),
                 text_secondary: "#52685c".into(),
                 shadow: "rgba(24, 74, 47, 0.16)".into(),
                 ..G3Theme::default_light()
             },
             Self::Night => G3Theme {
-                focused: "#7dd3fc".into(),
+                accent: "#7dd3fc".into(),
                 bg: "#07111f".into(),
                 bg_secondary: "#0e1b2e".into(),
                 card: "#111d2e".into(),
-                card_inset: "#172438".into(),
                 surface: "#101a2b".into(),
                 control: "#1b2a40".into(),
-                card_border: "rgba(148, 163, 184, 0.24)".into(),
-                label_primary: "#e5edf6".into(),
-                label_secondary: "#b8c7d8".into(),
+                border: "rgba(148, 163, 184, 0.24)".into(),
+                text_tertiary: "#b8c7d8".into(),
                 text: "#e5edf6".into(),
                 text_secondary: "#9fb0c3".into(),
                 shadow: "rgba(0, 0, 0, 0.54)".into(),
                 ..G3Theme::default_dark()
             },
             Self::Forest => G3Theme {
-                focused: "#34d399".into(),
+                accent: "#34d399".into(),
                 bg: "#050806".into(),
                 bg_secondary: "#0b130d".into(),
                 card: "#101811".into(),
-                card_inset: "#162218".into(),
                 surface: "#0e1610".into(),
                 control: "#18241b".into(),
-                card_border: "rgba(134, 239, 172, 0.2)".into(),
-                label_primary: "#e6f4e8".into(),
-                label_secondary: "#b8d4bd".into(),
+                border: "rgba(134, 239, 172, 0.2)".into(),
+                text_tertiary: "#b8d4bd".into(),
                 text: "#e6f4e8".into(),
                 text_secondary: "#9eb5a4".into(),
                 shadow: "rgba(0, 0, 0, 0.62)".into(),
@@ -160,25 +145,19 @@ impl PlaygroundTheme {
         }
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlaygroundViewport {
     Mobile,
     Desktop,
 }
 #[derive(Clone, Copy)]
 struct PlaygroundSettings {
-    mode_index: Signal<usize>,
-    viewport_index: Signal<usize>,
-    theme_value: Signal<String>,
+    mode: Signal<ComponentMode>,
+    viewport: Signal<PlaygroundViewport>,
+    theme: Signal<PlaygroundTheme>,
 }
 
 impl PlaygroundViewport {
-    fn from_index(index: usize) -> Self {
-        match index {
-            1 => Self::Desktop,
-            _ => Self::Mobile,
-        }
-    }
     fn as_str(self) -> &'static str {
         match self {
             Self::Mobile => "mobile",
@@ -250,33 +229,23 @@ fn App() -> Element {
 #[component]
 fn Playground() -> Element {
     let demos = component_playground_demos();
-    let mode_index = use_signal(|| 0_usize);
-    let viewport_index = use_signal(|| 0_usize);
+    let mode = use_signal(|| ComponentMode::Md);
+    let viewport = use_signal(|| PlaygroundViewport::Mobile);
     // Open from the first paint on a wide shell, where the drawer is a
     // persistent `Menu` that reserves its own space beside the page. Closed on
     // a phone, where it is a dismissible `Overlay` summoned from the header.
     let mut selector_open = use_signal(|| !initial_compact_shell().unwrap_or(true));
     let source_value = use_signal(Vec::<String>::new);
-    let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
+    let theme = use_signal(|| PlaygroundTheme::Blue);
     let mut playing = use_signal(|| false);
     let current_route: Route = use_route();
     let selected = selected_demo(&demos, &current_route);
     let showing_transitions = current_route.is_transition_showcase();
     let count = demos.len() + 1;
-    let active_mode = if mode_index() == 1 {
-        ComponentMode::Ios
-    } else {
-        ComponentMode::Md
-    };
-    let active_theme = PlaygroundTheme::from_value(&theme_value());
-    let active_viewport = PlaygroundViewport::from_index(viewport_index());
+    let active_mode = mode();
+    let active_viewport = viewport();
     let compact_shell = use_compact_shell();
     let is_compact = compact_shell().unwrap_or(false);
-    let selector_side_type = if is_compact {
-        g3_ui::SideSheetType::Overlay
-    } else {
-        g3_ui::SideSheetType::Menu
-    };
     set_platform(match active_mode {
         ComponentMode::Ios => Platform::Ios,
         ComponentMode::Md => Platform::Material,
@@ -321,30 +290,43 @@ fn Playground() -> Element {
     let theme_options = PlaygroundTheme::all()
         .iter()
         .copied()
-        .map(|theme| SelectOption::from((theme.label(), theme.label())))
+        .map(|theme| SelectOption::new(theme, theme.label()))
         .collect::<Vec<_>>();
     provide_context(PlaygroundSettings {
-        mode_index,
-        viewport_index,
-        theme_value,
+        mode,
+        viewport,
+        theme,
     });
+    let selector = rsx! {
+        div { class: "playground-sidebar-header",
+            h2 { "g3_ui" }
+            div { class: "subtitle", "{count} demos" }
+        }
+        PlaygroundNav {
+            demos: demos.clone(),
+            current_route: current_route.clone(),
+            selector_open,
+            dismiss_on_select: is_compact,
+        }
+    };
     rsx! {
         AppWrapper {
-            theme: active_theme.to_theme(),
+            theme: theme().to_theme(),
             mode: active_mode,
             class: "playground-root",
             layout: false,
             route_transition_overlay: false,
             div { class: "playground-page",
-                g3_ui::Header {
+                Header {
                     title: page_title,
                     mode: active_mode,
                     class: "playground-header",
-                    start_button: rsx! {
-                        g3_ui::Button {
-                            style: g3_ui::ButtonStyle::Clear,
-                            size: g3_ui::ButtonSize::Sm,
-                            aria_label: "Toggle component menu".to_string(),
+                    start: rsx! {
+                        Button {
+                            fill: ButtonFill::Clear,
+                            size: ButtonSize::Sm,
+                            aria_label: "Toggle component menu",
+                            aria_expanded: selector_open(),
                             class: "playground-menu-button",
                             onclick: move |_| selector_open.toggle(),
                             span { class: "playground-menu-icon", aria_hidden: "true",
@@ -354,18 +336,18 @@ fn Playground() -> Element {
                             }
                         }
                     },
-                    end_button: rsx! {
-                        Select { value: theme_value, mode: active_mode, options: theme_options }
+                    end: rsx! {
+                        Select { value: theme, aria_label: "Theme", options: theme_options }
                     },
                     toolbar: rsx! {
                         div { class: "playground-header-toggles",
-                            SegmentGroup { active: mode_index, mode: active_mode,
-                                SegmentButton { index: 0, mode: active_mode, "MD" }
-                                SegmentButton { index: 1, mode: active_mode, "iOS" }
+                            SegmentGroup { value: mode, aria_label: "Platform",
+                                SegmentButton { value: ComponentMode::Md, "MD" }
+                                SegmentButton { value: ComponentMode::Ios, "iOS" }
                             }
-                            SegmentGroup { active: viewport_index, mode: active_mode,
-                                SegmentButton { index: 0, mode: active_mode, "Mobile" }
-                                SegmentButton { index: 1, mode: active_mode, "Desktop" }
+                            SegmentGroup { value: viewport, aria_label: "Viewport",
+                                SegmentButton { value: PlaygroundViewport::Mobile, "Mobile" }
+                                SegmentButton { value: PlaygroundViewport::Desktop, "Desktop" }
                             }
                         }
                     },
@@ -374,9 +356,9 @@ fn Playground() -> Element {
                     div { class: "playground-intro",
                         p { class: "playground-description", "{page_description}" }
                         if showing_transitions {
-                            g3_ui::Button {
+                            Button {
                                 disabled: playing(),
-                                aria_label: "Play every route transition".to_string(),
+                                aria_label: "Play every route transition",
                                 onclick: play_all,
                                 if playing() { "Playing tour…" } else { "Play transition tour" }
                             }
@@ -399,20 +381,21 @@ fn Playground() -> Element {
                     }
                 }
             }
-            Sheet {
-                is_open: selector_open,
-                placement: SheetPlacement::Left(selector_side_type),
-                mode: active_mode,
-                class: "playground-selector-sheet",
-                div { class: "playground-sidebar-header",
-                    h2 { "g3_ui" }
-                    div { class: "subtitle", "{count} demos" }
+            // A phone has no room to keep the menu beside the page, so it
+            // becomes a dismissible sheet there.
+            if is_compact {
+                SideSheet {
+                    open: selector_open,
+                    aria_label: "Components",
+                    class: "playground-selector-sheet",
+                    {selector}
                 }
-                PlaygroundNav {
-                    demos: demos.clone(),
-                    current_route,
-                    selector_open,
-                    dismiss_on_select: is_compact,
+            } else {
+                NavigationDrawer {
+                    open: selector_open,
+                    aria_label: "Components",
+                    class: "playground-selector-sheet",
+                    {selector}
                 }
             }
         }
@@ -468,16 +451,7 @@ fn selected_demo(demos: &[ComponentPlaygroundDemo], route: &Route) -> ComponentP
 
 fn active_playground_settings() -> (ComponentMode, PlaygroundTheme, PlaygroundViewport) {
     let settings = use_context::<PlaygroundSettings>();
-    let mode = if (settings.mode_index)() == 1 {
-        ComponentMode::Ios
-    } else {
-        ComponentMode::Md
-    };
-    (
-        mode,
-        PlaygroundTheme::from_value(&(settings.theme_value)()),
-        PlaygroundViewport::from_index((settings.viewport_index)()),
-    )
+    ((settings.mode)(), (settings.theme)(), (settings.viewport)())
 }
 
 #[component]
@@ -570,8 +544,7 @@ fn PlaygroundViewportDemo(
             div {
                 class: "playground-viewport-demo",
                 "data-g3-mode": mode.as_str(),
-                g3_ui::G3ThemeProvider { mode, theme: theme
-                            .to_theme(),
+                ThemeProvider { mode, theme: theme.to_theme(),
                     RenderSelectedDemo { demo, mode, theme }
                 }
             }
@@ -627,7 +600,7 @@ fn PlaygroundNav(
         .collect::<Vec<_>>();
     component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
     rsx! {
-        g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
+        List { class: "playground-nav", lines: ListLines::None,
             if let Some(demo) = demo_app {
                 ComponentNavButton {
                     demo,
@@ -636,11 +609,10 @@ fn PlaygroundNav(
                     dismiss_on_select,
                 }
             }
-            g3_ui::Item {
-                kind: g3_ui::ItemKind::Button,
+            Item {
                 selected: current_route.is_transition_showcase(),
-                label: "Route transitions".to_string(),
-                description: "Navigation showcase".to_string(),
+                label: "Route transitions",
+                description: "Navigation showcase",
                 onclick: move |_| async move {
                     if dismiss_on_select {
                         selector_open.set(false);
@@ -681,8 +653,7 @@ fn ComponentNavButton(
         Route::ComponentDemo { slug: selected_slug } if selected_slug == &slug
     );
     rsx! {
-        g3_ui::Item {
-            kind: g3_ui::ItemKind::Button,
+        Item {
             selected: is_selected,
             label: demo.descriptor.name.to_string(),
             onclick: move |_| {
@@ -702,9 +673,8 @@ mod tests {
     use super::{PlaygroundViewport, demo_slug, playground_demo_source};
     #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
-        assert_eq!(PlaygroundViewport::from_index(0).as_str(), "mobile");
-        assert_eq!(PlaygroundViewport::from_index(1).as_str(), "desktop");
-        assert_eq!(PlaygroundViewport::from_index(2).as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::Mobile.as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::Desktop.as_str(), "desktop");
     }
     #[test]
     fn source_panel_extracts_only_playground_demo_function() {

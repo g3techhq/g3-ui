@@ -1,116 +1,139 @@
-//! Header component with start/end buttons and an optional toolbar.
-use super::header_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! The top bar of a page.
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+
+/// Marks content rendered inside a header's toolbar row, so a
+/// [`SegmentGroup`](crate::SegmentGroup) there can use its toolbar layout.
 #[derive(Clone, Copy)]
 pub(crate) struct HeaderToolbarContext;
+
 #[component]
-fn HeaderToolbarContextProvider(children: Element) -> Element {
-    provide_context(HeaderToolbarContext);
+fn ToolbarContextProvider(children: Element) -> Element {
+    use_hook(|| provide_context(HeaderToolbarContext));
     rsx! {
         {children}
     }
 }
+
+/// The top bar of a page: a title between `start` and `end` slots, with an
+/// optional toolbar row below. Like Ionic's `ion-header` with an
+/// `ion-toolbar`.
+///
+/// On shells `64rem` and wider, the toolbar moves into the title row.
+///
+/// ```rust,ignore
+/// rsx! {
+///     Header {
+///         title: "Round",
+///         start: rsx! { BackButton {} },
+///         end: rsx! { Button { fill: ButtonFill::Clear, "Save" } },
+///         toolbar: rsx! {
+///             SegmentGroup { value: tab,
+///                 SegmentButton { value: Tab::Card, "Card" }
+///                 SegmentButton { value: Tab::Stats, "Stats" }
+///             }
+///         },
+///     }
+/// }
+/// ```
 #[component]
 pub fn Header(
-    title: String,
-    /// Small element (e.g. an icon) rendered inline right after the title
-    /// text — for a status indicator that belongs with the title itself
-    /// rather than off in the end-button slot.
-    title_icon: Option<Element>,
-    start_button: Option<Element>,
-    end_button: Option<Element>,
+    /// The page title, rendered as the page's `h1`.
+    title: Option<String>,
+    /// Custom title content, used instead of `title`.
+    title_content: Option<Element>,
+    /// Rendered right after the title, such as a status badge.
+    title_end: Option<Element>,
+    /// Leading slot, usually a [`BackButton`](crate::BackButton) or menu button.
+    start: Option<Element>,
+    /// Trailing slot for page actions.
+    end: Option<Element>,
+    /// A second row, usually a [`SegmentGroup`](crate::SegmentGroup) or
+    /// [`Searchbar`](crate::Searchbar).
     toolbar: Option<Element>,
-    class: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Extra classes for the `header` element.
+    class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let has_toolbar = toolbar.is_some();
-    let header_cls = match mode {
-        ComponentMode::Ios => format!("{} {}", s::HEADER_BASE, s::HEADER_IOS),
-        ComponentMode::Md => format!("{} {}", s::HEADER_BASE, s::HEADER_MD),
-    };
-    let header_cls = merge_classes(header_cls, has_toolbar.then_some(s::HEADER_WITH_TOOLBAR));
+    let header_cls = classes([
+        "g3-header",
+        mode.pick("g3-header-ios", "g3-header-md"),
+        if toolbar.is_some() {
+            "g3-header-with-toolbar"
+        } else {
+            ""
+        },
+    ]);
     rsx! {
-        header { class: merge_classes(&header_cls, class.as_deref()),
-            div { class: s::HEADER_ROW,
-                div { class: s::HEADER_START_SLOT,
-                    if let Some(start) = start_button {
-                        {start}
+        header { class: merge_classes(header_cls, class.as_deref()),
+            div { class: "g3-header-row",
+                div { class: "g3-header-slot g3-header-start-slot", {start} }
+                h1 { class: "g3-header-title",
+                    if let Some(content) = title_content {
+                        {content}
+                    } else if let Some(title) = title {
+                        span { class: "g3-header-title-text", "{title}" }
                     }
+                    {title_end}
                 }
-                h1 { class: s::HEADER_TITLE,
-                    span { class: s::HEADER_TITLE_TEXT, "{title}" }
-                    if let Some(icon) = title_icon {
-                        {icon}
-                    }
-                }
-                div { class: s::HEADER_END_SLOT,
-                    if let Some(end) = end_button {
-                        {end}
-                    }
-                }
+                div { class: "g3-header-slot g3-header-end-slot", {end} }
             }
-            if let Some(t) = toolbar {
-                div { class: s::TOOLBAR,
-                    HeaderToolbarContextProvider { {t} }
+            if let Some(toolbar) = toolbar {
+                div { class: "g3-header-toolbar",
+                    ToolbarContextProvider { {toolbar} }
                 }
             }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn HeaderPlaygroundDemo() -> Element {
-    let active = use_signal(|| 0_usize);
+fn HeaderPlaygroundDemo() -> Element {
+    let tab = use_signal(|| 0_usize);
     let title = use_signal(|| "Pending Game".to_string());
     let toolbar = use_signal(|| true);
-    let start_button = use_signal(|| true);
-    let end_button = use_signal(|| true);
-    let start_text = use_signal(|| "Close".to_string());
-    let end_text = use_signal(|| "Create".to_string());
-    let playground_mode = crate::use_component_mode(None);
-    let toolbar_slot = toolbar().then(|| {
-        rsx! {
-            crate::SegmentGroup { active,
-                crate::SegmentButton { index: 0, "Players" }
-                crate::SegmentButton { index: 1, "Bet" }
-            }
-        }
-    });
+    let show_start = use_signal(|| true);
+    let show_end = use_signal(|| true);
+    let mode = crate::use_component_mode(None);
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                crate::Field { label: "Title".to_string(), value: title }
-                crate::Checkbox { checked: start_button, label: "Start button".to_string() }
-                crate::Field { label: "Start text".to_string(), value: start_text }
-                crate::Checkbox { checked: end_button, label: "End button".to_string() }
-                crate::Field { label: "End text"
-                            .to_string(), value: end_text }
-                crate::Checkbox { checked: toolbar, label: "Toolbar".to_string() }
+                crate::Input { label: "Title", value: title }
+                crate::Checkbox { checked: show_start, label: "Back button" }
+                crate::Checkbox { checked: show_end, label: "End action" }
+                crate::Checkbox { checked: toolbar, label: "Toolbar" }
             },
-            crate::AppWrapper { mode: playground_mode, class: "g3-playground-device-app",
+            crate::AppWrapper { mode, class: "g3-playground-device-app",
                 Header {
                     title: title(),
-                    start_button: start_button().then(|| rsx! {
-                        crate::Button { style: crate::ButtonStyle::Clear, onclick: |_| {}, "{start_text()}" }
+                    start: show_start().then(|| rsx! {
+                        crate::BackButton { onclick: |_| {} }
                     }),
-                    end_button: end_button().then(|| rsx! {
-                        crate::Button { style: crate::ButtonStyle::Outline, onclick: |_| {}, "{end_text()}" }
+                    end: show_end().then(|| rsx! {
+                        crate::Button { fill: crate::ButtonFill::Clear, "Create" }
                     }),
-                    toolbar: toolbar_slot,
+                    toolbar: toolbar().then(|| rsx! {
+                        crate::SegmentGroup { value: tab,
+                            crate::SegmentButton { value: 0_usize, "Players" }
+                            crate::SegmentButton { value: 1_usize, "Bets" }
+                        }
+                    }),
                 }
-                crate::Body { has_footer_space: false,
-                    crate::Card { title: "Preview", "Toolbar stays attached to the header." }
+                crate::Content { footer_space: false,
+                    crate::Card { title: "Preview", "The toolbar stays attached to the header." }
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Header",
-    description: "App header with start, title, end, and toolbar slots.",
+    description: "Page top bar with start, title, end, and toolbar slots.",
     demo: HeaderPlaygroundDemo,
     source: "src/components/header.rs",
 }
