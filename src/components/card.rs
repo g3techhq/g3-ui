@@ -3,6 +3,19 @@ use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
+/// How a [`Card`] separates itself from the page.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum CardVariant {
+    /// Lifted off the page with a shadow.
+    #[default]
+    Raised,
+    /// Level with the page, outlined by a border instead of a shadow.
+    Flat,
+    /// Level with the page on a tinted surface, for cards grouped inside
+    /// another surface.
+    Filled,
+}
+
 /// A content container with an optional title, subtitle, trailing content,
 /// and media. Like Ionic's `ion-card`.
 ///
@@ -32,8 +45,8 @@ pub fn Card(
     end: Option<Element>,
     /// Content above everything else, usually an image, drawn edge to edge.
     media: Option<Element>,
-    /// Draw the card on a recessed, nested surface.
-    inset: Option<bool>,
+    /// Surface treatment. Defaults to [`CardVariant::Raised`].
+    variant: Option<CardVariant>,
     /// Highlight the card as chosen. Exposed as `aria-pressed` on a tappable
     /// card.
     selected: Option<bool>,
@@ -63,10 +76,10 @@ pub fn Card(
     let cls = classes([
         "g3-card",
         mode.pick("g3-card-ios", "g3-card-md"),
-        if inset.unwrap_or(false) {
-            "g3-card-inset"
-        } else {
-            ""
+        match variant.unwrap_or_default() {
+            CardVariant::Raised => "",
+            CardVariant::Flat => "g3-card-flat",
+            CardVariant::Filled => "g3-card-filled",
         },
         if selected { "g3-card-selected" } else { "" },
         if interactive {
@@ -147,7 +160,7 @@ pub fn Card(
 #[component]
 fn CardPlaygroundDemo() -> Element {
     let title = use_signal(|| "Saturday four-ball".to_string());
-    let inset = use_signal(|| false);
+    let variant = use_signal(|| CardVariant::Raised);
     let mut selected = use_signal(|| false);
     let interactive = use_signal(|| true);
     rsx! {
@@ -155,13 +168,17 @@ fn CardPlaygroundDemo() -> Element {
             center: false,
             controls: rsx! {
                 crate::Input { label: "Title", value: title }
-                crate::Checkbox { checked: inset, label: "Inset" }
-                crate::Checkbox { checked: interactive, label: "Tappable" }
+                crate::SegmentGroup { value: variant, aria_label: "Variant",
+                    crate::SegmentButton { value: CardVariant::Raised, "Raised" }
+                    crate::SegmentButton { value: CardVariant::Flat, "Flat" }
+                    crate::SegmentButton { value: CardVariant::Filled, "Filled" }
+                }
+                crate::Checkbox { checked: interactive, label: "Selectable" }
             },
             Card {
                 title: title(),
                 subtitle: "Tee time 8:10",
-                inset: inset(),
+                variant: variant(),
                 selected: selected(),
                 onclick: interactive().then(|| EventHandler::new(move |_| selected.toggle())),
                 end: rsx! {

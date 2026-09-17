@@ -76,7 +76,10 @@ fn side_sheets_use_logical_edges_and_behaviours() {
     assert!(sheet.contains("g3-sheet-end"));
     assert!(sheet.contains("g3-sheet-push"));
     assert!(sheet.contains("--g3-side-sheet-width: 20rem;"));
-    assert!(element_with_class(&html, "g3-sheet-backdrop").contains("g3-sheet-push"));
+    // The scrim fades; only the behaviour class reaches it, not the slide.
+    let backdrop = element_with_class(&html, "g3-sheet-backdrop");
+    assert!(backdrop.contains("g3-sheet-push"));
+    assert!(!backdrop.contains("g3-sheet-side"));
 }
 
 #[test]
@@ -219,4 +222,19 @@ fn app_wrapper_hosts_code_opened_overlays() {
     assert!(html.contains("First"));
     assert!(!html.contains("Second"));
     assert!(html.contains("g3-toast-host"));
+}
+
+#[test]
+fn a_low_detent_leaves_the_page_usable() {
+    fn app() -> Element {
+        let open = use_signal(|| true);
+        rsx! {
+            BottomSheet { open, detents: vec![0.2, 1.0], backdrop_detent: 1, "Results" }
+        }
+    }
+    let html = render(app);
+    let sheet = element_with_class(&html, "g3-sheet");
+    assert!(sheet.contains("aria-modal=\"false\""));
+    assert!(sheet.contains("data-detents=\"[0.2, 1.0]\""));
+    assert!(element_with_class(&html, "g3-sheet-backdrop").contains("data-state=\"closed\""));
 }

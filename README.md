@@ -109,6 +109,27 @@ rsx! {
 `Select`, `RadioGroup`, `SegmentGroup`, `Tabs`, and `AccordionGroup` are generic over the value
 type, so options can be your own enums instead of strings or indexes.
 
+## Pull to Refresh
+
+Give `Content` an `on_refresh` handler and it refreshes when pulled down from the top. Keep
+`refreshing` true while the work runs:
+
+```rust,ignore
+let mut refreshing = use_signal(|| false);
+
+rsx! {
+    Content {
+        refreshing: refreshing(),
+        on_refresh: move |_| async move {
+            refreshing.set(true);
+            reload().await;
+            refreshing.set(false);
+        },
+        RoundList {}
+    }
+}
+```
+
 ## Overlays From Code
 
 Toasts, alerts, and action sheets can be opened from an event handler without declaring them in
@@ -180,6 +201,10 @@ so an app embedded in a narrow frame keeps its phone layout. At `48rem` and wide
 
 At `64rem` the `Header` toolbar moves inline with the title.
 
+`Grid` takes `wide_columns` and `wide_gap` for the same breakpoint, and
+`Content { width: ContentWidth::Readable }` keeps text at a comfortable width on a wide shell
+while its scrollbar stays at the page edge.
+
 ```rust,ignore
 rsx! {
     TabLayout {
@@ -200,10 +225,11 @@ hides the phone tab bar, for full-screen routes. Set `--g3-nav-rail-width` to wi
 
 ## Sheets and Drawers
 
-`BottomSheet` rises from the bottom edge. It can snap between heights:
+`BottomSheet` rises from the bottom edge. It can rest at several heights, given as fractions of
+the app's height. With `backdrop_detent`, the page stays usable while the sheet is low:
 
 ```rust,ignore
-BottomSheet { open: filters_open, title: "Filters", detents: vec![0.4, 0.9],
+BottomSheet { open: results_open, detents: vec![0.2, 0.5, 1.0], backdrop_detent: 2,
     /* content */
 }
 ```
@@ -307,6 +333,9 @@ ARIA attributes (`[data-state="open"]`, `[aria-checked="true"]`) rather than mod
 | `G3SheetButton` | `InfoButton { sheet, .. }` |
 | `G3FabContainer` | `FabMenu` |
 | `ButtonStyle` / `style:` | `ButtonFill` / `fill:` |
+| `Card { inset }` | `Card { variant: CardVariant::Filled }` |
+| `List { inset }` | `List { variant: ListVariant::Grouped }` |
+| `SwipeItem { behavior }` | `start_behavior`, `end_behavior` |
 | `is_open`, `active` props | `open`, `value` |
 | `--color-*` variables | `--g3-color-*` |
 | `Theme::with_focused`, `focused` | `Theme::with_accent`, `accent` |

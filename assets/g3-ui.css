@@ -27,7 +27,8 @@
     --g3-color-border: #c5cad3;
     --g3-color-shadow: rgba(15, 23, 42, 0.14);
     --g3-color-success: #067647;
-    --g3-color-warning: #b54708;
+    --g3-color-warning: #f5b400;
+    --g3-color-on-warning: #1f1a00;
     --g3-color-danger: #d92d20;
 
     --g3-shadow-ios-card: 0 4px 16px rgba(0, 0, 0, 0.12);
@@ -44,6 +45,11 @@
     --g3-transition-fast: 0.15s;
     --g3-transition-ios: cubic-bezier(0.3, 0.95, 0.75, 0.95);
     --g3-transition-md: ease-out;
+    /* Sheets travel further than controls change, so they get a longer,
+       softer curve, the one Ionic uses for its sheet modal. */
+    --g3-sheet-duration: 0.5s;
+    --g3-sheet-easing: cubic-bezier(0.32, 0.72, 0, 1);
+    --g3-backdrop-duration: 0.3s;
 
     /* Overlay stacking order. Toasts sit above dialogs, dialogs above
        sheets, so a confirmation raised from a sheet is never hidden. */
@@ -52,6 +58,14 @@
     --g3-z-sheet: 90;
     --g3-z-modal: 100;
     --g3-z-toast: 110;
+}
+
+/* Derived tokens. Declared wherever a theme can be applied, so they mix the
+   theme in effect there rather than the root defaults. */
+:root,
+.g3-app,
+.g3-theme-provider {
+    --g3-color-warning-ink: color-mix(in srgb, var(--g3-color-warning) 40%, var(--g3-color-text));
 }
 
 /* ThemeProvider carries tokens without adding a box of its own. */
@@ -180,6 +194,13 @@ body.g3-overlay-scroll-locked {
 
 .g3-btn-warning {
     --g3-btn-color: var(--g3-color-warning);
+    --g3-btn-on-color: var(--g3-color-on-warning);
+}
+
+/* Yellow text is unreadable on a light page, so outline and clear warning
+   buttons darken it toward the text colour. */
+.g3-btn-warning:is(.g3-btn-outline, .g3-btn-clear) {
+    color: var(--g3-color-warning-ink);
 }
 
 .g3-btn-danger {
@@ -207,6 +228,16 @@ body.g3-overlay-scroll-locked {
     background: transparent;
     color: var(--g3-btn-color);
     border: 2px solid var(--g3-btn-color);
+}
+
+/* A neutral outline is a quiet secondary action: a hairline, not a slab of
+   text colour. */
+.g3-btn-outline.g3-btn-neutral {
+    border-color: var(--g3-color-border);
+}
+
+.g3-btn-outline.g3-btn-neutral:hover:not(:disabled, [aria-disabled="true"]) {
+    background: color-mix(in srgb, var(--g3-color-text) 5%, transparent);
 }
 
 .g3-btn-clear {
@@ -662,6 +693,28 @@ body.g3-overlay-scroll-locked {
     display: none;
 }
 
+.g3-segment-scrollable::-webkit-scrollbar {
+    display: none;
+}
+
+.g3-segment-scrollable[data-dragging="true"] {
+    cursor: grabbing;
+    user-select: none;
+}
+
+/* Fade whichever edge has more buttons past it. */
+.g3-segment-scrollable[data-overflow-end="true"] {
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
+.g3-segment-scrollable[data-overflow-start="true"] {
+    mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
+.g3-segment-scrollable[data-overflow-start="true"][data-overflow-end="true"] {
+    mask-image: linear-gradient(to right, transparent, rgba(0, 0, 0, 1) 2.5rem, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
 .g3-segment-scrollable > .g3-segment-btn-ios,
 .g3-segment-scrollable > .g3-segment-btn-md {
     flex: 0 0 auto;
@@ -733,6 +786,11 @@ body.g3-overlay-scroll-locked {
 
 .g3-field-error {
     color: var(--g3-color-danger);
+}
+
+/* The positioning box for the start and end adornments. */
+.g3-field-control {
+    position: relative;
 }
 
 .g3-field-start,
@@ -1042,15 +1100,6 @@ textarea.g3-input {
     border-color: transparent;
 }
 
-.g3-searchbar-cancel {
-    flex: 0 0 auto;
-    padding: 0.25rem;
-    border: 0;
-    background: transparent;
-    color: var(--g3-color-accent);
-    font: inherit;
-    cursor: pointer;
-}
 /* -- Checkbox, toggle, and radio --
 
    Each is a whole-row control: the control mark, a label, and optional
@@ -1470,13 +1519,8 @@ textarea.g3-input {
    text colour darkens light themes and lightens dark ones alike. */
 .g3-card .g3-card,
 .g3-sheet-bottom .g3-card,
-.g3-card-inset {
-    --g3-card-surface: color-mix(in srgb, var(--g3-color-text) 7%, var(--g3-color-card));
-}
-
-.g3-card-inset {
-    margin-bottom: 0.5rem;
-    padding: 0.75rem;
+.g3-card-filled {
+    --g3-card-surface: color-mix(in srgb, var(--g3-color-text) 6%, var(--g3-color-card));
 }
 
 .g3-card-header {
@@ -1590,6 +1634,23 @@ textarea.g3-input {
     box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
 }
 
+/* Flat and filled cards sit level with the page: no elevation, and no press
+   shadow either. These follow the platform rules so they win over them. */
+.g3-card.g3-card-flat,
+.g3-card.g3-card-filled,
+.g3-card:is(.g3-card-flat, .g3-card-filled).g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
+    box-shadow: none;
+}
+
+.g3-card-flat {
+    border: 1px solid var(--g3-color-border);
+}
+
+.g3-card.g3-card-flat.g3-card-selected,
+.g3-card.g3-card-filled.g3-card-selected {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
     .g3-card {
         transition: none;
@@ -1615,8 +1676,8 @@ textarea.g3-input {
     background: var(--g3-color-card);
     color: var(--g3-color-text);
     outline: none;
-    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
-                visibility 0s linear var(--g3-transition-normal);
+    transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
+                visibility 0s linear var(--g3-sheet-duration);
 }
 
 .g3-sheet {
@@ -1655,7 +1716,7 @@ textarea.g3-input {
     -webkit-tap-highlight-color: transparent;
     background-color: rgba(0, 0, 0, 0.5);
     cursor: pointer;
-    transition: opacity var(--g3-transition-normal) var(--g3-transition-md);
+    transition: opacity var(--g3-backdrop-duration) ease;
 }
 
 .g3-sheet-backdrop[data-state="open"] {
@@ -1731,10 +1792,14 @@ textarea.g3-input {
 }
 
 .g3-sheet-bottom[data-detent] {
-    height: calc(var(--g3-sheet-detent, 1) * var(--g3-sheet-detent-max, 88dvh));
-    transition: transform var(--g3-transition-normal) var(--g3-transition-md),
-                height var(--g3-transition-normal) var(--g3-transition-md),
-                visibility 0s linear var(--g3-transition-normal);
+    /* Percentages resolve against the app shell, the sheet's containing
+       block, so a detent of 0.9 is 90% of the app rather than of the browser
+       window. The ceiling leaves the status bar clear. */
+    height: calc(var(--g3-sheet-detent, 1) * var(--g3-sheet-detent-max, calc(100% - max(env(safe-area-inset-top), 0.75rem))));
+    max-height: calc(100% - max(env(safe-area-inset-top), 0.75rem));
+    transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
+                height var(--g3-sheet-duration) var(--g3-sheet-easing),
+                visibility 0s linear var(--g3-sheet-duration);
 }
 
 .g3-sheet-bottom[data-state="closed"] {
@@ -1850,8 +1915,8 @@ textarea.g3-input {
     > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
     position: relative;
     z-index: 1;
-    transition: translate var(--g3-transition-normal) var(--g3-transition-md),
-                box-shadow var(--g3-transition-normal) var(--g3-transition-md);
+    transition: translate var(--g3-sheet-duration) var(--g3-sheet-easing),
+                box-shadow var(--g3-sheet-duration) var(--g3-sheet-easing);
 }
 
 .g3-app:has(> .g3-sheet-start:is(.g3-sheet-push, .g3-sheet-reveal)[data-state="open"])
@@ -1908,8 +1973,8 @@ textarea.g3-input {
     width: 100%;
     min-width: 0;
     margin-inline: 0;
-    transition: width var(--g3-transition-normal) var(--g3-transition-md),
-                margin var(--g3-transition-normal) var(--g3-transition-md);
+    transition: width var(--g3-sheet-duration) var(--g3-sheet-easing),
+                margin var(--g3-sheet-duration) var(--g3-sheet-easing);
 }
 
 .g3-app:has(> .g3-drawer[data-state="open"])
@@ -1959,7 +2024,6 @@ textarea.g3-input {
 /* Material */
 .g3-sheet-md {
     box-shadow: var(--g3-shadow-md-elevation-2);
-    transition-timing-function: var(--g3-transition-md);
 }
 
 .g3-sheet-md.g3-sheet-bottom {
@@ -1996,15 +2060,15 @@ textarea.g3-input {
 }
 
 .g3-sheet-enter.g3-sheet-bottom[data-state="open"] {
-    animation: g3-sheet-enter-bottom var(--g3-transition-normal) var(--g3-transition-md);
+    animation: g3-sheet-enter-bottom var(--g3-sheet-duration) var(--g3-sheet-easing) backwards;
 }
 
-.g3-sheet-enter:is(.g3-sheet-side:not(.g3-sheet-reveal), .g3-drawer)[data-state="open"] {
-    animation: g3-sheet-enter-side var(--g3-transition-normal) var(--g3-transition-md);
+.g3-sheet-enter:is(.g3-sheet.g3-sheet-side:not(.g3-sheet-reveal), .g3-drawer)[data-state="open"] {
+    animation: g3-sheet-enter-side var(--g3-sheet-duration) var(--g3-sheet-easing) backwards;
 }
 
 .g3-sheet-backdrop.g3-sheet-enter[data-state="open"] {
-    animation: g3-sheet-enter-backdrop var(--g3-transition-normal) var(--g3-transition-md);
+    animation: g3-sheet-enter-backdrop var(--g3-backdrop-duration) ease backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2044,7 +2108,7 @@ textarea.g3-input {
     }
 
     .g3-sheet-bottom[data-detent] {
-        --g3-sheet-detent-max: calc(100dvh - 6rem);
+        --g3-sheet-detent-max: calc(100% - 3rem);
     }
 }
 
@@ -2572,6 +2636,20 @@ textarea.g3-input {
     --g3-content-padding: 0;
 }
 
+/* A limited width narrows the children, not the scroller: the side padding
+   grows to centre them, so the scrollbar stays at the page edge. */
+.g3-content-scroll[data-width="readable"] {
+    --g3-content-max-width: 45rem;
+}
+
+.g3-content-scroll[data-width="wide"] {
+    --g3-content-max-width: 75rem;
+}
+
+.g3-content-scroll:is([data-width="readable"], [data-width="wide"]) {
+    padding-inline: max(var(--g3-content-padding, 1.5rem), calc((100% - var(--g3-content-max-width)) / 2));
+}
+
 .g3-content-footer-spacer {
     min-height: 1.5rem;
 }
@@ -2634,9 +2712,9 @@ textarea.g3-input {
 }
 
 .g3-badge-warning {
-    background: color-mix(in srgb, var(--g3-color-warning) 16%, transparent);
-    color: var(--g3-color-warning);
-    border-color: color-mix(in srgb, var(--g3-color-warning) 32%, transparent);
+    background: color-mix(in srgb, var(--g3-color-warning) 22%, transparent);
+    color: var(--g3-color-warning-ink);
+    border-color: color-mix(in srgb, var(--g3-color-warning) 45%, transparent);
 }
 
 .g3-badge-danger {
@@ -2867,25 +2945,25 @@ textarea.g3-input {
 
 /* Inset lists keep the normal item surface while clipping it to the
    platform-specific rounded container. */
-.g3-list-inset {
+.g3-list-grouped {
     overflow: hidden;
 }
 
 /* A grouped list inside a card is another surface, just like a nested card.
    Without this it inherits the parent card fill and its toggles/rows merge
    into the container instead of reading as a distinct control group. */
-.g3-card .g3-list-inset {
+.g3-card .g3-list-grouped {
     --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 9%, var(--g3-color-card));
     background: var(--g3-list-surface);
 }
 
-.g3-list-ios.g3-list-inset {
+.g3-list-ios.g3-list-grouped {
     border: 0;
     border-radius: 8px;
     box-shadow: var(--g3-shadow-ios-card);
 }
 
-.g3-list-md.g3-list-inset {
+.g3-list-md.g3-list-grouped {
     border: 0;
     border-radius: 4px;
     box-shadow: var(--g3-shadow-md-elevation-1);
@@ -3157,7 +3235,6 @@ textarea.g3-input {
 .g3-swipe-item {
     --g3-swipe-offset: 0px;
     --g3-swipe-progress: 0;
-    --g3-swipe-action-width: 88px;
     position: relative;
     width: 100%;
     max-height: var(--g3-swipe-row-max-height, 7.5rem);
@@ -3174,7 +3251,8 @@ textarea.g3-input {
     z-index: 0;
     display: flex;
     overflow: hidden;
-    width: var(--g3-swipe-action-width, 88px);
+    width: max-content;
+    max-width: 100%;
     visibility: visible;
     transition: visibility 0s linear 0s;
 }
@@ -3202,23 +3280,48 @@ textarea.g3-input {
     justify-content: flex-end;
 }
 
-.g3-swipe-item[data-behavior="dismiss"] .g3-swipe-actions {
+/* Activate and Dismiss edges fill the row with their first action, labelled
+   at the edge the row is leaving. Reveal edges keep their buttons side by
+   side at their own widths. */
+.g3-swipe-item:is([data-start-behavior="activate"], [data-start-behavior="dismiss"]) .g3-swipe-actions-start,
+.g3-swipe-item:is([data-end-behavior="activate"], [data-end-behavior="dismiss"]) .g3-swipe-actions-end {
     width: 100%;
 }
 
-.g3-swipe-item[data-behavior="dismiss"] .g3-swipe-action {
+.g3-swipe-item:is([data-start-behavior="activate"], [data-start-behavior="dismiss"]) .g3-swipe-actions-start .g3-swipe-action:first-child,
+.g3-swipe-item:is([data-end-behavior="activate"], [data-end-behavior="dismiss"]) .g3-swipe-actions-end .g3-swipe-action:first-child {
     flex: 1 1 auto;
-    min-width: 100%;
 }
 
-.g3-swipe-item[data-behavior="dismiss"] .g3-swipe-actions-start .g3-swipe-action {
+.g3-swipe-item:is([data-start-behavior="activate"], [data-start-behavior="dismiss"]) .g3-swipe-actions-start .g3-swipe-action:not(:first-child),
+.g3-swipe-item:is([data-end-behavior="activate"], [data-end-behavior="dismiss"]) .g3-swipe-actions-end .g3-swipe-action:not(:first-child) {
+    display: none;
+}
+
+.g3-swipe-actions-start .g3-swipe-action:first-child {
     justify-content: flex-start;
-    padding-left: 1rem;
+    padding-inline-start: 1.25rem;
 }
 
-.g3-swipe-item[data-behavior="dismiss"] .g3-swipe-actions-end .g3-swipe-action {
+.g3-swipe-actions-end .g3-swipe-action:first-child {
     justify-content: flex-end;
-    padding-right: 1rem;
+    padding-inline-end: 1.25rem;
+}
+
+.g3-swipe-item[data-start-behavior="reveal"] .g3-swipe-actions-start .g3-swipe-action,
+.g3-swipe-item[data-end-behavior="reveal"] .g3-swipe-actions-end .g3-swipe-action {
+    justify-content: center;
+    padding-inline: 1rem;
+}
+
+/* Past the threshold the label moves in with the row, a cue that letting go
+   will act. */
+.g3-swipe-action {
+    transition: padding 160ms var(--g3-transition-md);
+}
+
+.g3-swipe-item[data-committed="true"] .g3-swipe-action:first-child {
+    font-weight: 800;
 }
 
 .g3-swipe-content {
@@ -3276,7 +3379,7 @@ textarea.g3-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: var(--g3-swipe-action-width, 88px);
+    min-width: 88px;
     margin: 0;
     border: 0;
     background: var(--g3-color-control);
@@ -3308,6 +3411,7 @@ textarea.g3-input {
 
 .g3-swipe-action-warning {
     background: var(--g3-color-warning);
+    color: var(--g3-color-on-warning);
 }
 
 .g3-swipe-action-danger {
@@ -3605,29 +3709,36 @@ textarea.g3-input {
     transform: rotate(180deg);
 }
 
+/* The panel animates its row from 0fr to 1fr. The row's child must have no
+   padding or border of its own, or that part jumps into place before the
+   height starts to move; the padding lives on the body inside it. */
 .g3-accordion-panel {
     display: grid;
     grid-template-rows: 1fr;
-    opacity: 1;
-    transition: grid-template-rows var(--g3-transition-normal) var(--g3-transition-md), opacity var(--g3-transition-fast) ease;
+    transition: grid-template-rows 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .g3-accordion-panel[data-state="closed"] {
     grid-template-rows: 0fr;
-    opacity: 0;
 }
 
 .g3-accordion-content {
     min-height: 0;
     overflow: hidden;
+}
+
+.g3-accordion-body {
     padding: 0 1rem 1rem;
     color: var(--g3-color-text-secondary);
     font-size: 0.9375rem;
     line-height: 1.4;
+    opacity: 1;
+    transition: opacity 0.24s ease 0.04s;
 }
 
-.g3-accordion-panel[data-state="closed"] .g3-accordion-content {
-    padding-bottom: 0;
+.g3-accordion-panel[data-state="closed"] .g3-accordion-body {
+    opacity: 0;
+    transition-delay: 0s;
 }
 
 .g3-refresher {
@@ -3635,8 +3746,12 @@ textarea.g3-input {
     --g3-refresher-progress: 0;
     --g3-refresher-indicator-h: 56px;
     position: relative;
+    display: flex;
+    flex-direction: column;
     overflow: visible;
     width: 100%;
+    /* Fill the scroll area, so a pull can start below short content. */
+    min-height: 100%;
     overscroll-behavior-y: contain;
     /* `touch-action` is intentionally left at its default so normal vertical
        scrolling works. The drag script cancels the scroll via a non-passive
@@ -3684,8 +3799,10 @@ textarea.g3-input {
     font-weight: 650;
 }
 
+/* No transform at rest: a transformed box would become the containing block
+   for sheets and dialogs rendered inside the page. */
 .g3-refresher-content {
-    transform: translate3d(0, var(--g3-refresher-pull), 0);
+    flex: 1 1 auto;
     transition: transform var(--g3-transition-normal) var(--g3-transition-md);
 }
 
@@ -3693,6 +3810,7 @@ textarea.g3-input {
    easing toward each intermediate value, which otherwise made the gesture feel
    laggy and unresponsive. The spring/settle transition only applies on release. */
 .g3-refresher[data-state="pulling"] .g3-refresher-content {
+    transform: translate3d(0, var(--g3-refresher-pull), 0);
     transition: none;
 }
 
@@ -3721,6 +3839,7 @@ textarea.g3-input {
     .g3-toast,
     .g3-accordion-chevron,
     .g3-accordion-panel,
+    .g3-accordion-body,
     .g3-refresher-content {
         transition: none;
     }
@@ -4424,6 +4543,20 @@ textarea.g3-input {
 :is(.g3-stack, .g3-grid)[data-gap="lg"] { --g3-gap: 1rem; }
 :is(.g3-stack, .g3-grid)[data-gap="xl"] { --g3-gap: 1.5rem; }
 
+/* Wide shells: a grid switches to its wide columns and gap. */
+@container g3-app-shell (min-width: 48rem) {
+    .g3-grid {
+        grid-template-columns: var(--g3-grid-columns-wide, var(--g3-grid-columns));
+    }
+
+    .g3-grid[data-wide-gap="none"] { --g3-gap: 0; }
+    .g3-grid[data-wide-gap="xs"] { --g3-gap: 0.25rem; }
+    .g3-grid[data-wide-gap="sm"] { --g3-gap: 0.5rem; }
+    .g3-grid[data-wide-gap="md"] { --g3-gap: 0.75rem; }
+    .g3-grid[data-wide-gap="lg"] { --g3-gap: 1rem; }
+    .g3-grid[data-wide-gap="xl"] { --g3-gap: 1.5rem; }
+}
+
 .g3-text {
     margin: 0;
     color: var(--g3-color-text);
@@ -4468,7 +4601,7 @@ textarea.g3-input {
 .g3-text-accent { color: var(--g3-color-accent); }
 .g3-text-neutral { color: var(--g3-color-text); }
 .g3-text-success { color: var(--g3-color-success); }
-.g3-text-warning { color: var(--g3-color-warning); }
+.g3-text-warning { color: var(--g3-color-warning-ink); }
 .g3-text-danger { color: var(--g3-color-danger); }
 
 .g3-text-truncate {
@@ -4795,15 +4928,29 @@ textarea.g3-input {
         --g3-content-padding: 0;
     }
 
+    /* A thin bar with no arrow buttons. Chromium ignores the
+       ::-webkit-scrollbar rules once scrollbar-width is set, and its thin
+       standard scrollbar keeps its arrows, so the standard properties are for
+       Firefox only. */
     .g3-app-shell .g3-content-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: var(--g3-color-border) transparent;
+        scrollbar-width: auto;
     }
 
     .g3-app-shell .g3-content-scroll::-webkit-scrollbar {
         display: block;
         width: 0.625rem;
         height: 0.625rem;
+        background: transparent;
+    }
+
+    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-button {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-track {
+        background: transparent;
     }
 
     .g3-app-shell .g3-content-scroll::-webkit-scrollbar-thumb {
@@ -4811,6 +4958,17 @@ textarea.g3-input {
         border-radius: 999px;
         background: var(--g3-color-border);
         background-clip: padding-box;
+    }
+
+    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: var(--g3-color-text-tertiary);
+    }
+
+    @supports not selector(::-webkit-scrollbar) {
+        .g3-app-shell .g3-content-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: var(--g3-color-border) transparent;
+        }
     }
 }
 

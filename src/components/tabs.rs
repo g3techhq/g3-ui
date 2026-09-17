@@ -36,6 +36,20 @@ impl<T: Hash> TabsContext<T> {
 /// Put a [`TabList`] of [`Tab`]s and the matching [`TabPanel`]s inside.
 /// Values must be hashable, to link each tab to its panel.
 ///
+/// # Tabs or a segment?
+///
+/// Both look alike. The difference is what the choice does:
+///
+/// - **`Tabs`** switch between sections of content in place. Each tab is
+///   tied to its panel, so screen readers announce "tab 2 of 3" and can jump
+///   from the tab to the panel it shows. Panels that are not selected are not
+///   rendered, unless `keep_mounted`.
+/// - **[`SegmentGroup`](crate::SegmentGroup)** picks a value, like a
+///   radio group styled as buttons: a view mode, a filter, a unit. It shows
+///   nothing itself; your code reads the value and decides what changes.
+///   Use it in toolbars and forms, or for routed tabs where each choice
+///   navigates.
+///
 /// ```rust,ignore
 /// let tab = use_signal(|| Tab::Scores);
 /// rsx! {
@@ -215,7 +229,7 @@ fn TabsPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Tabs",
-    description: "Tabs with panels and full keyboard support.",
+    description: "Switch between panels of content in place. Use SegmentGroup to pick a value instead.",
     demo: TabsPlaygroundDemo,
     source: "src/components/tabs.rs",
 }

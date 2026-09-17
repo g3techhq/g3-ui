@@ -79,6 +79,7 @@ pub(crate) enum FrameKind {
         draggable: bool,
         detents: Vec<f64>,
         detent: Signal<usize>,
+        backdrop_detent: usize,
         max_height: Option<String>,
     },
     Side {
@@ -101,7 +102,9 @@ const dialog = document.getElementById(__DIALOG__);
 const handle = document.getElementById(__HANDLE__);
 if (dialog && handle && handle.dataset.g3Bound !== "true") {
     handle.dataset.g3Bound = "true";
-    const detents = __DETENTS__;
+    // Read on each gesture, so a sheet whose detents change keeps up.
+    const readDetents = () => JSON.parse(dialog.dataset.detents || "[]");
+    let detents = readDetents();
     const DISMISS = __DISMISS__;
     let dragging = false;
     let dragged = false;
@@ -113,6 +116,7 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
     handle.addEventListener("pointerdown", (event) => {
         dragging = true;
         dragged = false;
+        detents = readDetents();
         startY = event.clientY;
         deltaY = 0;
         startHeight = dialog.getBoundingClientRect().height;
@@ -170,7 +174,7 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
             event.preventDefault();
             return;
         }
-        dioxus.send(detents.length > 0 ? -2 : -1);
+        dioxus.send(readDetents().length > 0 ? -2 : -1);
     });
 }
 "#;
@@ -195,7 +199,18 @@ pub(crate) fn SheetFrame(
     let is_drawer = matches!(kind, FrameKind::Drawer { .. });
     let is_bottom = matches!(kind, FrameKind::Bottom { .. });
     let has_backdrop = !is_drawer && backdrop == SheetBackdrop::Dismiss;
-    let has_backdrop_signal = use_synced_signal(has_backdrop);
+    // A sheet resting below its backdrop detent leaves the page usable.
+    let below_backdrop = match &kind {
+        FrameKind::Bottom {
+            detents,
+            detent,
+            backdrop_detent,
+            ..
+        } if !detents.is_empty() => detent() < *backdrop_detent,
+        _ => false,
+    };
+    let modal = has_backdrop && !below_backdrop;
+    let has_backdrop_signal = use_synced_signal(modal);
     let is_open = open();
 
     let dismiss = use_callback(move |()| {
@@ -227,29 +242,26 @@ pub(crate) fn SheetFrame(
         use_open_count(open);
     }
 
-    let (drag_detents, detent_signal) = match &kind {
+    let (draggable, detent_signal, count) = match &kind {
         FrameKind::Bottom {
             draggable: true,
             detents,
             detent,
             ..
-        } => (Some(detents.clone()), Some(*detent)),
-        _ => (None, None),
+        } => (true, Some(*detent), detents.len()),
+        _ => (false, None, 0),
     };
+    let detent_count = use_synced_signal(count);
     {
         let id = id.clone();
         let handle_id = handle_id.clone();
         use_effect(move || {
-            let Some(detents) = drag_detents.clone() else {
-                return;
-            };
-            if !open() {
+            if !draggable || !open() {
                 return;
             }
             let script = DRAG_SCRIPT
                 .replace("__DIALOG__", &format!("{id:?}"))
                 .replace("__HANDLE__", &format!("{handle_id:?}"))
-                .replace("__DETENTS__", &format!("{detents:?}"))
                 .replace("__DISMISS__", &DISMISS_DISTANCE.to_string());
             spawn(async move {
                 let mut eval = document::eval(&script);
@@ -257,7 +269,8 @@ pub(crate) fn SheetFrame(
                     match (message, detent_signal) {
                         (-1, _) => dismiss.call(()),
                         (-2, Some(mut detent)) => {
-                            let next = (*detent.peek() + 1) % detents.len().max(1);
+                            let count = detent_count.peek().max(1);
+                            let next = (*detent.peek() + 1) % count;
                             detent.set(next);
                         }
                         (index, Some(mut detent)) if index >= 0 => {
@@ -286,6 +299,7 @@ pub(crate) fn SheetFrame(
             detents,
             detent,
             max_height,
+            ..
         } => {
             let mut style = String::new();
             if let Some(max_height) = max_height {
@@ -328,13 +342,11 @@ pub(crate) fn SheetFrame(
             false,
         ),
     };
+    // The scrim only needs the behaviour: the side-sheet classes would give
+    // it the sheet's slide instead of a fade.
     let behavior_cls = match &kind {
-        FrameKind::Side { behavior, edge, .. } => format!(
-            "g3-sheet-side g3-sheet-{} {}",
-            edge.as_str(),
-            behavior_class(*behavior),
-        ),
-        _ => String::new(),
+        FrameKind::Side { behavior, .. } => behavior_class(*behavior),
+        _ => "",
     };
     let surface_cls = classes([
         kind_cls.as_str(),
@@ -360,8 +372,8 @@ pub(crate) fn SheetFrame(
         if has_backdrop {
             button {
                 r#type: "button",
-                class: classes(["g3-sheet-backdrop", behavior_cls.as_str(), enter_cls]),
-                "data-state": state,
+                class: classes(["g3-sheet-backdrop", behavior_cls, enter_cls]),
+                "data-state": if modal && is_open { "open" } else { "closed" },
                 // The scrim is a pointer target only. Keyboard users close the
                 // sheet with Escape, so it stays out of the tab order.
                 tabindex: "-1",
@@ -377,7 +389,7 @@ pub(crate) fn SheetFrame(
             class: merge_classes(surface_cls, class.as_deref()),
             style,
             role: if is_drawer { "navigation" } else { "dialog" },
-            aria_modal: (!is_drawer).then(|| has_backdrop.to_string()),
+            aria_modal: (!is_drawer).then(|| modal.to_string()),
             aria_label: label,
             aria_labelledby: labelledby,
             aria_hidden: (!is_open).then_some("true"),
@@ -385,6 +397,10 @@ pub(crate) fn SheetFrame(
             tabindex: (!is_drawer).then_some("-1"),
             "data-state": state,
             "data-detent": detent_attr,
+            "data-detents": match &kind {
+                FrameKind::Bottom { detents, .. } if !detents.is_empty() => Some(format!("{detents:?}")),
+                _ => None,
+            },
             if handle && is_bottom {
                 button {
                     id: handle_id,

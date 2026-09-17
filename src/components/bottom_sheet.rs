@@ -36,12 +36,18 @@ pub fn BottomSheet(
     /// Show a drag handle that closes the sheet or moves it between detents.
     /// Defaults to `true`.
     draggable: Option<bool>,
-    /// Heights the sheet can rest at, as ascending fractions of the available
-    /// height, such as `vec![0.4, 0.9]`.
+    /// Heights the sheet can rest at, as fractions of the app's height, such
+    /// as `vec![0.25, 0.5, 1.0]`. `1.0` fills the app below the status bar.
+    /// They are sorted, so the order given does not matter.
     detents: Option<Vec<f64>>,
-    /// Index into `detents` of the current height. Starts at the first detent
-    /// when not given.
+    /// Index into the sorted `detents` of the current height. Pass a signal to
+    /// choose the starting height or to move the sheet from code; it follows
+    /// the handle too. Starts at the lowest detent otherwise.
     detent: Option<Signal<usize>>,
+    /// The lowest detent index at which the backdrop shows. Below it the
+    /// page stays visible and usable, as for a map with a results sheet.
+    /// Defaults to `0`, a backdrop at every height.
+    backdrop_detent: Option<usize>,
     /// What sits behind the sheet. Defaults to [`SheetBackdrop::Dismiss`].
     backdrop: Option<SheetBackdrop>,
     /// Content height cap when there are no detents, as a CSS length.
@@ -66,6 +72,7 @@ pub fn BottomSheet(
                 draggable: draggable.unwrap_or(true),
                 detents,
                 detent,
+                backdrop_detent: backdrop_detent.unwrap_or(0),
                 max_height,
             },
             backdrop: backdrop.unwrap_or_default(),
@@ -84,32 +91,93 @@ pub fn BottomSheet(
 fn BottomSheetPlaygroundDemo() -> Element {
     let mut open = use_signal(|| false);
     let backdrop = use_signal(|| SheetBackdrop::Dismiss);
-    let with_detents = use_signal(|| false);
+    let preset = use_signal(|| 0_usize);
+    let mut detent = use_signal(|| 0_usize);
+    let start_at = use_signal(|| 0_usize);
+    let backdrop_from = use_signal(|| 0_usize);
+    let presets: [(&str, Vec<f64>); 4] = [
+        ("Fit content", vec![]),
+        ("Half / full", vec![0.5, 1.0]),
+        ("Peek / half / full", vec![0.2, 0.5, 1.0]),
+        ("Quarter steps", vec![0.25, 0.5, 0.75, 1.0]),
+    ];
+    let detents = presets[preset()].1.clone();
+    let count = detents.len();
+    let heights = detents
+        .iter()
+        .map(|fraction| format!("{:.0}%", fraction * 100.0))
+        .collect::<Vec<_>>();
+    let position_options = |labels: &[String]| {
+        labels
+            .iter()
+            .enumerate()
+            .map(|(index, label)| crate::SelectOption::new(index, label.clone()))
+            .collect::<Vec<_>>()
+    };
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
                 crate::SegmentGroup { value: backdrop, aria_label: "Backdrop",
-                    crate::SegmentButton { value: SheetBackdrop::Dismiss, "Dismiss" }
-                    crate::SegmentButton { value: SheetBackdrop::None, "None" }
+                    crate::SegmentButton { value: SheetBackdrop::Dismiss, "Backdrop" }
+                    crate::SegmentButton { value: SheetBackdrop::None, "No backdrop" }
                 }
-                crate::Checkbox { checked: with_detents, label: "Detents (40% / 90%)" }
-                crate::Checkbox { checked: open, label: "Open" }
+                crate::Select {
+                    label: "Detents",
+                    value: preset,
+                    options: presets
+                        .iter()
+                        .enumerate()
+                        .map(|(index, (label, _))| crate::SelectOption::new(index, *label))
+                        .collect::<Vec<_>>(),
+                }
+                if count > 0 {
+                    crate::Select { label: "Opens at", value: start_at, options: position_options(&heights) }
+                    if backdrop() == SheetBackdrop::Dismiss {
+                        crate::Select {
+                            label: "Backdrop from",
+                            value: backdrop_from,
+                            options: position_options(&heights),
+                        }
+                    }
+                }
             },
             crate::AppWrapper { class: "g3-playground-device-app",
                 crate::Header { title: "Bottom sheet" }
                 crate::Content { footer_space: false,
-                    crate::Button { onclick: move |_| open.set(true), "Open sheet" }
+                    crate::Stack {
+                        crate::Button {
+                            onclick: move |_| {
+                                detent.set(start_at().min(count.saturating_sub(1)));
+                                open.set(true);
+                            },
+                            "Open sheet"
+                        }
+                        crate::Text { tone: crate::TextTone::Secondary,
+                            if count > 0 {
+                                "Drag the handle between heights, or tap it to step through them."
+                            } else {
+                                "The sheet is as tall as its content. Drag the handle down to close it."
+                            }
+                        }
+                    }
                 }
                 BottomSheet {
                     open,
                     title: "Round settings",
                     backdrop: backdrop(),
-                    detents: with_detents().then(|| vec![0.4, 0.9]),
+                    detents,
+                    detent,
+                    backdrop_detent: backdrop_from(),
+                    if count > 0 {
+                        crate::Text { tone: crate::TextTone::Secondary,
+                            "Resting at {heights[detent().min(count - 1)]}"
+                        }
+                    }
                     crate::List { lines: crate::ListLines::Full,
-                        crate::Item { label: "Scorecard", metadata: "12 / 18" }
-                        crate::Item { label: "Players", metadata: "4" }
-                        crate::Item { label: "Handicaps" }
+                        for label in ["Scorecard", "Players", "Handicaps", "Tees", "Side games", "Weather", "Notes"] {
+                            crate::Item { key: "{label}", label, onclick: |_| {} }
+                        }
                     }
                 }
             }
@@ -119,7 +187,7 @@ fn BottomSheetPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "BottomSheet",
-    description: "A sheet that rises from the bottom, with optional detents.",
+    description: "A sheet that rises from the bottom and can rest at several heights.",
     demo: BottomSheetPlaygroundDemo,
     source: "src/components/bottom_sheet.rs",
 }

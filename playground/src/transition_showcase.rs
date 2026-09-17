@@ -211,7 +211,7 @@ fn HomeContent() -> Element {
                 }
             }
         }
-        List { inset: true, lines: ListLines::Inset,
+        List { variant: g3_ui::ListVariant::Grouped, lines: ListLines::Inset,
             Item {
                 label: "Jordan Diaz",
                 description: "Ready to play",
@@ -228,7 +228,7 @@ fn DetailContent() -> Element {
         Card { title: "Match play", end: rsx! { "Thru 12" },
             p { "Jordan leads 2 up with six holes remaining." }
         }
-        List { inset: true, lines: ListLines::Full,
+        List { variant: g3_ui::ListVariant::Grouped, lines: ListLines::Full,
             Item { label: "Front nine", metadata: "+1" }
             Item { label: "Back nine", metadata: "2 up" }
             Item { label: "Course handicap", metadata: "12" }
@@ -243,7 +243,7 @@ fn ProfileContent() -> Element {
             p { "42 rounds · 12.1 handicap" }
             Badge { color: Color::Accent, "Following 18" }
         }
-        List { inset: true,
+        List { variant: g3_ui::ListVariant::Grouped,
             Item { label: "Achievements", detail: ItemDetail::Show }
             Item { label: "Round history", metadata: "42", detail: ItemDetail::Show }
             Item { label: "Settings", detail: ItemDetail::Show }
@@ -260,7 +260,7 @@ fn ArticleContent() -> Element {
             onclick: move |_| async move { go(Route::TransitionArticleDetail {}).await },
             p { "A quiet walk through the closing holes as the course settles into evening." }
         }
-        List { inset: true,
+        List { variant: g3_ui::ListVariant::Grouped,
             Item { label: "The architecture of risk", description: "Course design", detail: ItemDetail::Show }
             Item { label: "Playing into the wind", description: "Field notes", detail: ItemDetail::Show }
         }
@@ -312,7 +312,7 @@ fn RatingsScreen(tab: u8) -> Element {
                         }
                     }
                 }
-                List { inset: true, lines: ListLines::Inset,
+                List { variant: g3_ui::ListVariant::Grouped, lines: ListLines::Inset,
                     for (name, value) in rating_rows(tab) {
                         Item { key: "{name}", label: name, metadata: value }
                     }
@@ -362,7 +362,7 @@ fn QueueScreen() -> Element {
                 Card { title: "Available for 10:40 AM",
                     p { "Choose players to add to the Pebble Creek round." }
                 }
-                List { inset: true, lines: ListLines::Inset,
+                List { variant: g3_ui::ListVariant::Grouped, lines: ListLines::Inset,
                     Item { label: "Morgan Lee", description: "Available at 10:40" }
                     Item { label: "Taylor Kim", description: "Usually walks" }
                 }

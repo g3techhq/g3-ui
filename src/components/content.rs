@@ -1,9 +1,31 @@
 //! The scrollable content area of a page.
-use crate::components::Spinner;
+use crate::components::{Refresher, Spinner};
 use crate::theme::{merge_classes, use_strings};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
 use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
+
+/// How wide [`Content`] lets its children grow on a wide shell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ContentWidth {
+    /// Span the whole page.
+    #[default]
+    Full,
+    /// Stay within a comfortable reading width, about 45rem, centred.
+    Readable,
+    /// Stay within about 75rem, centred, for dashboards and grids.
+    Wide,
+}
+
+impl ContentWidth {
+    fn as_str(self) -> &'static str {
+        match self {
+            ContentWidth::Full => "full",
+            ContentWidth::Readable => "readable",
+            ContentWidth::Wide => "wide",
+        }
+    }
+}
 
 /// The scrollable content area of a page, below its [`Header`](crate::Header).
 /// Like Ionic's `ion-content`.
@@ -24,12 +46,21 @@ use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
 pub fn Content(
     /// Pad the content. Defaults to `true`; the padding grows on wide shells.
     padding: Option<bool>,
+    /// How wide the content may grow. Defaults to [`ContentWidth::Full`].
+    /// The scroll area, and its scrollbar, always span the whole page.
+    width: Option<ContentWidth>,
     /// Leave space after the last child so it clears a bottom tab bar or FAB.
     /// Defaults to `true`.
     footer_space: Option<bool>,
     /// A [`Fab`](crate::Fab) pinned over the content rather than scrolling
     /// with it.
     fab: Option<Element>,
+    /// Turn on pull to refresh: called when the user pulls down from the top
+    /// of the page. See [`Refresher`].
+    on_refresh: Option<EventHandler<()>>,
+    /// Whether a refresh started by `on_refresh` is still running. The
+    /// indicator stays until this is `false`.
+    refreshing: Option<bool>,
     /// Shown while a child is suspended. Defaults to a centred [`Spinner`].
     loading: Option<Element>,
     /// Shown when a child fails to render. Defaults to
@@ -48,7 +79,10 @@ pub fn Content(
     let load_error = strings.load_error;
     rsx! {
         div { class: merge_classes("g3-content", class.as_deref()),
-            div { class: scroll_cls, "data-padding": padding.to_string(),
+            div {
+                class: scroll_cls,
+                "data-padding": padding.to_string(),
+                "data-width": width.unwrap_or_default().as_str(),
                 ErrorBoundary {
                     handle_error: move |context: ErrorContext| match error {
                         Some(error) => error.call(context),
@@ -63,9 +97,18 @@ pub fn Content(
                                 Spinner { center: true }
                             },
                         },
-                        {children}
-                        if footer_space.unwrap_or(true) {
-                            div { class: "g3-content-footer-spacer" }
+                        if let Some(on_refresh) = on_refresh {
+                            Refresher { refreshing: refreshing.unwrap_or(false), on_refresh,
+                                {children}
+                                if footer_space.unwrap_or(true) {
+                                    div { class: "g3-content-footer-spacer" }
+                                }
+                            }
+                        } else {
+                            {children}
+                            if footer_space.unwrap_or(true) {
+                                div { class: "g3-content-footer-spacer" }
+                            }
                         }
                     }
                 }
@@ -81,6 +124,9 @@ fn ContentPlaygroundDemo() -> Element {
     let footer_space = use_signal(|| false);
     let padding = use_signal(|| true);
     let show_fab = use_signal(|| true);
+    let width = use_signal(|| ContentWidth::Readable);
+    let pull = use_signal(|| true);
+    let mut refreshing = use_signal(|| false);
     let mode = crate::use_component_mode(None);
     rsx! {
         crate::PlaygroundDemoFrame {
@@ -89,12 +135,30 @@ fn ContentPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: footer_space, label: "Footer space" }
                 crate::Checkbox { checked: padding, label: "Padding" }
                 crate::Checkbox { checked: show_fab, label: "FAB" }
+                crate::Checkbox { checked: pull, label: "Pull to refresh" }
+                crate::SegmentGroup { value: width, aria_label: "Width",
+                    crate::SegmentButton { value: ContentWidth::Full, "Full" }
+                    crate::SegmentButton { value: ContentWidth::Readable, "Readable" }
+                    crate::SegmentButton { value: ContentWidth::Wide, "Wide" }
+                }
+                crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                    "Width limits show on the Desktop viewport. The scrollbar stays at the edge either way."
+                }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 crate::Header { title: "Content" }
                 Content {
                     footer_space: footer_space(),
                     padding: padding(),
+                    width: width(),
+                    refreshing: refreshing(),
+                    on_refresh: pull().then(|| EventHandler::new(move |_| {
+                        refreshing.set(true);
+                        spawn(async move {
+                            dioxus_sdk_time::sleep(std::time::Duration::from_millis(1000)).await;
+                            refreshing.set(false);
+                        });
+                    })),
                     fab: show_fab().then(|| rsx! {
                         crate::Fab {
                             crate::FabButton { aria_label: "Add", "+" }

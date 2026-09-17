@@ -85,7 +85,7 @@ if (root && root.dataset.g3Bound !== "true") {
             engaged = true;
         }
         if (event && event.cancelable) event.preventDefault();
-        setPull(dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy);
+        setPull(Math.min(dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy, THRESHOLD * 2.5));
     };
     const up = () => {
         if (!dragging) return;
@@ -103,13 +103,26 @@ if (root && root.dataset.g3Bound !== "true") {
             setPull(0);
         }
     };
-    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") down(e.clientX, e.clientY); });
-    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") move(e.clientX, e.clientY, null); });
-    root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") up(); });
-    root.addEventListener("touchstart", (e) => down(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    root.addEventListener("touchmove", (e) => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false });
-    root.addEventListener("touchend", up);
-    root.addEventListener("touchcancel", up);
+    // A pull starts on the refresher but may end anywhere: moves and releases
+    // are heard on the window, so dragging past the refresher (or out of the
+    // window) still lets go instead of leaving the indicator stuck.
+    const listeners = new AbortController();
+    const alive = () => {
+        if (root.isConnected) return true;
+        listeners.abort();
+        return false;
+    };
+    const opts = { signal: listeners.signal };
+    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" && e.button === 0) down(e.clientX, e.clientY); }, opts);
+    window.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && alive()) move(e.clientX, e.clientY, null); }, opts);
+    window.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse" && alive()) up(); }, opts);
+    window.addEventListener("pointercancel", () => { if (alive()) up(); }, opts);
+    window.addEventListener("blur", () => { if (alive()) up(); }, opts);
+    document.addEventListener("mouseleave", () => { if (alive()) up(); }, opts);
+    root.addEventListener("touchstart", (e) => down(e.touches[0].clientX, e.touches[0].clientY), { passive: true, signal: listeners.signal });
+    root.addEventListener("touchmove", (e) => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false, signal: listeners.signal });
+    root.addEventListener("touchend", up, opts);
+    root.addEventListener("touchcancel", up, opts);
 }
 "#;
 
@@ -117,8 +130,12 @@ if (root && root.dataset.g3Bound !== "true") {
 ///
 /// Pulling past the threshold at the top of the scroll area calls
 /// `on_refresh`. Set `refreshing` while the refresh runs; the indicator stays
-/// until it is `false` again. Put the refresher inside
-/// [`Content`](crate::Content), around the content that refreshes.
+/// until it is `false` again.
+///
+/// Usually you set [`Content`](crate::Content)'s `on_refresh` and
+/// `refreshing` instead, which wraps the whole page in a refresher. Use this
+/// component directly to refresh only part of a page. It grows to fill its
+/// scroll area, so a pull can start anywhere below the content too.
 ///
 /// ```rust,ignore
 /// let mut refreshing = use_signal(|| false);
@@ -206,20 +223,24 @@ fn RefresherPlaygroundDemo() -> Element {
     let mut refreshing = use_signal(|| false);
     let mut count = use_signal(|| 0);
     rsx! {
-        crate::PlaygroundDemoFrame { center: false,
-            Refresher {
-                refreshing: refreshing(),
-                on_refresh: move |_| {
-                    refreshing.set(true);
-                    spawn(async move {
-                        dioxus_sdk_time::sleep(std::time::Duration::from_millis(1200)).await;
-                        count += 1;
-                        refreshing.set(false);
-                    });
-                },
-                crate::List { inset: true,
-                    crate::Item { label: "Leaderboard", description: "Pull down to refresh" }
-                    crate::Item { label: "Refreshed", metadata: "{count} times" }
+        crate::PlaygroundDemoFrame {
+            app: false,
+            crate::AppWrapper { class: "g3-playground-device-app",
+                crate::Header { title: "Leaderboard" }
+                crate::Content {
+                    refreshing: refreshing(),
+                    on_refresh: move |_| {
+                        refreshing.set(true);
+                        spawn(async move {
+                            dioxus_sdk_time::sleep(std::time::Duration::from_millis(1200)).await;
+                            count += 1;
+                            refreshing.set(false);
+                        });
+                    },
+                    crate::List { variant: crate::ListVariant::Grouped,
+                        crate::Item { label: "Pull down anywhere to refresh" }
+                        crate::Item { label: "Refreshed", metadata: "{count} times" }
+                    }
                 }
             }
         }

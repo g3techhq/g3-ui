@@ -86,6 +86,9 @@ pub struct Theme {
     pub success: String,
     /// States that need attention.
     pub warning: String,
+    /// Text and icons drawn on a `warning` fill. Warning is a light colour,
+    /// so this is usually dark.
+    pub on_warning: String,
     /// Errors and destructive actions.
     pub danger: String,
     /// The CSS `color-scheme`: `"light"`, `"dark"`, or `"light dark"`. Native
@@ -117,7 +120,8 @@ impl Theme {
             border: "#c5cad3".into(),
             shadow: "rgba(15, 23, 42, 0.14)".into(),
             success: "#067647".into(),
-            warning: "#b54708".into(),
+            warning: "#f5b400".into(),
+            on_warning: "#1f1a00".into(),
             danger: "#d92d20".into(),
             color_scheme: "light".into(),
         }
@@ -141,6 +145,7 @@ impl Theme {
             shadow: "rgba(0, 0, 0, 0.35)".into(),
             success: "#30d158".into(),
             warning: "#ffd60a".into(),
+            on_warning: "#1f1a00".into(),
             danger: "#ff453a".into(),
             color_scheme: "dark".into(),
         }
@@ -178,6 +183,7 @@ impl Theme {
             shadow: pair(light.shadow, dark.shadow),
             success: pair(light.success, dark.success),
             warning: pair(light.warning, dark.warning),
+            on_warning: pair(light.on_warning, dark.on_warning),
             danger: pair(light.danger, dark.danger),
             color_scheme: "light dark".into(),
         }
@@ -195,7 +201,7 @@ impl Theme {
     }
 
     /// Every token as `(custom property, value)` pairs, in declaration order.
-    pub fn tokens(&self) -> [(&'static str, &str); 15] {
+    pub fn tokens(&self) -> [(&'static str, &str); 16] {
         [
             ("--g3-color-accent", &self.accent),
             ("--g3-color-on-accent", &self.on_accent),
@@ -211,6 +217,7 @@ impl Theme {
             ("--g3-color-shadow", &self.shadow),
             ("--g3-color-success", &self.success),
             ("--g3-color-warning", &self.warning),
+            ("--g3-color-on-warning", &self.on_warning),
             ("--g3-color-danger", &self.danger),
         ]
     }

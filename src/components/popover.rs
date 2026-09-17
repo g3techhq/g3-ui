@@ -272,56 +272,79 @@ pub fn MenuItem(
 #[cfg(feature = "playground")]
 #[component]
 fn MenuPlaygroundDemo() -> Element {
+    let show_popover = use_signal(|| false);
+    let sheet_on_compact = use_signal(|| true);
     let mut menu_open = use_signal(|| false);
     let mut popover_open = use_signal(|| false);
     let mut last = use_signal(|| "Nothing yet".to_string());
     rsx! {
         crate::PlaygroundDemoFrame {
-            div { class: "playground-row",
-                Menu {
-                    open: menu_open,
-                    trigger: rsx! {
-                        crate::Button {
-                            fill: crate::ButtonFill::Outline,
-                            aria_haspopup: "menu",
-                            aria_expanded: menu_open().to_string(),
-                            onclick: move |_| menu_open.toggle(),
-                            "Actions"
-                        }
-                    },
-                    MenuItem { onclick: move |_| last.set("Rename".into()), "Rename" }
-                    MenuItem { onclick: move |_| last.set("Duplicate".into()), "Duplicate" }
-                    MenuItem {
-                        color: Color::Danger,
-                        onclick: move |_| last.set("Delete".into()),
-                        "Delete"
+            controls: rsx! {
+                crate::SegmentGroup { value: show_popover, aria_label: "Component",
+                    crate::SegmentButton { value: false, "Menu" }
+                    crate::SegmentButton { value: true, "Popover" }
+                }
+                if show_popover() {
+                    crate::Checkbox { checked: sheet_on_compact, label: "Sheet on phones" }
+                    crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                        "A popover holds extra detail about its trigger. On a phone it can open as a bottom sheet instead."
+                    }
+                } else {
+                    crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                        "A menu lists actions for its trigger. Arrow keys move between items."
                     }
                 }
+            },
+            if show_popover() {
                 Popover {
                     open: popover_open,
-                    sheet_on_compact: true,
+                    sheet_on_compact: sheet_on_compact(),
                     aria_label: "Player",
                     trigger: rsx! {
                         crate::Button {
-                            fill: crate::ButtonFill::Clear,
+                            fill: crate::ButtonFill::Outline,
                             aria_haspopup: "dialog",
                             aria_expanded: popover_open().to_string(),
                             onclick: move |_| popover_open.toggle(),
-                            "Player card"
+                            "Alex Morgan"
                         }
                     },
-                    strong { "Alex Morgan" }
-                    p { "Handicap 12 · 18 rounds this season" }
+                    crate::Stack { gap: crate::Space::Xs,
+                        crate::Text { variant: crate::TextVariant::Heading, "Alex Morgan" }
+                        crate::Text { tone: crate::TextTone::Secondary, "Handicap 12 · 18 rounds this season" }
+                    }
+                }
+            } else {
+                crate::Stack { align: crate::StackAlign::Center,
+                    Menu {
+                        open: menu_open,
+                        trigger: rsx! {
+                            crate::Button {
+                                fill: crate::ButtonFill::Outline,
+                                aria_haspopup: "menu",
+                                aria_expanded: menu_open().to_string(),
+                                onclick: move |_| menu_open.toggle(),
+                                "Actions"
+                            }
+                        },
+                        MenuItem { onclick: move |_| last.set("Rename".into()), "Rename" }
+                        MenuItem { onclick: move |_| last.set("Duplicate".into()), "Duplicate" }
+                        MenuItem {
+                            color: Color::Danger,
+                            onclick: move |_| last.set("Delete".into()),
+                            "Delete"
+                        }
+                    }
+                    crate::Text { tone: crate::TextTone::Secondary, "Last action: {last}" }
                 }
             }
-            p { "Last action: {last}" }
         }
     }
 }
 
 crate::g3_playground! {
     name: "Menu",
-    description: "Anchored menus and popovers.",
+    description: "Menus of actions and popovers of detail, anchored to the control that opens them.",
     demo: MenuPlaygroundDemo,
     source: "src/components/popover.rs",
 }

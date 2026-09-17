@@ -13,17 +13,28 @@ pub enum SwipeSide {
     End,
 }
 
-/// What a swipe does once it passes its threshold.
+/// What swiping toward one edge does once it passes its threshold.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum SwipeBehavior {
     /// Uncover the actions and hold them open until one is pressed or the
     /// row is swiped closed.
     #[default]
     Reveal,
-    /// Run the first action directly, as with swipe-to-archive.
+    /// Run a callback on release, as with swipe-to-archive. The first action
+    /// stretches across the row as the swipe passes the threshold.
     Activate,
     /// Slide the row away and remove it.
     Dismiss,
+}
+
+impl SwipeBehavior {
+    fn as_str(self) -> &'static str {
+        match self {
+            SwipeBehavior::Reveal => "reveal",
+            SwipeBehavior::Activate => "activate",
+            SwipeBehavior::Dismiss => "dismiss",
+        }
+    }
 }
 
 /// The live state of a swipe, passed to [`SwipeItem`]'s callbacks.
@@ -33,12 +44,14 @@ pub struct SwipeState {
     pub side: SwipeSide,
     /// Horizontal displacement of the row, in pixels.
     pub offset: f64,
-    /// `offset` as a fraction of the actions' width; `1.0` is fully open.
+    /// `offset` as a fraction of the threshold distance; `1.0` is fully open.
     pub ratio: f64,
     /// Whether releasing now would activate or dismiss.
     pub committed: bool,
 }
 
+/// Width of one revealed action, and the fallback before the actions are
+/// measured.
 const REVEAL_WIDTH: f64 = 88.0;
 const ACTIVATE_WIDTH: f64 = 136.0;
 const DISMISS_WIDTH: f64 = 104.0;
@@ -55,11 +68,61 @@ const LONG_PRESS_SLOP: f64 = 8.0;
 /// claiming one would steal ordinary scrolls.
 const HORIZONTAL_SLOP: f64 = 10.0;
 
-fn action_width(behavior: SwipeBehavior) -> f64 {
-    match behavior {
-        SwipeBehavior::Reveal => REVEAL_WIDTH,
-        SwipeBehavior::Activate => ACTIVATE_WIDTH,
-        SwipeBehavior::Dismiss => DISMISS_WIDTH,
+/// How one edge of a row behaves: what a swipe does, and how far it travels
+/// before that happens.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Edge {
+    behavior: SwipeBehavior,
+    width: f64,
+}
+
+impl Edge {
+    /// `revealed` is the measured width of the edge's actions.
+    fn new(behavior: SwipeBehavior, revealed: f64) -> Self {
+        let width = match behavior {
+            SwipeBehavior::Reveal => revealed.max(1.0),
+            SwipeBehavior::Activate => ACTIVATE_WIDTH,
+            SwipeBehavior::Dismiss => DISMISS_WIDTH,
+        };
+        Self { behavior, width }
+    }
+
+    /// Where the row sits for a raw drag distance toward this edge.
+    fn offset(self, raw: f64) -> f64 {
+        match self.behavior {
+            SwipeBehavior::Reveal => raw.clamp(-self.width, self.width),
+            SwipeBehavior::Activate => activate_offset(raw, self.width),
+            SwipeBehavior::Dismiss => elastic_offset(raw, self.width),
+        }
+    }
+
+    /// Whether releasing at `offset` commits the behaviour.
+    fn committed(self, offset: f64) -> bool {
+        match self.behavior {
+            SwipeBehavior::Activate => offset.abs() >= self.width * ACTIVATE_RATIO,
+            SwipeBehavior::Reveal | SwipeBehavior::Dismiss => {
+                offset.abs() >= self.width + FULL_SWIPE_MARGIN
+            }
+        }
+    }
+
+    /// Where a released Reveal row settles: open past halfway, closed
+    /// otherwise.
+    fn settle(self, offset: f64) -> f64 {
+        if offset.abs() > self.width / 2.0 {
+            self.width.copysign(offset)
+        } else {
+            0.0
+        }
+    }
+
+    fn state(self, offset: f64, committed: bool) -> Option<SwipeState> {
+        side_of(offset).map(|side| SwipeState {
+            side,
+            offset,
+            ratio: offset / self.width,
+            committed,
+        })
     }
 }
 
@@ -96,49 +159,12 @@ fn activate_offset(raw: f64, width: f64) -> f64 {
     raw.signum() * (soften_from + remaining * (extra / (extra + remaining)))
 }
 
-/// Where the row sits for a raw drag distance.
-fn drag_offset(raw: f64, behavior: SwipeBehavior, has_start: bool, has_end: bool) -> f64 {
-    let available = match side_of(raw) {
-        Some(SwipeSide::Start) => has_start,
-        Some(SwipeSide::End) => has_end,
-        None => false,
-    };
-    if !available {
-        return 0.0;
+/// The edge a drag of `raw` pixels moves toward, if it has actions.
+fn edge_for(raw: f64, start: Option<Edge>, end: Option<Edge>) -> Option<Edge> {
+    match side_of(raw)? {
+        SwipeSide::Start => start,
+        SwipeSide::End => end,
     }
-    let width = action_width(behavior);
-    match behavior {
-        SwipeBehavior::Reveal => raw.clamp(-width, width),
-        SwipeBehavior::Activate => activate_offset(raw, width),
-        SwipeBehavior::Dismiss => elastic_offset(raw, width),
-    }
-}
-
-/// Whether releasing at `offset` commits the behaviour.
-fn is_committed(offset: f64, behavior: SwipeBehavior) -> bool {
-    let width = action_width(behavior);
-    match behavior {
-        SwipeBehavior::Activate => offset.abs() >= width * ACTIVATE_RATIO,
-        SwipeBehavior::Reveal | SwipeBehavior::Dismiss => offset.abs() >= width + FULL_SWIPE_MARGIN,
-    }
-}
-
-/// Where a released Reveal row settles: open past halfway, closed otherwise.
-fn settle_reveal(offset: f64) -> f64 {
-    if offset.abs() > REVEAL_WIDTH / 2.0 {
-        REVEAL_WIDTH.copysign(offset)
-    } else {
-        0.0
-    }
-}
-
-fn state_for(offset: f64, behavior: SwipeBehavior, committed: bool) -> Option<SwipeState> {
-    side_of(offset).map(|side| SwipeState {
-        side,
-        offset,
-        ratio: offset / action_width(behavior),
-        committed,
-    })
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -194,16 +220,22 @@ pub fn SwipeAction(
 /// `ion-item-sliding`.
 ///
 /// Put an [`Item`](crate::Item) inside and [`SwipeAction`]s in
-/// `start_actions` or `end_actions`. Keyboard and screen reader users reach
-/// the actions through a "Show actions" button that appears on focus, or
-/// with the arrow keys; Escape closes them.
+/// `start_actions` or `end_actions`. Each edge has its own behaviour, so a
+/// row can archive on a swipe one way and reveal buttons the other way.
+/// Keyboard and screen reader users reach the actions through a "Show
+/// actions" button that appears on focus, or with the arrow keys; Escape
+/// closes them.
 ///
 /// ```rust,ignore
 /// rsx! {
 ///     SwipeItem {
-///         behavior: SwipeBehavior::Dismiss,
-///         end_actions: rsx! { SwipeAction { color: Color::Danger, onclick: move |_| delete(id), "Delete" } },
-///         on_dismiss: move |_| delete(id),
+///         start_behavior: SwipeBehavior::Activate,
+///         start_actions: rsx! { SwipeAction { color: Color::Success, "Archive" } },
+///         on_activate: move |_| archive(id),
+///         end_actions: rsx! {
+///             SwipeAction { onclick: move |_| pin(id), "Pin" }
+///             SwipeAction { color: Color::Danger, onclick: move |_| delete(id), "Delete" }
+///         },
 ///         Item { label: "Round 12" }
 ///     }
 /// }
@@ -214,8 +246,12 @@ pub fn SwipeItem(
     start_actions: Option<Element>,
     /// Actions uncovered by swiping toward the leading edge.
     end_actions: Option<Element>,
-    /// What a full swipe does. Defaults to [`SwipeBehavior::Reveal`].
-    behavior: Option<SwipeBehavior>,
+    /// What swiping far toward the trailing edge does. Defaults to
+    /// [`SwipeBehavior::Reveal`].
+    start_behavior: Option<SwipeBehavior>,
+    /// What swiping far toward the leading edge does. Defaults to
+    /// [`SwipeBehavior::Reveal`].
+    end_behavior: Option<SwipeBehavior>,
     /// Turn swiping off.
     disabled: Option<bool>,
     /// Let a mouse drag swipe too. Defaults to `true`; turn it off to keep
@@ -223,7 +259,8 @@ pub fn SwipeItem(
     mouse_swipe: Option<bool>,
     /// Called as the row moves.
     on_swipe: Option<EventHandler<SwipeState>>,
-    /// Called when an [`SwipeBehavior::Activate`] swipe commits.
+    /// Called when a [`SwipeBehavior::Activate`] swipe is released past its
+    /// threshold. [`SwipeState::side`] says which edge.
     on_activate: Option<EventHandler<SwipeState>>,
     /// Called once a [`SwipeBehavior::Dismiss`] row has slid away and
     /// collapsed. Remove the row here.
@@ -235,8 +272,8 @@ pub fn SwipeItem(
     children: Element,
 ) -> Element {
     let strings = use_strings();
-    let behavior = behavior.unwrap_or_default();
-    let width = action_width(behavior);
+    let start_behavior = start_behavior.unwrap_or_default();
+    let end_behavior = end_behavior.unwrap_or_default();
     let has_start = start_actions.is_some();
     let has_end = end_actions.is_some();
     let disabled = disabled.unwrap_or(false);
@@ -253,11 +290,35 @@ pub fn SwipeItem(
     // A click that ends a swipe must not also activate the row, so the
     // content ignores pointers briefly after one.
     let mut suppress_click = use_signal(|| false);
+    // Revealed actions are as wide as their buttons, measured once mounted.
+    let mut start_mount = use_signal(|| None::<std::rc::Rc<MountedData>>);
+    let mut end_mount = use_signal(|| None::<std::rc::Rc<MountedData>>);
+    let start_width = use_signal(|| REVEAL_WIDTH);
+    let end_width = use_signal(|| REVEAL_WIDTH);
+    let measure = move || {
+        spawn(async move {
+            for (mount, mut width) in [(start_mount, start_width), (end_mount, end_width)] {
+                let Some(mount) = mount.peek().clone() else {
+                    continue;
+                };
+                if let Ok(rect) = mount.get_client_rect().await
+                    && rect.width() > 0.0
+                    && (rect.width() - *width.peek()).abs() > 0.5
+                {
+                    width.set(rect.width());
+                }
+            }
+        });
+    };
+
+    let start_edge = has_start.then(|| Edge::new(start_behavior, start_width()));
+    let end_edge = has_end.then(|| Edge::new(end_behavior, end_width()));
 
     let current = offset();
     let start_hidden = current <= 0.0;
     let end_hidden = current >= 0.0;
     let open = current != 0.0;
+    let current_width = edge_for(current, start_edge, end_edge).map_or(REVEAL_WIDTH, |e| e.width);
 
     let mut close = move || {
         offset.set(0.0);
@@ -267,8 +328,8 @@ pub fn SwipeItem(
     let reveal_side = move |side: SwipeSide| {
         let mut offset = offset;
         match side {
-            SwipeSide::Start if has_start => offset.set(width),
-            SwipeSide::End if has_end => offset.set(-width),
+            SwipeSide::Start if has_start => offset.set(*start_width.peek()),
+            SwipeSide::End if has_end => offset.set(-*end_width.peek()),
             _ => {}
         }
     };
@@ -277,14 +338,14 @@ pub fn SwipeItem(
         div {
             class: merge_classes("g3-swipe-item", class.as_deref()),
             style: format!(
-                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {}; --g3-swipe-action-width: {width}px;",
-                (current / width).abs().min(1.4),
+                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {};",
+                (current / current_width).abs().min(1.4),
             ),
-            "data-behavior": match behavior {
-                SwipeBehavior::Reveal => "reveal",
-                SwipeBehavior::Activate => "activate",
-                SwipeBehavior::Dismiss => "dismiss",
-            },
+            "data-start-behavior": start_behavior.as_str(),
+            "data-end-behavior": end_behavior.as_str(),
+            "data-committed": edge_for(current, start_edge, end_edge)
+                .is_some_and(|edge| edge.behavior != SwipeBehavior::Reveal && edge.committed(current))
+                .then_some("true"),
             "data-state": phase().as_str(),
             "data-dragging": (dragging() && horizontal()).then_some("true"),
             onkeydown: move |event| {
@@ -313,8 +374,10 @@ pub fn SwipeItem(
                 {
                     return;
                 }
+                measure();
                 let point = event.client_coordinates();
-                start.set((point.x, point.y));
+                // Resume from where an open row rests.
+                start.set((point.x - offset(), point.y));
                 dragging.set(true);
                 horizontal.set(false);
                 moved.set(false);
@@ -342,17 +405,19 @@ pub fn SwipeItem(
                     moved.set(true);
                 }
                 if !horizontal() {
-                    if dx.abs() > HORIZONTAL_SLOP && dx.abs() > dy.abs() {
+                    if (dx - offset()).abs() > HORIZONTAL_SLOP && (dx - offset()).abs() > dy.abs() {
                         horizontal.set(true);
                     } else {
                         return;
                     }
                 }
-                let next = drag_offset(dx, behavior, has_start, has_end);
+                let Some(edge) = edge_for(dx, start_edge, end_edge) else {
+                    offset.set(0.0);
+                    return;
+                };
+                let next = edge.offset(dx);
                 offset.set(next);
-                if let (Some(on_swipe), Some(state)) =
-                    (on_swipe, state_for(next, behavior, is_committed(next, behavior)))
-                {
+                if let (Some(on_swipe), Some(state)) = (on_swipe, edge.state(next, edge.committed(next))) {
                     on_swipe.call(state);
                 }
             },
@@ -372,12 +437,16 @@ pub fn SwipeItem(
                     suppress_click.set(false);
                 });
                 let released = offset();
-                let committed = is_committed(released, behavior);
-                match behavior {
-                    SwipeBehavior::Reveal => offset.set(settle_reveal(released)),
+                let Some(edge) = edge_for(released, start_edge, end_edge) else {
+                    offset.set(0.0);
+                    return;
+                };
+                let committed = edge.committed(released);
+                match edge.behavior {
+                    SwipeBehavior::Reveal => offset.set(edge.settle(released)),
                     SwipeBehavior::Activate => {
                         if committed
-                            && let Some(state) = state_for(released, behavior, true)
+                            && let Some(state) = edge.state(released, true)
                             && let Some(on_activate) = on_activate
                         {
                             on_activate.call(state);
@@ -385,7 +454,7 @@ pub fn SwipeItem(
                         offset.set(0.0);
                     }
                     SwipeBehavior::Dismiss => {
-                        let Some(state) = state_for(released, behavior, true).filter(|_| committed) else {
+                        let Some(state) = edge.state(released, true).filter(|_| committed) else {
                             offset.set(0.0);
                             return;
                         };
@@ -413,6 +482,12 @@ pub fn SwipeItem(
                     class: "g3-swipe-actions g3-swipe-actions-start",
                     aria_hidden: start_hidden.to_string(),
                     inert: start_hidden.then_some(true),
+                    onmounted: move |event| {
+                        start_mount.set(Some(event.data()));
+                        measure();
+                    },
+                    // Pressing a revealed action finishes the swipe.
+                    onclick: move |_| close(),
                     {actions}
                 }
             }
@@ -421,6 +496,11 @@ pub fn SwipeItem(
                     class: "g3-swipe-actions g3-swipe-actions-end",
                     aria_hidden: end_hidden.to_string(),
                     inert: end_hidden.then_some(true),
+                    onmounted: move |event| {
+                        end_mount.set(Some(event.data()));
+                        measure();
+                    },
+                    onclick: move |_| close(),
                     {actions}
                 }
             }
@@ -454,6 +534,11 @@ pub fn SwipeItem(
 mod tests {
     use super::*;
 
+    const REVEAL: Edge = Edge {
+        behavior: SwipeBehavior::Reveal,
+        width: 88.0,
+    };
+
     #[test]
     fn elastic_offset_slows_past_the_action_width() {
         assert_eq!(elastic_offset(44.0, 88.0), 44.0);
@@ -463,15 +548,17 @@ mod tests {
 
     #[test]
     fn full_swipe_needs_the_width_plus_a_margin() {
-        assert!(!is_committed(133.0, SwipeBehavior::Dismiss));
-        assert!(is_committed(134.0, SwipeBehavior::Dismiss));
-        assert!(is_committed(-134.0, SwipeBehavior::Dismiss));
+        let dismiss = Edge::new(SwipeBehavior::Dismiss, 0.0);
+        assert!(!dismiss.committed(133.0));
+        assert!(dismiss.committed(134.0));
+        assert!(dismiss.committed(-134.0));
     }
 
     #[test]
     fn activation_commits_early() {
-        assert!(!is_committed(64.0, SwipeBehavior::Activate));
-        assert!(is_committed(66.0, SwipeBehavior::Activate));
+        let activate = Edge::new(SwipeBehavior::Activate, 0.0);
+        assert!(!activate.committed(64.0));
+        assert!(activate.committed(66.0));
     }
 
     #[test]
@@ -482,12 +569,11 @@ mod tests {
     }
 
     #[test]
-    fn reveal_stops_at_the_action_width() {
-        assert_eq!(drag_offset(188.0, SwipeBehavior::Reveal, true, true), 88.0);
-        assert_eq!(
-            drag_offset(-188.0, SwipeBehavior::Reveal, true, true),
-            -88.0
-        );
+    fn reveal_stops_at_the_measured_width() {
+        assert_eq!(REVEAL.offset(188.0), 88.0);
+        assert_eq!(REVEAL.offset(-188.0), -88.0);
+        let two_buttons = Edge::new(SwipeBehavior::Reveal, 176.0);
+        assert_eq!(two_buttons.offset(-300.0), -176.0);
     }
 
     #[test]
@@ -498,16 +584,18 @@ mod tests {
     }
 
     #[test]
-    fn missing_sides_do_not_move() {
-        assert_eq!(drag_offset(44.0, SwipeBehavior::Dismiss, false, true), 0.0);
-        assert_eq!(drag_offset(-44.0, SwipeBehavior::Dismiss, true, false), 0.0);
-        assert_eq!(drag_offset(44.0, SwipeBehavior::Dismiss, true, false), 44.0);
+    fn each_edge_keeps_its_own_behaviour() {
+        let activate = Edge::new(SwipeBehavior::Activate, 0.0);
+        assert_eq!(edge_for(44.0, Some(activate), Some(REVEAL)), Some(activate));
+        assert_eq!(edge_for(-44.0, Some(activate), Some(REVEAL)), Some(REVEAL));
+        assert_eq!(edge_for(-44.0, Some(activate), None), None);
+        assert_eq!(edge_for(0.0, Some(activate), Some(REVEAL)), None);
     }
 
     #[test]
     fn reveal_settles_open_past_halfway() {
-        assert_eq!(settle_reveal(50.0), 88.0);
-        assert_eq!(settle_reveal(-50.0), -88.0);
-        assert_eq!(settle_reveal(30.0), 0.0);
+        assert_eq!(REVEAL.settle(50.0), 88.0);
+        assert_eq!(REVEAL.settle(-50.0), -88.0);
+        assert_eq!(REVEAL.settle(30.0), 0.0);
     }
 }

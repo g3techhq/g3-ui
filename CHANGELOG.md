@@ -43,6 +43,18 @@ cascade layer. The README has a table of the most common renames.
   and `desktop_placement: Bottom` is `group: NavItemGroup::Secondary`.
   `NavItem` takes `to` or `href` and marks the current item with
   `aria-current`.
+- **Breaking:** `Card`'s `inset: bool` is now `variant: CardVariant`:
+  `Raised` (the default, with a shadow), `Flat` (a border and no shadow), or
+  `Filled` (a tinted surface, the old `inset`).
+- **Breaking:** `List`'s `inset: bool` is now `variant: ListVariant`:
+  `Plain` (the default) or `Grouped` (the old `inset: true`).
+- **Breaking:** `SwipeItem`'s `behavior` is split into `start_behavior` and
+  `end_behavior`, so each edge can reveal, activate, or dismiss on its own.
+  Revealed actions are as wide as their buttons, and pressing one closes
+  the row.
+- **Breaking:** `Theme::warning` defaults to yellow (`#f5b400`) instead of
+  orange, with a new `on_warning` field for text drawn on it. Warning text
+  and outline buttons darken it so it stays readable.
 - **Breaking:** consistent prop names across components:
   - `is_open` → `open`.
   - `active` and `index` → `value`.
@@ -106,6 +118,17 @@ cascade layer. The README has a table of the most common renames.
 - `Strings` holds every built-in label, for translation.
 - `use_theme`, `use_strings`, and `use_component_mode` read the values in
   effect.
+- `BottomSheet` takes `backdrop_detent`: below that detent the page stays
+  visible and usable. Detents are fractions of the app's height, so `1.0`
+  fills it; they were fractions of the browser window. Detents can change
+  while the sheet is mounted.
+- `Content` takes `width: ContentWidth` (`Full`, `Readable`, `Wide`) to
+  narrow its children on wide shells while the scrollbar stays at the page
+  edge, and `on_refresh`/`refreshing` for pull to refresh.
+- `Grid` takes `wide_columns` and `wide_gap` for shells `48rem` and wider.
+- Scrollable `SegmentGroup`s scroll by mouse drag and wheel as well as
+  touch, fade the edge that has more buttons, and keep the selected button in
+  view.
 - `Button` takes `loading`, `button_type`, `to`, `href`, `new_tab`, `start`,
   and `end`.
 - `Input` takes `clearable`, `start`, `end`, and `debounce_ms`, and supports
@@ -121,6 +144,19 @@ cascade layer. The README has a table of the most common renames.
   `transitions` feature.
 
 ### Fixed
+
+- Sheets animate in and out over 0.5s on a softer curve instead of 0.25s,
+  which read as popping in. The side sheet backdrop fades instead of sliding
+  in with the sheet.
+- Accordion panels open without a jump: the padding no longer snaps in
+  before the height animates.
+- Wide `Content` shows a thin scrollbar without arrow buttons.
+- A `Refresher` pull released outside the refresher, or outside the
+  window, lets go instead of staying pulled. The refresher fills its scroll
+  area, so a pull can start below short content, and it no longer becomes
+  the containing block for sheets inside it.
+- Neutral outline buttons, such as `ConfirmModal`'s Cancel, use the border
+  colour instead of a solid text-coloured outline.
 
 - The desktop rail no longer dims and scales with the page when a routed
   sheet opens, and the sheet no longer leaves an empty rail-width gap. With

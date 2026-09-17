@@ -243,3 +243,62 @@ fn every_gallery_entry_is_named_and_described() {
         );
     }
 }
+
+#[test]
+fn card_and_list_variants_set_their_surface() {
+    fn app() -> Element {
+        rsx! {
+            Card { title: "Raised", "a" }
+            Card { variant: CardVariant::Flat, title: "Flat", "b" }
+            Card { variant: CardVariant::Filled, title: "Filled", "c" }
+            List { variant: ListVariant::Grouped, Item { label: "Row" } }
+        }
+    }
+    let html = render(app);
+    assert_eq!(html.matches("g3-card-flat").count(), 1);
+    assert_eq!(html.matches("g3-card-filled").count(), 1);
+    assert!(element_with_class(&html, "g3-list").contains("g3-list-grouped"));
+}
+
+#[test]
+fn swipe_edges_keep_their_own_behaviour() {
+    fn app() -> Element {
+        rsx! {
+            SwipeItem {
+                start_behavior: SwipeBehavior::Activate,
+                start_actions: rsx! { SwipeAction { "Archive" } },
+                end_actions: rsx! { SwipeAction { "Pin" } SwipeAction { "Delete" } },
+                Item { label: "Round" }
+            }
+        }
+    }
+    let html = render(app);
+    let row = element_with_class(&html, "g3-swipe-item");
+    assert!(row.contains("data-start-behavior=\"activate\""));
+    assert!(row.contains("data-end-behavior=\"reveal\""));
+}
+
+#[test]
+fn content_limits_width_and_hosts_a_refresher() {
+    fn app() -> Element {
+        rsx! {
+            Content { width: ContentWidth::Readable, refreshing: true, on_refresh: |_| {}, "Page" }
+        }
+    }
+    let html = render(app);
+    assert!(element_with_class(&html, "g3-content-scroll").contains("data-width=\"readable\""));
+    assert!(element_with_class(&html, "g3-refresher").contains("aria-busy=\"true\""));
+}
+
+#[test]
+fn grids_carry_wide_settings() {
+    fn app() -> Element {
+        rsx! {
+            Grid { columns: GridColumns::Count(1), wide_columns: GridColumns::Count(3), wide_gap: Space::Xl, "a" }
+        }
+    }
+    let html = render(app);
+    let grid = element_with_class(&html, "g3-grid");
+    assert!(grid.contains("--g3-grid-columns-wide: repeat(3, minmax(0, 1fr));"));
+    assert!(grid.contains("data-wide-gap=\"xl\""));
+}

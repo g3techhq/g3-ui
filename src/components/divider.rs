@@ -61,11 +61,12 @@ fn DividerPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: vertical, label: "Vertical" }
                 crate::Checkbox { checked: spaced, label: "Spaced" }
             },
-            div {
-                class: if vertical() { "playground-divider-surface playground-divider-vertical" } else { "playground-divider-surface" },
-                span { "Front nine" }
-                Divider { orientation, spaced: spaced() }
-                span { "Back nine" }
+            crate::Card { variant: crate::CardVariant::Flat,
+                crate::Stack { horizontal: vertical(), gap: crate::Space::Sm,
+                    span { "Front nine" }
+                    Divider { orientation, spaced: spaced() }
+                    span { "Back nine" }
+                }
             }
         }
     }

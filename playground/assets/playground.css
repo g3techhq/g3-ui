@@ -195,17 +195,41 @@ textarea {
   background: currentColor;
 }
 
+/* The scroller spans the page so its scrollbar sits at the window edge; the
+   side padding keeps the demos within 1400px. */
 .playground-main {
-  width: min(1400px, 100%);
+  width: 100%;
   height: 100%;
   min-width: 0;
-  margin: 0 auto;
-  padding: 24px 20px 32px;
+  padding: 24px max(20px, calc((100% - 1400px) / 2)) 32px;
   display: grid;
   grid-auto-rows: max-content;
   align-content: start;
   gap: 18px;
   overflow: auto;
+}
+
+.playground-main::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+}
+
+.playground-main::-webkit-scrollbar-button {
+  display: none;
+}
+
+.playground-main::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--g3-color-border, #d5dde3);
+  background-clip: padding-box;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .playground-main {
+    scrollbar-width: thin;
+    scrollbar-color: var(--g3-color-border, #d5dde3) transparent;
+  }
 }
 
 /* Design language and shell width are both global, so they share the header
@@ -238,8 +262,6 @@ textarea {
   place-items: center;
   overflow: visible;
   padding: 2px 0 12px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--g3-color-border, #d5dde3) transparent;
 }
 
 .playground-viewport-card {
@@ -480,42 +502,8 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   padding: 0;
 }
 
-.g3-playground-preview .g3-sheet-backdrop,
-.g3-playground-preview .g3-modal-overlay {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Demo backdrops belong to the simulated app, not to the surrounding
-   playground. Keep the whole preview as a reliable dismiss target. */
-
-.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-bottom {
-  top: auto;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 52%;
-}
-
-.playground-viewport-mobile .g3-playground-preview .g3-sheet.g3-sheet-bottom .g3-sheet-content {
-  max-height: 100%;
-}
-
 .playground-viewport-mobile .g3-playground-preview .g3-app-shell {
   --g3-side-sheet-width: 68cqw;
-}
-
-.g3-playground-preview .g3-modal {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.playground-viewport-mobile .g3-playground-preview .g3-modal {
-  width: min(320px, calc(100% - 2rem)) !important;
 }
 
 /* Controls lead the demo stack in DOM order, so nothing here reorders them.
@@ -669,10 +657,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
     padding: 14px 10px 24px;
   }
 
-  .playground-intro > .g3-btn {
-    position: static;
-  }
-
   .playground-viewport-demo > .g3-playground-demo-stack {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -732,21 +716,6 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-
-.playground-divider-surface {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  background: var(--g3-color-card, #ffffff);
-}
-
-.playground-divider-surface.playground-divider-vertical {
-  flex-direction: row;
-  align-items: stretch;
-  min-height: 64px;
 }
 
 .playground-img-fallback {

@@ -155,7 +155,9 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
                 aria_labelledby: button_id,
                 inert: (!expanded).then_some(true),
                 aria_hidden: (!expanded).then_some("true"),
-                div { class: "g3-accordion-content", {children} }
+                div { class: "g3-accordion-content",
+                    div { class: "g3-accordion-body", {children} }
+                }
             }
         }
     }

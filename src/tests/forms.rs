@@ -168,14 +168,14 @@ fn stepper_and_range_expose_their_values() {
 fn searchbar_is_a_search_landmark() {
     fn app() -> Element {
         rsx! {
-            Searchbar { show_cancel: true }
+            Searchbar {}
         }
     }
     let html = render(app);
     assert!(element_with_class(&html, "g3-searchbar").contains("role=\"search\""));
     assert!(html.contains("type=\"search\""));
     assert!(html.contains("aria-label=\"Search\""));
-    assert!(html.contains(">Cancel</button>"));
+    assert!(!html.contains(">Cancel</button>"));
 }
 
 #[test]

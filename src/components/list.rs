@@ -26,6 +26,16 @@ impl ListLines {
     }
 }
 
+/// How a [`List`] sits on the page.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ListVariant {
+    /// Rows run edge to edge on the page background.
+    #[default]
+    Plain,
+    /// Rows sit in a rounded group with margins, like iOS settings screens.
+    Grouped,
+}
+
 /// Whether an [`Item`] shows a trailing chevron.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ItemDetail {
@@ -42,7 +52,7 @@ pub enum ItemDetail {
 ///
 /// ```rust,ignore
 /// rsx! {
-///     List { inset: true,
+///     List { variant: ListVariant::Grouped,
 ///         ListHeader { "Account" }
 ///         Item { label: "Profile", to: Route::Profile {} }
 ///         Item { label: "Notifications", end: rsx! { Toggle { checked: notify, aria_label: "Notifications" } } }
@@ -51,8 +61,8 @@ pub enum ItemDetail {
 /// ```
 #[component]
 pub fn List(
-    /// Draw the list as a rounded group inset from the edges.
-    inset: Option<bool>,
+    /// Plain or grouped. Defaults to [`ListVariant::Plain`].
+    variant: Option<ListVariant>,
     /// Separators between rows. Defaults to [`ListLines::Inset`].
     lines: Option<ListLines>,
     /// Accessible name of the list.
@@ -67,10 +77,9 @@ pub fn List(
     let cls = classes([
         "g3-list",
         mode.pick("g3-list-ios", "g3-list-md"),
-        if inset.unwrap_or(false) {
-            "g3-list-inset"
-        } else {
-            ""
+        match variant.unwrap_or_default() {
+            ListVariant::Plain => "",
+            ListVariant::Grouped => "g3-list-grouped",
         },
     ]);
     rsx! {
@@ -244,38 +253,85 @@ pub fn Item(
 #[cfg(feature = "playground")]
 #[component]
 fn ListPlaygroundDemo() -> Element {
-    use crate::{Color, SwipeAction, SwipeBehavior, SwipeItem};
-    let inset = use_signal(|| true);
+    use crate::{Color, SwipeAction, SwipeBehavior, SwipeItem, use_toast};
+    let variant = use_signal(|| ListVariant::Grouped);
     let lines = use_signal(|| ListLines::Inset);
+    let start_behavior = use_signal(|| SwipeBehavior::Activate);
+    let end_behavior = use_signal(|| SwipeBehavior::Reveal);
     let mut notify = use_signal(|| true);
-    let mut rows = use_signal(|| vec!["Round 12", "Round 11", "Round 10"]);
+    let mut rows = use_signal(|| vec!["Round 12", "Round 11", "Round 10", "Round 9"]);
+    let toast = use_toast();
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                crate::Checkbox { checked: inset, label: "Inset" }
+                crate::SegmentGroup { value: variant, aria_label: "Variant",
+                    crate::SegmentButton { value: ListVariant::Plain, "Plain" }
+                    crate::SegmentButton { value: ListVariant::Grouped, "Grouped" }
+                }
                 crate::SegmentGroup { value: lines, aria_label: "Lines",
-                    crate::SegmentButton { value: ListLines::Full, "Full" }
-                    crate::SegmentButton { value: ListLines::Inset, "Inset" }
-                    crate::SegmentButton { value: ListLines::None, "None" }
+                    crate::SegmentButton { value: ListLines::Full, "Full lines" }
+                    crate::SegmentButton { value: ListLines::Inset, "Inset lines" }
+                    crate::SegmentButton { value: ListLines::None, "No lines" }
+                }
+                crate::Select {
+                    label: "Swipe right",
+                    value: start_behavior,
+                    options: vec![
+                        crate::SelectOption::new(SwipeBehavior::Reveal, "Reveal buttons"),
+                        crate::SelectOption::new(SwipeBehavior::Activate, "Activate (archive)"),
+                        crate::SelectOption::new(SwipeBehavior::Dismiss, "Dismiss"),
+                    ],
+                }
+                crate::Select {
+                    label: "Swipe left",
+                    value: end_behavior,
+                    options: vec![
+                        crate::SelectOption::new(SwipeBehavior::Reveal, "Reveal buttons"),
+                        crate::SelectOption::new(SwipeBehavior::Activate, "Activate (delete)"),
+                        crate::SelectOption::new(SwipeBehavior::Dismiss, "Dismiss"),
+                    ],
                 }
             },
-            List { inset: inset(), lines: lines(),
+            List { variant: variant(), lines: lines(),
                 ListHeader { "Settings" }
                 Item { label: "Profile", description: "Name and handicap", onclick: |_| {} }
                 Item { label: "Notifications", checked: notify(), onclick: move |_| notify.toggle() }
                 Item { label: "Version", metadata: "0.4.0" }
-                ListHeader { "Rounds — swipe to delete" }
+            }
+            List { variant: variant(), lines: lines(),
+                ListHeader { "Rounds — swipe either way" }
                 for row in rows() {
                     SwipeItem {
                         key: "{row}",
-                        behavior: SwipeBehavior::Dismiss,
+                        start_behavior: start_behavior(),
+                        end_behavior: end_behavior(),
+                        start_actions: rsx! {
+                            SwipeAction {
+                                color: Color::Success,
+                                onclick: move |_| { toast.success(format!("{row} archived")); },
+                                "Archive"
+                            }
+                        },
                         end_actions: rsx! {
+                            if end_behavior() == SwipeBehavior::Reveal {
+                                SwipeAction {
+                                    color: Color::Accent,
+                                    onclick: move |_| { toast.show(format!("{row} pinned")); },
+                                    "Pin"
+                                }
+                            }
                             SwipeAction {
                                 color: Color::Danger,
                                 onclick: move |_| rows.write().retain(|r| *r != row),
                                 "Delete"
                             }
+                        },
+                        on_activate: move |state: crate::SwipeState| match state.side {
+                            crate::SwipeSide::Start => {
+                                toast.success(format!("{row} archived"));
+                            }
+                            crate::SwipeSide::End => rows.write().retain(|r| *r != row),
                         },
                         on_dismiss: move |_| rows.write().retain(|r| *r != row),
                         Item { label: row, description: "Pebble Creek" }
