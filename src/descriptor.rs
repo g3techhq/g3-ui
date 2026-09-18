@@ -77,6 +77,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/spinner.rs"),
     include_str!("components/swipe.rs"),
     include_str!("components/tab_layout.rs"),
+    include_str!("components/table.rs"),
     include_str!("components/tabs.rs"),
     include_str!("components/text.rs"),
     include_str!("components/time_picker.rs"),

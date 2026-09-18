@@ -20,8 +20,15 @@ pub enum Color {
 }
 
 impl Color {
-    /// The class suffix the stylesheet uses for this colour.
-    pub(crate) fn as_str(self) -> &'static str {
+    /// The name the stylesheet knows this colour by, such as `"success"`:
+    /// the value of a `data-color` attribute, as on a [`Table`](crate::Table)
+    /// cell.
+    ///
+    /// ```
+    /// # use g3_ui::Color;
+    /// assert_eq!(Color::Danger.as_str(), "danger");
+    /// ```
+    pub fn as_str(self) -> &'static str {
         match self {
             Color::Accent => "accent",
             Color::Neutral => "neutral",

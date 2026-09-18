@@ -54,6 +54,7 @@ mod skeleton;
 mod spinner;
 mod swipe;
 mod tab_layout;
+mod table;
 mod tabs;
 mod text;
 mod time_picker;
@@ -116,6 +117,7 @@ pub use skeleton::{Skeleton, SkeletonShape};
 pub use spinner::{Spinner, SpinnerSize};
 pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
 pub use tab_layout::TabLayout;
+pub use table::Table;
 pub use tabs::{Tab, TabList, TabPanel, Tabs};
 pub use text::{Text, TextTone, TextVariant};
 pub use time_picker::TimePicker;
@@ -169,6 +171,7 @@ gallery![
     empty_state,
     shelf,
     rating,
+    table,
     spinner,
     accordion,
     segment,

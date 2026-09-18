@@ -369,3 +369,41 @@ fn a_shelf_is_a_named_focusable_group() {
     assert!(!html.contains("g3-shelf-header"), "no empty heading row");
     assert!(html.contains(r#"data-snap="false""#));
 }
+
+#[test]
+fn a_table_scrolls_in_a_named_focusable_frame() {
+    fn captioned() -> Element {
+        rsx! {
+            Table { caption: "Front nine", sticky_first_column: true,
+                tbody { tr { th { scope: "row", "Par" } td { "4" } } }
+            }
+        }
+    }
+    let html = render(captioned);
+    let frame = element_with_class(&html, "g3-table-frame");
+    assert!(frame.contains("role=\"region\""));
+    assert!(
+        frame.contains("tabindex=\"0\""),
+        "a scrolling frame is reachable by keyboard"
+    );
+    assert!(
+        frame.contains("aria-labelledby="),
+        "the frame is named by the caption"
+    );
+    assert!(html.contains("<caption"));
+    assert!(html.contains("data-sticky-first=\"true\""));
+    assert!(!html.contains("data-fill"));
+
+    fn unnamed_caption() -> Element {
+        rsx! {
+            Table { aria_label: "Results", fill: true,
+                tbody { tr { td { "1" } } }
+            }
+        }
+    }
+    let html = render(unnamed_caption);
+    assert!(!html.contains("<caption"));
+    assert_eq!(html.matches("aria-label=\"Results\"").count(), 2);
+    assert!(html.contains("data-fill=\"true\""));
+    assert!(!html.contains("data-sticky-first"));
+}
