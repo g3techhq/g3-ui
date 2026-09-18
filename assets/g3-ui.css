@@ -4720,11 +4720,111 @@ button.g3-chip:focus-visible {
     gap: var(--g3-gap);
 }
 
-:is(.g3-stack, .g3-grid)[data-gap="none"] { --g3-gap: 0; }
-:is(.g3-stack, .g3-grid)[data-gap="xs"] { --g3-gap: 0.25rem; }
-:is(.g3-stack, .g3-grid)[data-gap="sm"] { --g3-gap: 0.5rem; }
-:is(.g3-stack, .g3-grid)[data-gap="lg"] { --g3-gap: 1rem; }
-:is(.g3-stack, .g3-grid)[data-gap="xl"] { --g3-gap: 1.5rem; }
+:is(.g3-stack, .g3-grid, .g3-shelf-track)[data-gap="none"] { --g3-gap: 0; }
+:is(.g3-stack, .g3-grid, .g3-shelf-track)[data-gap="xs"] { --g3-gap: 0.25rem; }
+:is(.g3-stack, .g3-grid, .g3-shelf-track)[data-gap="sm"] { --g3-gap: 0.5rem; }
+:is(.g3-stack, .g3-grid, .g3-shelf-track)[data-gap="lg"] { --g3-gap: 1rem; }
+:is(.g3-stack, .g3-grid, .g3-shelf-track)[data-gap="xl"] { --g3-gap: 1.5rem; }
+
+/* -- Shelf -- */
+
+.g3-shelf {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* A flex or grid child defaults to the width of its content, which for a
+       row that overflows by design is the full width of every item: the page
+       would widen to fit it rather than the row scrolling. */
+    min-width: 0;
+}
+
+.g3-shelf-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+/* An overline: the row's items carry the weight, the heading only names it. */
+.g3-shelf-title {
+    margin: 0;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.g3-shelf-end {
+    flex: 0 0 auto;
+}
+
+.g3-shelf-track {
+    --g3-gap: 0.75rem;
+    position: relative;
+    display: flex;
+    gap: var(--g3-gap);
+    overflow-x: auto;
+    /* Room for an item's focus ring and shadow, which the overflow would
+       otherwise clip. */
+    padding-block: 0.25rem;
+    /* A sideways overscroll stops at the row instead of chaining out to the
+       page, which on some browsers is a swipe back through history. */
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    /* touch-action is left alone on purpose. A short strip of chips can claim
+       pan-x, but a row of cards is tall enough that a vertical swipe starting
+       on it has to scroll the page, and the browser already locks each gesture
+       to the axis it began along. */
+}
+
+.g3-shelf-track::-webkit-scrollbar {
+    display: none;
+}
+
+.g3-shelf-track:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+}
+
+/* Items keep their own width: overflowing is what makes the row scroll. */
+.g3-shelf-track > * {
+    flex: 0 0 auto;
+}
+
+.g3-shelf-track[data-snap="true"] {
+    /* Proximity rather than mandatory: mandatory snapping fights a mouse
+       wheel, pulling back to an item after every notch. */
+    scroll-snap-type: x proximity;
+}
+
+.g3-shelf-track[data-snap="true"] > * {
+    scroll-snap-align: start;
+}
+
+.g3-shelf-track[data-dragging="true"] {
+    cursor: grabbing;
+    scroll-snap-type: none;
+    user-select: none;
+}
+
+.g3-shelf-track[data-overflow-end="true"] {
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
+.g3-shelf-track[data-overflow-start="true"] {
+    mask-image: linear-gradient(to left, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
+.g3-shelf-track[data-overflow-start="true"][data-overflow-end="true"] {
+    mask-image: linear-gradient(to right, transparent, rgba(0, 0, 0, 1) 2.5rem, rgba(0, 0, 0, 1) calc(100% - 2.5rem), transparent);
+}
+
+/* Playground: a card needs a width to sit in a row. */
+.g3-shelf-demo-card {
+    width: 12rem;
+}
 
 /* Wide shells: a grid switches to its wide columns and gap. */
 @container g3-app-shell (min-width: 48rem) {

@@ -25,6 +25,7 @@ mod empty_state;
 mod fab;
 mod field;
 mod header;
+mod hscroll;
 mod infinite_scroll;
 mod info_button;
 mod keyboard;
@@ -46,6 +47,7 @@ mod searchbar;
 mod segment;
 mod select;
 mod sheet;
+mod shelf;
 mod side_sheet;
 mod skeleton;
 mod spinner;
@@ -106,6 +108,7 @@ pub use searchbar::Searchbar;
 pub use segment::{SegmentButton, SegmentGroup};
 pub use select::{Select, SelectOption, SelectWidth};
 pub use sheet::{SheetBackdrop, SheetEdge, SideSheetBehavior, open_sheet_count};
+pub use shelf::Shelf;
 pub use side_sheet::SideSheet;
 pub use skeleton::{Skeleton, SkeletonShape};
 pub use spinner::{Spinner, SpinnerSize};
@@ -162,6 +165,7 @@ gallery![
     progress,
     skeleton,
     empty_state,
+    shelf,
     spinner,
     accordion,
     segment,

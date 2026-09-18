@@ -1,82 +1,10 @@
 //! Segmented controls.
 use super::HeaderToolbarContext;
+use super::hscroll::use_horizontal_scroll;
 use super::keyboard::use_roving_selection;
-use super::overlay::js_string;
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
-
-/// Sideways scrolling for a scrollable group: touch scrolls natively; this
-/// adds mouse dragging, vertical wheels, edge fades while more is hidden, and
-/// keeps the selected button in view.
-const SCROLL_SCRIPT: &str = r#"
-const group = document.getElementById(__ID__);
-if (group && group.dataset.g3Scroll !== "true") {
-    group.dataset.g3Scroll = "true";
-    const edges = () => {
-        const max = group.scrollWidth - group.clientWidth;
-        group.dataset.overflowStart = String(group.scrollLeft > 1);
-        group.dataset.overflowEnd = String(group.scrollLeft < max - 1);
-    };
-    const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const reveal = (animate) => {
-        const smooth = animate && !calm.matches;
-        const selected = group.querySelector("[aria-checked=true], [aria-selected=true]");
-        if (!selected) return;
-        // The group is positioned, so this is already relative to it.
-        const left = selected.offsetLeft;
-        const right = left + selected.offsetWidth;
-        if (left < group.scrollLeft + 16) {
-            group.scrollTo({ left: left - 16, behavior: smooth ? "smooth" : "auto" });
-        } else if (right > group.scrollLeft + group.clientWidth - 16) {
-            group.scrollTo({ left: right - group.clientWidth + 16, behavior: smooth ? "smooth" : "auto" });
-        }
-    };
-    let down = false;
-    let dragged = false;
-    let startX = 0;
-    let startLeft = 0;
-    group.addEventListener("pointerdown", (event) => {
-        if (event.pointerType !== "mouse" || event.button !== 0) return;
-        down = true;
-        dragged = false;
-        startX = event.clientX;
-        startLeft = group.scrollLeft;
-    });
-    window.addEventListener("pointermove", (event) => {
-        if (!down) return;
-        const dx = event.clientX - startX;
-        if (!dragged && Math.abs(dx) < 5) return;
-        dragged = true;
-        group.dataset.dragging = "true";
-        group.scrollLeft = startLeft - dx;
-    });
-    window.addEventListener("pointerup", () => {
-        down = false;
-        delete group.dataset.dragging;
-    });
-    // A drag must not also pick the button it ended on.
-    group.addEventListener("click", (event) => {
-        if (dragged) {
-            dragged = false;
-            event.preventDefault();
-            event.stopPropagation();
-        }
-    }, true);
-    group.addEventListener("wheel", (event) => {
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-        if (group.scrollWidth <= group.clientWidth) return;
-        event.preventDefault();
-        group.scrollLeft += event.deltaY;
-    }, { passive: false });
-    group.addEventListener("scroll", edges, { passive: true });
-    new ResizeObserver(edges).observe(group);
-    new MutationObserver(() => { reveal(true); edges(); })
-        .observe(group, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-checked", "aria-selected"] });
-    reveal(false);
-    edges();
-}
-"#;
 
 struct SegmentContext<T: 'static> {
     value: Signal<T>,
@@ -144,14 +72,7 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
     let id = use_element_id("segment", None);
     use_roving_selection(id.clone(), "[role=radio]", false);
     let scrollable = scrollable.unwrap_or(false);
-    {
-        let id = id.clone();
-        use_effect(use_reactive!(|scrollable| {
-            if scrollable {
-                document::eval(&SCROLL_SCRIPT.replace("__ID__", &js_string(&id)));
-            }
-        }));
-    }
+    use_horizontal_scroll(id.clone(), scrollable);
     let in_toolbar = try_consume_context::<HeaderToolbarContext>().is_some();
     let context = SegmentContext {
         value,

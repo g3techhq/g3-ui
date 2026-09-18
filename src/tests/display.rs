@@ -336,3 +336,36 @@ fn an_empty_state_announces_only_a_failure() {
         "no icon wrapper when no icon is given"
     );
 }
+
+#[test]
+fn a_shelf_is_a_named_focusable_group() {
+    fn titled() -> Element {
+        rsx! {
+            Shelf { title: "Nearby courses", gap: Space::Sm,
+                Card { title: "Pebble Creek", "18 holes" }
+            }
+        }
+    }
+    let html = render(titled);
+    assert!(html.contains("g3-shelf-track"));
+    assert!(html.contains(r#"role="group""#));
+    assert!(html.contains(r#"tabindex="0""#), "a keyboard can scroll it");
+    assert!(html.contains(r#"data-gap="sm""#));
+    assert!(html.contains(r#"data-snap="true""#), "snaps by default");
+    // The visible title names the row, so there is no separate label.
+    assert!(html.contains("aria-labelledby="));
+    assert!(!html.contains("aria-label=\""));
+
+    fn untitled() -> Element {
+        rsx! {
+            Shelf { aria_label: "Filters", snap: false,
+                Chip { "Nearby" }
+            }
+        }
+    }
+    let html = render(untitled);
+    assert!(html.contains(r#"aria-label="Filters""#));
+    assert!(!html.contains("aria-labelledby="));
+    assert!(!html.contains("g3-shelf-header"), "no empty heading row");
+    assert!(html.contains(r#"data-snap="false""#));
+}

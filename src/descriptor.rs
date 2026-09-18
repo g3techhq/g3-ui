@@ -70,6 +70,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/searchbar.rs"),
     include_str!("components/segment.rs"),
     include_str!("components/select.rs"),
+    include_str!("components/shelf.rs"),
     include_str!("components/side_sheet.rs"),
     include_str!("components/skeleton.rs"),
     include_str!("components/spinner.rs"),

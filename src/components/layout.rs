@@ -21,7 +21,7 @@ pub enum Space {
 }
 
 impl Space {
-    fn as_str(self) -> &'static str {
+    pub(crate) fn as_str(self) -> &'static str {
         match self {
             Space::None => "none",
             Space::Xs => "xs",
