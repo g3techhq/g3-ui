@@ -3473,6 +3473,42 @@ button.g3-chip:focus-visible {
     content: none;
 }
 
+/* A reorderable row is wrapped in a `.g3-reorder-item`, which moves as a
+   whole, so the separator belongs to the wrapper. The row inside draws
+   none, or each row would count as a list's last row. */
+.g3-list[data-lines] > .g3-reorder-item .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
+    border-bottom: 0;
+}
+
+.g3-list > .g3-reorder-item .g3-item::after,
+.g3-list > .g3-reorder-item > .g3-swipe-item::after {
+    display: none;
+    content: none;
+}
+
+.g3-list[data-lines="inset"] > .g3-reorder-item:not(:last-child)::after,
+.g3-list[data-lines="full"] > .g3-reorder-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: var(--g3-color-border);
+    pointer-events: none;
+}
+
+.g3-list[data-lines="inset"] > .g3-reorder-item:not(:last-child)::after {
+    right: 1rem;
+    left: 1rem;
+}
+
+/* The row being dragged lifts off the list, so it drops its separator. */
+.g3-list > .g3-reorder-item[data-dragging="true"]::after {
+    display: none;
+}
+
 .g3-item-ios {
     min-height: 52px;
     padding-block: 0.6875rem;
