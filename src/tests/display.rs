@@ -407,3 +407,17 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
     assert!(html.contains("data-fill=\"true\""));
     assert!(!html.contains("data-sticky-first"));
 }
+
+#[test]
+fn a_labelled_divider_reads_its_label() {
+    fn app() -> Element {
+        rsx! {
+            Divider { label: "or continue with email", spaced: true }
+        }
+    }
+    let html = render(app);
+    assert!(!html.contains("<hr"), "a separator's content goes unread");
+    assert!(html.contains("g3-divider-labelled"));
+    assert!(html.contains(">or continue with email</span>"));
+    assert_eq!(html.matches("aria-hidden=\"true\"").count(), 2);
+}

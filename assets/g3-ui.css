@@ -418,6 +418,25 @@ body.g3-overlay-scroll-locked {
 .g3-divider-v.g3-divider-margins {
     margin-inline: 1rem;
 }
+.g3-divider-labelled {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+.g3-divider-labelled.g3-divider-margins {
+    margin-block: 1rem;
+}
+.g3-divider-labelled > .g3-divider {
+    flex: 1 1 0;
+    width: auto;
+}
+.g3-divider-label {
+    flex: 0 1 auto;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    text-align: center;
+}
 
 /* -- Segment and tabs -- */
 
