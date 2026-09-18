@@ -49,6 +49,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/content.rs"),
     include_str!("components/date_picker.rs"),
     include_str!("components/divider.rs"),
+    include_str!("components/empty_state.rs"),
     include_str!("components/fab.rs"),
     include_str!("components/field.rs"),
     include_str!("components/header.rs"),

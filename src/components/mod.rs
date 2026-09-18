@@ -21,6 +21,7 @@ mod datetime;
 #[cfg(feature = "playground")]
 mod demo_app;
 mod divider;
+mod empty_state;
 mod fab;
 mod field;
 mod header;
@@ -76,6 +77,7 @@ pub use content::{Content, ContentWidth};
 pub use date_picker::{DatePicker, PickerStyle};
 pub use datetime::{CalendarDate, HourCycle, ParseDateTimeError, TimeOfDay};
 pub use divider::{Divider, DividerOrientation};
+pub use empty_state::EmptyState;
 pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
 #[cfg(test)]
 pub(crate) use field::within_typing_limits as field_limits;
@@ -159,6 +161,7 @@ gallery![
     divider,
     progress,
     skeleton,
+    empty_state,
     spinner,
     accordion,
     segment,

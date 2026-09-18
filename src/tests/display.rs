@@ -303,3 +303,36 @@ fn grids_carry_wide_settings() {
     assert!(grid.contains("--g3-grid-columns-wide: repeat(3, minmax(0, 1fr));"));
     assert!(grid.contains("data-wide-gap=\"xl\""));
 }
+
+#[test]
+fn an_empty_state_announces_only_a_failure() {
+    fn empty() -> Element {
+        rsx! {
+            EmptyState { title: "No rounds yet", heading_level: 3, "Rounds you play show up here." }
+        }
+    }
+    let html = render(empty);
+    assert!(html.contains("g3-empty-state"));
+    assert!(html.contains(r#"data-color="neutral""#));
+    assert!(
+        html.contains("<h3"),
+        "the title is a heading at the level asked for"
+    );
+    assert!(
+        !html.contains("role="),
+        "an empty list is part of the page, not an event"
+    );
+
+    fn failed() -> Element {
+        rsx! {
+            EmptyState { title: "Couldn't load rounds", color: Color::Danger, "Try again." }
+        }
+    }
+    let html = render(failed);
+    assert!(html.contains(r#"role="alert""#), "a failure is announced");
+    assert!(html.contains(r#"data-color="danger""#));
+    assert!(
+        !html.contains("g3-empty-state-icon"),
+        "no icon wrapper when no icon is given"
+    );
+}
