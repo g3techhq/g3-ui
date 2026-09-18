@@ -1610,6 +1610,18 @@ button.g3-chip:focus-visible {
     min-width: 0;
 }
 
+.g3-card-start {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+/* With something before it, the heading takes the room between the two
+   ends, so `end` stays at the trailing edge. */
+.g3-card-start + .g3-card-heading {
+    flex: 1 1 auto;
+}
+
 .g3-card-title {
     margin: 0;
     font-size: 1.25rem;
@@ -3674,6 +3686,11 @@ button.g3-chip:focus-visible {
     line-height: 1.2rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.g3-item-wrap :is(.g3-item-label, .g3-item-description) {
+    overflow-wrap: anywhere;
+    white-space: normal;
 }
 
 .g3-item-metadata {

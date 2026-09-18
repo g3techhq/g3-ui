@@ -185,6 +185,10 @@ pub fn Item(
     detail: Option<ItemDetail>,
     /// Separator under this row, overriding the list's.
     lines: Option<ListLines>,
+    /// Let the label and description wrap onto more lines instead of being
+    /// cut short, for text the reader needs in full. Like Ionic's
+    /// `ion-text-wrap`.
+    wrap: Option<bool>,
     /// Accessible name, when the visible text is not enough.
     aria_label: Option<String>,
     /// Platform look. Defaults to the ambient mode.
@@ -222,6 +226,11 @@ pub fn Item(
             if interactive { "g3-item-button" } else { "" },
             if selected { "g3-item-selected" } else { "" },
             if disabled { "g3-item-disabled" } else { "" },
+            if wrap.unwrap_or(false) {
+                "g3-item-wrap"
+            } else {
+                ""
+            },
         ]),
         class.as_deref(),
     );

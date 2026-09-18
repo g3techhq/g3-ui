@@ -29,6 +29,31 @@ fn a_tappable_card_names_its_action_with_the_title() {
 }
 
 #[test]
+fn a_card_puts_its_start_content_before_the_heading() {
+    fn app() -> Element {
+        rsx! {
+            Card { title: "Upload", start: rsx! { Avatar { name: "Ada" } }, "Body" }
+        }
+    }
+    let html = render(app);
+    let start = html.find("g3-card-start").expect("start slot");
+    let heading = html.find("g3-card-heading").expect("heading");
+    assert!(start < heading);
+}
+
+#[test]
+fn a_wrapping_item_says_so() {
+    fn app() -> Element {
+        rsx! {
+            Item { label: "Sponsor", description: "Paid promotion", wrap: true }
+            Item { label: "Plain" }
+        }
+    }
+    let html = render(app);
+    assert_eq!(html.matches("g3-item-wrap").count(), 1);
+}
+
+#[test]
 fn items_pick_their_element_from_their_props() {
     fn app() -> Element {
         rsx! {
