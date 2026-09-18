@@ -3765,12 +3765,21 @@ button.g3-chip:focus-visible {
     --g3-swipe-progress: 0;
     position: relative;
     width: 100%;
-    max-height: var(--g3-swipe-row-max-height, 7.5rem);
     overflow: hidden;
     isolation: isolate;
     background: var(--g3-list-surface, var(--g3-color-card));
     touch-action: pan-y;
     transition: max-height 180ms var(--g3-transition-md), margin 180ms var(--g3-transition-md), opacity 140ms ease;
+}
+
+/* A row keeps `pan-y` so a vertical scroll can still start on it, which leaves
+   the browser free to begin scrolling before the swipe is recognised; by then
+   cancelling the touch is too late for a scroll already running on the
+   compositor. Taking the overflow off the scroller while a row is dragged
+   sideways stops that scroll dead, and moves nothing. */
+.g3-content-scroll:has(.g3-swipe-item[data-dragging="true"]) {
+    overflow-y: hidden;
+    overscroll-behavior: contain;
 }
 
 .g3-swipe-actions {
@@ -3896,6 +3905,12 @@ button.g3-chip:focus-visible {
     transition-duration: 560ms;
 }
 
+/* A dismissed row is held at its measured height while it slides away, so
+   the collapse that follows has a height to animate from. */
+.g3-swipe-item[data-state="exiting"] {
+    max-height: var(--g3-swipe-row-max-height, var(--g3-swipe-row-height, 7.5rem));
+}
+
 .g3-swipe-item[data-state="collapsing"] {
     max-height: 0;
     margin-block: 0;
@@ -3957,13 +3972,16 @@ button.g3-chip:focus-visible {
 /* The keyboard route to the actions: invisible until focused. */
 .g3-swipe-toggle {
     position: absolute;
-    inset-block: 0.5rem;
+    top: 50%;
+    min-height: 2rem;
+    translate: 0 -50%;
     inset-inline-end: 0.5rem;
     z-index: 1;
     padding: 0 0.75rem;
     border: 0;
     border-radius: 999px;
-    background: var(--g3-color-control);
+    background: var(--g3-color-surface);
+    box-shadow: 0 2px 8px var(--g3-color-shadow);
     color: var(--g3-color-text);
     font: inherit;
     font-size: 0.8125rem;
@@ -3975,6 +3993,16 @@ button.g3-chip:focus-visible {
     opacity: 1;
     pointer-events: auto;
     outline: 2px solid var(--g3-color-accent);
+}
+
+/* With mouse swiping off, the button is how a mouse reaches the actions, so
+   it shows while the pointer is over the row, or while the row is open. */
+@media (hover: hover) {
+    .g3-swipe-item[data-mouse-swipe="false"]:hover .g3-swipe-toggle,
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-toggle[aria-expanded="true"] {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

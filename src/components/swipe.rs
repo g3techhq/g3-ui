@@ -301,6 +301,9 @@ pub fn SwipeItem(
     let mut moved = use_signal(|| false);
     let mut press_generation = use_signal(|| 0_u64);
     let mut phase = use_signal(|| Phase::Idle);
+    // The row's height, so a dismissed row can collapse from exactly that,
+    // whatever it holds - a one-line item or a whole card.
+    let mut row_height = use_signal(|| None::<f64>);
     // A click that ends a swipe must not also activate the row, so the
     // content ignores pointers briefly after one.
     let mut suppress_click = use_signal(|| false);
@@ -407,13 +410,23 @@ pub fn SwipeItem(
             class: merge_classes("g3-swipe-item", class.as_deref()),
             role: in_list.then_some("listitem"),
             style: format!(
-                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {}; --g3-swipe-exit: {};",
+                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {}; --g3-swipe-exit: {};{}",
                 (current / current_width).abs().min(1.4),
                 // Which way a dismissed row leaves. The distance is the row's
                 // own width, in CSS, so it clears a desktop row as surely as a
                 // phone one.
                 if current < 0.0 { -1 } else { 1 },
+                row_height().map(|height| format!(" --g3-swipe-row-height: {height}px;")).unwrap_or_default(),
             ),
+            onresize: move |event: ResizeEvent| {
+                // Only while idle: a collapsing row is shrinking on purpose.
+                if *phase.peek() == Phase::Idle
+                    && let Ok(size) = event.data().get_border_box_size()
+                    && size.height > 0.0
+                {
+                    row_height.set(Some(size.height));
+                }
+            },
             "data-start-behavior": start_behavior.as_str(),
             "data-end-behavior": end_behavior.as_str(),
             "data-committed": edge_for(current, start_edge, end_edge)
@@ -421,6 +434,8 @@ pub fn SwipeItem(
                 .then_some("true"),
             "data-state": phase().as_str(),
             "data-dragging": (dragging() && horizontal()).then_some("true"),
+            // A mouse cannot drag this row, so its actions button shows on hover.
+            "data-mouse-swipe": (!mouse_swipe).then_some("false"),
             onkeydown: move |event| {
                 if disabled || phase() != Phase::Idle {
                     return;
