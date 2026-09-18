@@ -3520,8 +3520,14 @@ button.g3-chip:focus-visible {
     z-index: 1;
 }
 
-.g3-item-split > :is(.g3-item-start, .g3-item-metadata, .g3-item-detail) {
+/* Only the controls at the end take their own presses; a badge or a count
+   beside them lets a press through to the row. */
+.g3-item-split > :is(.g3-item-start, .g3-item-end, .g3-item-metadata, .g3-item-detail) {
     pointer-events: none;
+}
+
+.g3-item-split > .g3-item-end :is(a, button, input, select, textarea, label, [tabindex]) {
+    pointer-events: auto;
 }
 
 .g3-item-split:has(.g3-item-action:active):not(.g3-item-disabled) {
