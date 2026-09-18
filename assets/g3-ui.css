@@ -1573,6 +1573,12 @@ button.g3-chip:focus-visible {
                 background var(--g3-transition-fast) var(--g3-transition-ios);
 }
 
+/* In a Stack or Grid the gap spaces the cards; a card's own margin would
+   add to it. */
+:is(.g3-stack, .g3-grid) > .g3-card {
+    margin-bottom: 0;
+}
+
 .g3-card-md {
     margin-bottom: 0.75rem;
     border-radius: 4px;
