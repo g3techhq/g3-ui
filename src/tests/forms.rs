@@ -338,3 +338,46 @@ fn a_labelled_segment_group_is_named_by_its_visible_label() {
     assert!(html.contains(r#"aria-label="Round""#));
     assert!(!html.contains("g3-field"), "no wrapper without a label");
 }
+
+/// A group handed a different `value` signal follows it. RadioGroup used to
+/// provide its context once, so after the switch its radios went on showing,
+/// and writing to, the first signal: in greenside-partee, picking the second
+/// game's type changed the first game's.
+#[test]
+fn a_radio_group_follows_a_new_value_signal() {
+    static SECOND: GlobalSignal<bool> = Signal::global(|| false);
+    fn app() -> Element {
+        let first = use_signal(|| Some(1));
+        let second = use_signal(|| Some(2));
+        rsx! {
+            RadioGroup { value: if SECOND() { second } else { first }, aria_label: "Pick",
+                Radio { value: 1, label: "One" }
+                Radio { value: 2, label: "Two" }
+            }
+        }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    let checked = |dom: &VirtualDom| {
+        let html = dioxus_ssr::render(dom);
+        let one = html.find(">One<").expect("one");
+        let two = html.find(">Two<").expect("two");
+        let at = html.find("checked").expect("a checked radio");
+        if at < one {
+            1
+        } else if at < two {
+            2
+        } else {
+            0
+        }
+    };
+    assert_eq!(checked(&dom), 1);
+    dom.in_runtime(|| *SECOND.write() = true);
+    // The group re-renders first and updates its context, which marks the
+    // radios dirty for the pass after.
+    for _ in 0..2 {
+        dom.process_events();
+        dom.render_immediate(&mut dioxus::core::NoOpMutations);
+    }
+    assert_eq!(checked(&dom), 2);
+}
