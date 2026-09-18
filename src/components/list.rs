@@ -225,6 +225,12 @@ pub fn Item(
         ]),
         class.as_deref(),
     );
+    // Controls in `end`, such as a Follow button, cannot sit inside the row's
+    // own button: a button in a button is invalid, and neither can then be
+    // reached properly by keyboard or a screen reader. Such a row makes only
+    // its text the action, stretched over the row, and keeps the controls
+    // beside it, as a Card does.
+    let split = interactive && checked.is_none() && end.is_some();
     let end = match checked {
         Some(_) => Some(rsx! {
             span { class: "g3-item-check", aria_hidden: "true",
@@ -237,22 +243,24 @@ pub fn Item(
             }
         }),
     };
-    let content = rsx! {
-        if let Some(start) = start {
+    let text = rsx! {
+        if let Some(overline) = overline {
+            span { class: "g3-item-overline", "{overline}" }
+        }
+        if let Some(label) = label {
+            span { class: "g3-item-label", "{label}" }
+        }
+        if let Some(description) = description {
+            span { class: "g3-item-description", "{description}" }
+        }
+        {children}
+    };
+    let start = start.map(|start| {
+        rsx! {
             span { class: "g3-item-start", {start} }
         }
-        span { class: "g3-item-main",
-            if let Some(overline) = overline {
-                span { class: "g3-item-overline", "{overline}" }
-            }
-            if let Some(label) = label {
-                span { class: "g3-item-label", "{label}" }
-            }
-            if let Some(description) = description {
-                span { class: "g3-item-description", "{description}" }
-            }
-            {children}
-        }
+    });
+    let trailing = rsx! {
         if let Some(metadata) = metadata {
             span { class: "g3-item-metadata", "{metadata}" }
         }
@@ -291,10 +299,31 @@ pub fn Item(
             class: "g3-item-row",
             role: list_item.then_some("listitem"),
             aria_label: row_label.filter(|_| list_item),
-            if interactive {
-                Pressable { class: cls, target, disabled, onclick, attributes, {content} }
+            if split {
+                div { class: merge_classes(cls, Some("g3-item-split")),
+                    {start}
+                    Pressable {
+                        class: "g3-item-main g3-item-action",
+                        target,
+                        disabled,
+                        onclick,
+                        attributes,
+                        {text}
+                    }
+                    {trailing}
+                }
+            } else if interactive {
+                Pressable { class: cls, target, disabled, onclick, attributes,
+                    {start}
+                    span { class: "g3-item-main", {text} }
+                    {trailing}
+                }
             } else {
-                div { class: cls, {content} }
+                div { class: cls,
+                    {start}
+                    span { class: "g3-item-main", {text} }
+                    {trailing}
+                }
             }
         }
     }

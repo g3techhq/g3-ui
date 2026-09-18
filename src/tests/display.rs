@@ -421,3 +421,42 @@ fn a_labelled_divider_reads_its_label() {
     assert!(html.contains(">or continue with email</span>"));
     assert_eq!(html.matches("aria-hidden=\"true\"").count(), 2);
 }
+
+#[test]
+fn a_row_with_a_control_at_its_end_does_not_nest_buttons() {
+    fn app() -> Element {
+        rsx! {
+            List { aria_label: "People",
+                Item {
+                    label: "Alex",
+                    onclick: |_| {},
+                    end: rsx! { Button { "Follow" } },
+                }
+                Item { label: "Sam", onclick: |_| {} }
+            }
+        }
+    }
+    let html = render(app);
+    assert!(
+        element_with_class(&html, "g3-item-split").starts_with("<div"),
+        "the row itself is not the button"
+    );
+    let split = &html[html.find("g3-item-split").expect("split row")..];
+    let action = split
+        .find("g3-item-action")
+        .expect("the text is the action");
+    let closes = split[action..]
+        .find("</button>")
+        .expect("action button closes")
+        + action;
+    let follow = split.find(">Follow<").expect("follow button");
+    assert!(
+        follow > closes,
+        "the Follow button sits after the row action, not inside it"
+    );
+    // A row with nothing at its end stays one button.
+    assert!(
+        html.contains("g3-item g3-item-md g3-item-button") || html.contains("g3-item-button\"")
+    );
+    assert_eq!(html.matches("g3-item-split").count(), 1);
+}
