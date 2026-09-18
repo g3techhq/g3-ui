@@ -1,6 +1,6 @@
-//! The semantic colour roles components accept.
+//! The semantic color roles components accept.
 
-/// A semantic colour for buttons, badges, chips, toasts, and swipe actions.
+/// A semantic color for buttons, badges, chips, toasts, and swipe actions.
 ///
 /// Each role maps to a [`Theme`](crate::Theme) token, so it follows the app's
 /// theme.
@@ -9,7 +9,7 @@ pub enum Color {
     /// The theme accent. The default for actions.
     #[default]
     Accent,
-    /// A plain, unemphasised surface or text colour.
+    /// A plain, unemphasised surface or text color.
     Neutral,
     /// A positive or completed state.
     Success,
@@ -20,7 +20,7 @@ pub enum Color {
 }
 
 impl Color {
-    /// The class suffix the stylesheet uses for this colour.
+    /// The class suffix the stylesheet uses for this color.
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             Color::Accent => "accent",

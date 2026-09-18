@@ -16,9 +16,7 @@ Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](ht
   >
 </p>
 
-`g3-ui` is a component library for responsive apps that compile to web (WASM), desktop (Wry), and
-native mobile through Dioxus. It covers bottom tabs that become a desktop rail, sheets, dialogs,
-forms, and swipeable lists. Every component has iOS and Material Design (MD) styling,
+`g3-ui` is a component library for Dioxus web and desktop/android/ios using web view. It may be expanded to work with Dioxus Native (blitz) in the future. Components try to be compatible with desktop and mobile sizing as much as possible. Every component has iOS and Material Design (MD) styling,
 CSS-variable theming, and WAI-ARIA semantics. The Rust crate name is `g3_ui`.
 
 ## Install
@@ -221,7 +219,7 @@ fn main() {
 }
 ```
 
-Colours are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The presets are
+Colors are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The presets are
 `Theme::default_light()`, `Theme::default_dark()`, and `Theme::system()`, which follows the
 operating system through CSS `light-dark()`. Every field is public:
 

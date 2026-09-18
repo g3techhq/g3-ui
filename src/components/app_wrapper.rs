@@ -35,7 +35,7 @@ pub fn AppWrapper(
     /// Platform look. Defaults to an enclosing provider's mode, then
     /// [`get_mode`](crate::get_mode).
     mode: Option<ComponentMode>,
-    /// Colour tokens. Defaults to an enclosing provider's theme, then
+    /// Color tokens. Defaults to an enclosing provider's theme, then
     /// [`Theme::default_light`]. Changing it re-themes the app in place.
     theme: Option<Theme>,
     /// Component text. Defaults to an enclosing provider's strings, then

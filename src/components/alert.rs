@@ -11,7 +11,7 @@ pub enum AlertButtonRole {
     Default,
     /// Dismisses without acting. Also chosen by Escape.
     Cancel,
-    /// A destructive choice, drawn in the danger colour.
+    /// A destructive choice, drawn in the danger color.
     Destructive,
 }
 
@@ -207,7 +207,11 @@ fn AlertPlaygroundDemo() -> Element {
                         let name = alerts
                             .prompt(
                                 "Rename round",
-                                AlertInput { label: "Name".into(), value: "Saturday".into(), ..AlertInput::default() },
+                                AlertInput {
+                                    label: "Name".into(),
+                                    value: "Saturday".into(),
+                                    ..AlertInput::default()
+                                },
                             )
                             .await;
                         last.set(format!("Prompt: {name:?}"));
@@ -231,7 +235,11 @@ fn AlertPlaygroundDemo() -> Element {
                     },
                     "Action sheet from code"
                 }
-                crate::Button { fill: ButtonFill::Clear, onclick: move |_| modal_open.set(true), "Modal" }
+                crate::Button {
+                    fill: ButtonFill::Clear,
+                    onclick: move |_| modal_open.set(true),
+                    "Modal"
+                }
                 p { "Last result: {last}" }
             }
             Alert {

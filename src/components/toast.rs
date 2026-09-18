@@ -67,7 +67,7 @@ pub fn Toast(
     message: Option<String>,
     /// Where it appears. Defaults to [`ToastPosition::Bottom`].
     position: Option<ToastPosition>,
-    /// Colour of the status dot and tint. Defaults to [`Color::Neutral`].
+    /// Color of the status dot and tint. Defaults to [`Color::Neutral`].
     /// [`Color::Danger`] and [`Color::Warning`] are announced assertively.
     color: Option<Color>,
     /// How long it stays up. Defaults to [`ToastDuration::Short`], or
@@ -240,11 +240,12 @@ fn ToastPlaygroundDemo() -> Element {
                         crate::Button {
                             fill: crate::ButtonFill::Outline,
                             onclick: move |_| {
-                                toaster.show(
-                                    crate::ToastOptions::new("Queued from code")
-                                        .color(color())
-                                        .position(position()),
-                                );
+                                toaster
+                                    .show(
+                                        crate::ToastOptions::new("Queued from code")
+                                            .color(color())
+                                            .position(position()),
+                                    );
                             },
                             "Queue a toast with use_toast"
                         }

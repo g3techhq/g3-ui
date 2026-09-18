@@ -13,7 +13,7 @@ body,
      the page is painted before there is anything to paint on it, and
      `.playground-root` covers the viewport with the theme background as soon as
      the app renders. White keeps that window indistinguishable from the
-     browser's own blank page rather than flashing a colour of its own. */
+     browser's own blank page rather than flashing a color of its own. */
   background: #ffffff;
   color: var(--g3-color-text, #17202a);
 }

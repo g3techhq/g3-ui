@@ -303,7 +303,7 @@ pub fn MenuItem(
     start: Option<Element>,
     /// Content after the label, such as a keyboard shortcut.
     end: Option<Element>,
-    /// Colour. Only [`Color::Danger`] and [`Color::Accent`] change the item.
+    /// Color. Only [`Color::Danger`] and [`Color::Accent`] change the item.
     color: Option<Color>,
     /// Disable the item.
     disabled: Option<bool>,
@@ -369,11 +369,15 @@ fn MenuPlaygroundDemo() -> Element {
                 }
                 if show_popover() {
                     crate::Checkbox { checked: sheet_on_compact, label: "Sheet on phones" }
-                    crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                    crate::Text {
+                        variant: crate::TextVariant::Caption,
+                        tone: crate::TextTone::Secondary,
                         "A popover holds extra detail about its trigger. On a phone it can open as a bottom sheet instead."
                     }
                 } else {
-                    crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                    crate::Text {
+                        variant: crate::TextVariant::Caption,
+                        tone: crate::TextTone::Secondary,
                         "A menu lists actions for its trigger. Arrow keys move between items."
                     }
                 }

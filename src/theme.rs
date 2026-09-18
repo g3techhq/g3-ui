@@ -1,7 +1,7 @@
-//! Platform mode, colour theme, and UI strings.
+//! Platform mode, color theme, and UI strings.
 //!
 //! - [`ComponentMode`] picks the platform look (iOS or Material Design).
-//! - [`Theme`] holds the colour tokens, written to the page as `--g3-color-*`
+//! - [`Theme`] holds the color tokens, written to the page as `--g3-color-*`
 //!   custom properties.
 //! - [`Strings`] holds every piece of text a component renders on its own, so
 //!   an app can translate them.
@@ -41,9 +41,9 @@ impl ComponentMode {
     }
 }
 
-/// Colour tokens for g3-ui components.
+/// Color tokens for g3-ui components.
 ///
-/// Each field is any CSS colour value and becomes a `--g3-color-*` custom
+/// Each field is any CSS color value and becomes a `--g3-color-*` custom
 /// property: `accent` becomes `--g3-color-accent`, `text_secondary` becomes
 /// `--g3-color-text-secondary`, and so on. Start from a preset and change the
 /// fields you need:
@@ -57,7 +57,7 @@ impl ComponentMode {
 /// ```
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Theme {
-    /// Brand colour: primary buttons, selected controls, focus rings, links.
+    /// Brand color: primary buttons, selected controls, focus rings, links.
     /// Most tints in the stylesheet are mixed from it.
     pub accent: String,
     /// Text and icons drawn on an `accent` fill.
@@ -80,13 +80,13 @@ pub struct Theme {
     pub control: String,
     /// Hairline borders and separators.
     pub border: String,
-    /// Shadow colour, including its alpha.
+    /// Shadow color, including its alpha.
     pub shadow: String,
     /// Success states and confirmations.
     pub success: String,
     /// States that need attention.
     pub warning: String,
-    /// Text and icons drawn on a `warning` fill. Warning is a light colour,
+    /// Text and icons drawn on a `warning` fill. Warning is a light color,
     /// so this is usually dark.
     pub on_warning: String,
     /// Errors and destructive actions.
@@ -195,7 +195,7 @@ impl Theme {
         Self::adaptive(Self::default_light(), Self::default_dark())
     }
 
-    /// Return this theme with a different accent colour.
+    /// Return this theme with a different accent color.
     pub fn with_accent(mut self, accent: impl Into<String>) -> Self {
         self.accent = accent.into();
         self
@@ -580,7 +580,7 @@ pub(crate) fn classes<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
 pub fn ThemeProvider(
     /// Platform look for this subtree.
     mode: Option<ComponentMode>,
-    /// Colour tokens for this subtree.
+    /// Color tokens for this subtree.
     theme: Option<Theme>,
     /// Component text for this subtree.
     strings: Option<Strings>,

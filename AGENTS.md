@@ -83,7 +83,7 @@ Components must work across platforms:
   Overlays take a required `open: Signal<bool>`. Pair the signal with an optional
   `onchange`/`on_*` callback that receives the new value, not a DOM event.
 - **Names**: `open` for visibility, `value` for selection, `disabled`, `aria_label`, `mode`,
-  `class`. Colours use the shared `Color` enum.
+  `class`. Colors use the shared `Color` enum.
 
 ### Slots
 - Follow Ionic's slot naming: `start`, `end`, `primary`, `secondary` for toolbar components.

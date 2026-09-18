@@ -64,7 +64,7 @@ fn reply<T>() -> (Responder<T>, Reply<T>) {
 pub struct ToastOptions {
     /// The message.
     pub message: String,
-    /// Colour. Defaults to [`Color::Neutral`].
+    /// Color. Defaults to [`Color::Neutral`].
     pub color: Color,
     /// Where it appears.
     pub position: ToastPosition,
@@ -83,7 +83,7 @@ impl ToastOptions {
         }
     }
 
-    /// Set the colour.
+    /// Set the color.
     pub fn color(mut self, color: Color) -> Self {
         self.color = color;
         self

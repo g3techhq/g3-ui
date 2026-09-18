@@ -8,7 +8,7 @@ use dioxus::prelude::*;
 pub struct ActionSheetButton {
     /// Button text.
     pub label: String,
-    /// Colour. [`Color::Danger`] marks a destructive choice.
+    /// Color. [`Color::Danger`] marks a destructive choice.
     pub color: Option<Color>,
     /// Whether it can be chosen.
     pub disabled: bool,
@@ -112,7 +112,11 @@ pub fn ActionSheet(
                         r#type: "button",
                         class: classes([
                             "g3-action-sheet-button",
-                            if button.color == Some(Color::Danger) { "g3-action-sheet-button-danger" } else { "" },
+                            if button.color == Some(Color::Danger) {
+                                "g3-action-sheet-button-danger"
+                            } else {
+                                ""
+                            },
                         ]),
                         disabled: button.disabled,
                         onclick: move |_| finish(Some(index)),

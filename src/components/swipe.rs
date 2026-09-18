@@ -190,7 +190,7 @@ impl Phase {
 /// A button uncovered by swiping a [`SwipeItem`].
 #[component]
 pub fn SwipeAction(
-    /// Colour. Defaults to [`Color::Neutral`].
+    /// Color. Defaults to [`Color::Neutral`].
     color: Option<Color>,
     /// Accessible name, for icon-only actions.
     aria_label: Option<String>,

@@ -97,7 +97,7 @@ cascade layer. The README has a table of the most common renames.
   - `disable_text_selection` → `text_selection`.
   - `FabSize::Normal` → `FabSize::Regular`.
   - `SwipeState::full` → `committed`.
-- **Breaking:** colour variants share one `Color` enum (`Accent`,
+- **Breaking:** color variants share one `Color` enum (`Accent`,
   `Neutral`, `Success`, `Warning`, `Danger`) across `Button`, `Badge`,
   `Toast`, `MenuItem`, `SwipeAction`, and `Text`.
 - **Breaking:** `Select`, `RadioGroup`/`Radio`, `SegmentGroup`/`SegmentButton`,
@@ -161,7 +161,7 @@ cascade layer. The README has a table of the most common renames.
   - Content and layout: `Text`, `Img`, `Tooltip`, `Stack`, and `Grid`.
   - Feedback: `InfiniteScroll`.
 - `Theme::system()` and `Theme::adaptive(light, dark)` follow the operating
-  system's colour scheme through CSS `light-dark()`.
+  system's color scheme through CSS `light-dark()`.
 - `Strings` holds every built-in label, for translation.
 - `use_theme`, `use_strings`, and `use_component_mode` read the values in
   effect.
@@ -217,7 +217,7 @@ cascade layer. The README has a table of the most common renames.
   area, so a pull can start below short content, and it no longer becomes
   the containing block for sheets inside it.
 - Neutral outline buttons, such as `ConfirmModal`'s Cancel, use the border
-  colour instead of a solid text-coloured outline.
+  color instead of a solid text-colored outline.
 
 - The desktop rail no longer dims and scales with the page when a routed
   sheet opens, and the sheet no longer leaves an empty rail-width gap. With
@@ -259,7 +259,7 @@ Every playground demo passes an axe-core audit in both modes.
   focusable can still be scrolled from the keyboard.
 - Fields, checkboxes, radios, and steppers use a new
   `--g3-color-control-border` with at least 3:1 contrast. The dark preset's
-  accent and danger colours meet 4.5:1 as text, and its fills carry dark
+  accent and danger colors meet 4.5:1 as text, and its fills carry dark
   text (`on_accent` is `#04162b`).
 - Focus rings for ranges, steppers, and chips; Windows High Contrast
   support; reduced motion is respected when segments scroll.
@@ -420,9 +420,9 @@ Initial release.
 - Make mode and theme switchable at runtime: `G3Mode` now carries a `Signal<ComponentMode>` and the ambient theme is published as a `Signal<Theme>`, so changing either re-renders components that are already mounted. Previously both were read once per component and never again, and `AppWrapper` read its own published value back instead of an outer one. **Breaking:** `G3Mode.mode` changed type; construct it from a signal.
 - Add `use_ambient_theme` for reading the theme an enclosing `AppWrapper` or `G3ThemeProvider` set.
 - Replace the JavaScript first-paint guard with `AssetOptions::css().with_static_head(true)`, which puts the stylesheet `<link>` in the document head at build time and lets the browser block first paint on it. The old guard hid the shell behind `visibility: hidden` and `transition: none !important` until a polled round trip reported the stylesheet had applied; when that round trip never completed the guard never lifted, which left every transition in the app dead - swipe rows snapped back instead of animating. `AppWrapper` still links the stylesheet at runtime as well, because desktop and mobile bundles only collect assets something links at runtime - a statically-headed asset alone never reaches them. **Breaking:** `G3PreloadStyle` and the `g3-preload` class are gone.
-- Stop the swipe action colour bleeding through as a hairline along the bottom of the last swipeable row: the dragged content composites separately from the actions beneath it, and on a fractionally-tall row the two rasterize to different device pixels. Rows above the last were only ever covered by their own divider.
-- Hold a swiped row's action colour underneath until the row has slid back over it. The row reported itself closed the instant the drag was released, which hid the actions immediately and left the row animating home across bare card.
-- Link the playground stylesheet into the head at build time. Loading it at runtime left a window where the library stylesheet had applied but the playground's had not, so the device frame rendered unstyled while the app booted. The page background during that window is white, so it reads as the browser's own blank page rather than a colour of its own.
+- Stop the swipe action color bleeding through as a hairline along the bottom of the last swipeable row: the dragged content composites separately from the actions beneath it, and on a fractionally-tall row the two rasterize to different device pixels. Rows above the last were only ever covered by their own divider.
+- Hold a swiped row's action color underneath until the row has slid back over it. The row reported itself closed the instant the drag was released, which hid the actions immediately and left the row animating home across bare card.
+- Link the playground stylesheet into the head at build time. Loading it at runtime left a window where the library stylesheet had applied but the playground's had not, so the device frame rendered unstyled while the app booted. The page background during that window is white, so it reads as the browser's own blank page rather than a color of its own.
 - Drop the compact-shell/wide-shell chips above each playground preview; the header toggle already names the width.
 - 25 mobile-first components with iOS and Material Design variants of each.
 - Configurable `Theme` of 17 CSS custom-property tokens, with built-in light

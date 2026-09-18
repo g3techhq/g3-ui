@@ -9,10 +9,10 @@ use dioxus::prelude::*;
 /// How a [`Button`] is filled.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ButtonFill {
-    /// Filled with its colour. The primary action on a screen.
+    /// Filled with its color. The primary action on a screen.
     #[default]
     Solid,
-    /// A coloured border and label, for a secondary action.
+    /// A colored border and label, for a secondary action.
     Outline,
     /// Label only, for low-emphasis and toolbar actions.
     Clear,
@@ -63,7 +63,7 @@ pub enum ButtonExpand {
 pub fn Button(
     /// Fill. Defaults to [`ButtonFill::Solid`].
     fill: Option<ButtonFill>,
-    /// Colour. Defaults to [`Color::Accent`].
+    /// Color. Defaults to [`Color::Accent`].
     color: Option<Color>,
     /// Size. Defaults to [`ButtonSize::Md`].
     size: Option<ButtonSize>,
@@ -107,7 +107,7 @@ pub fn Button(
         ButtonFill::Outline => "g3-btn-outline",
         ButtonFill::Clear => "g3-btn-clear",
     };
-    // Accent is the base colour, so it needs no class of its own.
+    // Accent is the base color, so it needs no class of its own.
     let color_cls = match color.unwrap_or_default() {
         Color::Accent => String::new(),
         color => format!("g3-btn-{}", color.as_str()),

@@ -100,7 +100,7 @@ body.g3-overlay-scroll-locked {
 }
 /* -- Button --
 
-   A button is a fill (solid, outline, clear) in a colour. The colour class
+   A button is a fill (solid, outline, clear) in a color. The color class
    sets two local properties and the fill class decides where they go. */
 
 .g3-btn {
@@ -185,7 +185,7 @@ body.g3-overlay-scroll-locked {
     padding: 0;
 }
 
-/* Colours */
+/* Colors */
 .g3-btn-neutral {
     --g3-btn-color: var(--g3-color-text);
     --g3-btn-on-color: var(--g3-color-text);
@@ -201,7 +201,7 @@ body.g3-overlay-scroll-locked {
 }
 
 /* Yellow text is unreadable on a light page, so outline and clear warning
-   buttons darken it toward the text colour. */
+   buttons darken it toward the text color. */
 .g3-btn-warning:is(.g3-btn-outline, .g3-btn-clear) {
     color: var(--g3-color-warning-ink);
 }
@@ -217,7 +217,7 @@ body.g3-overlay-scroll-locked {
 }
 
 /* A neutral solid button is a raised surface rather than a slab of text
-   colour. */
+   color. */
 .g3-btn-solid.g3-btn-neutral {
     background: var(--g3-color-card);
     border: 1px solid var(--g3-color-border);
@@ -234,7 +234,7 @@ body.g3-overlay-scroll-locked {
 }
 
 /* A neutral outline is a quiet secondary action: a hairline, not a slab of
-   text colour. */
+   text color. */
 .g3-btn-outline.g3-btn-neutral {
     border-color: var(--g3-color-border);
 }
@@ -337,7 +337,7 @@ body.g3-overlay-scroll-locked {
     transform: none;
 }
 
-/* A loading button is busy, not unavailable: it keeps its colour. */
+/* A loading button is busy, not unavailable: it keeps its color. */
 .g3-btn.g3-btn-loading[aria-disabled="true"] {
     cursor: progress;
     opacity: 1;
@@ -1554,7 +1554,7 @@ button.g3-chip:focus-visible {
 }
 
 /* A card inside a card or a bottom sheet needs its own surface. Mixing in the
-   text colour darkens light themes and lightens dark ones alike. */
+   text color darkens light themes and lightens dark ones alike. */
 .g3-card .g3-card,
 .g3-sheet-bottom .g3-card,
 .g3-card-filled {
@@ -3486,9 +3486,9 @@ button.g3-chip:focus-visible {
 
    The row reports itself closed the moment the drag is released, but the
    content still needs a full transition to slide back over the actions. Hiding
-   on that signal alone would snap the action colour away and leave the row
+   on that signal alone would snap the action color away and leave the row
    travelling across bare card. Delaying only the hide - opening stays instant -
-   keeps the colour underneath until the content has covered it. */
+   keeps the color underneath until the content has covered it. */
 .g3-swipe-actions[aria-hidden="true"] {
     visibility: hidden;
     transition-delay: var(--g3-transition-normal);
@@ -3562,12 +3562,12 @@ button.g3-chip:focus-visible {
     transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease;
     will-change: transform;
     /* The content carries the drag transform, so it rasterizes on its own
-       compositing layer while the action colours paint in the row's layer
+       compositing layer while the action colors paint in the row's layer
        underneath. Row heights come from text metrics and land on fractional
        pixels, so the two layers round to different device pixels and the action
-       colour bleeds through as a hairline along the row's edge. Rows other than
+       color bleeds through as a hairline along the row's edge. Rows other than
        the last hide this behind their 1px divider, which is why only the bottom
-       row shows it. These guards paint the row's own colour just outside the
+       row shows it. These guards paint the row's own color just outside the
        content box - in the content's layer, so they travel with the drag and
        only ever cover the part the content still occupies. `overflow: hidden`
        on the row clips them, so they cost no height. */
@@ -3580,7 +3580,7 @@ button.g3-chip:focus-visible {
     transition: none;
 }
 
-/* Keep the guard the same colour as the row it is guarding. */
+/* Keep the guard the same color as the row it is guarding. */
 .g3-swipe-content:has(.g3-item-selected) {
     --g3-swipe-edge: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
@@ -3701,8 +3701,8 @@ button.g3-chip:focus-visible {
     gap: 0.75rem;
     min-height: 48px;
     padding: 0.75rem 0.875rem;
-    /* Colour is carried by the leading status dot + a whisper of surface tint,
-       not by a coloured outline or the old left accent bar. This matches the
+    /* Color is carried by the leading status dot + a whisper of surface tint,
+       not by a colored outline or the old left accent bar. This matches the
        card treatment used by items, cards and the accordion. */
     --g3-toast-accent-color: var(--g3-color-text-tertiary);
     --g3-toast-surface: var(--g3-color-card);
@@ -3716,7 +3716,7 @@ button.g3-chip:focus-visible {
     transition: opacity var(--g3-transition-normal) var(--g3-transition-md), transform var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-/* Leading status dot — the primary colour signal. */
+/* Leading status dot — the primary color signal. */
 .g3-toast-indicator {
     width: 0.625rem;
     height: 0.625rem;
@@ -3769,8 +3769,8 @@ button.g3-chip:focus-visible {
     box-shadow: var(--g3-shadow-md-fab);
 }
 
-/* Colour is applied as the status accent (drives the dot) plus a faint surface
-   tint, so it reads on both light and dark themes without a coloured outline. */
+/* Color is applied as the status accent (drives the dot) plus a faint surface
+   tint, so it reads on both light and dark themes without a colored outline. */
 .g3-toast-accent {
     --g3-toast-accent-color: var(--g3-color-accent);
     --g3-toast-surface: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
@@ -5416,7 +5416,7 @@ button.g3-chip:focus-visible {
 
    A month grid whose cells are buttons. The selected day and today are drawn
    the way each platform draws them: a filled circle and an outlined one on
-   Material, a tinted circle and coloured text on iOS. */
+   Material, a tinted circle and colored text on iOS. */
 
 .g3-calendar {
     --g3-calendar-cell: 2.5rem;
@@ -5919,11 +5919,11 @@ td[aria-selected="true"] > .g3-calendar-day {
     }
 }
 
-/* -- Forced colours --
+/* -- Forced colors --
 
-   Windows High Contrast and similar modes replace every colour with a small
+   Windows High Contrast and similar modes replace every color with a small
    system palette and drop backgrounds and shadows. Controls drawn from those
-   get outlines and system colours back, so their state stays visible. */
+   get outlines and system colors back, so their state stays visible. */
 @media (forced-colors: active) {
     .g3-control-mark,
     .g3-switch-ios,

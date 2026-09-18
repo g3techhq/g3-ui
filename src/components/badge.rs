@@ -14,7 +14,7 @@ use dioxus::prelude::*;
 /// ```
 #[component]
 pub fn Badge(
-    /// Colour. Defaults to [`Color::Neutral`].
+    /// Color. Defaults to [`Color::Neutral`].
     color: Option<Color>,
     /// What the badge means, when its text alone does not say, such as
     /// "3 unread" for a badge showing "3".
@@ -25,8 +25,7 @@ pub fn Badge(
 ) -> Element {
     let color = color.unwrap_or(Color::Neutral);
     rsx! {
-        span {
-            class: merge_classes(format!("g3-badge g3-badge-{}", color.as_str()), class.as_deref()),
+        span { class: merge_classes(format!("g3-badge g3-badge-{}", color.as_str()), class.as_deref()),
             if let Some(label) = aria_label {
                 span { aria_hidden: "true", {children} }
                 span { class: "g3-sr-only", "{label}" }
@@ -55,7 +54,7 @@ fn BadgePlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Badge",
-    description: "Status and count pills in each colour.",
+    description: "Status and count pills in each color.",
     demo: BadgePlaygroundDemo,
     source: "src/components/badge.rs",
 }

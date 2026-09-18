@@ -24,7 +24,7 @@ pub enum TextVariant {
 /// How strongly [`Text`] stands out.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum TextTone {
-    /// The theme's body text colour.
+    /// The theme's body text color.
     #[default]
     Primary,
     /// De-emphasised.
@@ -33,7 +33,7 @@ pub enum TextTone {
     Tertiary,
 }
 
-/// Text in the theme's type scale and colours.
+/// Text in the theme's type scale and colors.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -53,7 +53,7 @@ pub fn Text(
     /// Emphasis. Defaults to [`TextTone::Primary`]; ignored when `color` is
     /// set.
     tone: Option<TextTone>,
-    /// A semantic colour, such as [`Color::Danger`] for an error.
+    /// A semantic color, such as [`Color::Danger`] for an error.
     color: Option<Color>,
     /// Cut off with an ellipsis instead of wrapping.
     truncate: Option<bool>,
@@ -110,11 +110,23 @@ pub fn Text(
 #[component]
 pub(crate) fn Heading(level: u8, class: String, children: Element) -> Element {
     match level.clamp(1, 6) {
-        1 => rsx! { h1 { class, {children} } },
-        2 => rsx! { h2 { class, {children} } },
-        3 => rsx! { h3 { class, {children} } },
-        4 => rsx! { h4 { class, {children} } },
-        5 => rsx! { h5 { class, {children} } },
-        _ => rsx! { h6 { class, {children} } },
+        1 => rsx! {
+            h1 { class, {children} }
+        },
+        2 => rsx! {
+            h2 { class, {children} }
+        },
+        3 => rsx! {
+            h3 { class, {children} }
+        },
+        4 => rsx! {
+            h4 { class, {children} }
+        },
+        5 => rsx! {
+            h5 { class, {children} }
+        },
+        _ => rsx! {
+            h6 { class, {children} }
+        },
     }
 }

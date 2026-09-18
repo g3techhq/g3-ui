@@ -12,7 +12,7 @@ pub enum DividerOrientation {
     Vertical,
 }
 
-/// A thin rule that separates content. Set `--g3-divider-color` to recolour
+/// A thin rule that separates content. Set `--g3-divider-color` to recolor
 /// it.
 #[component]
 pub fn Divider(

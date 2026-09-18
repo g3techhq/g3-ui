@@ -90,7 +90,7 @@ pub fn Rating(
     helper: Option<String>,
     /// Width of one star, in pixels. Defaults to `24`.
     size: Option<u32>,
-    /// Colour of a filled star. Defaults to [`Color::Warning`], the gold
+    /// Color of a filled star. Defaults to [`Color::Warning`], the gold
     /// ratings are usually shown in.
     color: Option<Color>,
     /// Called with every value while dragging.

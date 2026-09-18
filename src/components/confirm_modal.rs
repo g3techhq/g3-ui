@@ -6,7 +6,7 @@ use dioxus::prelude::*;
 /// A confirmation dialog with cancel and confirm buttons.
 ///
 /// Both buttons close it. Set `destructive` for actions such as deleting,
-/// which colours the confirm button as dangerous.
+/// which colors the confirm button as dangerous.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -80,7 +80,11 @@ pub fn ConfirmModal(
             mode,
             class,
             actions: rsx! {
-                Button { fill: ButtonFill::Outline, color: Color::Neutral, mode, onclick: cancel,
+                Button {
+                    fill: ButtonFill::Outline,
+                    color: Color::Neutral,
+                    mode,
+                    onclick: cancel,
                     "{cancel_label}"
                 }
                 Button {

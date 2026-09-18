@@ -88,7 +88,7 @@ fn custom_properties_are_namespaced() {
 }
 
 #[test]
-fn colours_come_from_theme_tokens() {
+fn colors_come_from_theme_tokens() {
     let root_end = STYLESHEET.find(":root {").unwrap() + rule_body(":root").len();
     let rest = &STYLESHEET[root_end..];
     for line in rest.lines() {
@@ -96,8 +96,8 @@ fn colours_come_from_theme_tokens() {
         if line.starts_with("/*") || line.starts_with('*') {
             continue;
         }
-        assert!(!line.contains('#'), "literal colour: {line}");
-        assert!(!line.contains(" white"), "literal colour: {line}");
+        assert!(!line.contains('#'), "literal color: {line}");
+        assert!(!line.contains(" white"), "literal color: {line}");
         assert!(
             !line.contains("rgba(") || line.contains("rgba(0, 0, 0"),
             "only neutral shadows may use rgba: {line}"
