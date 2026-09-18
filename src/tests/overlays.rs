@@ -225,6 +225,30 @@ fn app_wrapper_hosts_code_opened_overlays() {
 }
 
 #[test]
+fn a_replacing_toast_takes_the_place_of_the_one_showing() {
+    fn app() -> Element {
+        rsx! {
+            AppWrapper { Page {} }
+        }
+    }
+    #[component]
+    fn Page() -> Element {
+        let toaster = use_toast();
+        use_hook(|| {
+            toaster.show("First");
+            toaster.show(ToastOptions::new("Second").replace());
+        });
+        rsx! { "Page" }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    dom.render_immediate(&mut dioxus::core::NoOpMutations);
+    let html = dioxus_ssr::render(&dom);
+    assert!(!html.contains("First"));
+    assert!(html.contains("Second"));
+}
+
+#[test]
 fn a_low_detent_leaves_the_page_usable() {
     fn app() -> Element {
         let open = use_signal(|| true);

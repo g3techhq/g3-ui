@@ -70,6 +70,9 @@ pub struct ToastOptions {
     pub position: ToastPosition,
     /// How long it stays up.
     pub duration: ToastDuration,
+    /// Take the place of the toast showing, and any waiting, rather than
+    /// queueing behind them.
+    pub replace: bool,
 }
 
 impl ToastOptions {
@@ -80,6 +83,7 @@ impl ToastOptions {
             color: Color::Neutral,
             position: ToastPosition::default(),
             duration: ToastDuration::default(),
+            replace: false,
         }
     }
 
@@ -98,6 +102,15 @@ impl ToastOptions {
     /// Set how long it stays up.
     pub fn duration(mut self, duration: ToastDuration) -> Self {
         self.duration = duration;
+        self
+    }
+
+    /// Show it at once, in place of the toast showing and any waiting. Use it
+    /// for feedback on an action that can be repeated quickly, such as saving
+    /// several items in a row: queued, the confirmations would trail behind
+    /// the actions long after they happened.
+    pub fn replace(mut self) -> Self {
+        self.replace = true;
         self
     }
 }
@@ -209,10 +222,15 @@ impl Toaster {
     /// Queue a toast.
     pub fn show(&self, options: impl Into<ToastOptions>) -> ToastId {
         let id = self.queues.next();
+        let options = options.into();
         let mut toasts = self.queues.toasts;
-        toasts.write().push(Entry {
+        let mut queue = toasts.write();
+        if options.replace {
+            queue.clear();
+        }
+        queue.push(Entry {
             id,
-            options: options.into(),
+            options,
             responder: None,
         });
         ToastId(id)
