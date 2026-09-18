@@ -3090,8 +3090,12 @@ button.g3-chip:focus-visible {
 .g3-rating {
     --g3-rating-fill: var(--g3-color-warning);
     display: inline-flex;
+    align-items: flex-start;
     gap: 2px;
     width: fit-content;
+    /* Stars shrink rather than overflow a narrow column; rating.rs measures
+       the row to keep the pointer maths right. */
+    max-width: 100%;
     border-radius: 0.375rem;
     /* The pointer maths assumes this gap; see GAP in rating.rs. */
 }
@@ -3103,11 +3107,15 @@ button.g3-chip:focus-visible {
 
 .g3-rating-star {
     display: block;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    aspect-ratio: 1;
 }
 
 .g3-rating-star svg {
     display: block;
+    width: 100%;
+    height: 100%;
     overflow: visible;
 }
 

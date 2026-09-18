@@ -88,7 +88,9 @@ pub fn Rating(
     aria_label: Option<String>,
     /// Help text below.
     helper: Option<String>,
-    /// Width of one star, in pixels. Defaults to `24`.
+    /// Width of one star, in pixels. Defaults to `24`. The stars shrink
+    /// below it when the row would not otherwise fit, as ten stars on a
+    /// phone may not.
     size: Option<u32>,
     /// Colour of a filled star. Defaults to [`Color::Warning`], the gold
     /// ratings are usually shown in.
@@ -109,6 +111,13 @@ pub fn Rating(
     let disabled = disabled.unwrap_or(false);
     let interactive = !readonly && !disabled;
     let size = f64::from(size.unwrap_or(24));
+    // The row's drawn width, once known: the stars may be narrower than
+    // `size`, and a press has to map to the star it lands on.
+    let mut row_width = use_signal(|| None::<f64>);
+    let star_size = move || match row_width() {
+        Some(width) if width > 0.0 => ((width + GAP) / f64::from(max) - GAP).min(size),
+        _ => size,
+    };
     let mut value = use_controlled(value, || 0.0);
     let mut dragging = use_signal(|| false);
     let step = if half { 0.5 } else { 1.0 };
@@ -160,7 +169,7 @@ pub fn Rating(
             span {
                 key: "{index}",
                 class: "g3-rating-star",
-                style: "width: {px}px; height: {px}px;",
+                style: "width: {px}px;",
                 // Each star knows where it sits, so a press on it, or a drag
                 // that the browser keeps delivering to it, maps to a place
                 // along the whole row.
@@ -170,6 +179,7 @@ pub fn Rating(
                     }
                     event.prevent_default();
                     dragging.set(true);
+                    let size = star_size();
                     let offset = f64::from(index) * (size + GAP) + event.element_coordinates().x;
                     set(value_at(offset, size, max, half), true);
                 },
@@ -177,13 +187,12 @@ pub fn Rating(
                     if !interactive || !dragging() {
                         return;
                     }
+                    let size = star_size();
                     let offset = f64::from(index) * (size + GAP) + event.element_coordinates().x;
                     set(value_at(offset, size, max, half), true);
                 },
                 svg {
                     view_box: "0 0 24 24",
-                    width: "{px}",
-                    height: "{px}",
                     "aria-hidden": "true",
                     defs {
                         clipPath { id: "{id}-clip-{index}",
@@ -241,6 +250,11 @@ pub fn Rating(
                     aria_valuenow: "{shown}",
                     aria_valuetext: spoken_value,
                     aria_disabled: disabled.then_some("true"),
+                    onresize: move |event: ResizeEvent| {
+                        if let Ok(box_size) = event.data().get_border_box_size() {
+                            row_width.set(Some(box_size.width));
+                        }
+                    },
                     onpointerup: move |_| commit(),
                     onpointercancel: move |_| commit(),
                     onpointerleave: move |_| commit(),
