@@ -3144,6 +3144,60 @@ button.g3-chip:focus-visible {
     opacity: 0.5;
 }
 
+/* -- Reorder -- */
+
+.g3-reorder-item {
+    position: relative;
+    transition: transform var(--g3-transition-fast, 160ms) ease;
+}
+
+/* The dragged row follows the pointer exactly and rides above the rest. */
+.g3-reorder-item[data-dragging="true"] {
+    z-index: 2;
+    transition: none;
+    box-shadow: var(--g3-shadow-md-elevation-2, 0 6px 16px var(--g3-color-shadow));
+}
+
+.g3-reorder[data-dragging="true"] {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.g3-reorder-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--g3-color-text-secondary);
+    cursor: grab;
+    /* The handle claims the gesture: a drag on it moves the row rather than
+       scrolling the page. */
+    touch-action: none;
+}
+
+.g3-reorder-handle:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-reorder-handle[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-reorder-item {
+        transition: none;
+    }
+}
+
 /* -- Table -- */
 
 .g3-table-frame {

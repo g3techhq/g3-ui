@@ -460,3 +460,34 @@ fn a_row_with_a_control_at_its_end_does_not_nest_buttons() {
     );
     assert_eq!(html.matches("g3-item-split").count(), 1);
 }
+
+#[test]
+fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
+    fn app() -> Element {
+        rsx! {
+            ReorderList { onreorder: |_| {},
+                List { aria_label: "Holes",
+                    ReorderItem { index: 0,
+                        Item { label: "Front nine", start: rsx! { ReorderHandle { label: "Move Front nine" } } }
+                    }
+                    ReorderItem { index: 1,
+                        Item { label: "Back nine", start: rsx! { ReorderHandle {} } }
+                    }
+                }
+            }
+        }
+    }
+    let html = render(app);
+    let handle = element_with_class(&html, "g3-reorder-handle");
+    assert!(handle.starts_with("<button"));
+    assert!(handle.contains("aria-label=\"Move Front nine\""));
+    assert!(
+        html.contains("aria-label=\"Reorder\""),
+        "an unnamed handle gets the default name"
+    );
+    assert!(
+        html.contains("role=\"status\""),
+        "keyboard moves are announced"
+    );
+    assert_eq!(html.matches("g3-reorder-item").count(), 2);
+}

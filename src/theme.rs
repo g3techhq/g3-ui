@@ -293,6 +293,8 @@ pub struct Strings {
     pub search: String,
     /// Accessible name of a swipe row's keyboard "show actions" control.
     pub show_actions: String,
+    /// Accessible name of a reorder handle that was not given one.
+    pub reorder: String,
     /// Read after a link that opens in a new tab.
     pub opens_in_new_tab: String,
     /// Month names, January first.
@@ -359,6 +361,7 @@ impl Default for Strings {
             back: "Back".into(),
             search: "Search".into(),
             show_actions: "Show actions".into(),
+            reorder: "Reorder".into(),
             opens_in_new_tab: "(opens in a new tab)".into(),
             months: [
                 "January",

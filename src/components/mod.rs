@@ -44,6 +44,7 @@ mod radio;
 mod range;
 mod rating;
 mod refresher;
+mod reorder;
 mod searchbar;
 mod segment;
 mod select;
@@ -107,6 +108,7 @@ pub use radio::{Radio, RadioGroup};
 pub use range::{Range, Stepper};
 pub use rating::Rating;
 pub use refresher::Refresher;
+pub use reorder::{ReorderHandle, ReorderItem, ReorderList};
 pub use searchbar::Searchbar;
 pub use segment::{SegmentButton, SegmentGroup};
 pub use select::{Select, SelectOption, SelectWidth};
@@ -172,6 +174,7 @@ gallery![
     shelf,
     rating,
     table,
+    reorder,
     spinner,
     accordion,
     segment,

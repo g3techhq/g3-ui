@@ -68,6 +68,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/range.rs"),
     include_str!("components/rating.rs"),
     include_str!("components/refresher.rs"),
+    include_str!("components/reorder.rs"),
     include_str!("components/searchbar.rs"),
     include_str!("components/segment.rs"),
     include_str!("components/select.rs"),
