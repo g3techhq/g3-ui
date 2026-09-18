@@ -306,3 +306,35 @@ fn a_labelled_rating_display_still_says_its_value() {
     assert!(html.contains(r#"aria-label="Average of 214 ratings: 3.7 of 5 stars""#));
     assert!(!html.contains("aria-labelledby"));
 }
+
+#[test]
+fn a_labelled_segment_group_is_named_by_its_visible_label() {
+    fn labelled() -> Element {
+        let theme = use_signal(|| 0_u8);
+        rsx! {
+            SegmentGroup { value: theme, label: "Theme",
+                SegmentButton { value: 0_u8, "Light" }
+                SegmentButton { value: 1_u8, "Dark" }
+            }
+        }
+    }
+    let html = render(labelled);
+    assert!(
+        html.contains("g3-field-label"),
+        "the label shows like other form labels"
+    );
+    assert!(html.contains("aria-labelledby="), "and names the group");
+    assert!(!html.contains("<label"), "a radio group is not labelable");
+
+    fn toolbar() -> Element {
+        let tab = use_signal(|| 0_u8);
+        rsx! {
+            SegmentGroup { value: tab, aria_label: "Round",
+                SegmentButton { value: 0_u8, "Card" }
+            }
+        }
+    }
+    let html = render(toolbar);
+    assert!(html.contains(r#"aria-label="Round""#));
+    assert!(!html.contains("g3-field"), "no wrapper without a label");
+}

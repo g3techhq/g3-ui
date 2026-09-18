@@ -56,7 +56,11 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
     /// Only report picks through `onchange` and leave `value` alone, for a
     /// selection that follows something else such as the current route.
     defer_selection: Option<bool>,
-    /// Accessible name of the group.
+    /// Visible label above the group, which also names it, as on the other
+    /// form controls. Leave it out in a toolbar, where the group names itself
+    /// through `aria_label`.
+    label: Option<String>,
+    /// Accessible name of the group when there is no visible label.
     aria_label: Option<String>,
     /// Let buttons keep their natural width and scroll sideways when they
     /// overflow: by touch, mouse drag, or wheel. Otherwise buttons share the
@@ -84,9 +88,9 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
     if *provided.peek() != context {
         provided.set(context);
     }
-    rsx! {
+    let group = rsx! {
         div {
-            id,
+            id: id.clone(),
             class: merge_classes(
                 classes([
                     mode.pick("g3-segment-ios", "g3-segment-md"),
@@ -96,9 +100,21 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
                 class.as_deref(),
             ),
             role: "radiogroup",
-            aria_label,
+            aria_label: if label.is_none() { aria_label } else { None },
+            aria_labelledby: label.as_ref().map(|_| format!("{id}-label")),
             {children}
         }
+    };
+    match label {
+        // Not a <label>: a radio group is not a labelable element, so the name
+        // comes from aria-labelledby and the text only has to be visible.
+        Some(label) => rsx! {
+            div { class: "g3-field",
+                span { id: "{id}-label", class: "g3-field-label", "{label}" }
+                {group}
+            }
+        },
+        None => group,
     }
 }
 
