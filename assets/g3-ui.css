@@ -6,8 +6,18 @@
 
 /* Every g3-ui rule lives in the `g3` cascade layer. Unlayered application CSS
    always beats layered CSS, so an app overrides a component with an ordinary
-   selector - no `!important`, no specificity matching. Declare
-   `@layer g3;` before your own layers if you use layers yourself. */
+   selector - no `!important`, no specificity matching.
+
+   Layers rank in the order they are first named, and this sheet usually loads
+   before the app's own. Naming only `g3` here would rank it below every layer
+   the app declares later - Tailwind's `base` among them, whose preflight
+   resets the padding, margins and borders of every element and so would
+   flatten every component. So the order is set here: after Tailwind's `theme`
+   and `base`, before its `components` and `utilities`, so a utility class on
+   a component still wins. Without Tailwind the other names are empty layers
+   and change nothing. An app with layers of its own names them after these. */
+@layer theme, base, g3, components, utilities;
+
 @layer g3 {
 
 /* -- Theme variables -- */
