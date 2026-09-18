@@ -1656,6 +1656,13 @@ button.g3-chip:focus-visible {
     height: auto;
 }
 
+/* A tappable card's picture is part of the button, not something to drag
+   away: a mouse press that wandered would otherwise lift a ghost image. */
+.g3-card-interactive .g3-card-media img {
+    -webkit-user-drag: none;
+    user-select: none;
+}
+
 .g3-card-body {
     padding-block: 0.5rem 0;
 }
@@ -2818,6 +2825,15 @@ button.g3-chip:focus-visible {
     letter-spacing: 0;
     white-space: nowrap;
     border: 1px solid transparent;
+    gap: 0.25rem;
+}
+
+/* With an `aria_label`, the visible content sits in its own span. It lays
+   out like the badge, so an icon stays beside its count. */
+.g3-badge > [aria-hidden="true"] {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
 }
 
 .g3-badge-neutral {
@@ -6318,5 +6334,26 @@ td[aria-selected="true"] > .g3-calendar-day {
 @container g3-app-shell (min-width: 48rem) {
     .g3-tab-layout.route-transition-base-region:has(> .g3-nav-adaptive) {
         display: grid;
+    }
+}
+
+/* A page region (`RouteTransitionPage`) wrapping a tab layout's header and
+   content takes their place: it fills the space beside the navigation rather
+   than the viewport height its own stylesheet gives a standalone page. */
+.g3-tab-layout > .route-transition-page {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
+.g3-tab-layout:has(> .g3-nav-rail) > .route-transition-page {
+    grid-column: 2;
+    grid-row: 1 / -1;
+}
+
+@container g3-app-shell (min-width: 48rem) {
+    .g3-tab-layout:has(> .g3-nav-adaptive) > .route-transition-page {
+        grid-column: 2;
+        grid-row: 1 / -1;
     }
 }
