@@ -1,4 +1,5 @@
 //! Lists and list rows.
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -157,8 +158,8 @@ pub fn Item(
     /// Called when the row is pressed.
     onclick: Option<EventHandler<MouseEvent>>,
     /// Router destination.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Open the link in a new tab.

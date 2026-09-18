@@ -33,6 +33,13 @@ cascade layer. The README has a table of the most common renames.
 
 ### Changed
 
+- **Breaking:** `to` and `BackButton`'s `default_to` take a `Destination`
+  rather than an `Option<NavigationTarget>`, so a route goes straight in -
+  `Item { label: "Profile", to: Route::Profile {} }` - the way Dioxus's own
+  `Link` takes one. That form is what the documentation always showed, but it
+  did not compile: Dioxus converts into an optional prop only for
+  `Option<String>`, so every other caller had to spell out
+  `NavigationTarget::from(..)`.
 - A dismissed `SwipeItem` leaves by the row's own width instead of a fixed
   430px, so a wide desktop row no longer stops partway across.
 - A `Searchbar` in a `Header`'s `toolbar` keeps the room a field needs from

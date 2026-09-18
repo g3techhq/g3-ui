@@ -3,6 +3,38 @@
 use crate::theme::use_strings;
 use dioxus::prelude::*;
 
+/// Where a tappable component navigates, built from a route, a path, or a URL.
+///
+/// A component takes this rather than a bare
+/// [`NavigationTarget`](dioxus::prelude::NavigationTarget) so a route can be
+/// passed straight in, the way [`Link`](dioxus::prelude::Link) takes one:
+///
+/// ```rust,ignore
+/// Item { label: "Profile", to: Route::Profile {} }
+/// ```
+///
+/// An absent `to` leaves the component a button.
+#[derive(Clone, PartialEq, Default)]
+pub struct Destination(Option<NavigationTarget>);
+
+impl<R: Routable> From<R> for Destination {
+    fn from(route: R) -> Self {
+        Self(Some(NavigationTarget::from(route)))
+    }
+}
+
+impl Destination {
+    /// The target, or `None` when nothing was set.
+    pub fn target(self) -> Option<NavigationTarget> {
+        self.0
+    }
+
+    /// Whether anything was set.
+    pub fn is_some(&self) -> bool {
+        self.0.is_some()
+    }
+}
+
 /// Where a tappable component goes when activated.
 #[derive(Clone, PartialEq, Default)]
 pub(crate) enum Target {
@@ -16,12 +48,8 @@ pub(crate) enum Target {
 }
 
 impl Target {
-    pub(crate) fn from_props(
-        href: Option<String>,
-        to: Option<NavigationTarget>,
-        new_tab: bool,
-    ) -> Self {
-        match (to, href) {
+    pub(crate) fn from_props(href: Option<String>, to: Destination, new_tab: bool) -> Self {
+        match (to.target(), href) {
             (Some(to), _) => Target::Route { to, new_tab },
             (None, Some(href)) => Target::Href { href, new_tab },
             (None, None) => Target::Action,

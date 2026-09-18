@@ -1,4 +1,5 @@
 //! Content cards.
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -56,8 +57,8 @@ pub fn Card(
     /// Called when the card is pressed.
     onclick: Option<EventHandler<MouseEvent>>,
     /// Router destination for a tappable card.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Disable a tappable card.

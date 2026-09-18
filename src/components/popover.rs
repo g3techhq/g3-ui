@@ -1,6 +1,7 @@
 //! Floating panels anchored to a trigger: popovers and menus.
 use super::Color;
 use super::overlay::{js_string, use_overlay_focus_with};
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
@@ -293,8 +294,8 @@ pub fn MenuItem(
     /// Disable the item.
     disabled: Option<bool>,
     /// Router destination.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Called when chosen.

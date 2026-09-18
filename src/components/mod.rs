@@ -95,7 +95,7 @@ pub use overlay_host::{
     use_action_sheet, use_alert, use_toast,
 };
 pub use popover::{Menu, MenuItem, Popover, PopoverPlacement};
-pub use pressable::ButtonType;
+pub use pressable::{ButtonType, Destination};
 pub use progress::Progress;
 pub use radio::{Radio, RadioGroup};
 pub use range::{Range, Stepper};

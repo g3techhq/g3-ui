@@ -1,4 +1,5 @@
 //! Persistent app navigation: bottom bars, side rails, and their items.
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
@@ -132,8 +133,8 @@ pub fn NavItem(
     /// Icon shown above the label.
     icon: Option<Element>,
     /// Router destination.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Mark this as the current destination. Router links mark themselves.

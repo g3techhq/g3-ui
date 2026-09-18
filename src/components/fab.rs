@@ -1,4 +1,5 @@
 //! Floating action buttons.
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::state::{use_controlled, use_element_id};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
@@ -111,8 +112,8 @@ pub fn FabButton(
     /// Disable the button.
     disabled: Option<bool>,
     /// Router destination. Renders a link.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Called when pressed.

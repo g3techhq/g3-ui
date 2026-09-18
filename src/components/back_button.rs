@@ -1,4 +1,5 @@
 //! A header button that goes back.
+use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
@@ -21,8 +22,8 @@ pub fn BackButton(
     /// [`Strings::back`](crate::Strings::back).
     label: Option<String>,
     /// Where to go when the history has nothing to go back to.
-    #[props(into)]
-    default_to: Option<NavigationTarget>,
+    #[props(default, into)]
+    default_to: Destination,
     /// Replaces the default back behaviour.
     onclick: Option<EventHandler<MouseEvent>>,
     /// Platform look. Defaults to the ambient mode.
@@ -43,7 +44,7 @@ pub fn BackButton(
         };
         if router.can_go_back() {
             router.go_back();
-        } else if let Some(target) = default_to.clone() {
+        } else if let Some(target) = default_to.clone().target() {
             router.replace(target);
         }
     };

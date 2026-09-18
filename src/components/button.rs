@@ -1,5 +1,6 @@
 //! Buttons.
 use super::Color;
+use super::pressable::Destination;
 use crate::components::pressable::{ButtonType, Pressable, Target};
 use crate::components::{Spinner, SpinnerSize};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
@@ -69,8 +70,8 @@ pub fn Button(
     /// a form does not submit it unless asked to.
     button_type: Option<ButtonType>,
     /// Router destination. Renders a link.
-    #[props(into)]
-    to: Option<NavigationTarget>,
+    #[props(default, into)]
+    to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
     /// Open the link in a new tab.

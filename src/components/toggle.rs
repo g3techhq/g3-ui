@@ -19,10 +19,15 @@ pub enum ToggleSize {
 ///
 /// The label comes first by default, as in a settings list:
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let notifications = use_signal(|| false);
 /// rsx! {
 ///     Toggle { checked: notifications, label: "Notifications" }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Toggle(
