@@ -42,6 +42,7 @@ pub(crate) mod pressable;
 mod progress;
 mod radio;
 mod range;
+mod rating;
 mod refresher;
 mod searchbar;
 mod segment;
@@ -103,6 +104,7 @@ pub use pressable::{ButtonType, Destination};
 pub use progress::Progress;
 pub use radio::{Radio, RadioGroup};
 pub use range::{Range, Stepper};
+pub use rating::Rating;
 pub use refresher::Refresher;
 pub use searchbar::Searchbar;
 pub use segment::{SegmentButton, SegmentGroup};
@@ -166,6 +168,7 @@ gallery![
     skeleton,
     empty_state,
     shelf,
+    rating,
     spinner,
     accordion,
     segment,

@@ -264,3 +264,45 @@ fn pickers_are_fields_that_open_a_dialog() {
     assert!(html.contains("g3-select-placeholder\">Select time"));
     assert!(html.contains("aria-label=\"Round start\""));
 }
+
+#[test]
+fn a_rating_is_a_slider_and_a_display_is_an_image() {
+    fn input() -> Element {
+        let stars = use_signal(|| 3.5);
+        rsx! { Rating { label: "Your rating", value: stars, half: true } }
+    }
+    let html = render(input);
+    assert!(html.contains(r#"role="slider""#));
+    assert!(html.contains(r#"aria-valuemin="0""#));
+    assert!(html.contains(r#"aria-valuemax="5""#));
+    assert!(html.contains(r#"aria-valuenow="3.5""#));
+    assert!(html.contains(r#"aria-valuetext="3.5 of 5 stars""#));
+    assert!(html.contains(r#"tabindex="0""#));
+    assert!(html.contains("-label\""), "named by its visible label");
+    assert_eq!(html.matches("g3-rating-star").count(), 5);
+
+    fn display() -> Element {
+        rsx! { Rating { aria_label: "Average", value: use_signal(|| 3.7), readonly: true } }
+    }
+    let html = render(display);
+    assert!(
+        html.contains(r#"role="img""#),
+        "a display is a picture of a number"
+    );
+    assert!(!html.contains("role=\"slider\""));
+    assert!(!html.contains("tabindex"), "nothing to focus in a display");
+    // A display keeps the fraction rather than snapping it to a step.
+    assert!(html.contains(r#"aria-label="Average: 3.7 of 5 stars""#));
+}
+
+#[test]
+fn a_labelled_rating_display_still_says_its_value() {
+    // aria-labelledby would replace aria-label, dropping the number, so a
+    // display with a visible label folds that label into its own name.
+    fn app() -> Element {
+        rsx! { Rating { label: "Average of 214 ratings", value: use_signal(|| 3.7), readonly: true } }
+    }
+    let html = render(app);
+    assert!(html.contains(r#"aria-label="Average of 214 ratings: 3.7 of 5 stars""#));
+    assert!(!html.contains("aria-labelledby"));
+}

@@ -3056,6 +3056,65 @@ button.g3-chip:focus-visible {
     color: var(--g3-color-danger);
 }
 
+/* -- Rating -- */
+
+.g3-rating {
+    --g3-rating-fill: var(--g3-color-warning);
+    display: inline-flex;
+    gap: 2px;
+    width: fit-content;
+    border-radius: 0.375rem;
+    /* The pointer maths assumes this gap; see GAP in rating.rs. */
+}
+
+.g3-rating[data-color="accent"] { --g3-rating-fill: var(--g3-color-accent); }
+.g3-rating[data-color="success"] { --g3-rating-fill: var(--g3-color-success); }
+.g3-rating[data-color="danger"] { --g3-rating-fill: var(--g3-color-danger); }
+.g3-rating[data-color="neutral"] { --g3-rating-fill: var(--g3-color-text-secondary); }
+
+.g3-rating-star {
+    display: block;
+    flex: 0 0 auto;
+}
+
+.g3-rating-star svg {
+    display: block;
+    overflow: visible;
+}
+
+/* The outline carries the shape of every star, filled or not, so an empty
+   star meets the 3:1 contrast a control's boundary needs. */
+.g3-rating-empty {
+    fill: none;
+    stroke: var(--g3-color-control-border);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.g3-rating-fill {
+    fill: var(--g3-rating-fill);
+    stroke: var(--g3-rating-fill);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+/* A control claims the gesture: a drag across the stars sets the rating
+   rather than scrolling the page. A display leaves the page its scroll. */
+.g3-rating[data-interactive="true"] {
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+}
+
+.g3-rating[role="slider"]:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 3px;
+}
+
+.g3-rating[aria-disabled="true"] {
+    opacity: 0.5;
+}
+
 @keyframes g3-progress-indeterminate {
     0% {
         transform: translateX(-120%);
