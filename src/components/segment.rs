@@ -105,7 +105,11 @@ impl<T> Copy for SegmentContext<T> {}
 ///
 /// A segment always has a selection, so it takes a signal:
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq)] enum View { Card, Stats }
 /// let view = use_signal(|| View::Card);
 /// rsx! {
 ///     SegmentGroup { value: view, aria_label: "View",
@@ -113,6 +117,7 @@ impl<T> Copy for SegmentContext<T> {}
 ///         SegmentButton { value: View::Stats, "Stats" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn SegmentGroup<T: Clone + PartialEq + 'static>(

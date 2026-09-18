@@ -31,7 +31,13 @@ pub enum ModalSize {
 /// `dismissible` is false), and returns focus to where it was when it
 /// closes. The title names the dialog and the content describes it.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let mut open = use_signal(|| false);
+/// # let name = use_signal(String::new);
+/// # fn save() {}
 /// rsx! {
 ///     Modal { open, title: "Rename round",
 ///         actions: rsx! {
@@ -41,6 +47,7 @@ pub enum ModalSize {
 ///         Input { label: "Name", value: name }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Modal(

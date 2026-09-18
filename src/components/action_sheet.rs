@@ -46,7 +46,12 @@ impl ActionSheetButton {
 /// user cancels. To open one from an event handler and await the choice, use
 /// [`use_action_sheet`](crate::use_action_sheet).
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let open = use_signal(|| false);
+/// # fn delete() {}
 /// rsx! {
 ///     ActionSheet {
 ///         open,
@@ -55,6 +60,7 @@ impl ActionSheetButton {
 ///         on_select: move |choice| if choice == Some(1) { delete() },
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn ActionSheet(

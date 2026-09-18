@@ -47,11 +47,17 @@ impl ToastDuration {
 /// To show toasts from event handlers without keeping a signal for each,
 /// use [`use_toast`](crate::use_toast).
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let saved = use_signal(|| false);
+/// # let undo = move |_: MouseEvent| {};
 /// rsx! {
 ///     Toast { open: saved, message: "Round saved", color: Color::Success,
 ///         action: rsx! { Button { fill: ButtonFill::Clear, onclick: undo, "Undo" } } }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Toast(

@@ -87,11 +87,15 @@ if (year) year.focus({ preventScroll: true });
 /// the week, and Page Up and Page Down change the month (with Shift, the
 /// year). The month title opens a list of years.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// let day = use_signal(|| None::<CalendarDate>);
 /// rsx! {
 ///     Calendar { value: day, min: CalendarDate::today() }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Calendar(

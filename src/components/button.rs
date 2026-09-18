@@ -44,13 +44,20 @@ pub enum ButtonExpand {
 /// Set `to` for a router destination or `href` for a plain link; otherwise it
 /// renders a `<button>`. An icon-only button needs an `aria_label`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # fn save() {}
+/// # #[component] fn Settings() -> Element { rsx! {} }
+/// # let saving = use_signal(|| false);
 /// rsx! {
 ///     Button { onclick: move |_| save(), "Save" }
 ///     Button { fill: ButtonFill::Outline, color: Color::Danger, "Delete" }
 ///     Button { fill: ButtonFill::Clear, aria_label: "Settings", Settings {} }
 ///     Button { button_type: ButtonType::Submit, loading: saving(), "Sign in" }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Button(

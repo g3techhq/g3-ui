@@ -8,7 +8,12 @@ use dioxus::prelude::*;
 /// Both buttons close it. Set `destructive` for actions such as deleting,
 /// which colours the confirm button as dangerous.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let open = use_signal(|| false);
+/// # fn delete_round() {}
 /// rsx! {
 ///     ConfirmModal {
 ///         open,
@@ -19,6 +24,7 @@ use dioxus::prelude::*;
 ///         on_confirm: move |_| delete_round(),
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn ConfirmModal(

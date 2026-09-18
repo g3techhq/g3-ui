@@ -13,8 +13,20 @@ use dioxus_icons::lucide::{ArrowLeft, ChevronLeft};
 /// `default_to` when there is nothing to go back to. It shows a chevron and
 /// label on iOS and an arrow on Material Design.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/")]
+/// #     Players {},
+/// # }
+/// # #[component] fn Players() -> Element { rsx! {} }
+/// # rsx! {
 /// Header { title: "Player", start: rsx! { BackButton { default_to: Route::Players {} } } }
+/// # }
+/// # }
 /// ```
 #[component]
 pub fn BackButton(

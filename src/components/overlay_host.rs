@@ -240,9 +240,13 @@ impl Toaster {
 /// Needs an [`AppWrapper`](crate::AppWrapper) above the calling component,
 /// which renders them.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// let toaster = use_toast();
 /// rsx! { Button { onclick: move |_| { toaster.success("Saved"); }, "Save" } }
+/// # }
 /// ```
 pub fn use_toast() -> Toaster {
     Toaster {
@@ -326,7 +330,11 @@ impl Alerts {
 
 /// Show alerts from event handlers and await the answer.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # fn delete_round() {}
 /// let alerts = use_alert();
 /// rsx! {
 ///     Button {
@@ -338,6 +346,7 @@ impl Alerts {
 ///         "Delete"
 ///     }
 /// }
+/// # }
 /// ```
 pub fn use_alert() -> Alerts {
     Alerts {

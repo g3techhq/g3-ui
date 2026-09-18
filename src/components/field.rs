@@ -206,7 +206,11 @@ fn use_text_events(
 /// the user commits (blur or Enter), or after `debounce_ms` of no typing when
 /// that is set, which suits search-as-you-type.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # fn email_error() -> Option<String> { None }
 /// let email = use_signal(String::new);
 /// rsx! {
 ///     Input {
@@ -218,6 +222,7 @@ fn use_text_events(
 ///         error: email_error(),
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Input(

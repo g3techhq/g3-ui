@@ -16,7 +16,18 @@ use dioxus::prelude::*;
 /// The rows of a drawer are its navigation, and they read best pressing from
 /// edge to edge, so pass `padding: false` when the drawer is a list.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/")]
+/// #     Rounds {},
+/// # }
+/// # #[component] fn Rounds() -> Element { rsx! {} }
+/// # #[component] fn Page() -> Element { rsx! {} }
+/// # let drawer_open = use_signal(|| false);
 /// rsx! {
 ///     AppWrapper {
 ///         NavigationDrawer { open: drawer_open, padding: false,
@@ -25,6 +36,7 @@ use dioxus::prelude::*;
 ///         Page {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn NavigationDrawer(

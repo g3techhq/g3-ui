@@ -7,8 +7,13 @@ use dioxus_icons::lucide::{Minus, Plus};
 
 /// A slider for a number in a range. Like Ionic's `ion-range`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let volume = use_signal(|| 50.0_f64);
 /// rsx! { Range { label: "Volume", value: volume, min: 0.0, max: 100.0, show_value: true } }
+/// # }
 /// ```
 #[component]
 pub fn Range(
@@ -94,8 +99,13 @@ pub fn Range(
 /// A number with decrease and increase buttons, for small counts such as
 /// players or holes.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let players = use_signal(|| 4_i64);
 /// rsx! { Stepper { label: "Players", value: players, min: 1, max: 8 } }
+/// # }
 /// ```
 #[component]
 pub fn Stepper(

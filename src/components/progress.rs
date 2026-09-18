@@ -7,8 +7,13 @@ use dioxus::prelude::*;
 /// Give it a `value` for known progress; leave it out for an indeterminate,
 /// animated bar.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let holes_played = 7_i32;
 /// rsx! { Progress { value: holes_played as f64, max: 18.0, label: "Holes played" } }
+/// # }
 /// ```
 #[component]
 pub fn Progress(

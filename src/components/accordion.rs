@@ -40,13 +40,19 @@ fn toggled<T: Clone + PartialEq>(current: &[T], item: &T, multiple: bool) -> Vec
 ///
 /// `value` lists the open items. By default opening one closes the others.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn Rules() -> Element { rsx! {} }
+/// # #[component] fn Prizes() -> Element { rsx! {} }
 /// rsx! {
 ///     AccordionGroup::<&str> { multiple: true,
 ///         AccordionItem { value: "rules", label: "Rules", Rules {} }
 ///         AccordionItem { value: "prizes", label: "Prizes", Prizes {} }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn AccordionGroup<T: Clone + PartialEq + 'static>(

@@ -21,7 +21,12 @@ fn ToolbarContextProvider(children: Element) -> Element {
 ///
 /// On shells `64rem` and wider, the toolbar moves into the title row.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq)] enum Tab { Card, Stats }
+/// # let tab = use_signal(|| Tab::Card);
 /// rsx! {
 ///     Header {
 ///         title: "Round",
@@ -35,6 +40,7 @@ fn ToolbarContextProvider(children: Element) -> Element {
 ///         },
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Header(

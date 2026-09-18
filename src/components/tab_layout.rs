@@ -14,7 +14,22 @@ use g3_route_transitions::ROUTE_TRANSITION_BASE_REGION_CLASS;
 /// [`NavRail`](crate::NavRail) always a rail. Set `--g3-nav-rail-width` to
 /// widen the rail.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/")]
+/// #     Rounds {},
+/// #     #[route("/profile")]
+/// #     Profile {},
+/// # }
+/// # #[component] fn Rounds() -> Element { rsx! {} }
+/// # #[component] fn Profile() -> Element { rsx! {} }
+/// # #[component] fn RoundList() -> Element { rsx! {} }
+/// # #[component] fn Flag() -> Element { rsx! {} }
+/// # #[component] fn User() -> Element { rsx! {} }
 /// rsx! {
 ///     TabLayout {
 ///         Header { title: "Rounds" }
@@ -26,6 +41,7 @@ use g3_route_transitions::ROUTE_TRANSITION_BASE_REGION_CLASS;
 ///         }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn TabLayout(

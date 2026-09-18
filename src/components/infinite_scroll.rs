@@ -21,11 +21,20 @@ if (sentinel && !sentinel.g3Observer) {
 /// Set `loading` while a page loads, which shows a spinner and holds further
 /// calls, and `complete` once there is nothing more to load.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, PartialEq)] struct Round { name: String }
+/// # let rounds = use_signal(Vec::<Round>::new);
+/// # let loading = use_signal(|| false);
+/// # let done = use_signal(|| false);
+/// # fn load_next_page() {}
 /// rsx! {
 ///     List { for round in rounds() { Item { label: round.name } } }
 ///     InfiniteScroll { loading: loading(), complete: done(), on_load: move |_| load_next_page() }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn InfiniteScroll(

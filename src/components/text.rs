@@ -35,12 +35,16 @@ pub enum TextTone {
 
 /// Text in the theme's type scale and colours.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! {
 ///     Text { variant: TextVariant::Heading, "Leaderboard" }
 ///     Text { variant: TextVariant::Caption, tone: TextTone::Secondary, "Updated 2 min ago" }
 ///     Text { color: Color::Danger, "Payment failed" }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Text(

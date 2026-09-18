@@ -29,7 +29,11 @@ impl<T> Copy for RadioContext<T> {}
 /// Radios use native inputs, so arrow keys move between them. The value type
 /// is anything comparable; `None` means nothing is selected.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq)] enum Format { Stroke, Match }
 /// let format = use_signal(|| Some(Format::Stroke));
 /// rsx! {
 ///     RadioGroup { value: format, label: "Format",
@@ -37,6 +41,7 @@ impl<T> Copy for RadioContext<T> {}
 ///         Radio { value: Format::Match, label: "Match play" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn RadioGroup<T: Clone + PartialEq + 'static>(

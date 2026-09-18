@@ -5,8 +5,12 @@ use dioxus::prelude::*;
 
 /// A small pill for a count or a status. Like Ionic's `ion-badge`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! { Badge { color: Color::Success, "Open" } }
+/// # }
 /// ```
 #[component]
 pub fn Badge(

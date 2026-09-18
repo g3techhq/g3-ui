@@ -65,13 +65,17 @@ pub enum StackJustify {
 
 /// Lays children out in a column or row with even spacing.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! {
 ///     Stack { horizontal: true, justify: StackJustify::Between, align: StackAlign::Center,
 ///         Text { variant: TextVariant::Heading, "Players" }
 ///         Button { fill: ButtonFill::Clear, "Add" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Stack(
@@ -158,7 +162,12 @@ impl GridColumns {
 /// `wide_gap` take over once the app shell is `48rem` or wider, the same
 /// breakpoint where navigation becomes a rail.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let courses = use_signal(Vec::<String>::new);
+/// # #[component] fn CourseCard(course: String) -> Element { rsx! {} }
 /// rsx! {
 ///     Grid {
 ///         columns: GridColumns::Count(1),
@@ -167,6 +176,7 @@ impl GridColumns {
 ///         for course in courses() { CourseCard { course } }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Grid(

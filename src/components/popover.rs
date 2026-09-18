@@ -180,7 +180,12 @@ pub(crate) fn PopoverFrame(
 /// tap outside close the popover. With `sheet_on_compact`, it shows as a
 /// bottom sheet on shells narrower than `48rem`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let mut open = use_signal(|| false);
+/// # #[component] fn FilterForm() -> Element { rsx! {} }
 /// rsx! {
 ///     Popover { open,
 ///         trigger: rsx! {
@@ -190,6 +195,7 @@ pub(crate) fn PopoverFrame(
 ///         FilterForm {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Popover(
@@ -237,7 +243,14 @@ struct MenuContext {
 /// Arrow keys, Home, and End move between items; Escape closes the menu.
 /// Choosing an item closes it.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let mut open = use_signal(|| false);
+/// # #[component] fn Ellipsis() -> Element { rsx! {} }
+/// # fn rename() {}
+/// # fn delete() {}
 /// rsx! {
 ///     Menu { open,
 ///         trigger: rsx! {
@@ -248,6 +261,7 @@ struct MenuContext {
 ///         MenuItem { color: Color::Danger, onclick: move |_| delete(), "Delete" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Menu(

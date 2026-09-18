@@ -229,7 +229,14 @@ pub fn SwipeAction(
 /// actions" button that appears on focus, or with the arrow keys; Escape
 /// closes them.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let id = 7_u32;
+/// # fn archive(_id: u32) {}
+/// # fn pin(_id: u32) {}
+/// # fn delete(_id: u32) {}
 /// rsx! {
 ///     SwipeItem {
 ///         start_behavior: SwipeBehavior::Activate,
@@ -242,6 +249,7 @@ pub fn SwipeAction(
 ///         Item { label: "Round 12" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn SwipeItem(

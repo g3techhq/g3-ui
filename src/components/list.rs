@@ -69,7 +69,17 @@ pub enum ItemDetail {
 
 /// A vertical list of [`Item`]s. Like Ionic's `ion-list`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/")]
+/// #     Profile {},
+/// # }
+/// # #[component] fn Profile() -> Element { rsx! {} }
+/// # let notify = use_signal(|| false);
 /// rsx! {
 ///     List { variant: ListVariant::Raised,
 ///         ListHeader { "Account" }
@@ -77,6 +87,7 @@ pub enum ItemDetail {
 ///         Item { label: "Notifications", end: rsx! { Toggle { checked: notify, aria_label: "Notifications" } } }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn List(

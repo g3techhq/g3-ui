@@ -17,8 +17,14 @@ pub enum ImgFit {
 /// An image that loads lazily, holds its space with a placeholder while it
 /// loads, and shows `fallback` if it fails. Like Ionic's `ion-img`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # struct Course { photo: String, name: String }
+/// # let course = Course { photo: String::new(), name: String::new() };
 /// rsx! { Img { src: course.photo, alt: course.name, aspect_ratio: "16 / 9" } }
+/// # }
 /// ```
 #[component]
 pub fn Img(
@@ -93,12 +99,17 @@ if (control && control !== tip && !control.hasAttribute("aria-describedby")) {
 /// A tooltip only supplements a control that is already named. To have it
 /// read out, give the trigger `aria_describedby` with the tooltip's `id`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn Download() -> Element { rsx! {} }
 /// rsx! {
 ///     Tooltip { id: "export-tip", label: "Download as CSV",
 ///         Button { aria_label: "Export", aria_describedby: "export-tip", Download {} }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Tooltip(

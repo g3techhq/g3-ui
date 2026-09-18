@@ -18,13 +18,17 @@ use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitio
 /// wider, a [`TabLayout`](crate::TabLayout) moves its navigation to a side
 /// rail, bottom sheets float, and dialogs widen.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! {
 ///     AppWrapper { theme: Theme::system(),
 ///         Header { title: "Games" }
 ///         Content { Card { title: "Pending game", "Invite players." } }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn AppWrapper(

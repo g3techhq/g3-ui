@@ -42,7 +42,12 @@ impl ContentWidth {
 /// It catches suspended children with a loading spinner and failed children
 /// with an error message, so one failing resource does not take down the page.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn Plus() -> Element { rsx! {} }
+/// # #[component] fn RoundList() -> Element { rsx! {} }
 /// rsx! {
 ///     Header { title: "Rounds" }
 ///     Content {
@@ -50,6 +55,7 @@ impl ContentWidth {
 ///         RoundList {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Content(

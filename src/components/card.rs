@@ -25,7 +25,17 @@ pub enum CardVariant {
 /// name, and controls inside it (such as an [`InfoButton`](crate::InfoButton)
 /// in `end`) keep working on their own.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/game/:id")]
+/// #     Game { id: u32 },
+/// # }
+/// # #[component] fn Game(id: u32) -> Element { rsx! {} }
+/// # let id = 7_u32;
 /// rsx! {
 ///     Card {
 ///         title: "Saturday four-ball",
@@ -35,6 +45,7 @@ pub enum CardVariant {
 ///         "Two spots left."
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Card(

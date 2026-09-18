@@ -20,8 +20,14 @@ pub enum AvatarSize {
 /// `name` is the accessible name. Pass an empty `name` for a decorative
 /// avatar next to text that already names the person.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # struct Player { photo_url: String }
+/// # let player = Player { photo_url: String::new() };
 /// rsx! { Avatar { name: "Alex Morgan", initials: "AM", src: player.photo_url } }
+/// # }
 /// ```
 #[component]
 pub fn Avatar(

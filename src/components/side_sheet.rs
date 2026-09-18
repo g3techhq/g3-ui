@@ -13,7 +13,13 @@ use dioxus::prelude::*;
 /// For navigation that stays open beside the page, use
 /// [`NavigationDrawer`](crate::NavigationDrawer).
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn FilterForm() -> Element { rsx! {} }
+/// # #[component] fn Page() -> Element { rsx! {} }
+/// # let filters_open = use_signal(|| false);
 /// rsx! {
 ///     AppWrapper {
 ///         SideSheet { open: filters_open, edge: SheetEdge::End, title: "Filters",
@@ -22,6 +28,7 @@ use dioxus::prelude::*;
 ///         Page {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn SideSheet(

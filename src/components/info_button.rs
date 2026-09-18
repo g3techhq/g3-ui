@@ -9,12 +9,16 @@ use dioxus_icons::lucide::Info;
 ///
 /// Presses do not reach an enclosing clickable card or list row.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! {
 ///     InfoButton { sheet_title: "Handicaps",
 ///         sheet: rsx! { p { "Handicaps adjust each player's score." } },
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn InfoButton(

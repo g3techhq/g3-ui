@@ -7,11 +7,17 @@ use dioxus::prelude::*;
 /// With `onclick` it is a button; with `selected` as well it is a toggle
 /// button (`aria-pressed`). Without `onclick` it is plain content.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let mut nearby = use_signal(|| false);
+/// # #[component] fn MapPin() -> Element { rsx! {} }
 /// rsx! {
 ///     Chip { selected: nearby(), onclick: move |_| nearby.toggle(), "Nearby" }
 ///     Chip { start: rsx! { MapPin {} }, "Pebble Creek" }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Chip(

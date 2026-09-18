@@ -88,7 +88,12 @@ impl AlertResult {
 /// Any button closes it and reports its index. To open alerts from event
 /// handlers and await the answer, use [`use_alert`](crate::use_alert).
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let open = use_signal(|| false);
+/// # fn leave() {}
 /// rsx! {
 ///     Alert {
 ///         open,
@@ -98,6 +103,7 @@ impl AlertResult {
 ///         on_result: move |result: AlertResult| if result.button == Some(1) { leave() },
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Alert(

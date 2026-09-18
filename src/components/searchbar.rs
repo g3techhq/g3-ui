@@ -11,11 +11,17 @@ use dioxus_icons::lucide::Search;
 /// `onchange` fires after typing pauses for `debounce_ms` (300 by default),
 /// which suits live filtering. `on_submit` fires on Enter.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let query = use_signal(String::new);
+/// # fn filter(_query: String) {}
 /// rsx! {
 ///     Header { title: "Players",
 ///         toolbar: rsx! { Searchbar { value: query, onchange: move |q| filter(q) } } }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Searchbar(

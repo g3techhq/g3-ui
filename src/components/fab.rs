@@ -58,8 +58,20 @@ pub enum FabSize {
 /// Pass it to [`Content`](crate::Content)'s `fab` slot so it stays put while
 /// the content scrolls.
 ///
-/// ```rust,ignore
-/// Content { fab: rsx! { Fab { FabButton { aria_label: "New round", onclick: new_round, Plus {} } } }, .. }
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn Plus() -> Element { rsx! {} }
+/// # #[component] fn RoundList() -> Element { rsx! {} }
+/// # let new_round = move |_: MouseEvent| {};
+/// # rsx! {
+/// Content {
+///     fab: rsx! { Fab { FabButton { aria_label: "New round", onclick: new_round, Plus {} } } },
+///     RoundList {}
+/// }
+/// # }
+/// # }
 /// ```
 #[component]
 pub fn Fab(
@@ -192,13 +204,22 @@ pub fn FabList(
 /// A floating action button that opens a list of secondary actions, with the
 /// open state and close icon handled for you. A speed dial.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn Plus() -> Element { rsx! {} }
+/// # #[component] fn Flag() -> Element { rsx! {} }
+/// # #[component] fn User() -> Element { rsx! {} }
+/// # let new_round = move |_: MouseEvent| {};
+/// # let new_player = move |_: MouseEvent| {};
 /// rsx! {
 ///     FabMenu { aria_label: "Create", icon: rsx! { Plus {} },
 ///         FabButton { size: FabSize::Small, aria_label: "Round", onclick: new_round, Flag {} }
 ///         FabButton { size: FabSize::Small, aria_label: "Player", onclick: new_player, User {} }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn FabMenu(

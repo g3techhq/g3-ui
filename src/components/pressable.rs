@@ -9,8 +9,17 @@ use dioxus::prelude::*;
 /// [`NavigationTarget`](dioxus::prelude::NavigationTarget) so a route can be
 /// passed straight in, the way [`Link`](dioxus::prelude::Link) takes one:
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route { #[route("/")] Profile {} }
+/// # #[component] fn Profile() -> Element { rsx! {} }
+/// # rsx! {
 /// Item { label: "Profile", to: Route::Profile {} }
+/// # }
+/// # }
 /// ```
 ///
 /// An absent `to` leaves the component a button.

@@ -565,12 +565,16 @@ pub(crate) fn classes<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
 /// properties, so it adds no box of its own. Props left unset are inherited
 /// from an enclosing provider.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// rsx! {
 ///     ThemeProvider { theme: Theme::default_dark(),
 ///         Button { "Dark button" }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn ThemeProvider(

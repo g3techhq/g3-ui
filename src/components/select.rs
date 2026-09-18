@@ -92,7 +92,11 @@ impl<T, L: Into<String>> From<(T, L)> for SelectOption<T> {
 ///
 /// The value type is anything comparable, so enums work directly:
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq)] enum Tees { White, Yellow }
 /// let tees = use_signal(|| Tees::White);
 /// rsx! {
 ///     Select {
@@ -104,6 +108,7 @@ impl<T, L: Into<String>> From<(T, L)> for SelectOption<T> {
 ///         ],
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Select<T: Clone + PartialEq + 'static>(

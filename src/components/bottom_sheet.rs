@@ -15,14 +15,19 @@ use dioxus::prelude::*;
 /// `max_height`. With `detents` it has fixed heights, as fractions of the
 /// screen, that the handle moves between:
 ///
-/// ```rust,ignore
-/// let open = use_signal(|| false);
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn FilterForm() -> Element { rsx! {} }
+/// let mut open = use_signal(|| false);
 /// rsx! {
 ///     Button { onclick: move |_| open.set(true), "Filters" }
 ///     BottomSheet { open, title: "Filters", detents: vec![0.5, 1.0],
 ///         FilterForm {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn BottomSheet(

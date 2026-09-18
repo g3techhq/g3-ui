@@ -256,11 +256,15 @@ fn TimeDialog(draft: Signal<TimeOfDay>, cycle: HourCycle, typing: Signal<bool>) 
 /// The Material dialog also has a typing mode, for entering a time straight
 /// from the keyboard.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// let tee_time = use_signal(|| None::<TimeOfDay>);
 /// rsx! {
 ///     TimePicker { label: "Tee time", value: tee_time, minute_step: 10 }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn TimePicker(

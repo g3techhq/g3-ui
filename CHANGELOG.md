@@ -28,6 +28,12 @@ cascade layer. The README has a table of the most common renames.
 
 ### Fixed
 
+- Every documentation example compiles. They were `rust,ignore`, so nothing
+  checked them against the API, and 0.4 renamed half of it. Each now carries
+  hidden scaffolding - the imports, a wrapper, and stand-ins for the names it
+  invents - so it builds as a doctest while the rendered page shows only the
+  example. The one exception is the route-transitions snippet in the README,
+  which needs the optional `transitions` feature and its crate.
 - Package only the crate's own root files. The `include` patterns were
   unanchored, so `deploy/README.md` shipped in the crate.
 

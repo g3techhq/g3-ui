@@ -50,7 +50,13 @@ impl<T: Hash> TabsContext<T> {
 ///   Use it in toolbars and forms, or for routed tabs where each choice
 ///   navigates.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq, Eq, Hash)] enum Tab { Scores, Notes }
+/// # #[component] fn Scores() -> Element { rsx! {} }
+/// # #[component] fn Notes() -> Element { rsx! {} }
 /// let tab = use_signal(|| Tab::Scores);
 /// rsx! {
 ///     Tabs { value: tab,
@@ -62,6 +68,7 @@ impl<T: Hash> TabsContext<T> {
 ///         TabPanel { value: Tab::Notes, Notes {} }
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(

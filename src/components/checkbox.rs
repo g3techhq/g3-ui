@@ -51,12 +51,16 @@ pub(crate) fn control_classes(
 /// A checkbox row: the box, a label, and optional helper and error text. The
 /// whole row is the control. Like Ionic's `ion-checkbox`.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// let agreed = use_signal(|| false);
 /// rsx! {
 ///     Checkbox { checked: agreed, label: "I agree to the terms",
 ///         error: (!agreed()).then(|| "Required".to_string()) }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Checkbox(

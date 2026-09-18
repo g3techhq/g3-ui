@@ -44,7 +44,7 @@ The minimum supported Rust version is 1.88.
 `AppWrapper` loads the stylesheet, resolves the platform mode, applies the theme, and hosts the
 toasts, alerts, and action sheets opened from code. Everything else nests inside it.
 
-```rust,ignore
+```
 use dioxus::prelude::*;
 use g3_ui::prelude::*;
 
@@ -91,7 +91,12 @@ A component with a value takes an optional `Signal<T>` and reads and writes it d
 the signal out and the component keeps its own state. An optional `onchange` or `on_*` callback
 reports changes when you need a side effect as well:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+# #[derive(Clone, Copy, PartialEq)] enum Format { Stroke, Match }
+# fn save(_name: String) {}
 let checked = use_signal(|| false);
 let name = use_signal(String::new);
 let format = use_signal(|| None::<Format>);
@@ -104,6 +109,7 @@ rsx! {
         Radio { value: Format::Match, label: "Match play" }
     }
 }
+# }
 ```
 
 `Select`, `RadioGroup`, `SegmentGroup`, `Tabs`, and `AccordionGroup` are generic over the value
@@ -116,7 +122,10 @@ type, so options can be your own enums instead of strings or indexes.
 the theme. Their values are `CalendarDate` and `TimeOfDay`, which parse from and print as
 ISO 8601 (`2026-09-19`, `14:05`), so nothing has to agree on a string format:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
 let tee_day = use_signal(|| None::<CalendarDate>);
 let tee_time = use_signal(|| None::<TimeOfDay>);
 
@@ -124,6 +133,7 @@ rsx! {
     DatePicker { label: "Tee day", value: tee_day, min: CalendarDate::today() }
     TimePicker { label: "Tee time", value: tee_time, minute_step: 10 }
 }
+# }
 ```
 
 `style` decides how one opens. By default it follows the mode:
@@ -147,7 +157,12 @@ is a spin button, and the clock face is a radio group; Material's dialog can als
 Give `Content` an `on_refresh` handler and it refreshes when pulled down from the top. Keep
 `refreshing` true while the work runs:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+# #[component] fn RoundList() -> Element { rsx! {} }
+# async fn reload() {}
 let mut refreshing = use_signal(|| false);
 
 rsx! {
@@ -161,6 +176,7 @@ rsx! {
         RoundList {}
     }
 }
+# }
 ```
 
 ## Overlays From Code
@@ -169,16 +185,21 @@ Toasts, alerts, and action sheets can be opened from an event handler without de
 markup. `AppWrapper` renders them one at a time. Alerts and action sheets return a future with
 the user's answer:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() {
+# fn remove_round() {}
 let toast = use_toast();
 let alerts = use_alert();
 
-let delete = move |_| async move {
+let delete = move |_: MouseEvent| async move {
     if alerts.confirm("Delete round?", "This cannot be undone.").await {
         remove_round();
         toast.success("Round deleted");
     }
 };
+# }
 ```
 
 `use_action_sheet()` works the same way and resolves to the chosen button's index. Each overlay is
@@ -191,7 +212,9 @@ Components have Ionic-style `Ios` and `Md` modes. A component takes the first mo
 own `mode` prop, the nearest `AppWrapper` or `ThemeProvider`, then the global default set by
 `set_mode` or `init_auto_mode`. Changing the provider's `mode` prop updates the subtree.
 
-```rust,ignore
+```no_run
+# use dioxus::prelude::*;
+# #[component] fn App() -> Element { rsx! {} }
 fn main() {
     g3_ui::init_auto_mode(); // iOS look on Apple platforms, MD elsewhere
     dioxus::launch(App);
@@ -202,7 +225,12 @@ Colours are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The
 `Theme::default_light()`, `Theme::default_dark()`, and `Theme::system()`, which follows the
 operating system through CSS `light-dark()`. Every field is public:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() {
+# let light_brand = Theme::default_light();
+# let dark_brand = Theme::default_dark();
 let brand = Theme::system().with_accent("#1f7a4d");
 
 let custom = Theme {
@@ -212,6 +240,7 @@ let custom = Theme {
 };
 
 let paired = Theme::adaptive(light_brand, dark_brand);
+# }
 ```
 
 The theme is written as inline custom properties on the wrapper, so passing a different `Theme`
@@ -238,7 +267,21 @@ At `64rem` the `Header` toolbar moves inline with the title.
 `Content { width: ContentWidth::Readable }` keeps text at a comfortable width on a wide shell
 while its scrollbar stays at the page edge.
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+# #[derive(Routable, Clone, Debug, PartialEq)]
+# enum Route {
+#     #[route("/")]
+#     Rounds {},
+#     #[route("/profile")]
+#     Profile {},
+# }
+# #[component] fn Rounds() -> Element { rsx! {} }
+# #[component] fn Profile() -> Element { rsx! {} }
+# #[component] fn Flag() -> Element { rsx! {} }
+# #[component] fn User() -> Element { rsx! {} }
 rsx! {
     TabLayout {
         Header { title: "Rounds" }
@@ -250,6 +293,7 @@ rsx! {
         }
     }
 }
+# }
 ```
 
 `NavItemGroup::Secondary` moves an item to the bottom of the rail; the phone tab bar keeps the
@@ -261,10 +305,17 @@ hides the phone tab bar, for full-screen routes. Set `--g3-nav-rail-width` to wi
 `BottomSheet` rises from the bottom edge. It can rest at several heights, given as fractions of
 the app's height. With `backdrop_detent`, the page stays usable while the sheet is low:
 
-```rust,ignore
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+# let results_open = use_signal(|| false);
+# rsx! {
 BottomSheet { open: results_open, detents: vec![0.2, 0.5, 1.0], backdrop_detent: 2,
     /* content */
 }
+# }
+# }
 ```
 
 `SideSheet` slides in from the start or end edge. `SideSheetBehavior::Overlay` covers the page,

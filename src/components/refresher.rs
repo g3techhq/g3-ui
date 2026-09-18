@@ -140,7 +140,12 @@ if (root && root.dataset.g3Bound !== "true") {
 /// A pull needs a pointer. Offer another way to refresh as well, such as a
 /// button in the header, for keyboard and switch users.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn RoundList() -> Element { rsx! {} }
+/// # async fn reload() {}
 /// let mut refreshing = use_signal(|| false);
 /// rsx! {
 ///     Refresher {
@@ -153,6 +158,7 @@ if (root && root.dataset.g3Bound !== "true") {
 ///         RoundList {}
 ///     }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn Refresher(

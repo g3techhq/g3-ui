@@ -155,11 +155,15 @@ fn DateWheels(
 /// The field shows it as "Sep 19, 2026"; pass `format` to show it
 /// differently.
 ///
-/// ```rust,ignore
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
 /// let tee_day = use_signal(|| None::<CalendarDate>);
 /// rsx! {
 ///     DatePicker { label: "Tee day", value: tee_day, min: CalendarDate::today() }
 /// }
+/// # }
 /// ```
 #[component]
 pub fn DatePicker(
