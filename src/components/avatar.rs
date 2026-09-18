@@ -71,8 +71,10 @@ pub fn Avatar(
 }
 
 fn initials_of(name: &str) -> String {
+    // The first letter or digit of a word, so a handle such as "@ada" or a
+    // name in quotes still gives a letter rather than its punctuation.
     name.split_whitespace()
-        .filter_map(|word| word.chars().next())
+        .filter_map(|word| word.chars().find(|c| c.is_alphanumeric()))
         .take(2)
         .flat_map(char::to_uppercase)
         .collect()
@@ -85,6 +87,8 @@ mod tests {
         assert_eq!(super::initials_of("alex morgan jones"), "AM");
         assert_eq!(super::initials_of("Émile"), "É");
         assert_eq!(super::initials_of(""), "");
+        assert_eq!(super::initials_of("@googledevelopers"), "G");
+        assert_eq!(super::initials_of("\"Ada\" Lovelace"), "AL");
     }
 }
 

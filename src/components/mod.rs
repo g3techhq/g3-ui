@@ -44,6 +44,7 @@ mod radio;
 mod range;
 mod rating;
 mod refresher;
+mod reorder;
 mod searchbar;
 mod segment;
 mod select;
@@ -54,6 +55,7 @@ mod skeleton;
 mod spinner;
 mod swipe;
 mod tab_layout;
+mod table;
 mod tabs;
 mod text;
 mod time_picker;
@@ -106,6 +108,7 @@ pub use radio::{Radio, RadioGroup};
 pub use range::{Range, Stepper};
 pub use rating::Rating;
 pub use refresher::Refresher;
+pub use reorder::{ReorderHandle, ReorderItem, ReorderList};
 pub use searchbar::Searchbar;
 pub use segment::{SegmentButton, SegmentGroup};
 pub use select::{Select, SelectOption, SelectWidth};
@@ -116,6 +119,7 @@ pub use skeleton::{Skeleton, SkeletonShape};
 pub use spinner::{Spinner, SpinnerSize};
 pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
 pub use tab_layout::TabLayout;
+pub use table::Table;
 pub use tabs::{Tab, TabList, TabPanel, Tabs};
 pub use text::{Text, TextTone, TextVariant};
 pub use time_picker::TimePicker;
@@ -169,6 +173,8 @@ gallery![
     empty_state,
     shelf,
     rating,
+    table,
+    reorder,
     spinner,
     accordion,
     segment,

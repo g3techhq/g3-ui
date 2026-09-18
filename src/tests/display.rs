@@ -29,6 +29,31 @@ fn a_tappable_card_names_its_action_with_the_title() {
 }
 
 #[test]
+fn a_card_puts_its_start_content_before_the_heading() {
+    fn app() -> Element {
+        rsx! {
+            Card { title: "Upload", start: rsx! { Avatar { name: "Ada" } }, "Body" }
+        }
+    }
+    let html = render(app);
+    let start = html.find("g3-card-start").expect("start slot");
+    let heading = html.find("g3-card-heading").expect("heading");
+    assert!(start < heading);
+}
+
+#[test]
+fn a_wrapping_item_says_so() {
+    fn app() -> Element {
+        rsx! {
+            Item { label: "Sponsor", description: "Paid promotion", wrap: true }
+            Item { label: "Plain" }
+        }
+    }
+    let html = render(app);
+    assert_eq!(html.matches("g3-item-wrap").count(), 1);
+}
+
+#[test]
 fn items_pick_their_element_from_their_props() {
     fn app() -> Element {
         rsx! {
@@ -368,4 +393,126 @@ fn a_shelf_is_a_named_focusable_group() {
     assert!(!html.contains("aria-labelledby="));
     assert!(!html.contains("g3-shelf-header"), "no empty heading row");
     assert!(html.contains(r#"data-snap="false""#));
+}
+
+#[test]
+fn a_table_scrolls_in_a_named_focusable_frame() {
+    fn captioned() -> Element {
+        rsx! {
+            Table { caption: "Front nine", sticky_first_column: true,
+                tbody { tr { th { scope: "row", "Par" } td { "4" } } }
+            }
+        }
+    }
+    let html = render(captioned);
+    let frame = element_with_class(&html, "g3-table-frame");
+    assert!(frame.contains("role=\"region\""));
+    assert!(
+        frame.contains("tabindex=\"0\""),
+        "a scrolling frame is reachable by keyboard"
+    );
+    assert!(
+        frame.contains("aria-labelledby="),
+        "the frame is named by the caption"
+    );
+    assert!(html.contains("<caption"));
+    assert!(html.contains("data-sticky-first=\"true\""));
+    assert!(!html.contains("data-fill"));
+
+    fn unnamed_caption() -> Element {
+        rsx! {
+            Table { aria_label: "Results", fill: true,
+                tbody { tr { td { "1" } } }
+            }
+        }
+    }
+    let html = render(unnamed_caption);
+    assert!(!html.contains("<caption"));
+    assert_eq!(html.matches("aria-label=\"Results\"").count(), 2);
+    assert!(html.contains("data-fill=\"true\""));
+    assert!(!html.contains("data-sticky-first"));
+}
+
+#[test]
+fn a_labelled_divider_reads_its_label() {
+    fn app() -> Element {
+        rsx! {
+            Divider { label: "or continue with email", spaced: true }
+        }
+    }
+    let html = render(app);
+    assert!(!html.contains("<hr"), "a separator's content goes unread");
+    assert!(html.contains("g3-divider-labelled"));
+    assert!(html.contains(">or continue with email</span>"));
+    assert_eq!(html.matches("aria-hidden=\"true\"").count(), 2);
+}
+
+#[test]
+fn a_row_with_a_control_at_its_end_does_not_nest_buttons() {
+    fn app() -> Element {
+        rsx! {
+            List { aria_label: "People",
+                Item {
+                    label: "Alex",
+                    onclick: |_| {},
+                    end: rsx! { Button { "Follow" } },
+                }
+                Item { label: "Sam", onclick: |_| {} }
+            }
+        }
+    }
+    let html = render(app);
+    assert!(
+        element_with_class(&html, "g3-item-split").starts_with("<div"),
+        "the row itself is not the button"
+    );
+    let split = &html[html.find("g3-item-split").expect("split row")..];
+    let action = split
+        .find("g3-item-action")
+        .expect("the text is the action");
+    let closes = split[action..]
+        .find("</button>")
+        .expect("action button closes")
+        + action;
+    let follow = split.find(">Follow<").expect("follow button");
+    assert!(
+        follow > closes,
+        "the Follow button sits after the row action, not inside it"
+    );
+    // A row with nothing at its end stays one button.
+    assert!(
+        html.contains("g3-item g3-item-md g3-item-button") || html.contains("g3-item-button\"")
+    );
+    assert_eq!(html.matches("g3-item-split").count(), 1);
+}
+
+#[test]
+fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
+    fn app() -> Element {
+        rsx! {
+            ReorderList { onreorder: |_| {},
+                List { aria_label: "Holes",
+                    ReorderItem { index: 0,
+                        Item { label: "Front nine", start: rsx! { ReorderHandle { label: "Move Front nine" } } }
+                    }
+                    ReorderItem { index: 1,
+                        Item { label: "Back nine", start: rsx! { ReorderHandle {} } }
+                    }
+                }
+            }
+        }
+    }
+    let html = render(app);
+    let handle = element_with_class(&html, "g3-reorder-handle");
+    assert!(handle.starts_with("<button"));
+    assert!(handle.contains("aria-label=\"Move Front nine\""));
+    assert!(
+        html.contains("aria-label=\"Reorder\""),
+        "an unnamed handle gets the default name"
+    );
+    assert!(
+        html.contains("role=\"status\""),
+        "keyboard moves are announced"
+    );
+    assert_eq!(html.matches("g3-reorder-item").count(), 2);
 }

@@ -2,7 +2,7 @@
 use super::HeaderToolbarContext;
 use super::hscroll::use_horizontal_scroll;
 use super::keyboard::use_roving_selection;
-use crate::state::use_element_id;
+use crate::state::{provide_live_context, use_element_id, use_live_context};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
@@ -84,10 +84,7 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
         defer_selection: defer_selection.unwrap_or(false),
         mode,
     };
-    let mut provided = use_context_provider(|| Signal::new(context));
-    if *provided.peek() != context {
-        provided.set(context);
-    }
+    provide_live_context(context);
     let group = rsx! {
         div {
             id: id.clone(),
@@ -140,7 +137,7 @@ pub fn SegmentButton<T: Clone + PartialEq + 'static>(
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let context = use_context::<Signal<SegmentContext<T>>>()();
+    let context = use_live_context::<SegmentContext<T>>();
     let mut group_value = context.value;
     let selected = *group_value.read() == value;
     let disabled = disabled.unwrap_or(false);

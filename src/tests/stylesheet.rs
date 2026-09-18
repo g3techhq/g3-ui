@@ -59,6 +59,18 @@ fn component_rules_live_in_the_g3_layer() {
     assert!(!code().contains("!important"));
 }
 
+/// The sheet names the layer order before anything else can. Tailwind's
+/// preflight lives in `base`; were `g3` ranked below it, the reset would
+/// strip every component's padding, margins and borders.
+#[test]
+fn the_g3_layer_ranks_above_a_css_reset_and_below_utilities() {
+    let order = STYLESHEET
+        .find("@layer theme, base, g3, components, utilities;")
+        .expect("layer order statement");
+    let layer = STYLESHEET.find("@layer g3 {").expect("g3 layer");
+    assert!(order < layer, "the order is named before the layer opens");
+}
+
 #[test]
 fn the_stylesheet_does_not_style_the_host_page() {
     for global in [

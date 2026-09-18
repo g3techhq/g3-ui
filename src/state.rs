@@ -14,6 +14,22 @@ pub(crate) fn use_controlled<T: 'static>(
     value.unwrap_or(local)
 }
 
+/// Provides `context` to descendants and keeps it current as the owner's
+/// props change. `use_context_provider` alone runs once, so a group handed a
+/// different `value` signal or `onchange` later would go on writing to the
+/// first one. Read it with [`use_live_context`].
+pub(crate) fn provide_live_context<C: Copy + PartialEq + 'static>(context: C) {
+    let mut provided = use_context_provider(|| Signal::new(context));
+    if *provided.peek() != context {
+        provided.set(context);
+    }
+}
+
+/// The current value of a context given by [`provide_live_context`].
+pub(crate) fn use_live_context<C: Copy + 'static>() -> C {
+    use_context::<Signal<C>>()()
+}
+
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
 /// An element id that is unique in the document and stable for the life of

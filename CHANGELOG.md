@@ -36,6 +36,24 @@ cascade layer. The README has a table of the most common renames.
   which needs the optional `transitions` feature and its crate.
 - Package only the crate's own root files. The `include` patterns were
   unanchored, so `deploy/README.md` shipped in the crate.
+- The stylesheet names its layer order (`theme, base, g3, components,
+  utilities`), so Tailwind's reset no longer flattens the components.
+- `RadioGroup` and `AccordionGroup` follow a new `value` signal passed on a
+  later render.
+- An `Item` with controls in `end` keeps them out of its own button, so no
+  button is nested in another.
+- Cards in a `Stack` or `Grid` are spaced by its gap alone; a card's own
+  margin no longer adds to it.
+- `Rating` stars shrink to fit a narrow column, and a press still lands on
+  the star under it.
+- A `SwipeItem` holds content of any height and collapses from that height
+  when dismissed. A vertical scroll no longer runs on under a sideways drag,
+  and with `mouse_swipe: false` its actions button shows on hover.
+- Rows in a `ReorderList` are separated like any other list's rows.
+- A `Badge` with an `aria_label` keeps an icon beside its text, and `Avatar`
+  initials skip leading punctuation, so "@ada" reads "A".
+- A `RouteTransitionPage` inside a `TabLayout` fills the space beside the
+  navigation.
 
 ### Changed
 
@@ -193,6 +211,18 @@ cascade layer. The README has a table of the most common renames.
 - Arrow keys move between radios, segments, and tabs.
 - Every public item is documented, and docs.rs builds with the
   `transitions` feature.
+- `Table`: a data table in a focusable, scrollable region, with an optional
+  sticky first column. Cells take a `Color` and a muted tone.
+- `ReorderList`, `ReorderItem`, and `ReorderHandle`: rows reordered by
+  dragging the handle, or with the arrow keys, announced to screen readers.
+- `Divider` takes a `label`, drawn between two rules, as in "or continue
+  with email".
+- `Card` takes `start`, content before the title, such as an avatar.
+- `Item` takes `wrap`, which lets its label and description wrap instead of
+  being cut short.
+- `ToastOptions::replace` shows a toast at once, in place of the one showing
+  and any waiting.
+- `Color::as_str` is public, for styling your own elements by color.
 
 ### Fixed
 

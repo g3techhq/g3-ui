@@ -1,5 +1,7 @@
 //! Expandable sections.
-use crate::state::{use_controlled, use_element_id, use_synced_signal};
+use crate::state::{
+    provide_live_context, use_controlled, use_element_id, use_live_context, use_synced_signal,
+};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronDown;
@@ -18,6 +20,15 @@ impl<T> Clone for AccordionContext<T> {
 }
 
 impl<T> Copy for AccordionContext<T> {}
+
+impl<T> PartialEq for AccordionContext<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+            && self.multiple == other.multiple
+            && self.disabled == other.disabled
+            && self.onchange == other.onchange
+    }
+}
 
 /// The open values after pressing `item`.
 fn toggled<T: Clone + PartialEq>(current: &[T], item: &T, multiple: bool) -> Vec<T> {
@@ -74,7 +85,7 @@ pub fn AccordionGroup<T: Clone + PartialEq + 'static>(
     let value = use_controlled(value, Vec::new);
     let multiple = use_synced_signal(multiple.unwrap_or(false));
     let disabled = use_synced_signal(disabled.unwrap_or(false));
-    use_context_provider(|| AccordionContext {
+    provide_live_context(AccordionContext {
         value,
         multiple,
         disabled,
@@ -111,7 +122,7 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let context = use_context::<AccordionContext<T>>();
+    let context = use_live_context::<AccordionContext<T>>();
     let id = use_element_id("accordion", None);
     let panel_id = format!("{id}-panel");
     let button_id = format!("{id}-button");

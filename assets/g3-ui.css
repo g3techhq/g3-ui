@@ -6,8 +6,18 @@
 
 /* Every g3-ui rule lives in the `g3` cascade layer. Unlayered application CSS
    always beats layered CSS, so an app overrides a component with an ordinary
-   selector - no `!important`, no specificity matching. Declare
-   `@layer g3;` before your own layers if you use layers yourself. */
+   selector - no `!important`, no specificity matching.
+
+   Layers rank in the order they are first named, and this sheet usually loads
+   before the app's own. Naming only `g3` here would rank it below every layer
+   the app declares later - Tailwind's `base` among them, whose preflight
+   resets the padding, margins and borders of every element and so would
+   flatten every component. So the order is set here: after Tailwind's `theme`
+   and `base`, before its `components` and `utilities`, so a utility class on
+   a component still wins. Without Tailwind the other names are empty layers
+   and change nothing. An app with layers of its own names them after these. */
+@layer theme, base, g3, components, utilities;
+
 @layer g3 {
 
 /* -- Theme variables -- */
@@ -417,6 +427,25 @@ body.g3-overlay-scroll-locked {
 }
 .g3-divider-v.g3-divider-margins {
     margin-inline: 1rem;
+}
+.g3-divider-labelled {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+}
+.g3-divider-labelled.g3-divider-margins {
+    margin-block: 1rem;
+}
+.g3-divider-labelled > .g3-divider {
+    flex: 1 1 0;
+    width: auto;
+}
+.g3-divider-label {
+    flex: 0 1 auto;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    text-align: center;
 }
 
 /* -- Segment and tabs -- */
@@ -1544,6 +1573,12 @@ button.g3-chip:focus-visible {
                 background var(--g3-transition-fast) var(--g3-transition-ios);
 }
 
+/* In a Stack or Grid the gap spaces the cards; a card's own margin would
+   add to it. */
+:is(.g3-stack, .g3-grid) > .g3-card {
+    margin-bottom: 0;
+}
+
 .g3-card-md {
     margin-bottom: 0.75rem;
     border-radius: 4px;
@@ -1573,6 +1608,18 @@ button.g3-chip:focus-visible {
     flex-direction: column;
     gap: 0.125rem;
     min-width: 0;
+}
+
+.g3-card-start {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
+/* With something before it, the heading takes the room between the two
+   ends, so `end` stays at the trailing edge. */
+.g3-card-start + .g3-card-heading {
+    flex: 1 1 auto;
 }
 
 .g3-card-title {
@@ -1607,6 +1654,13 @@ button.g3-chip:focus-visible {
     display: block;
     width: 100%;
     height: auto;
+}
+
+/* A tappable card's picture is part of the button, not something to drag
+   away: a mouse press that wandered would otherwise lift a ghost image. */
+.g3-card-interactive .g3-card-media img {
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .g3-card-body {
@@ -2771,6 +2825,15 @@ button.g3-chip:focus-visible {
     letter-spacing: 0;
     white-space: nowrap;
     border: 1px solid transparent;
+    gap: 0.25rem;
+}
+
+/* With an `aria_label`, the visible content sits in its own span. It lays
+   out like the badge, so an icon stays beside its count. */
+.g3-badge > [aria-hidden="true"] {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
 }
 
 .g3-badge-neutral {
@@ -3061,8 +3124,12 @@ button.g3-chip:focus-visible {
 .g3-rating {
     --g3-rating-fill: var(--g3-color-warning);
     display: inline-flex;
+    align-items: flex-start;
     gap: 2px;
     width: fit-content;
+    /* Stars shrink rather than overflow a narrow column; rating.rs measures
+       the row to keep the pointer maths right. */
+    max-width: 100%;
     border-radius: 0.375rem;
     /* The pointer maths assumes this gap; see GAP in rating.rs. */
 }
@@ -3074,11 +3141,15 @@ button.g3-chip:focus-visible {
 
 .g3-rating-star {
     display: block;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
+    min-width: 0;
+    aspect-ratio: 1;
 }
 
 .g3-rating-star svg {
     display: block;
+    width: 100%;
+    height: 100%;
     overflow: visible;
 }
 
@@ -3113,6 +3184,164 @@ button.g3-chip:focus-visible {
 
 .g3-rating[aria-disabled="true"] {
     opacity: 0.5;
+}
+
+/* -- Reorder -- */
+
+.g3-reorder-item {
+    position: relative;
+    transition: transform var(--g3-transition-fast, 160ms) ease;
+}
+
+/* The dragged row follows the pointer exactly and rides above the rest. */
+.g3-reorder-item[data-dragging="true"] {
+    z-index: 2;
+    transition: none;
+    box-shadow: var(--g3-shadow-md-elevation-2, 0 6px 16px var(--g3-color-shadow));
+}
+
+.g3-reorder[data-dragging="true"] {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.g3-reorder-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--g3-color-text-secondary);
+    cursor: grab;
+    /* The handle claims the gesture: a drag on it moves the row rather than
+       scrolling the page. */
+    touch-action: none;
+}
+
+.g3-reorder-handle:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-reorder-handle[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-reorder-item {
+        transition: none;
+    }
+}
+
+/* -- Table -- */
+
+.g3-table-frame {
+    --g3-table-surface: var(--g3-color-card);
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    border: 1px solid var(--g3-color-border);
+    border-radius: 12px;
+    background: var(--g3-table-surface);
+    scrollbar-width: thin;
+}
+
+.g3-table-frame[data-fill="true"] {
+    width: 100%;
+}
+
+.g3-table-frame:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    color: var(--g3-color-text);
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.3;
+}
+
+.g3-table-frame[data-fill="true"] .g3-table {
+    width: 100%;
+}
+
+.g3-table-caption {
+    padding: 0.625rem 0.75rem 0.25rem;
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: start;
+}
+
+.g3-table :is(th, td) {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--g3-color-border);
+    border-inline-end: 1px solid var(--g3-color-border);
+    background: var(--g3-table-surface);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.g3-table th {
+    font-weight: 600;
+}
+
+.g3-table th[scope="row"] {
+    text-align: start;
+}
+
+.g3-table :is(th, td):last-child {
+    border-inline-end: 0;
+}
+
+.g3-table tr:last-child > :is(th, td) {
+    border-bottom: 0;
+}
+
+/* The header row is set off from the body by a heavier rule. */
+.g3-table thead tr:last-child > :is(th, td) {
+    border-bottom: 2px solid var(--g3-color-border);
+}
+
+/* Tints are mixed into the surface, not laid over it, so a tinted cell
+   stays opaque when the sticky column slides over it. */
+.g3-table [data-color="accent"] {
+    background: color-mix(in srgb, var(--g3-color-accent) 18%, var(--g3-table-surface));
+}
+
+.g3-table [data-color="success"] {
+    background: color-mix(in srgb, var(--g3-color-success) 20%, var(--g3-table-surface));
+}
+
+.g3-table [data-color="warning"] {
+    background: color-mix(in srgb, var(--g3-color-warning) 24%, var(--g3-table-surface));
+}
+
+.g3-table [data-color="danger"] {
+    background: color-mix(in srgb, var(--g3-color-danger) 18%, var(--g3-table-surface));
+}
+
+.g3-table [data-muted="true"] {
+    background: color-mix(in srgb, var(--g3-color-text) 6%, var(--g3-table-surface));
+    color: var(--g3-color-text-secondary);
+}
+
+.g3-table[data-sticky-first="true"] tr > :first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    border-inline-end-width: 2px;
 }
 
 @keyframes g3-progress-indeterminate {
@@ -3272,6 +3501,42 @@ button.g3-chip:focus-visible {
     content: none;
 }
 
+/* A reorderable row is wrapped in a `.g3-reorder-item`, which moves as a
+   whole, so the separator belongs to the wrapper. The row inside draws
+   none, or each row would count as a list's last row. */
+.g3-list[data-lines] > .g3-reorder-item .g3-item:not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none) {
+    border-bottom: 0;
+}
+
+.g3-list > .g3-reorder-item .g3-item::after,
+.g3-list > .g3-reorder-item > .g3-swipe-item::after {
+    display: none;
+    content: none;
+}
+
+.g3-list[data-lines="inset"] > .g3-reorder-item:not(:last-child)::after,
+.g3-list[data-lines="full"] > .g3-reorder-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: var(--g3-color-border);
+    pointer-events: none;
+}
+
+.g3-list[data-lines="inset"] > .g3-reorder-item:not(:last-child)::after {
+    right: 1rem;
+    left: 1rem;
+}
+
+/* The row being dragged lifts off the list, so it drops its separator. */
+.g3-list > .g3-reorder-item[data-dragging="true"]::after {
+    display: none;
+}
+
 .g3-item-ios {
     min-height: 52px;
     padding-block: 0.6875rem;
@@ -3294,6 +3559,56 @@ button.g3-chip:focus-visible {
 }
 
 .g3-item-button:active:not(.g3-item-disabled) {
+    transform: scale(0.995);
+}
+
+/* A row with controls at its end: the text is the row's action, stretched
+   over the whole row, and the controls sit above that stretch. */
+.g3-item-action {
+    appearance: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.g3-item-action:focus-visible {
+    outline: none;
+}
+
+.g3-item-action::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.g3-item-action:focus-visible::before {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: -2px;
+}
+
+.g3-item-split > :is(.g3-item-start, .g3-item-end, .g3-item-metadata, .g3-item-detail) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Only the controls at the end take their own presses; a badge or a count
+   beside them lets a press through to the row. */
+.g3-item-split > :is(.g3-item-start, .g3-item-end, .g3-item-metadata, .g3-item-detail) {
+    pointer-events: none;
+}
+
+.g3-item-split > .g3-item-end :is(a, button, input, select, textarea, label, [tabindex]) {
+    pointer-events: auto;
+}
+
+.g3-item-split:has(.g3-item-action:active):not(.g3-item-disabled) {
     transform: scale(0.995);
 }
 
@@ -3389,6 +3704,11 @@ button.g3-chip:focus-visible {
     white-space: nowrap;
 }
 
+.g3-item-wrap :is(.g3-item-label, .g3-item-description) {
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
 .g3-item-metadata {
     color: var(--g3-color-text-secondary);
     font-size: 0.8125rem;
@@ -3461,12 +3781,21 @@ button.g3-chip:focus-visible {
     --g3-swipe-progress: 0;
     position: relative;
     width: 100%;
-    max-height: var(--g3-swipe-row-max-height, 7.5rem);
     overflow: hidden;
     isolation: isolate;
     background: var(--g3-list-surface, var(--g3-color-card));
     touch-action: pan-y;
     transition: max-height 180ms var(--g3-transition-md), margin 180ms var(--g3-transition-md), opacity 140ms ease;
+}
+
+/* A row keeps `pan-y` so a vertical scroll can still start on it, which leaves
+   the browser free to begin scrolling before the swipe is recognised; by then
+   cancelling the touch is too late for a scroll already running on the
+   compositor. Taking the overflow off the scroller while a row is dragged
+   sideways stops that scroll dead, and moves nothing. */
+.g3-content-scroll:has(.g3-swipe-item[data-dragging="true"]) {
+    overflow-y: hidden;
+    overscroll-behavior: contain;
 }
 
 .g3-swipe-actions {
@@ -3592,6 +3921,12 @@ button.g3-chip:focus-visible {
     transition-duration: 560ms;
 }
 
+/* A dismissed row is held at its measured height while it slides away, so
+   the collapse that follows has a height to animate from. */
+.g3-swipe-item[data-state="exiting"] {
+    max-height: var(--g3-swipe-row-max-height, var(--g3-swipe-row-height, 7.5rem));
+}
+
 .g3-swipe-item[data-state="collapsing"] {
     max-height: 0;
     margin-block: 0;
@@ -3653,13 +3988,16 @@ button.g3-chip:focus-visible {
 /* The keyboard route to the actions: invisible until focused. */
 .g3-swipe-toggle {
     position: absolute;
-    inset-block: 0.5rem;
+    top: 50%;
+    min-height: 2rem;
+    translate: 0 -50%;
     inset-inline-end: 0.5rem;
     z-index: 1;
     padding: 0 0.75rem;
     border: 0;
     border-radius: 999px;
-    background: var(--g3-color-control);
+    background: var(--g3-color-surface);
+    box-shadow: 0 2px 8px var(--g3-color-shadow);
     color: var(--g3-color-text);
     font: inherit;
     font-size: 0.8125rem;
@@ -3671,6 +4009,16 @@ button.g3-chip:focus-visible {
     opacity: 1;
     pointer-events: auto;
     outline: 2px solid var(--g3-color-accent);
+}
+
+/* With mouse swiping off, the button is how a mouse reaches the actions, so
+   it shows while the pointer is over the row, or while the row is open. */
+@media (hover: hover) {
+    .g3-swipe-item[data-mouse-swipe="false"]:hover .g3-swipe-toggle,
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-toggle[aria-expanded="true"] {
+        opacity: 1;
+        pointer-events: auto;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5986,5 +6334,26 @@ td[aria-selected="true"] > .g3-calendar-day {
 @container g3-app-shell (min-width: 48rem) {
     .g3-tab-layout.route-transition-base-region:has(> .g3-nav-adaptive) {
         display: grid;
+    }
+}
+
+/* A page region (`RouteTransitionPage`) wrapping a tab layout's header and
+   content takes their place: it fills the space beside the navigation rather
+   than the viewport height its own stylesheet gives a standalone page. */
+.g3-tab-layout > .route-transition-page {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
+.g3-tab-layout:has(> .g3-nav-rail) > .route-transition-page {
+    grid-column: 2;
+    grid-row: 1 / -1;
+}
+
+@container g3-app-shell (min-width: 48rem) {
+    .g3-tab-layout:has(> .g3-nav-adaptive) > .route-transition-page {
+        grid-column: 2;
+        grid-row: 1 / -1;
     }
 }

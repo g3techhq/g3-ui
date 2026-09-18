@@ -1,7 +1,7 @@
 //! Radio groups.
 use super::checkbox::{ControlLabelPlacement, ControlText, control_classes};
 use super::field::described_by;
-use crate::state::{use_controlled, use_element_id};
+use crate::state::{provide_live_context, use_controlled, use_element_id, use_live_context};
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
@@ -22,6 +22,17 @@ impl<T> Clone for RadioContext<T> {
 }
 
 impl<T> Copy for RadioContext<T> {}
+
+impl<T> PartialEq for RadioContext<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+            && self.name == other.name
+            && self.disabled == other.disabled
+            && self.allow_empty == other.allow_empty
+            && self.placement == other.placement
+            && self.onchange == other.onchange
+    }
+}
 
 /// A set of [`Radio`] choices where one may be selected. Like Ionic's
 /// `ion-radio-group`.
@@ -75,7 +86,7 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
     let disabled = crate::state::use_synced_signal(disabled.unwrap_or(false));
     let allow_empty = crate::state::use_synced_signal(allow_empty.unwrap_or(false));
     let placement = crate::state::use_synced_signal(label_placement.unwrap_or_default());
-    use_context_provider(|| RadioContext {
+    provide_live_context(RadioContext {
         value,
         name,
         disabled,
@@ -129,7 +140,7 @@ pub fn Radio<T: Clone + PartialEq + 'static>(
 ) -> Element {
     let mode = use_component_mode(mode);
     let id = use_element_id("radio", None);
-    let context = use_context::<RadioContext<T>>();
+    let context = use_live_context::<RadioContext<T>>();
     let RadioContext {
         value: mut group_value,
         name,
