@@ -77,8 +77,9 @@ pub fn Table(
 ) -> Element {
     let id = use_element_id("table", None);
     let caption_id = format!("{id}-caption");
-    // The frame scrolls, so it has to be reachable by keyboard, and a focused
-    // region needs a name. It shares the table's.
+    // The inner viewport scrolls, so it has to be reachable by keyboard, and
+    // a focused region needs a name. The caption stays outside that viewport:
+    // it titles the whole surface rather than travelling with its columns.
     let table_label = if caption.is_none() {
         aria_label.clone()
     } else {
@@ -96,19 +97,23 @@ pub fn Table(
                 TableVariant::Flat => "flat",
                 TableVariant::Raised => "raised",
             },
-            role: "region",
-            tabindex: "0",
-            aria_labelledby: labelled_by,
-            aria_label: label,
-            table {
-                id,
-                class: "g3-table",
-                "data-sticky-first": sticky_first_column.unwrap_or(false).then_some("true"),
-                aria_label: table_label,
-                if let Some(caption) = caption {
-                    caption { id: caption_id, class: "g3-table-caption", "{caption}" }
+            if let Some(caption) = caption.as_ref() {
+                div { id: caption_id.clone(), class: "g3-table-caption", "{caption}" }
+            }
+            div {
+                class: "g3-table-scroll",
+                role: "region",
+                tabindex: "0",
+                aria_labelledby: labelled_by,
+                aria_label: label,
+                table {
+                    id,
+                    class: "g3-table",
+                    "data-sticky-first": sticky_first_column.unwrap_or(false).then_some("true"),
+                    aria_labelledby: caption.as_ref().map(|_| caption_id),
+                    aria_label: table_label,
+                    {children}
                 }
-                {children}
             }
         }
     }

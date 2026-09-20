@@ -4,6 +4,8 @@ use crate::state::use_controlled;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::Search;
+#[cfg(feature = "playground")]
+use dioxus_icons::lucide::SlidersHorizontal;
 
 /// A search field with an icon and a clear button. Like Ionic's
 /// `ion-searchbar`.
@@ -38,8 +40,8 @@ pub fn Searchbar(
     onchange: Option<EventHandler<String>>,
     /// Called with the query when the user presses Enter.
     on_submit: Option<EventHandler<String>>,
-    /// A control after the field, such as a filter button. It is separated
-    /// from the field by a vertical rule.
+    /// A control inside the field after the clear button, such as a filter
+    /// button. It is separated from the text controls by a vertical rule.
     end: Option<Element>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
@@ -77,10 +79,10 @@ pub fn Searchbar(
                 start: rsx! {
                     Search { size: 18 }
                 },
+                end: end.map(|end| rsx! {
+                    span { class: "g3-searchbar-end", {end} }
+                }),
                 autocomplete: "off",
-            }
-            if let Some(end) = end {
-                span { class: "g3-searchbar-end", {end} }
             }
         }
     }
@@ -91,12 +93,24 @@ pub fn Searchbar(
 fn SearchbarPlaygroundDemo() -> Element {
     let query = use_signal(String::new);
     let mut committed = use_signal(String::new);
+    let show_end = use_signal(|| true);
     rsx! {
         crate::PlaygroundDemoFrame {
+            controls: rsx! {
+                crate::Checkbox { checked: show_end, label: "End action" }
+            },
             crate::Stack {
                 Searchbar {
                     value: query,
                     onchange: move |q| committed.set(q),
+                    end: show_end().then(|| rsx! {
+                        crate::Button {
+                            fill: crate::ButtonFill::Clear,
+                            size: crate::ButtonSize::Sm,
+                            aria_label: "Filters",
+                            SlidersHorizontal { size: 18 }
+                        }
+                    }),
                 }
                 crate::Text { tone: crate::TextTone::Secondary,
                     if committed().is_empty() { "Type to filter." } else { "Filtering by \"{committed}\"" }

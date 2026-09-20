@@ -409,16 +409,19 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
     }
     let html = render(captioned);
     let frame = element_with_class(&html, "g3-table-frame");
-    assert!(frame.contains("role=\"region\""));
+    let scroll = element_with_class(&html, "g3-table-scroll");
+    assert!(scroll.contains("role=\"region\""));
     assert!(
-        frame.contains("tabindex=\"0\""),
+        scroll.contains("tabindex=\"0\""),
         "a scrolling frame is reachable by keyboard"
     );
     assert!(
-        frame.contains("aria-labelledby="),
+        scroll.contains("aria-labelledby="),
         "the frame is named by the caption"
     );
-    assert!(html.contains("<caption"));
+    assert!(html.contains("g3-table-caption"));
+    assert!(html.contains("g3-table-scroll"));
+    assert!(!html.contains("<caption"));
     assert!(html.contains("data-sticky-first=\"true\""));
     assert!(frame.contains("data-variant=\"raised\""));
     assert!(!html.contains("data-fill"));
@@ -431,7 +434,7 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
         }
     }
     let html = render(unnamed_caption);
-    assert!(!html.contains("<caption"));
+    assert!(!html.contains("g3-table-caption"));
     assert_eq!(html.matches("aria-label=\"Results\"").count(), 2);
     assert!(html.contains("data-fill=\"true\""));
     assert!(!html.contains("data-sticky-first"));

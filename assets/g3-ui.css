@@ -599,7 +599,7 @@ body.g3-overlay-scroll-locked {
 }
 .g3-segment-toolbar.g3-segment-ios,
 .g3-header-toolbar .g3-segment-standalone.g3-segment-ios {
-    width: auto;
+    width: fit-content;
     max-width: calc(100% - 0.5rem);
 }
 :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-ios .g3-segment-btn-ios {
@@ -777,29 +777,47 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-tabs {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
+    overflow: hidden;
+}
+
+.g3-tabs > [role="tablist"] {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.g3-tab-panel {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
 }
 
 .g3-tabs[data-swipe="true"] {
     touch-action: pan-y;
 }
 
-.g3-tabs[data-animated="true"] > .g3-tab-panel:not([hidden]) {
-    animation: g3-tab-panel-enter var(--g3-transition-normal) var(--g3-transition-md) both;
+.g3-tabs[data-animated="true"][data-direction="forward"] > .g3-tab-panel[data-state="entering"] {
+    animation: g3-tab-panel-enter-forward var(--g3-transition-normal) var(--g3-transition-md) both;
 }
 
-@keyframes g3-tab-panel-enter {
-    from {
-        opacity: 0;
-        transform: translate3d(0.75rem, 0, 0);
-    }
-    to {
-        opacity: 1;
-        transform: translate3d(0, 0, 0);
-    }
+.g3-tabs[data-animated="true"][data-direction="forward"] > .g3-tab-panel[data-state="leaving"] {
+    animation: g3-tab-panel-leave-forward var(--g3-transition-normal) var(--g3-transition-md) both;
 }
+
+.g3-tabs[data-animated="true"][data-direction="backward"] > .g3-tab-panel[data-state="entering"] {
+    animation: g3-tab-panel-enter-backward var(--g3-transition-normal) var(--g3-transition-md) both;
+}
+
+.g3-tabs[data-animated="true"][data-direction="backward"] > .g3-tab-panel[data-state="leaving"] {
+    animation: g3-tab-panel-leave-backward var(--g3-transition-normal) var(--g3-transition-md) both;
+}
+
+@keyframes g3-tab-panel-enter-forward { from { opacity: 0; transform: translate3d(100%, 0, 0); } }
+@keyframes g3-tab-panel-leave-forward { to { opacity: 0; transform: translate3d(-100%, 0, 0); } }
+@keyframes g3-tab-panel-enter-backward { from { opacity: 0; transform: translate3d(-100%, 0, 0); } }
+@keyframes g3-tab-panel-leave-backward { to { opacity: 0; transform: translate3d(100%, 0, 0); } }
 
 .g3-tab-panel[hidden] {
     display: none;
@@ -811,8 +829,8 @@ body.g3-overlay-scroll-locked {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .g3-tabs[data-animated="true"] > .g3-tab-panel:not([hidden]) {
-        animation: none;
+    .g3-tabs[data-animated="true"] > .g3-tab-panel {
+        animation-duration: 1ms;
     }
 }
 
@@ -881,6 +899,12 @@ body.g3-overlay-scroll-locked {
 
 .g3-field-end {
     inset-inline-end: 0.5rem;
+    gap: 0.125rem;
+}
+
+.g3-input-end-slot {
+    display: inline-flex;
+    align-items: center;
 }
 
 .g3-input {
@@ -1175,9 +1199,7 @@ button.g3-chip:focus-visible {
 
 /* Searchbar */
 .g3-searchbar {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    display: block;
     width: 100%;
     margin: 0;
 }
@@ -1188,11 +1210,25 @@ button.g3-chip:focus-visible {
 
 .g3-searchbar-end {
     display: inline-flex;
-    flex: 0 0 auto;
     align-items: center;
-    align-self: stretch;
-    padding-inline-start: 0.5rem;
+    min-height: 1.75rem;
+    margin-inline-start: 0.25rem;
+    padding-inline-start: 0.375rem;
     border-inline-start: 1px solid var(--g3-color-border);
+}
+
+.g3-searchbar-end .g3-btn {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding-inline: 0.375rem;
+}
+
+.g3-searchbar .g3-field-control:has(.g3-searchbar-end) > .g3-input {
+    padding-inline-end: 3.75rem;
+}
+
+.g3-searchbar .g3-field-control:has(.g3-searchbar-end):has(.g3-field-clear) > .g3-input {
+    padding-inline-end: 6rem;
 }
 
 .g3-searchbar-ios .g3-input {
@@ -1749,17 +1785,22 @@ button.g3-chip:focus-visible {
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
 :is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
-    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
     overflow: visible;
 }
 
-.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]),
-.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]),
+.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
     z-index: var(--g3-z-sheet-backdrop);
 }
 
-.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
     z-index: var(--g3-z-sheet-backdrop);
+}
+
+.g3-table-frame:has(.g3-popover[data-state="open"]),
+.g3-table-frame:has(.g3-popover[data-state="open"]) .g3-table-scroll {
+    overflow: visible;
 }
 
 .g3-card-ios.g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
@@ -2711,6 +2752,8 @@ button.g3-chip:focus-visible {
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.25;
+    padding-block: 0.0625rem;
 }
 .g3-header-ios .g3-header-title {
     font-size: 17px;
@@ -3263,6 +3306,9 @@ button.g3-chip:focus-visible {
 
 .g3-reorder-item {
     position: relative;
+}
+
+.g3-reorder[data-dragging="true"] .g3-reorder-item {
     transition: transform var(--g3-transition-fast, 160ms) ease;
 }
 
@@ -3329,15 +3375,20 @@ button.g3-chip:focus-visible {
     --g3-table-surface: var(--g3-color-card);
     width: fit-content;
     max-width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
+    overflow: hidden;
     border: 1px solid var(--g3-color-border);
     border-radius: 12px;
     background: var(--g3-table-surface);
+}
+
+.g3-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
     scrollbar-width: none;
 }
 
-.g3-table-frame::-webkit-scrollbar {
+.g3-table-scroll::-webkit-scrollbar {
     display: none;
 }
 
@@ -3350,7 +3401,7 @@ button.g3-chip:focus-visible {
     width: 100%;
 }
 
-.g3-table-frame:focus-visible {
+.g3-table-scroll:focus-visible {
     outline: 2px solid var(--g3-color-accent);
     outline-offset: 2px;
 }
@@ -3369,7 +3420,8 @@ button.g3-chip:focus-visible {
 }
 
 .g3-table-caption {
-    padding: 0.625rem 0.75rem 0.25rem;
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--g3-color-border);
     color: var(--g3-color-text-secondary);
     font-size: 0.8125rem;
     font-weight: 600;
@@ -3383,6 +3435,11 @@ button.g3-chip:focus-visible {
     background: var(--g3-table-surface);
     text-align: center;
     white-space: nowrap;
+}
+
+.g3-table tr[data-compact="true"] > :is(th, td) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
 }
 
 .g3-table th {
@@ -3896,7 +3953,7 @@ button.g3-chip:focus-visible {
 }
 
 /* A row keeps `pan-y` so a vertical scroll can still start on it, which leaves
-   the browser free to begin scrolling before the swipe is recognised; by then
+   the browser free to begin scrolling before the swipe is recognized; by then
    cancelling the touch is too late for a scroll already running on the
    compositor. Taking the overflow off the scroller while a row is dragged
    sideways stops that scroll dead, and moves nothing. */
@@ -4028,6 +4085,12 @@ button.g3-chip:focus-visible {
     background: transparent;
     box-shadow: none;
     border-radius: inherit;
+}
+
+/* A card owns its spacing at the grid/list level. Inside a swipe wrapper its
+   bottom margin would instead become empty height revealed during a drag. */
+.g3-swipe-content > .g3-card {
+    margin-bottom: 0;
 }
 
 /* A dismissed row leaves by its own width rather than a fixed distance, so a
@@ -5332,6 +5395,7 @@ button.g3-chip:focus-visible {
 
 .g3-shelf-track {
     --g3-gap: 0.75rem;
+    --g3-shelf-snap-inset: 3rem;
     position: relative;
     display: flex;
     gap: var(--g3-gap);
@@ -5368,10 +5432,13 @@ button.g3-chip:focus-visible {
     /* Proximity rather than mandatory: mandatory snapping fights a mouse
        wheel, pulling back to an item after every notch. */
     scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--g3-shelf-snap-inset);
+    scroll-behavior: smooth;
 }
 
 .g3-shelf-track[data-snap="true"] > * {
     scroll-snap-align: start;
+    scroll-margin-inline-start: var(--g3-shelf-snap-inset);
 }
 
 .g3-shelf-track[data-dragging="true"] {
@@ -5766,7 +5833,12 @@ button.g3-chip:focus-visible {
         padding: 0 1rem 0.75rem;
     }
 
-    .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-ios,
+    .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-ios {
+        width: fit-content;
+        max-width: min(100%, 30rem);
+        margin-inline: 0;
+    }
+
     .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-md {
         width: min(100%, 30rem);
         max-width: 30rem;

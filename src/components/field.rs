@@ -316,7 +316,20 @@ pub fn Input(
                 }
             }
         });
-    let end = clear_button.or(end);
+    // A clear button and a caller-supplied trailing control are independent
+    // affordances. Keeping both is especially important for Searchbar, whose
+    // filter action belongs inside the field after the clear button.
+    let end = match (clear_button, end) {
+        (Some(clear), Some(end)) => Some(rsx! {
+            {clear}
+            span { class: "g3-input-end-slot", {end} }
+        }),
+        (Some(clear), None) => Some(clear),
+        (None, Some(end)) => Some(rsx! {
+            span { class: "g3-input-end-slot", {end} }
+        }),
+        (None, None) => None,
+    };
     rsx! {
         FieldShell {
             id: id.clone(),

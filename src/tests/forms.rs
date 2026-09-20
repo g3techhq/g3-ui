@@ -181,6 +181,28 @@ fn searchbar_is_a_search_landmark() {
     assert!(!html.contains(">Cancel</button>"));
     assert!(html.contains("g3-searchbar-end"));
     assert!(html.contains(">Filter</button>"));
+    assert!(
+        html.find("g3-field-control") < html.find("g3-searchbar-end"),
+        "the end action is composed inside the input shell"
+    );
+}
+
+#[test]
+fn input_keeps_a_custom_end_control_beside_its_clear_button() {
+    fn app() -> Element {
+        let value = use_signal(|| "query".to_string());
+        rsx! {
+            Input {
+                value,
+                clearable: true,
+                end: rsx! { button { "Filter" } },
+            }
+        }
+    }
+    let html = render(app);
+    assert!(html.contains("g3-field-clear"));
+    assert!(html.contains("g3-input-end-slot"));
+    assert!(html.contains(">Filter</button>"));
 }
 
 #[test]

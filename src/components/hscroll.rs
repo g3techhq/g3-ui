@@ -40,8 +40,10 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     let dragged = false;
     let startX = 0;
     let startLeft = 0;
+    let snapTimer;
     strip.addEventListener("pointerdown", (event) => {
         if (event.pointerType !== "mouse" || event.button !== 0) return;
+        clearTimeout(snapTimer);
         down = true;
         dragged = false;
         startX = event.clientX;
@@ -57,7 +59,22 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     });
     window.addEventListener("pointerup", () => {
         down = false;
-        delete strip.dataset.dragging;
+        if (!dragged || strip.dataset.snap !== "true") {
+            delete strip.dataset.dragging;
+            return;
+        }
+        const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
+        const target = [...strip.children].reduce((nearest, child) => {
+            const left = Math.max(0, child.offsetLeft - inset);
+            return nearest === null || Math.abs(left - strip.scrollLeft) < Math.abs(nearest - strip.scrollLeft)
+                ? left : nearest;
+        }, null) ?? strip.scrollLeft;
+        strip.scrollTo({ left: target, behavior: calm.matches ? "auto" : "smooth" });
+        if (calm.matches) {
+            delete strip.dataset.dragging;
+        } else {
+            snapTimer = setTimeout(() => { delete strip.dataset.dragging; }, 320);
+        }
     });
     // A drag must not also press whatever it ended on.
     strip.addEventListener("click", (event) => {
@@ -118,5 +135,11 @@ mod tests {
     fn wheel_lines_and_pages_become_pixels() {
         assert!(SCRIPT.contains("event.deltaMode === 1"));
         assert!(SCRIPT.contains("event.deltaMode === 2"));
+    }
+
+    #[test]
+    fn shelf_drag_settles_smoothly_clear_of_its_fade() {
+        assert!(SCRIPT.contains("--g3-shelf-snap-inset"));
+        assert!(SCRIPT.contains("behavior: calm.matches ? \"auto\" : \"smooth\""));
     }
 }

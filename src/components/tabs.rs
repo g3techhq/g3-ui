@@ -10,6 +10,11 @@ struct TabsContext<T: 'static> {
     onchange: Option<EventHandler<T>>,
     id: Signal<String>,
     mode: ComponentMode,
+    order: Signal<Vec<u64>>,
+    previous: Signal<Option<u64>>,
+    direction: Signal<i8>,
+    animating: Signal<bool>,
+    animated: bool,
 }
 
 impl<T> Clone for TabsContext<T> {
@@ -21,10 +26,14 @@ impl<T> Clone for TabsContext<T> {
 impl<T> Copy for TabsContext<T> {}
 
 impl<T: Hash> TabsContext<T> {
-    fn ids(&self, value: &T) -> (String, String) {
+    fn key(&self, value: &T) -> u64 {
         let mut hasher = DefaultHasher::new();
         value.hash(&mut hasher);
-        let key = hasher.finish();
+        hasher.finish()
+    }
+
+    fn ids(&self, value: &T) -> (String, String) {
+        let key = self.key(value);
         let id = self.id.peek();
         (format!("{id}-tab-{key:x}"), format!("{id}-panel-{key:x}"))
     }
@@ -90,29 +99,49 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     let mode = use_component_mode(mode);
     let id = use_element_id("tabs", None);
     let id_signal = use_signal(|| id.clone());
+    let order = use_signal(Vec::<u64>::new);
+    let previous = use_signal(|| None::<u64>);
+    let direction = use_signal(|| 1_i8);
+    let animating = use_signal(|| false);
+    let animated = animated.unwrap_or(true);
     let context = TabsContext {
         value,
         onchange,
         id: id_signal,
         mode,
+        order,
+        previous,
+        direction,
+        animating,
+        animated,
     };
     let mut provided = use_context_provider(|| Signal::new(context));
-    if provided.peek().onchange != onchange || provided.peek().mode != mode {
+    if provided.peek().onchange != onchange
+        || provided.peek().mode != mode
+        || provided.peek().animated != animated
+    {
         provided.set(context);
     }
     let swipe = swipe.unwrap_or(false);
     let mut gesture_start = use_signal(|| None::<(f64, f64)>);
-    let swipe_id = id.clone();
+    let swipe_capture_id = id.clone();
+    let swipe_release_id = id.clone();
     rsx! {
         div {
             id,
             class: merge_classes("g3-tabs", class.as_deref()),
-            "data-animated": animated.unwrap_or(true).to_string(),
+            "data-animated": animated.to_string(),
+            "data-direction": if direction() < 0 { "backward" } else { "forward" },
             "data-swipe": swipe.to_string(),
             onpointerdown: move |event| {
                 if swipe && event.data.pointer_type() != "mouse" {
                     let point = event.client_coordinates();
                     gesture_start.set(Some((point.x, point.y)));
+                    document::eval(&format!(
+                        "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
+                        crate::components::overlay::js_string(&swipe_capture_id),
+                        event.data.pointer_id(),
+                    ));
                 }
             },
             onpointerup: move |event| {
@@ -131,7 +160,7 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
                             .filter((tab) => !tab.disabled && tab.getAttribute('aria-disabled') !== 'true');
                         const current = tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
                         tabs[current + {}]?.click();"#,
-                    crate::components::overlay::js_string(&swipe_id),
+                    crate::components::overlay::js_string(&swipe_release_id),
                     direction,
                 ));
             },
@@ -189,6 +218,15 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
 ) -> Element {
     let context = use_context::<Signal<TabsContext<T>>>()();
     let (tab_id, panel_id) = context.ids(&value);
+    let key = context.key(&value);
+    let mut order = context.order;
+    use_hook(move || {
+        order.with_mut(|items| {
+            if !items.contains(&key) {
+                items.push(key);
+            }
+        });
+    });
     let mut selected_value = context.value;
     let selected = *selected_value.read() == value;
     rsx! {
@@ -207,6 +245,21 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
             onclick: move |_| {
                 if *selected_value.peek() == value {
                     return;
+                }
+                let current_key = context.key(&selected_value.peek());
+                let target_key = context.key(&value);
+                let order = context.order.peek();
+                let current_index = order.iter().position(|item| *item == current_key);
+                let target_index = order.iter().position(|item| *item == target_key);
+                if let (Some(current), Some(target)) = (current_index, target_index) {
+                    let mut direction = context.direction;
+                    direction.set(if target < current { -1 } else { 1 });
+                }
+                if context.animated {
+                    let mut previous = context.previous;
+                    let mut animating = context.animating;
+                    previous.set(Some(current_key));
+                    animating.set(true);
                 }
                 selected_value.set(value.clone());
                 if let Some(onchange) = context.onchange {
@@ -232,18 +285,43 @@ pub fn TabPanel<T: Clone + PartialEq + Hash + 'static>(
 ) -> Element {
     let context = use_context::<Signal<TabsContext<T>>>()();
     let (tab_id, panel_id) = context.ids(&value);
+    let key = context.key(&value);
     let selected = *context.value.read() == value;
-    if !selected && !keep_mounted.unwrap_or(false) {
+    let leaving =
+        context.animated && *context.animating.read() && *context.previous.read() == Some(key);
+    if !selected && !leaving && !keep_mounted.unwrap_or(false) {
         return rsx! {};
     }
+    let state = if leaving {
+        "leaving"
+    } else if selected && context.animated && *context.animating.read() {
+        "entering"
+    } else if selected {
+        "current"
+    } else {
+        "hidden"
+    };
     rsx! {
         div {
             id: panel_id,
             class: merge_classes("g3-tab-panel", class.as_deref()),
             role: "tabpanel",
+            "data-state": state,
             aria_labelledby: tab_id,
+            aria_hidden: (!selected).then_some("true"),
             tabindex: "0",
-            hidden: !selected,
+            hidden: !selected && !leaving,
+            onanimationend: move |event| {
+                if selected
+                    && event.data().animation_name().starts_with("g3-tab-panel-enter")
+                    && *context.animating.peek()
+                {
+                    let mut animating = context.animating;
+                    let mut previous = context.previous;
+                    animating.set(false);
+                    previous.set(None);
+                }
+            },
             {children}
         }
     }

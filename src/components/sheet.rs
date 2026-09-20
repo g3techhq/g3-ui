@@ -141,11 +141,15 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
     const end = () => {
         if (!dragging) return;
         dragging = false;
-        delete dialog.dataset.dragging;
-        dialog.style.removeProperty("height");
-        dialog.style.setProperty("--g3-sheet-drag-y", "0px");
-        if (!dragged) return;
+        if (!dragged) {
+            delete dialog.dataset.dragging;
+            dialog.style.removeProperty("height");
+            dialog.style.setProperty("--g3-sheet-drag-y", "0px");
+            return;
+        }
         if (detents.length === 0) {
+            delete dialog.dataset.dragging;
+            dialog.style.setProperty("--g3-sheet-drag-y", "0px");
             if (deltaY > DISMISS) dioxus.send(-1);
             return;
         }
@@ -153,6 +157,8 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
         const height = startHeight - deltaY;
         const lowest = detents[0] * ceiling;
         if (height < lowest - DISMISS) {
+            delete dialog.dataset.dragging;
+            dialog.style.removeProperty("height");
             dioxus.send(-1);
             return;
         }
@@ -162,6 +168,14 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
                 nearest = index;
             }
         });
+        // Synchronize the CSS-sized surface before releasing the temporary
+        // pixel height. Otherwise the Rust update can land a frame later,
+        // leaving the visible sheet and its outside-click hit area briefly at
+        // different detents.
+        dialog.style.setProperty("--g3-sheet-detent", detents[nearest]);
+        dialog.style.removeProperty("height");
+        dialog.style.setProperty("--g3-sheet-drag-y", "0px");
+        delete dialog.dataset.dragging;
         dioxus.send(nearest);
     };
     handle.addEventListener("pointerup", end);
