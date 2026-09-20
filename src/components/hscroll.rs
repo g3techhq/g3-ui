@@ -64,8 +64,9 @@ if (strip && strip.dataset.g3Scroll !== "true") {
             return;
         }
         const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
+        const max = strip.scrollWidth - strip.clientWidth;
         const target = [...strip.children].reduce((nearest, child) => {
-            const left = Math.max(0, child.offsetLeft - inset);
+            const left = Math.max(0, Math.min(max, child.offsetLeft - inset));
             return nearest === null || Math.abs(left - strip.scrollLeft) < Math.abs(nearest - strip.scrollLeft)
                 ? left : nearest;
         }, null) ?? strip.scrollLeft;
@@ -73,7 +74,12 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         if (calm.matches) {
             delete strip.dataset.dragging;
         } else {
-            snapTimer = setTimeout(() => { delete strip.dataset.dragging; }, 320);
+            const settled = () => {
+                clearTimeout(snapTimer);
+                delete strip.dataset.dragging;
+            };
+            strip.addEventListener("scrollend", settled, { once: true });
+            snapTimer = setTimeout(settled, 500);
         }
     });
     // A drag must not also press whatever it ended on.
@@ -141,5 +147,6 @@ mod tests {
     fn shelf_drag_settles_smoothly_clear_of_its_fade() {
         assert!(SCRIPT.contains("--g3-shelf-snap-inset"));
         assert!(SCRIPT.contains("behavior: calm.matches ? \"auto\" : \"smooth\""));
+        assert!(SCRIPT.contains("scrollend"));
     }
 }

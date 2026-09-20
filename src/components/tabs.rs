@@ -333,20 +333,25 @@ fn TabsPlaygroundDemo() -> Element {
     let tab = use_signal(|| "scores");
     rsx! {
         crate::PlaygroundDemoFrame {
-            Tabs { value: tab, swipe: true,
-                TabList { aria_label: "Round",
-                    Tab { value: "scores", "Scores" }
-                    Tab { value: "players", "Players" }
-                    Tab { value: "notes", "Notes" }
+            crate::Stack {
+                crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
+                    "On a touch screen, swipe the panel left or right to move between tabs."
                 }
-                TabPanel { value: "scores",
-                    crate::Card { title: "Scores", "Front nine: 38" }
-                }
-                TabPanel { value: "players",
-                    crate::Card { title: "Players", "Four players in this group." }
-                }
-                TabPanel { value: "notes", keep_mounted: true,
-                    crate::TextArea { label: "Notes" }
+                Tabs { value: tab, swipe: true,
+                    TabList { aria_label: "Round",
+                        Tab { value: "scores", "Scores" }
+                        Tab { value: "players", "Players" }
+                        Tab { value: "notes", "Notes" }
+                    }
+                    TabPanel { value: "scores",
+                        crate::Card { title: "Scores", "Front nine: 38" }
+                    }
+                    TabPanel { value: "players",
+                        crate::Card { title: "Players", "Four players in this group." }
+                    }
+                    TabPanel { value: "notes", keep_mounted: true,
+                        crate::TextArea { label: "Notes" }
+                    }
                 }
             }
         }

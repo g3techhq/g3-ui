@@ -175,6 +175,10 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
         dialog.style.setProperty("--g3-sheet-detent", detents[nearest]);
         dialog.style.removeProperty("height");
         dialog.style.setProperty("--g3-sheet-drag-y", "0px");
+        // Flush the new geometry before the backdrop can receive another
+        // pointer. This keeps the sheet's visual edge and hit-test edge in
+        // lockstep after moving from a larger detent to a smaller one.
+        dialog.getBoundingClientRect();
         delete dialog.dataset.dragging;
         dioxus.send(nearest);
     };
