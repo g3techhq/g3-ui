@@ -598,7 +598,10 @@ fn ProfileScreen() -> Element {
                                 Item {
                                     label: course,
                                     description: (index == 0).then(|| "Shown first when you book".to_string()),
-                                    end: rsx! { ReorderHandle { label: format!("Move {course}") } },
+                                    end: rsx! { ReorderHandle {
+                                        label: format!("Move {course}"),
+                                        position: ReorderHandlePosition::End,
+                                    } },
                                 }
                             }
                         }
@@ -612,7 +615,6 @@ fn ProfileScreen() -> Element {
                         wrap: true,
                     }
                 }
-                Divider { label: "Account", spaced: true }
                 Button {
                     fill: ButtonFill::Outline,
                     color: Color::Danger,

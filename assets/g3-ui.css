@@ -420,7 +420,8 @@ body.g3-overlay-scroll-locked {
 .g3-divider-v {
     width: 1px;
     min-width: 1px;
-    min-height: 1rem;
+    min-height: 2rem;
+    align-self: stretch;
 }
 .g3-divider-h.g3-divider-margins {
     margin-block: 1rem;
@@ -592,23 +593,29 @@ body.g3-overlay-scroll-locked {
 .g3-segment-toolbar {
     margin-inline: auto;
 }
-.g3-segment-toolbar.g3-segment-ios {
+.g3-header-toolbar .g3-segment-standalone {
+    margin-top: 0;
+    margin-inline: auto;
+}
+.g3-segment-toolbar.g3-segment-ios,
+.g3-header-toolbar .g3-segment-standalone.g3-segment-ios {
     width: auto;
     max-width: calc(100% - 0.5rem);
 }
-.g3-segment-toolbar.g3-segment-ios .g3-segment-btn-ios {
+:is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-ios .g3-segment-btn-ios {
     min-height: 28px;
     min-width: 0;
     margin: 0;
     line-height: 28px;
 }
-.g3-segment-toolbar.g3-segment-md .g3-segment-btn-md {
+:is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md .g3-segment-btn-md {
     min-width: 0;
 }
 .g3-segment-standalone.g3-segment-ios .g3-segment-btn-ios {
     margin: 2px;
 }
-.g3-segment-toolbar.g3-segment-md {
+.g3-segment-toolbar.g3-segment-md,
+.g3-header-toolbar .g3-segment-standalone.g3-segment-md {
     width: 100%;
     border-bottom: 0;
 }
@@ -775,6 +782,25 @@ body.g3-overlay-scroll-locked {
     gap: 0.75rem;
 }
 
+.g3-tabs[data-swipe="true"] {
+    touch-action: pan-y;
+}
+
+.g3-tabs[data-animated="true"] > .g3-tab-panel:not([hidden]) {
+    animation: g3-tab-panel-enter var(--g3-transition-normal) var(--g3-transition-md) both;
+}
+
+@keyframes g3-tab-panel-enter {
+    from {
+        opacity: 0;
+        transform: translate3d(0.75rem, 0, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
 .g3-tab-panel[hidden] {
     display: none;
 }
@@ -782,6 +808,12 @@ body.g3-overlay-scroll-locked {
 .g3-tab-panel:focus-visible {
     outline: 2px solid var(--g3-color-accent);
     outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-tabs[data-animated="true"] > .g3-tab-panel:not([hidden]) {
+        animation: none;
+    }
 }
 
 /* -- Form fields --
@@ -1152,6 +1184,15 @@ button.g3-chip:focus-visible {
 
 .g3-searchbar .g3-field {
     flex: 1 1 auto;
+}
+
+.g3-searchbar-end {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    align-self: stretch;
+    padding-inline-start: 0.5rem;
+    border-inline-start: 1px solid var(--g3-color-border);
 }
 
 .g3-searchbar-ios .g3-input {
@@ -1564,6 +1605,10 @@ button.g3-chip:focus-visible {
     color: var(--g3-color-text);
 }
 
+.g3-card[data-padding="false"] {
+    padding: 0;
+}
+
 .g3-card-ios {
     margin-bottom: 1.5rem;
     border-radius: 8px;
@@ -1694,9 +1739,27 @@ button.g3-chip:focus-visible {
     outline-offset: 2px;
 }
 
-.g3-card-interactive :is(a, button, input, select, textarea, [tabindex]):not(.g3-card-action) {
+.g3-card-interactive
+    :is(a, button, input, select, textarea, [tabindex]):not(:where(.g3-card-action, .g3-sheet, .g3-sheet-backdrop, .g3-popover, .g3-modal-overlay)) {
     position: relative;
     z-index: 1;
+}
+
+/* Declarative overlays are allowed anywhere in component composition. Keep
+   their fixed surface from being clipped when the trigger lives inside a
+   scrolling content region, card, sticky table cell, or transitioning page. */
+:is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
+    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+    overflow: visible;
+}
+
+.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]),
+.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+    z-index: var(--g3-z-sheet-backdrop);
+}
+
+.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"]) {
+    z-index: var(--g3-z-sheet-backdrop);
 }
 
 .g3-card-ios.g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
@@ -2106,9 +2169,7 @@ button.g3-chip:focus-visible {
 
 /* iOS */
 .g3-sheet-ios {
-    background: color-mix(in srgb, var(--g3-color-card) 94%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: var(--g3-color-card);
     box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.16);
     transition-timing-function: var(--g3-transition-ios);
 }
@@ -2412,37 +2473,49 @@ button.g3-chip:focus-visible {
 .g3-fab-list[aria-hidden="true"] {
     visibility: hidden;
     opacity: 0;
+    transform: var(--g3-fab-list-position) scale(0.82);
     pointer-events: none;
 }
 
 .g3-fab-list {
-    transition: opacity var(--g3-transition-fast) var(--g3-transition-md), visibility 0s linear var(--g3-transition-fast);
+    transform-origin: center;
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
+                transform var(--g3-transition-fast) var(--g3-transition-md),
+                visibility 0s linear 0s;
 }
 .g3-fab-list[aria-hidden="false"] {
+    visibility: visible;
+    opacity: 1;
+    transform: var(--g3-fab-list-position) scale(1);
+    transition-delay: 0s;
     pointer-events: auto;
 }
 .g3-fab-list-top {
     bottom: calc(100% + 0.75rem);
     left: 50%;
-    transform: translateX(-50%);
+    --g3-fab-list-position: translateX(-50%);
+    transform: var(--g3-fab-list-position);
     flex-direction: column-reverse;
 }
 .g3-fab-list-bottom {
     top: calc(100% + 0.75rem);
     left: 50%;
-    transform: translateX(-50%);
+    --g3-fab-list-position: translateX(-50%);
+    transform: var(--g3-fab-list-position);
     flex-direction: column;
 }
 .g3-fab-list-start {
     right: calc(100% + 0.75rem);
     top: 50%;
-    transform: translateY(-50%);
+    --g3-fab-list-position: translateY(-50%);
+    transform: var(--g3-fab-list-position);
     flex-direction: row-reverse;
 }
 .g3-fab-list-end {
     left: calc(100% + 0.75rem);
     top: 50%;
-    transform: translateY(-50%);
+    --g3-fab-list-position: translateY(-50%);
+    transform: var(--g3-fab-list-position);
     flex-direction: row;
 }
 
@@ -3210,18 +3283,28 @@ button.g3-chip:focus-visible {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
+    width: 1.5rem;
     min-height: 2.75rem;
     margin: 0;
     padding: 0;
     border: 0;
     border-radius: 8px;
     background: none;
+    appearance: none;
+    box-shadow: none;
     color: var(--g3-color-text-secondary);
     cursor: grab;
     /* The handle claims the gesture: a drag on it moves the row rather than
        scrolling the page. */
     touch-action: none;
+}
+
+.g3-reorder-handle[data-position="start"] {
+    margin-inline-start: -0.5rem;
+}
+
+.g3-reorder-handle[data-position="end"] {
+    margin-inline-end: -0.5rem;
 }
 
 .g3-reorder-handle:focus-visible {
@@ -3251,7 +3334,16 @@ button.g3-chip:focus-visible {
     border: 1px solid var(--g3-color-border);
     border-radius: 12px;
     background: var(--g3-table-surface);
-    scrollbar-width: thin;
+    scrollbar-width: none;
+}
+
+.g3-table-frame::-webkit-scrollbar {
+    display: none;
+}
+
+.g3-table-frame[data-variant="raised"] {
+    border-color: transparent;
+    box-shadow: var(--g3-shadow-md-elevation-1);
 }
 
 .g3-table-frame[data-fill="true"] {
@@ -3312,6 +3404,12 @@ button.g3-chip:focus-visible {
 /* The header row is set off from the body by a heavier rule. */
 .g3-table thead tr:last-child > :is(th, td) {
     border-bottom: 2px solid var(--g3-color-border);
+}
+
+/* Mark the boundary between table sections without baking scorecard-specific
+   row knowledge into the component. */
+.g3-table tr[data-divider="strong"] > :is(th, td) {
+    border-bottom: 3px solid color-mix(in srgb, var(--g3-color-text) 48%, var(--g3-color-border));
 }
 
 /* Tints are mixed into the surface, not laid over it, so a tinted cell
@@ -3397,6 +3495,15 @@ button.g3-chip:focus-visible {
 .g3-card .g3-list-grouped {
     --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 9%, var(--g3-color-card));
     background: var(--g3-list-surface);
+}
+
+.g3-sheet-bottom .g3-list-grouped:not(.g3-list-filled) {
+    --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 9%, var(--g3-color-card));
+    background: var(--g3-list-surface);
+}
+
+:is(.g3-card, .g3-list-grouped):has(.g3-popover[data-state="open"]) {
+    overflow: visible;
 }
 
 .g3-list-ios.g3-list-grouped {
@@ -3914,6 +4021,15 @@ button.g3-chip:focus-visible {
     --g3-swipe-edge: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
 }
 
+/* Cards bring their own rounded surface. The generic row surface otherwise
+   peeks out as square corners below them. */
+.g3-swipe-item:has(> .g3-swipe-content > .g3-card),
+.g3-swipe-content:has(> .g3-card) {
+    background: transparent;
+    box-shadow: none;
+    border-radius: inherit;
+}
+
 /* A dismissed row leaves by its own width rather than a fixed distance, so a
    wide desktop row does not stop partway across. */
 .g3-swipe-item[data-state="exiting"] .g3-swipe-content {
@@ -4014,10 +4130,60 @@ button.g3-chip:focus-visible {
 /* With mouse swiping off, the button is how a mouse reaches the actions, so
    it shows while the pointer is over the row, or while the row is open. */
 @media (hover: hover) {
-    .g3-swipe-item[data-mouse-swipe="false"]:hover .g3-swipe-toggle,
-    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-toggle[aria-expanded="true"] {
-        opacity: 1;
-        pointer-events: auto;
+    /* A pointer-precise layout turns the two swipe directions into visible
+       edge buttons. This is both faster and more discoverable than a generic
+       "Show actions" pill, while touch keeps the native swipe gesture. */
+    .g3-swipe-item[data-mouse-swipe="false"] {
+        display: grid;
+        grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+        gap: 0.375rem;
+        overflow: visible;
+        isolation: auto;
+        background: transparent;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] > .g3-swipe-actions {
+        position: relative;
+        inset: auto;
+        width: auto;
+        max-width: none;
+        visibility: visible;
+        transition: none;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] > .g3-swipe-actions-start {
+        grid-column: 1;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] > .g3-swipe-actions-end {
+        grid-column: 3;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] > .g3-swipe-content {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        transform: none;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-action {
+        width: 3rem;
+        min-width: 3rem;
+        height: 100%;
+        padding: 0;
+        border-radius: inherit;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-action > span {
+        display: none;
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-action:hover {
+        filter: brightness(0.86);
+    }
+
+    .g3-swipe-item[data-mouse-swipe="false"] .g3-swipe-toggle {
+        display: none;
     }
 }
 
@@ -4104,10 +4270,8 @@ button.g3-chip:focus-visible {
 .g3-toast-ios {
     border-radius: 0.875rem;
     border-color: color-mix(in srgb, var(--g3-color-border) 60%, transparent);
-    background: color-mix(in srgb, var(--g3-toast-surface) 82%, transparent);
+    background: var(--g3-toast-surface);
     box-shadow: 0 8px 30px color-mix(in srgb, var(--g3-color-shadow) 80%, transparent);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 /* Material: an opaque, near-square elevated snackbar. */
@@ -5602,8 +5766,8 @@ button.g3-chip:focus-visible {
         padding: 0 1rem 0.75rem;
     }
 
-    .g3-header-toolbar .g3-segment-toolbar.g3-segment-ios,
-    .g3-header-toolbar .g3-segment-toolbar.g3-segment-md {
+    .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-ios,
+    .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-md {
         width: min(100%, 30rem);
         max-width: 30rem;
         margin-inline: 0;

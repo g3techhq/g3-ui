@@ -36,6 +36,8 @@ pub struct SelectOption<T> {
     pub value: T,
     /// Text shown for it.
     pub label: String,
+    /// Shorter text shown in the closed trigger. The list keeps `label`.
+    pub trigger_label: Option<String>,
     /// Secondary text under the label.
     pub description: Option<String>,
     /// Whether it can be chosen.
@@ -48,6 +50,7 @@ impl<T> SelectOption<T> {
         Self {
             value,
             label: label.into(),
+            trigger_label: None,
             description: None,
             disabled: false,
         }
@@ -56,6 +59,12 @@ impl<T> SelectOption<T> {
     /// Add secondary text.
     pub fn description(mut self, description: impl Into<String>) -> Self {
         self.description = Some(description.into());
+        self
+    }
+
+    /// Use different, usually shorter, text in the closed select trigger.
+    pub fn trigger_label(mut self, label: impl Into<String>) -> Self {
+        self.trigger_label = Some(label.into());
         self
     }
 
@@ -195,7 +204,9 @@ pub fn Select<T: Clone + PartialEq + 'static>(
             },
             match chosen {
                 Some(option) => rsx! {
-                    span { id: format!("{id}-value"), class: "g3-select-value", "{option.label}" }
+                    span { id: format!("{id}-value"), class: "g3-select-value",
+                        "{option.trigger_label.as_deref().unwrap_or(&option.label)}"
+                    }
                 },
                 None => rsx! {
                     span { id: format!("{id}-value"), class: "g3-select-value g3-select-placeholder", "{placeholder}" }
@@ -258,6 +269,7 @@ fn SelectOptionRow<T: Clone + PartialEq + 'static>(
     let SelectOption {
         value,
         label,
+        trigger_label: _,
         description,
         disabled,
     } = option;

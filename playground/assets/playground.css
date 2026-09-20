@@ -296,7 +296,7 @@ textarea {
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
   justify-items: center;
-  gap: 24px;
+  gap: 32px;
 }
 
 .playground-viewport-card .playground-controls-pane {

@@ -147,7 +147,7 @@ fn tabs_link_each_tab_to_its_panel() {
     fn app() -> Element {
         let tab = use_signal(|| 1_u8);
         rsx! {
-            Tabs { value: tab,
+            Tabs { value: tab, swipe: true,
                 TabList { aria_label: "Round",
                     Tab { value: 1_u8, "Scores" }
                     Tab { value: 2_u8, "Notes" }
@@ -159,6 +159,8 @@ fn tabs_link_each_tab_to_its_panel() {
     }
     let html = render(app);
     assert!(html.contains("role=\"tablist\""));
+    assert!(html.contains("data-animated=\"true\""));
+    assert!(html.contains("data-swipe=\"true\""));
     assert!(!html.contains("Note panel"));
     let panel = element_with_class(&html, "g3-tab-panel");
     let panel_id = panel
@@ -273,7 +275,7 @@ fn every_gallery_entry_is_named_and_described() {
 fn card_and_list_variants_set_their_surface() {
     fn app() -> Element {
         rsx! {
-            Card { title: "Raised", "a" }
+            Card { title: "Raised", padding: false, "a" }
             Card { variant: CardVariant::Flat, title: "Flat", "b" }
             Card { variant: CardVariant::Filled, title: "Filled", "c" }
             List { variant: ListVariant::Flat, Item { label: "Row" } }
@@ -282,6 +284,7 @@ fn card_and_list_variants_set_their_surface() {
     let html = render(app);
     assert_eq!(html.matches("g3-card-flat").count(), 1);
     assert_eq!(html.matches("g3-card-filled").count(), 1);
+    assert!(html.contains("data-padding=\"false\""));
     let list = element_with_class(&html, "g3-list");
     assert!(list.contains("g3-list-grouped") && list.contains("g3-list-flat"));
 }
@@ -399,7 +402,7 @@ fn a_shelf_is_a_named_focusable_group() {
 fn a_table_scrolls_in_a_named_focusable_frame() {
     fn captioned() -> Element {
         rsx! {
-            Table { caption: "Front nine", sticky_first_column: true,
+            Table { caption: "Front nine", sticky_first_column: true, variant: TableVariant::Raised,
                 tbody { tr { th { scope: "row", "Par" } td { "4" } } }
             }
         }
@@ -417,6 +420,7 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
     );
     assert!(html.contains("<caption"));
     assert!(html.contains("data-sticky-first=\"true\""));
+    assert!(frame.contains("data-variant=\"raised\""));
     assert!(!html.contains("data-fill"));
 
     fn unnamed_caption() -> Element {
@@ -496,7 +500,7 @@ fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
                         Item { label: "Front nine", start: rsx! { ReorderHandle { label: "Move Front nine" } } }
                     }
                     ReorderItem { index: 1,
-                        Item { label: "Back nine", start: rsx! { ReorderHandle {} } }
+                        Item { label: "Back nine", end: rsx! { ReorderHandle { position: ReorderHandlePosition::End } } }
                     }
                 }
             }
@@ -515,4 +519,5 @@ fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
         "keyboard moves are announced"
     );
     assert_eq!(html.matches("g3-reorder-item").count(), 2);
+    assert!(html.contains("data-position=\"end\""));
 }

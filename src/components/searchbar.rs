@@ -38,6 +38,9 @@ pub fn Searchbar(
     onchange: Option<EventHandler<String>>,
     /// Called with the query when the user presses Enter.
     on_submit: Option<EventHandler<String>>,
+    /// A control after the field, such as a filter button. It is separated
+    /// from the field by a vertical rule.
+    end: Option<Element>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the search form.
@@ -75,6 +78,9 @@ pub fn Searchbar(
                     Search { size: 18 }
                 },
                 autocomplete: "off",
+            }
+            if let Some(end) = end {
+                span { class: "g3-searchbar-end", {end} }
             }
         }
     }

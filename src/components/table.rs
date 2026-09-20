@@ -3,6 +3,16 @@ use crate::state::use_element_id;
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
 
+/// How a [`Table`] sits on its page.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum TableVariant {
+    /// A quiet bordered surface.
+    #[default]
+    Flat,
+    /// A card-like surface with elevation.
+    Raised,
+}
+
 /// A table of data, such as a scorecard, a leaderboard or a price list.
 ///
 /// Write the rows as ordinary `thead`, `tbody`, `tr`, `th` and `td` elements;
@@ -58,6 +68,8 @@ pub fn Table(
     /// Stretch to the full width available. By default the table is as wide
     /// as its content, up to the width available.
     fill: Option<bool>,
+    /// Surface treatment. Defaults to [`TableVariant::Flat`].
+    variant: Option<TableVariant>,
     /// Extra classes for the scrolling frame.
     class: Option<String>,
     /// The rows: `thead`, `tbody` and `tr` elements.
@@ -80,6 +92,10 @@ pub fn Table(
         div {
             class: merge_classes("g3-table-frame", class.as_deref()),
             "data-fill": fill.unwrap_or(false).then_some("true"),
+            "data-variant": match variant.unwrap_or_default() {
+                TableVariant::Flat => "flat",
+                TableVariant::Raised => "raised",
+            },
             role: "region",
             tabindex: "0",
             aria_labelledby: labelled_by,
@@ -103,6 +119,7 @@ pub fn Table(
 fn TablePlaygroundDemo() -> Element {
     let sticky = use_signal(|| true);
     let fill = use_signal(|| false);
+    let raised = use_signal(|| true);
     let pars = [4, 3, 5, 4, 4, 3, 4, 5, 4];
     let scores = [4, 2, 6, 4, 5, 3, 4, 4, 4];
     rsx! {
@@ -110,11 +127,13 @@ fn TablePlaygroundDemo() -> Element {
             controls: rsx! {
                 crate::Checkbox { checked: sticky, label: "Sticky first column" }
                 crate::Checkbox { checked: fill, label: "Fill width" }
+                crate::Checkbox { checked: raised, label: "Raised surface" }
             },
             Table {
                 caption: "Front nine",
                 sticky_first_column: sticky(),
                 fill: fill(),
+                variant: if raised() { TableVariant::Raised } else { TableVariant::Flat },
                 thead {
                     tr {
                         th { scope: "col", "Hole" }

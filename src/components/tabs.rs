@@ -78,6 +78,11 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     onchange: Option<EventHandler<T>>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Animate the newly selected panel. Defaults to `true`.
+    animated: Option<bool>,
+    /// Let a horizontal touch gesture select the adjacent tab. Defaults to
+    /// `false`, since some panels own horizontal gestures of their own.
+    swipe: Option<bool>,
     /// Extra classes for the wrapper.
     class: Option<String>,
     children: Element,
@@ -95,8 +100,44 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     if provided.peek().onchange != onchange || provided.peek().mode != mode {
         provided.set(context);
     }
+    let swipe = swipe.unwrap_or(false);
+    let mut gesture_start = use_signal(|| None::<(f64, f64)>);
+    let swipe_id = id.clone();
     rsx! {
-        div { id, class: merge_classes("g3-tabs", class.as_deref()), {children} }
+        div {
+            id,
+            class: merge_classes("g3-tabs", class.as_deref()),
+            "data-animated": animated.unwrap_or(true).to_string(),
+            "data-swipe": swipe.to_string(),
+            onpointerdown: move |event| {
+                if swipe && event.data.pointer_type() != "mouse" {
+                    let point = event.client_coordinates();
+                    gesture_start.set(Some((point.x, point.y)));
+                }
+            },
+            onpointerup: move |event| {
+                let Some((start_x, start_y)) = gesture_start.take() else { return };
+                let point = event.client_coordinates();
+                let dx = point.x - start_x;
+                let dy = point.y - start_y;
+                if dx.abs() < 48.0 || dx.abs() <= dy.abs() {
+                    return;
+                }
+                event.prevent_default();
+                let direction = if dx < 0.0 { 1 } else { -1 };
+                document::eval(&format!(
+                    r#"const root = document.getElementById({});
+                        const tabs = [...(root?.querySelectorAll('[role="tab"]') || [])]
+                            .filter((tab) => !tab.disabled && tab.getAttribute('aria-disabled') !== 'true');
+                        const current = tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
+                        tabs[current + {}]?.click();"#,
+                    crate::components::overlay::js_string(&swipe_id),
+                    direction,
+                ));
+            },
+            onpointercancel: move |_| { gesture_start.set(None); },
+            {children}
+        }
     }
 }
 
@@ -214,7 +255,7 @@ fn TabsPlaygroundDemo() -> Element {
     let tab = use_signal(|| "scores");
     rsx! {
         crate::PlaygroundDemoFrame {
-            Tabs { value: tab,
+            Tabs { value: tab, swipe: true,
                 TabList { aria_label: "Round",
                     Tab { value: "scores", "Scores" }
                     Tab { value: "players", "Players" }

@@ -26,6 +26,9 @@ pub fn InfoButton(
     sheet: Option<Element>,
     /// Title of that sheet.
     sheet_title: Option<String>,
+    /// Resting heights for the information sheet, as viewport fractions.
+    /// Omit for a sheet that fits its content.
+    sheet_detents: Option<Vec<f64>>,
     /// Called when pressed, in addition to opening any sheet.
     onclick: Option<EventHandler<MouseEvent>>,
     /// Accessible name. Defaults to
@@ -64,7 +67,7 @@ pub fn InfoButton(
             Info { class: "g3-info-btn-icon", size: 24 }
         }
         if let Some(sheet) = sheet {
-            BottomSheet { open, title: sheet_title, mode, {sheet} }
+            BottomSheet { open, title: sheet_title, detents: sheet_detents, mode, {sheet} }
         }
     }
 }

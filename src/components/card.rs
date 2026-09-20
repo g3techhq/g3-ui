@@ -65,6 +65,9 @@ pub fn Card(
     media: Option<Element>,
     /// Surface treatment. Defaults to [`CardVariant::Raised`].
     variant: Option<CardVariant>,
+    /// Pad the card's contents. Defaults to `true`. Turn this off for an
+    /// edge-to-edge list or media layout.
+    padding: Option<bool>,
     /// Highlight the card as chosen. Exposed as `aria-pressed` on a tappable
     /// card.
     selected: Option<bool>,
@@ -141,6 +144,7 @@ pub fn Card(
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
+            "data-padding": padding.unwrap_or(true).to_string(),
             aria_disabled: (interactive && disabled).then_some("true"),
             if untitled_action {
                 Pressable {

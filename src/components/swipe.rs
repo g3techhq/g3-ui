@@ -469,6 +469,15 @@ pub fn SwipeItem(
                 dragging.set(true);
                 horizontal.set(false);
                 moved.set(false);
+                // Capture immediately. Touch browsers can dispatch a leave as
+                // soon as the finger moves off the original hit-test box; if
+                // capture waits for horizontal intent, that leave ends the
+                // gesture and the row appears to snap back before it can act.
+                document::eval(&format!(
+                    "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
+                    js_string(&row_id),
+                    event.data.pointer_id(),
+                ));
                 let generation = press_generation.with_mut(|g| {
                     *g += 1;
                     *g
@@ -495,12 +504,6 @@ pub fn SwipeItem(
                 if !horizontal() {
                     if (dx - offset()).abs() > HORIZONTAL_SLOP && (dx - offset()).abs() > dy.abs() {
                         horizontal.set(true);
-                        // Keep receiving the drag after the pointer leaves the row.
-                        document::eval(&format!(
-                            "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
-                            js_string(&row_id),
-                            event.data.pointer_id(),
-                        ));
                     } else {
                         return;
                     }
@@ -516,9 +519,6 @@ pub fn SwipeItem(
                 }
             },
             onpointerup: move |_| release(()),
-            // A captured pointer keeps reporting to the row wherever it goes.
-            // Leaving is the fallback for when capture was not granted.
-            onpointerleave: move |_| release(()),
             onlostpointercapture: move |_| release(()),
             onpointercancel: move |_| {
                 if phase() == Phase::Idle {

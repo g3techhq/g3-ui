@@ -58,7 +58,7 @@ pub(crate) struct InSwipeRow;
 /// Whether an [`Item`] shows a trailing chevron.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ItemDetail {
-    /// Show it for tappable rows on iOS, as iOS does.
+    /// Show it for tappable rows on both platforms.
     #[default]
     Auto,
     /// Always show it.
@@ -210,7 +210,7 @@ pub fn Item(
         && match detail.unwrap_or_default() {
             ItemDetail::Show => true,
             ItemDetail::Hide => false,
-            ItemDetail::Auto => interactive && mode == ComponentMode::Ios,
+            ItemDetail::Auto => interactive,
         };
     let lines_cls = match lines {
         Some(ListLines::Full) => "g3-item-lines-full",

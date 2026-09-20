@@ -61,12 +61,15 @@ fn select_shows_the_chosen_label_not_the_value() {
             Select {
                 label: "Country",
                 value,
-                options: vec![SelectOption::new("us".to_string(), "United States"), SelectOption::new("gb".to_string(), "United Kingdom")],
+                options: vec![
+                    SelectOption::new("us".to_string(), "United States"),
+                    SelectOption::new("gb".to_string(), "United Kingdom").trigger_label("UK"),
+                ],
             }
         }
     }
     let html = render(app);
-    assert!(html.contains("g3-select-value\">United Kingdom</span>"));
+    assert!(html.contains("g3-select-value\">UK</span>"));
     assert!(!html.contains("g3-select-value\">gb"));
     let trigger = element_with_class(&html, "g3-select");
     assert!(trigger.contains("aria-haspopup=\"listbox\""));
@@ -168,7 +171,7 @@ fn stepper_and_range_expose_their_values() {
 fn searchbar_is_a_search_landmark() {
     fn app() -> Element {
         rsx! {
-            Searchbar {}
+            Searchbar { end: rsx! { button { "Filter" } } }
         }
     }
     let html = render(app);
@@ -176,6 +179,8 @@ fn searchbar_is_a_search_landmark() {
     assert!(html.contains("type=\"search\""));
     assert!(html.contains("aria-label=\"Search\""));
     assert!(!html.contains(">Cancel</button>"));
+    assert!(html.contains("g3-searchbar-end"));
+    assert!(html.contains(">Filter</button>"));
 }
 
 #[test]

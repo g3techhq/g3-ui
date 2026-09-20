@@ -7,6 +7,16 @@ use dioxus_icons::lucide::GripVertical;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+/// Which edge of a row holds a [`ReorderHandle`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ReorderHandlePosition {
+    /// Leading edge.
+    #[default]
+    Start,
+    /// Trailing edge, matching Ionic's default.
+    End,
+}
+
 /// A drag in progress: which row, where it started, and where it would land.
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct Drag {
@@ -209,15 +219,20 @@ pub fn ReorderHandle(
     /// Accessible name, naming the row, such as "Move Dune". Defaults to
     /// [`Strings::reorder`](crate::Strings::reorder).
     label: Option<String>,
+    /// Edge spacing for the handle. Place the handle in the matching `Item`
+    /// slot. Defaults to [`ReorderHandlePosition::Start`] for compatibility
+    /// with the original handle API.
+    position: Option<ReorderHandlePosition>,
     /// Extra classes for the handle.
     class: Option<String>,
 ) -> Element {
     let context = use_live_context::<ReorderContext>();
-    let ReorderPosition(position) = use_context::<ReorderPosition>();
-    let index = position();
+    let ReorderPosition(row_position) = use_context::<ReorderPosition>();
+    let index = row_position();
     let mut announcement = context.announcement;
     let label = label.unwrap_or_else(|| use_strings().reorder);
     let disabled = (context.disabled)();
+    let position = position.unwrap_or_default();
     let rows = context.rows;
     let mut drag = context.drag;
     let mut middles = context.middles;
@@ -291,6 +306,10 @@ pub fn ReorderHandle(
         button {
             r#type: "button",
             class: merge_classes("g3-reorder-handle", class.as_deref()),
+            "data-position": match position {
+                ReorderHandlePosition::Start => "start",
+                ReorderHandlePosition::End => "end",
+            },
             aria_label: label.clone(),
             aria_disabled: disabled.then_some("true"),
             onpointerdown: start,
@@ -314,8 +333,15 @@ fn ReorderPlaygroundDemo() -> Element {
             "Closest to the pin",
         ]
     });
+    let position = use_signal(|| ReorderHandlePosition::End);
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
+            controls: rsx! {
+                crate::SegmentGroup { value: position, aria_label: "Handle edge",
+                    crate::SegmentButton { value: ReorderHandlePosition::Start, "Start" }
+                    crate::SegmentButton { value: ReorderHandlePosition::End, "End" }
+                }
+            },
             ReorderList {
                 onreorder: move |(from, to): (usize, usize)| {
                     rows.with_mut(|rows| {
@@ -329,7 +355,12 @@ fn ReorderPlaygroundDemo() -> Element {
                             crate::Item {
                                 label: row,
                                 description: format!("Position {}", index + 1),
-                                start: rsx! { ReorderHandle { label: format!("Move {row}") } },
+                                start: (position() == ReorderHandlePosition::Start).then(|| rsx! {
+                                    ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::Start }
+                                }),
+                                end: (position() == ReorderHandlePosition::End).then(|| rsx! {
+                                    ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::End }
+                                }),
                             }
                         }
                     }
