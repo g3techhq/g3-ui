@@ -184,6 +184,7 @@ fn CardPlaygroundDemo() -> Element {
     let variant = use_signal(|| CardVariant::Raised);
     let mut selected = use_signal(|| false);
     let interactive = use_signal(|| true);
+    let leading = use_signal(|| true);
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
@@ -195,6 +196,7 @@ fn CardPlaygroundDemo() -> Element {
                     crate::SegmentButton { value: CardVariant::Filled, "Filled" }
                 }
                 crate::Checkbox { checked: interactive, label: "Selectable" }
+                crate::Checkbox { checked: leading, label: "Leading avatar" }
             },
             Card {
                 title: title(),
@@ -202,6 +204,7 @@ fn CardPlaygroundDemo() -> Element {
                 variant: variant(),
                 selected: selected(),
                 onclick: interactive().then(|| EventHandler::new(move |_| selected.toggle())),
+                start: leading().then(|| rsx! { crate::Avatar { name: "Alex Morgan" } }),
                 end: rsx! {
                     crate::InfoButton {
                         sheet_title: "Four-ball",

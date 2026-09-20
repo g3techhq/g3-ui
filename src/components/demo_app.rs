@@ -195,6 +195,7 @@ fn TodayScreen(when: Signal<usize>) -> Element {
                     Card {
                         title: "Saturday four-ball",
                         subtitle: "Pebble Creek · hole 7",
+                        start: rsx! { Flag { size: 22 } },
                         end: rsx! { Badge { color: Color::Success, "-2" } },
                         onclick: move |_| {
                             spawn(async move {
@@ -215,15 +216,46 @@ fn TodayScreen(when: Signal<usize>) -> Element {
                         },
                         Progress { value: 7.0, max: 18.0, label: "Holes played", value_text: "7 of 18" }
                     }
-                    List { variant: ListVariant::Raised,
-                        ListHeader { "Leaderboard" }
-                        for (name, score) in [("Alex Morgan", "-3"), ("Grace Park", "E"), ("Sam Ortiz", "+1")] {
-                            Item {
-                                key: "{name}",
-                                label: name,
-                                start: rsx! { Avatar { name } },
-                                metadata: score,
+                    // A scorecard is rows of data, so it is a table. The
+                    // names stay in view while the holes scroll past.
+                    Table { caption: "Leaderboard", sticky_first_column: true,
+                        thead {
+                            tr {
+                                th { scope: "col", "Player" }
+                                for hole in 1..=7 {
+                                    th { key: "{hole}", scope: "col", "{hole}" }
+                                }
+                                th { scope: "col", "Total" }
                             }
+                        }
+                        tbody {
+                            tr {
+                                th { scope: "row", "Par" }
+                                for par in PARS {
+                                    td { "data-muted": "true", "{par}" }
+                                }
+                                td { "data-muted": "true", "28" }
+                            }
+                            for (name, strokes, total) in LEADERBOARD {
+                                tr { key: "{name}",
+                                    th { scope: "row", "{name}" }
+                                    for (hole, score) in strokes.iter().enumerate() {
+                                        td {
+                                            key: "{hole}",
+                                            "data-color": score_color(*score, PARS[hole]),
+                                            "{score}"
+                                        }
+                                    }
+                                    td { "{total}" }
+                                }
+                            }
+                        }
+                    }
+                    // A sideways strip: more courses than fit across, each
+                    // with its rating shown rather than asked for.
+                    Shelf { title: "Courses near you", gap: Space::Md,
+                        for (course, rating, reviews) in NEARBY {
+                            CourseCard { key: "{course}", course, rating, reviews }
                         }
                     }
                 }
@@ -248,6 +280,46 @@ fn TodayScreen(when: Signal<usize>) -> Element {
                 }
             }
         }
+    }
+}
+
+/// Par for the first seven holes, which the live round has reached.
+const PARS: [u8; 7] = [4, 5, 3, 4, 4, 3, 5];
+
+/// Each player's strokes on those holes, and their score against par.
+const LEADERBOARD: [(&str, [u8; 7], &str); 3] = [
+    ("Alex Morgan", [4, 4, 3, 3, 4, 3, 4], "-3"),
+    ("Grace Park", [4, 5, 3, 4, 4, 3, 5], "E"),
+    ("Sam Ortiz", [5, 5, 3, 4, 4, 3, 5], "+1"),
+];
+
+/// Nearby courses, with their average rating out of five.
+const NEARBY: [(&str, f64, u32); 4] = [
+    ("Pebble Creek", 4.5, 212),
+    ("Oak Hollow", 3.5, 87),
+    ("Mill Ridge", 4.0, 140),
+    ("Cedar Point", 5.0, 31),
+];
+
+/// One course in the nearby strip. Its own component, so its rating has a
+/// signal of its own rather than one made on every render.
+#[component]
+fn CourseCard(course: &'static str, rating: f64, reviews: u32) -> Element {
+    let rating = use_signal(|| rating);
+    rsx! {
+        Card { class: "w-44", title: course, subtitle: "{reviews} reviews",
+            Rating { aria_label: "Average for {course}", value: rating, readonly: true, size: 16 }
+        }
+    }
+}
+
+/// A birdie or better is good news, a bogey or worse is not. The cell says
+/// the score as well, since color alone does not reach everyone.
+fn score_color(strokes: u8, par: u8) -> Option<&'static str> {
+    match strokes.cmp(&par) {
+        std::cmp::Ordering::Less => Some(Color::Success.as_str()),
+        std::cmp::Ordering::Equal => None,
+        std::cmp::Ordering::Greater => Some(Color::Warning.as_str()),
     }
 }
 
@@ -417,7 +489,7 @@ fn ActivityScreen() -> Element {
                                     color: if swipes == Swipes::DeleteOrRead { Color::Accent } else { Color::Danger },
                                     onclick: move |_| {
                                         if swipes == Swipes::DeleteOrRead {
-                                            toaster.show("Marked read");
+                                            toaster.show(ToastOptions::new("Marked read").replace());
                                         } else {
                                             take_row(label);
                                         }
@@ -443,7 +515,9 @@ fn ActivityScreen() -> Element {
                                 toaster.success("Archived");
                             }
                             SwipeSide::End => {
-                                toaster.show("Marked read");
+                                // Read one, then another: each toast takes the
+                                // last one's place rather than queueing.
+                                toaster.show(ToastOptions::new("Marked read").replace());
                             }
                         },
                         on_dismiss: move |_| take_row(label),
@@ -454,8 +528,12 @@ fn ActivityScreen() -> Element {
                         }
                     }
                 }
-                if rows().is_empty() {
-                    Item { label: "All caught up", description: "Nothing new this week" }
+            }
+            if rows().is_empty() {
+                EmptyState {
+                    title: "All caught up",
+                    icon: rsx! { Bell { size: 40 } },
+                    "Nothing new this week."
                 }
             }
             if !gone().is_empty() {
@@ -485,6 +563,7 @@ fn ProfileScreen() -> Element {
     let alerts = use_alert();
     let toaster = use_toast();
     let notifications = use_signal(|| true);
+    let mut favorites = use_signal(|| vec!["Pebble Creek", "Oak Hollow", "Mill Ridge"]);
     rsx! {
         Content {
             Stack { gap: Space::Lg,
@@ -504,6 +583,36 @@ fn ProfileScreen() -> Element {
                     Item { label: "Handicap index", metadata: "12.4", detail: ItemDetail::Show, onclick: |_| {} }
                     Item { label: "Version", metadata: "0.4.0" }
                 }
+                // Dragged, or moved with the arrow keys from the handle.
+                ReorderList {
+                    onreorder: move |(from, to): (usize, usize)| {
+                        favorites.with_mut(|courses| {
+                            let course = courses.remove(from);
+                            courses.insert(to, course);
+                        });
+                    },
+                    List { variant: ListVariant::Raised,
+                        ListHeader { "Favorite courses" }
+                        for (index, course) in favorites().into_iter().enumerate() {
+                            ReorderItem { key: "{course}", index,
+                                Item {
+                                    label: course,
+                                    description: (index == 0).then(|| "Shown first when you book".to_string()),
+                                    end: rsx! { ReorderHandle { label: format!("Move {course}") } },
+                                }
+                            }
+                        }
+                    }
+                }
+                List { variant: ListVariant::Raised,
+                    // Text the reader needs in full wraps rather than being cut.
+                    Item {
+                        label: "Handicap",
+                        description: "Your index is the average of your best eight differentials from your last twenty rounds, updated the day after each round.",
+                        wrap: true,
+                    }
+                }
+                Divider { label: "Account", spaced: true }
                 Button {
                     fill: ButtonFill::Outline,
                     color: Color::Danger,

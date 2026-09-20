@@ -400,6 +400,11 @@ fn ListPlaygroundDemo() -> Element {
                     Item { label: "Profile", description: "Name and handicap", onclick: |_| {} }
                     Item { label: "Notifications", checked: notify(), onclick: move |_| notify.toggle() }
                     Item { label: "Version", metadata: "0.4.0" }
+                    Item {
+                        label: "Handicap",
+                        description: "Wraps rather than cutting short: the average of your best eight differentials from your last twenty rounds.",
+                        wrap: true,
+                    }
                 }
                 List { variant: variant(), lines: lines(),
                     ListHeader { "Rounds — swipe either way" }

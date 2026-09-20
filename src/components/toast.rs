@@ -249,6 +249,21 @@ fn ToastPlaygroundDemo() -> Element {
                             },
                             "Queue a toast with use_toast"
                         }
+                        // For feedback on a repeatable action: press it a few
+                        // times and each toast takes the last one's place.
+                        crate::Button {
+                            fill: crate::ButtonFill::Outline,
+                            onclick: move |_| {
+                                toaster
+                                    .show(
+                                        crate::ToastOptions::new("Replaced the one showing")
+                                            .color(color())
+                                            .position(position())
+                                            .replace(),
+                                    );
+                            },
+                            "Replace the toast showing"
+                        }
                     }
                 }
                 Toast {
