@@ -146,3 +146,26 @@ fn overlays_use_the_z_index_scale() {
 fn motion_respects_reduced_motion() {
     assert!(STYLESHEET.contains("@media (prefers-reduced-motion: reduce)"));
 }
+
+#[test]
+fn overlays_enter_on_a_keyframe_rather_than_a_transition() {
+    // An overlay is rendered only once its top-layer wrapper opens, and by
+    // then it already carries its open state: a transition has nothing left
+    // to animate, so the panel appears at rest. Every opening surface needs a
+    // keyframe entrance, which starts when the panel first renders.
+    for animation in [
+        "g3-popover-enter",
+        "g3-popover-sheet-enter",
+        "g3-sheet-enter-bottom",
+        "g3-sheet-enter-side",
+    ] {
+        assert!(
+            STYLESHEET.contains(&format!("@keyframes {animation}")),
+            "stylesheet should define @keyframes {animation}"
+        );
+        assert!(
+            STYLESHEET.contains(&format!("animation: {animation}")),
+            "stylesheet should run {animation} on an opening overlay"
+        );
+    }
+}

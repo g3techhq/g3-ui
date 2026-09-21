@@ -5129,6 +5129,19 @@ button.g3-chip:focus-visible {
     transform: scale(1);
     visibility: visible;
     transition-delay: 0s;
+    animation: g3-popover-enter var(--g3-transition-fast) var(--g3-transition-md) backwards;
+}
+
+/* The top layer renders a panel only once its wrapper opens, which is a frame
+   after the panel is already in its open state: a transition has nothing left
+   to animate by then, so an opening menu appeared at full size. The entrance
+   is a keyframe, which starts when the panel first renders, while the exit
+   stays a transition, which runs while the wrapper is still open. */
+@keyframes g3-popover-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.96);
+    }
 }
 
 .g3-popover[data-state="closed"] {
@@ -5173,6 +5186,18 @@ button.g3-chip:focus-visible {
 
 .g3-popover-sheet[data-state="open"] {
     transition-delay: 0s;
+}
+
+/* A compact sheet rises rather than growing from its trigger. The desktop
+   layout below keeps the menu entrance above. */
+.g3-popover-sheet[data-state="open"]:not([data-g3-sheet-layout="popover"]) {
+    animation: g3-popover-sheet-enter var(--g3-sheet-duration) var(--g3-sheet-easing) backwards;
+}
+
+@keyframes g3-popover-sheet-enter {
+    from {
+        transform: translate3d(0, 100%, 0);
+    }
 }
 
 .g3-popover-sheet[data-placement] {
