@@ -4048,18 +4048,18 @@ button.g3-chip:focus-visible {
 }
 
 .g3-swipe-actions-start .g3-swipe-action:first-child {
-    justify-content: flex-start;
+    align-items: flex-start;
     padding-inline-start: 1.25rem;
 }
 
 .g3-swipe-actions-end .g3-swipe-action:first-child {
-    justify-content: flex-end;
+    align-items: flex-end;
     padding-inline-end: 1.25rem;
 }
 
 .g3-swipe-item[data-start-behavior="reveal"] .g3-swipe-actions-start .g3-swipe-action,
 .g3-swipe-item[data-end-behavior="reveal"] .g3-swipe-actions-end .g3-swipe-action {
-    justify-content: center;
+    align-items: center;
     padding-inline: 1rem;
 }
 
@@ -4150,8 +4150,10 @@ button.g3-chip:focus-visible {
 
 .g3-swipe-action {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.2rem;
     min-width: 88px;
     margin: 0;
     border: 0;
@@ -4159,7 +4161,26 @@ button.g3-chip:focus-visible {
     color: var(--g3-color-text);
     font: inherit;
     font-weight: 700;
+    line-height: 1.15;
     opacity: clamp(0.72, calc(0.72 + (var(--g3-swipe-progress, 0) * 0.28)), 1);
+}
+
+/* The width a swipe exposes is about a thumb's travel, and an icon beside a
+   label needs more than that: the label lost its tail first, then the icon
+   went with it. Stacked, the two share one narrow column and both stay whole.
+   The label takes two lines at most, so a long one truncates rather than
+   growing the action past the height of the row it covers. */
+.g3-swipe-action > :not(svg) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    min-width: 0;
+    max-width: 5.5rem;
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .g3-swipe-action-neutral {
