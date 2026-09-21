@@ -373,6 +373,7 @@ fn ReorderPlaygroundDemo() -> Element {
 crate::g3_playground! {
     name: "Reorder",
     description: "Rows moved by dragging a handle, or with the arrow keys.",
+    components: ["ReorderList", "ReorderItem", "ReorderHandle"],
     demo: ReorderPlaygroundDemo,
     source: "src/components/reorder.rs",
 }

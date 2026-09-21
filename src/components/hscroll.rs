@@ -41,8 +41,40 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     let startX = 0;
     let startLeft = 0;
     let snapTimer;
+    let settleFrame = 0;
+    const stopSettling = () => {
+        if (settleFrame) cancelAnimationFrame(settleFrame);
+        settleFrame = 0;
+    };
+    const settleTo = (target) => {
+        if (calm.matches) {
+            strip.scrollLeft = target;
+            delete strip.dataset.dragging;
+            return;
+        }
+        stopSettling();
+        const start = strip.scrollLeft;
+        const distance = target - start;
+        const started = performance.now();
+        const duration = 360;
+        const step = (now) => {
+            const progress = Math.min(1, (now - started) / duration);
+            // Ease out: it keeps the release connected to the pointer, then
+            // settles gently instead of snapping to the closest card.
+            const eased = 1 - Math.pow(1 - progress, 3);
+            strip.scrollLeft = start + distance * eased;
+            if (progress < 1) {
+                settleFrame = requestAnimationFrame(step);
+            } else {
+                settleFrame = 0;
+                delete strip.dataset.dragging;
+            }
+        };
+        settleFrame = requestAnimationFrame(step);
+    };
     strip.addEventListener("pointerdown", (event) => {
         if (event.pointerType !== "mouse" || event.button !== 0) return;
+        stopSettling();
         clearTimeout(snapTimer);
         down = true;
         dragged = false;
@@ -55,6 +87,7 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         if (!dragged && Math.abs(dx) < 5) return;
         dragged = true;
         strip.dataset.dragging = "true";
+        event.preventDefault();
         strip.scrollLeft = startLeft - dx;
     });
     window.addEventListener("pointerup", () => {
@@ -70,17 +103,7 @@ if (strip && strip.dataset.g3Scroll !== "true") {
             return nearest === null || Math.abs(left - strip.scrollLeft) < Math.abs(nearest - strip.scrollLeft)
                 ? left : nearest;
         }, null) ?? strip.scrollLeft;
-        strip.scrollTo({ left: target, behavior: calm.matches ? "auto" : "smooth" });
-        if (calm.matches) {
-            delete strip.dataset.dragging;
-        } else {
-            const settled = () => {
-                clearTimeout(snapTimer);
-                delete strip.dataset.dragging;
-            };
-            strip.addEventListener("scrollend", settled, { once: true });
-            snapTimer = setTimeout(settled, 500);
-        }
+        settleTo(target);
     });
     // A drag must not also press whatever it ended on.
     strip.addEventListener("click", (event) => {
@@ -91,13 +114,14 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         }
     }, true);
     strip.addEventListener("wheel", (event) => {
-        // A trackpad's own sideways gesture already scrolls the strip.
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        const raw = Math.abs(event.deltaY) > Math.abs(event.deltaX)
+            ? event.deltaY
+            : event.deltaX;
         const max = strip.scrollWidth - strip.clientWidth;
         if (max <= 0) return;
-        const delta = event.deltaMode === 1 ? event.deltaY * LINE
-            : event.deltaMode === 2 ? event.deltaY * strip.clientWidth * 0.9
-            : event.deltaY;
+        const delta = event.deltaMode === 1 ? raw * LINE
+            : event.deltaMode === 2 ? raw * strip.clientWidth * 0.9
+            : raw;
         // Against a stop, the page keeps the scroll.
         if ((delta < 0 && strip.scrollLeft <= 0) || (delta > 0 && strip.scrollLeft >= max - 1)) return;
         event.preventDefault();
@@ -146,7 +170,7 @@ mod tests {
     #[test]
     fn shelf_drag_settles_smoothly_clear_of_its_fade() {
         assert!(SCRIPT.contains("--g3-shelf-snap-inset"));
-        assert!(SCRIPT.contains("behavior: calm.matches ? \"auto\" : \"smooth\""));
-        assert!(SCRIPT.contains("scrollend"));
+        assert!(SCRIPT.contains("const settleTo"));
+        assert!(SCRIPT.contains("requestAnimationFrame"));
     }
 }

@@ -1796,7 +1796,7 @@ button.g3-chip:focus-visible {
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
 :is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
-    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop, .g3-modal-overlay[data-state="open"]) {
+    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-modal-overlay[data-state="open"]) {
     overflow: visible;
 }
 
@@ -1812,11 +1812,6 @@ button.g3-chip:focus-visible {
 
 .g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
     z-index: var(--g3-z-sheet-backdrop);
-}
-
-.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-backdrop),
-.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-backdrop) .g3-table-scroll {
-    overflow: visible;
 }
 
 .g3-card-ios.g3-card-interactive:has(> .g3-card-header .g3-card-action:active, > .g3-card-action:active) {
@@ -5237,6 +5232,17 @@ button.g3-chip:focus-visible {
 }
 
 @container g3-app-shell (min-width: 48rem) {
+    /* A menu opened from a clipped pane escapes in viewport coordinates. This
+       keeps a table's viewport bound to its card and leaves the page's current
+       scroll position untouched while a setting menu is open. */
+    .g3-popover[data-g3-escape-clipping] {
+        position: fixed;
+        top: var(--g3-popover-fixed-top, 0px);
+        left: var(--g3-popover-fixed-left, 0px);
+        right: auto;
+        bottom: auto;
+    }
+
     .g3-popover-sheet {
         position: absolute;
         bottom: auto;
