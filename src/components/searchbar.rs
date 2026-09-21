@@ -94,6 +94,9 @@ fn SearchbarPlaygroundDemo() -> Element {
     let query = use_signal(String::new);
     let mut committed = use_signal(String::new);
     let show_end = use_signal(|| true);
+    let mut filters_open = use_signal(|| false);
+    let nearby = use_signal(|| true);
+    let available = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
@@ -108,12 +111,24 @@ fn SearchbarPlaygroundDemo() -> Element {
                             fill: crate::ButtonFill::Clear,
                             size: crate::ButtonSize::Sm,
                             aria_label: "Filters",
+                            onclick: move |_| filters_open.set(true),
                             SlidersHorizontal { size: 18 }
                         }
                     }),
                 }
                 crate::Text { tone: crate::TextTone::Secondary,
                     if committed().is_empty() { "Type to filter." } else { "Filtering by \"{committed}\"" }
+                }
+            }
+            crate::BottomSheet { open: filters_open, title: "Search filters",
+                crate::Stack {
+                    crate::Toggle { checked: nearby, label: "Nearby results" }
+                    crate::Toggle { checked: available, label: "Available now" }
+                    crate::Button {
+                        expand: crate::ButtonExpand::Block,
+                        onclick: move |_| filters_open.set(false),
+                        "Show results"
+                    }
                 }
             }
         }

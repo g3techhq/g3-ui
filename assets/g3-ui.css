@@ -1796,13 +1796,18 @@ button.g3-chip:focus-visible {
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
 :is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
-    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
+    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-modal-overlay[data-state="open"]) {
     overflow: visible;
 }
 
 .route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]),
 .route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
     z-index: var(--g3-z-sheet-backdrop);
+}
+
+.route-transition-page:has(.g3-modal-overlay[data-state="open"]),
+.route-transition-segment:has(.g3-modal-overlay[data-state="open"]) {
+    z-index: var(--g3-z-modal);
 }
 
 .g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
@@ -3519,7 +3524,17 @@ button.g3-chip:focus-visible {
 
 /* A fixed sheet nested in a sticky cell needs to participate in the app's
    overlay stack, not the sticky column's local stacking context. */
-.g3-table:has(.g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"])[data-sticky-first="true"] tr > :first-child {
+.g3-table:has(.g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"])[data-sticky-first="true"]
+    tr > :first-child:not(:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"])) {
+    z-index: auto;
+}
+
+/* The fixed backdrop can span several tables on one page. Sticky cells in a
+   later table must also yield to it, even though that table does not contain
+   the sheet itself. */
+.g3-app-shell:has(.g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"])
+    .g3-table[data-sticky-first="true"]
+    tr > :first-child:not(:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"])) {
     z-index: auto;
 }
 

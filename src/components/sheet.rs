@@ -168,18 +168,15 @@ if (dialog && handle && handle.dataset.g3Bound !== "true") {
                 nearest = index;
             }
         });
-        // Synchronize the CSS-sized surface before releasing the temporary
-        // pixel height. Otherwise the Rust update can land a frame later,
-        // leaving the visible sheet and its outside-click hit area briefly at
-        // different detents.
+        // Select the CSS-sized destination while retaining the temporary pixel
+        // height from the drag. Re-enable transitions, flush that starting
+        // geometry, and only then release the pixel height so the sheet settles
+        // smoothly while its visible and hit-test edges stay together.
         dialog.style.setProperty("--g3-sheet-detent", detents[nearest]);
-        dialog.style.removeProperty("height");
         dialog.style.setProperty("--g3-sheet-drag-y", "0px");
-        // Flush the new geometry before the backdrop can receive another
-        // pointer. This keeps the sheet's visual edge and hit-test edge in
-        // lockstep after moving from a larger detent to a smaller one.
-        dialog.getBoundingClientRect();
         delete dialog.dataset.dragging;
+        dialog.getBoundingClientRect();
+        dialog.style.removeProperty("height");
         dioxus.send(nearest);
     };
     handle.addEventListener("pointerup", end);
