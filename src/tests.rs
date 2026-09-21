@@ -77,6 +77,15 @@ pub(crate) fn element_with_class<'a>(html: &'a str, class: &str) -> &'a str {
     panic!("no element with class {class} in:\n{html}");
 }
 
+/// Every id the markup names, in the order it names them.
+pub(crate) fn ids_in(html: &str) -> Vec<String> {
+    html.split(" id=\"")
+        .skip(1)
+        .filter_map(|chunk| chunk.split('"').next())
+        .map(str::to_string)
+        .collect()
+}
+
 /// The opening tag of the element with `id`.
 pub(crate) fn element_with_id<'a>(html: &'a str, id: &str) -> &'a str {
     let needle = format!(" id=\"{id}\"");

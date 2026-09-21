@@ -1,6 +1,8 @@
 //! Hooks shared by the components: optional controlled state and element ids.
+use dioxus::core::provide_root_context;
 use dioxus::prelude::*;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::cell::Cell;
+use std::rc::Rc;
 
 /// A component's primary value, either owned by the caller or kept locally.
 ///
@@ -30,12 +32,32 @@ pub(crate) fn use_live_context<C: Copy + 'static>() -> C {
     use_context::<Signal<C>>()()
 }
 
-static NEXT_ID: AtomicU64 = AtomicU64::new(1);
+/// Counts out the ids below, once per document. It lives in the root scope
+/// rather than in a static, so each render of a page starts from the same
+/// number.
+#[derive(Clone)]
+struct ElementIds(Rc<Cell<u64>>);
 
 /// An element id that is unique in the document and stable for the life of
 /// the component. `explicit` wins when it is non-empty.
+///
+/// A server renders the page and the client that hydrates it renders the
+/// same tree again. The markup keeps the ids of the first render, so the
+/// second one has to arrive at the same names or every script the client
+/// runs looks up an element that is not there: a shelf never picks up its
+/// drag handling, an infinite scroll never arms, a refresher never binds,
+/// until a later client-side navigation rebuilds the page. A counter held by
+/// the document counts the same way in both renders, where a process-wide
+/// one carries over from whatever the server rendered before, and a scope id
+/// shifts by any scope that exists on only one side.
 pub(crate) fn use_element_id(prefix: &'static str, explicit: Option<String>) -> String {
-    let generated = use_hook(|| format!("g3-{prefix}-{}", NEXT_ID.fetch_add(1, Ordering::Relaxed)));
+    let generated = use_hook(|| {
+        let ids = try_consume_context::<ElementIds>()
+            .unwrap_or_else(|| provide_root_context(ElementIds(Rc::new(Cell::new(1)))));
+        let number = ids.0.get();
+        ids.0.set(number + 1);
+        format!("g3-{prefix}-{number}")
+    });
     explicit
         .filter(|id| !id.trim().is_empty())
         .unwrap_or(generated)

@@ -175,6 +175,25 @@ mod shell {
     }
 
     #[test]
+    fn ids_survive_the_render_that_hydrates_a_server_rendered_page() {
+        fn app() -> Element {
+            rsx! {
+                Shelf { title: "Rounds", div { "One" } }
+                Refresher { refreshing: false, on_refresh: |_| {} }
+                InfiniteScroll { loading: false, complete: false, on_load: |_| {} }
+            }
+        }
+        // Hydration keeps the markup the server sent, so the client's render
+        // of the same tree has to name the same elements. When it does not,
+        // every script that looks its element up by id finds nothing: a shelf
+        // stops dragging and an infinite scroll never arms.
+        let server = crate::tests::ids_in(&render(app));
+        let client = crate::tests::ids_in(&render(app));
+        assert!(!server.is_empty());
+        assert_eq!(server, client);
+    }
+
+    #[test]
     fn infinite_scroll_exposes_loading_state_to_its_observer() {
         fn app() -> Element {
             rsx! {
