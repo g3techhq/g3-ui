@@ -175,6 +175,26 @@ mod shell {
     }
 
     #[test]
+    fn the_shell_size_starts_compact_and_is_readable_anywhere() {
+        fn app() -> Element {
+            let outside = use_shell_size();
+            rsx! {
+                AppWrapper {
+                    Card { title: "Inside", "{use_shell_size().is_wide()}" }
+                }
+                Card { title: "Outside", "{outside.is_compact()}" }
+            }
+        }
+        // Nothing has been measured in a server render, and a shell may not
+        // exist at all, so both answer with the narrow layout rather than
+        // guessing at a width.
+        let html = render(app);
+        assert!(html.contains(">false<"));
+        assert!(html.contains(">true<"));
+        assert!(ShellSize::default().is_compact());
+    }
+
+    #[test]
     fn ids_survive_the_render_that_hydrates_a_server_rendered_page() {
         fn app() -> Element {
             rsx! {

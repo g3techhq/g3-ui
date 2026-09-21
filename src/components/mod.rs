@@ -66,7 +66,7 @@ mod wheel;
 pub use accordion::{AccordionGroup, AccordionItem};
 pub use action_sheet::{ActionSheet, ActionSheetButton};
 pub use alert::{Alert, AlertButton, AlertButtonRole, AlertInput, AlertResult};
-pub use app_wrapper::AppWrapper;
+pub use app_wrapper::{AppWrapper, ShellSize, use_shell_size};
 pub use avatar::{Avatar, AvatarSize};
 pub use back_button::BackButton;
 pub use badge::Badge;

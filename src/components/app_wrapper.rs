@@ -1,11 +1,89 @@
 //! The root of a g3-ui app.
+use super::overlay::js_string;
 use super::overlay_host::{OverlayHost, use_provide_overlay_queues};
 #[cfg(not(target_arch = "wasm32"))]
 use crate::UI_CSS;
+use crate::state::use_element_id;
 use crate::theme::{ComponentMode, Strings, Theme, classes, merge_classes, use_provide_ambient};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
 use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitionStyles};
+
+/// How wide the app shell is, in the two sizes the stylesheet lays out for.
+///
+/// The same `48rem` line the CSS uses, reported to Rust so a component can
+/// branch on it where a container query cannot reach: choosing between two
+/// components, picking how many items to ask the server for, deciding whether
+/// a control is worth showing at all. Layout alone is better left to CSS,
+/// which needs no measurement and cannot flicker.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum ShellSize {
+    /// Narrower than `48rem`: a phone, or a window cut down to one.
+    #[default]
+    Compact,
+    /// `48rem` and wider.
+    Wide,
+}
+
+impl ShellSize {
+    /// Whether this is [`ShellSize::Wide`].
+    pub fn is_wide(self) -> bool {
+        matches!(self, Self::Wide)
+    }
+
+    /// Whether this is [`ShellSize::Compact`].
+    pub fn is_compact(self) -> bool {
+        matches!(self, Self::Compact)
+    }
+}
+
+/// The width class of the enclosing [`AppWrapper`]'s shell.
+///
+/// Reads [`ShellSize::Compact`] until the shell has been measured, and
+/// anywhere outside an `AppWrapper`, so a server render and the first client
+/// render agree on the narrower layout.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// let size = use_shell_size();
+/// rsx! {
+///     if size.is_wide() {
+///         Card { title: "Rounds", "Side by side." }
+///     } else {
+///         Card { title: "Rounds", "One column." }
+///     }
+/// }
+/// # }
+/// ```
+pub fn use_shell_size() -> ShellSize {
+    use_hook(try_consume_context::<Signal<ShellSize>>)
+        .map(|size| size())
+        .unwrap_or_default()
+}
+
+/// Watches the shell and reports which side of `48rem` it is on.
+///
+/// `rem` is read from the document rather than assumed to be 16px, so this
+/// agrees with the container query even on a page that has resized its root.
+const SHELL_SIZE_SCRIPT: &str = r#"
+const shell = document.getElementById(__ID__);
+if (shell && !shell.g3SizeObserver) {
+    let last = null;
+    const report = () => {
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const wide = shell.getBoundingClientRect().width >= 48 * rem;
+        if (wide !== last) {
+            last = wide;
+            dioxus.send(wide);
+        }
+    };
+    shell.g3SizeObserver = new ResizeObserver(report);
+    shell.g3SizeObserver.observe(shell);
+    report();
+}
+"#;
 
 /// The root of a g3-ui app: loads the stylesheet, applies the mode, theme, and
 /// strings, and lays out a full-height, responsive app shell.
@@ -59,6 +137,25 @@ pub fn AppWrapper(
 ) -> Element {
     let (mode, theme) = use_provide_ambient(mode, theme, strings);
     let queues = use_provide_overlay_queues();
+    let shell_id = use_element_id("app", None);
+    let mut shell_size = use_signal(ShellSize::default);
+    use_context_provider(|| shell_size);
+    {
+        let shell_id = shell_id.clone();
+        use_effect(move || {
+            let script = SHELL_SIZE_SCRIPT.replace("__ID__", &js_string(&shell_id));
+            spawn(async move {
+                let mut eval = document::eval(&script);
+                while let Ok(wide) = eval.recv::<bool>().await {
+                    shell_size.set(if wide {
+                        ShellSize::Wide
+                    } else {
+                        ShellSize::Compact
+                    });
+                }
+            });
+        });
+    }
     let layout = layout.unwrap_or(true);
     let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);
     #[cfg(feature = "transitions")]
@@ -84,6 +181,7 @@ pub fn AppWrapper(
     ]);
     let shell = rsx! {
         div {
+            id: shell_id,
             class: merge_classes(shell_cls, class.as_deref()),
             style: theme.to_style_attr(),
             "data-g3-mode": mode.as_str(),
