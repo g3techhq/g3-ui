@@ -111,13 +111,22 @@ pub(crate) fn PopoverFrame(
     });
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
     let mut ever_opened = use_signal(|| false);
+    let mut backdrop_present = use_signal(|| open());
     {
         let id = id.clone();
         use_effect(move || {
             let is_open = open();
             if is_open {
                 ever_opened.set(true);
+                backdrop_present.set(true);
                 document::eval(&FIT_SCRIPT.replace("__ID__", &js_string(&id)));
+            } else if backdrop_present() {
+                spawn(async move {
+                    dioxus_sdk_time::sleep(std::time::Duration::from_millis(300)).await;
+                    if !open() {
+                        backdrop_present.set(false);
+                    }
+                });
             }
             let popup = match role {
                 "menu" | "listbox" => role,
@@ -146,9 +155,10 @@ pub(crate) fn PopoverFrame(
     rsx! {
         span { id: anchor_id, class: "g3-popover-anchor",
             {trigger}
-            if is_open {
+            if is_open || backdrop_present() {
                 div {
                     class: "g3-popover-backdrop",
+                    "data-state": state,
                     aria_hidden: "true",
                     onclick: move |_| dismiss.call(()),
                 }

@@ -94,6 +94,7 @@ pub(crate) enum FrameKind {
 }
 
 const DISMISS_DISTANCE: f64 = 96.0;
+const BACKDROP_EXIT_DELAY: std::time::Duration = std::time::Duration::from_millis(300);
 
 /// Pointer and keyboard behaviour of a bottom sheet's handle. Messages back to
 /// Rust: `-1` dismiss, `-2` cycle detents, `n >= 0` settle on detent `n`.
@@ -228,6 +229,21 @@ pub(crate) fn SheetFrame(
     let modal = has_backdrop && !below_backdrop;
     let has_backdrop_signal = use_synced_signal(modal);
     let is_open = open();
+    // Keep the initially rendered backdrop in the markup even below its
+    // activation detent; it is inert there and retires after the fade window.
+    let mut backdrop_present = use_signal(|| is_open);
+    use_effect(move || {
+        if open() && has_backdrop_signal() {
+            backdrop_present.set(true);
+        } else if backdrop_present() {
+            spawn(async move {
+                dioxus_sdk_time::sleep(BACKDROP_EXIT_DELAY).await;
+                if !open() || !has_backdrop_signal() {
+                    backdrop_present.set(false);
+                }
+            });
+        }
+    });
 
     let dismiss = use_callback(move |()| {
         let mut open = open;
@@ -389,7 +405,7 @@ pub(crate) fn SheetFrame(
     let labelledby = title.as_ref().map(|_| title_id.clone());
 
     rsx! {
-        if has_backdrop {
+        if has_backdrop && (modal && is_open || backdrop_present()) {
             button {
                 r#type: "button",
                 class: classes(["g3-sheet-backdrop", behavior_cls, enter_cls]),

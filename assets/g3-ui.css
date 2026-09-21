@@ -1796,12 +1796,12 @@ button.g3-chip:focus-visible {
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
 :is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
-    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-modal-overlay[data-state="open"]) {
+    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop, .g3-modal-overlay[data-state="open"]) {
     overflow: visible;
 }
 
-.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]),
-.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
+.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop),
+.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
     z-index: var(--g3-z-sheet-backdrop);
 }
 
@@ -1810,12 +1810,12 @@ button.g3-chip:focus-visible {
     z-index: var(--g3-z-modal);
 }
 
-.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"]) {
+.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
     z-index: var(--g3-z-sheet-backdrop);
 }
 
-.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"]),
-.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"]) .g3-table-scroll {
+.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-backdrop),
+.g3-table-frame:has(.g3-popover[data-state="open"], .g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-backdrop) .g3-table-scroll {
     overflow: visible;
 }
 
@@ -1934,7 +1934,8 @@ button.g3-chip:focus-visible {
     -webkit-tap-highlight-color: transparent;
     background-color: rgba(0, 0, 0, 0.5);
     cursor: pointer;
-    transition: opacity var(--g3-backdrop-duration) ease;
+    transition: opacity var(--g3-backdrop-duration) ease,
+                visibility 0s linear 0s;
 }
 
 .g3-sheet-backdrop[data-state="open"] {
@@ -1944,6 +1945,8 @@ button.g3-chip:focus-visible {
 .g3-sheet-backdrop[data-state="closed"] {
     opacity: 0;
     pointer-events: none;
+    visibility: hidden;
+    transition-delay: 0s, var(--g3-backdrop-duration);
 }
 
 .g3-sheet-header {
@@ -3524,17 +3527,17 @@ button.g3-chip:focus-visible {
 
 /* A fixed sheet nested in a sticky cell needs to participate in the app's
    overlay stack, not the sticky column's local stacking context. */
-.g3-table:has(.g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"])[data-sticky-first="true"]
-    tr > :first-child:not(:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"])) {
+.g3-table:has(.g3-sheet-backdrop, .g3-popover-backdrop)[data-sticky-first="true"]
+    tr > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
     z-index: auto;
 }
 
 /* The fixed backdrop can span several tables on one page. Sticky cells in a
    later table must also yield to it, even though that table does not contain
    the sheet itself. */
-.g3-app-shell:has(.g3-sheet[data-state="open"], .g3-popover-sheet[data-state="open"])
+.g3-app-shell:has(.g3-sheet-backdrop, .g3-popover-backdrop)
     .g3-table[data-sticky-first="true"]
-    tr > :first-child:not(:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop[data-state="open"], .g3-popover-sheet[data-state="open"])) {
+    tr > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
     z-index: auto;
 }
 
@@ -5051,6 +5054,16 @@ button.g3-chip:focus-visible {
     position: fixed;
     inset: 0;
     z-index: calc(var(--g3-z-modal) - 1);
+    opacity: 1;
+    transition: opacity var(--g3-backdrop-duration) ease,
+                visibility 0s linear 0s;
+}
+
+.g3-popover-backdrop[data-state="closed"] {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition-delay: 0s, var(--g3-backdrop-duration);
 }
 
 .g3-popover {
@@ -5131,7 +5144,7 @@ button.g3-chip:focus-visible {
     border-width: 0;
     border-radius: 16px 16px 0 0;
     transform-origin: bottom;
-    transition: opacity var(--g3-transition-fast) ease,
+    transition: opacity var(--g3-sheet-duration) ease,
                 transform var(--g3-sheet-duration) var(--g3-sheet-easing),
                 visibility 0s linear var(--g3-sheet-duration);
 }
@@ -5148,8 +5161,11 @@ button.g3-chip:focus-visible {
     transform: translate3d(0, 100%, 0);
 }
 
-.g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
+.g3-popover-anchor:has(> .g3-popover-sheet) > .g3-popover-backdrop {
     background: rgba(0, 0, 0, 0.4);
+}
+
+.g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
     animation: g3-sheet-enter-backdrop var(--g3-backdrop-duration) ease backwards;
 }
 
@@ -5230,9 +5246,9 @@ button.g3-chip:focus-visible {
         padding-bottom: 0;
         border-width: 1px;
         transform-origin: top;
-        transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
-                    transform var(--g3-transition-fast) var(--g3-transition-md),
-                    visibility 0s linear var(--g3-transition-fast);
+        transition: opacity var(--g3-backdrop-duration) var(--g3-transition-md),
+                    transform var(--g3-backdrop-duration) var(--g3-transition-md),
+                    visibility 0s linear var(--g3-backdrop-duration);
     }
 
     .g3-popover-sheet[data-placement^="bottom"] {
@@ -5265,7 +5281,7 @@ button.g3-chip:focus-visible {
         transform: scale(0.96);
     }
 
-    .g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
+    .g3-popover-anchor:has(> .g3-popover-sheet) > .g3-popover-backdrop {
         background: transparent;
     }
 }
