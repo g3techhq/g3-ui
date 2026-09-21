@@ -173,6 +173,20 @@ mod shell {
         assert!(html.contains("role=\"status\""));
         assert!(html.contains("g3-spinner-sm"));
     }
+
+    #[test]
+    fn infinite_scroll_exposes_loading_state_to_its_observer() {
+        fn app() -> Element {
+            rsx! {
+                InfiniteScroll { loading: true, complete: false, on_load: |_| {} }
+            }
+        }
+        let html = render(app);
+        let sentinel = element_with_class(&html, "g3-infinite-scroll");
+        assert!(sentinel.contains("data-loading=\"true\""));
+        assert!(sentinel.contains("data-complete=\"false\""));
+        assert!(sentinel.contains("aria-busy=\"true\""));
+    }
 }
 
 #[test]

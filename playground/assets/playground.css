@@ -516,7 +516,7 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
    from sizing the track to its max-content and spilling out of the card. */
 .playground-controls-pane {
   width: 100%;
-  margin-block-end: 3.5rem;
+  margin-block-end: 2rem;
 }
 
 .playground-controls-pane > .g3-card-body {

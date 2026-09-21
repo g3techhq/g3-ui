@@ -49,12 +49,27 @@ pub fn Avatar(
     };
     let cls = merge_classes(classes(["g3-avatar", size_cls]), class.as_deref());
     let decorative = name.is_empty();
-    match src {
-        Some(src) => rsx! {
-            span { class: cls,
-                img { src, alt: name, loading: "lazy", decoding: "async" }
+    let src = src.filter(|src| !src.trim().is_empty());
+    // Remember the URL that failed rather than a plain boolean. If a reused
+    // card later receives a different image it gets a fresh attempt, while a
+    // broken channel URL immediately falls back to useful initials instead of
+    // showing the browser's broken-image glyph and clipped alt text.
+    let mut failed_src = use_signal(|| None::<String>);
+    match src.filter(|src| failed_src().as_ref() != Some(src)) {
+        Some(src) => {
+            let failed = src.clone();
+            rsx! {
+                span { class: cls,
+                    img {
+                        src,
+                        alt: name,
+                        loading: "lazy",
+                        decoding: "async",
+                        onerror: move |_| failed_src.set(Some(failed.clone())),
+                    }
+                }
             }
-        },
+        }
         None => {
             let initials = initials.unwrap_or_else(|| initials_of(&name));
             rsx! {

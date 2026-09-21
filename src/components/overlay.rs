@@ -1,6 +1,7 @@
 //! Behaviour shared by overlays: page scroll locking and keyboard focus.
 use dioxus::prelude::*;
 use std::cell::Cell;
+use std::time::Duration;
 
 /// `text` as a JavaScript string literal, safe to splice into an `eval`
 /// script whatever it contains.
@@ -20,6 +21,42 @@ pub(crate) fn js_string(text: &str) -> String {
     }
     out.push('"');
     out
+}
+
+/// Put a rendered overlay wrapper in the browser's top layer while it is
+/// open. Unlike `position: fixed`, a top-layer element cannot be clipped by a
+/// scrolling table, card, route-transition pane, or transformed ancestor.
+/// The wrapper remains open for `exit_delay` so its children can finish their
+/// exit animations before the browser hides it.
+pub(crate) fn use_top_layer(open: ReadSignal<bool>, id: String, exit_delay: Duration) {
+    use_effect(move || {
+        let is_open = open();
+        let script = format!(
+            r#"
+const layer = document.getElementById({id});
+if (layer && typeof layer.showPopover === "function") {{
+    clearTimeout(layer.g3HideTimer);
+    if ({is_open}) {{
+        if (!layer.matches(":popover-open")) layer.showPopover();
+    }} else if (layer.matches(":popover-open")) {{
+        layer.g3HideTimer = setTimeout(() => {{
+            if (layer.isConnected && layer.matches(":popover-open")) layer.hidePopover();
+        }}, {delay});
+    }}
+}} else if (layer) {{
+    // Older embedded WebViews (notably the minimum supported iOS versions)
+    // do not have the Popover API. Removing the attribute restores the
+    // ordinary fixed-position fallback instead of leaving the wrapper hidden
+    // by the user-agent `[popover]` rule.
+    layer.removeAttribute("popover");
+}}
+"#,
+            id = js_string(&id),
+            is_open = is_open,
+            delay = exit_delay.as_millis(),
+        );
+        let _ = document::eval(&script);
+    });
 }
 
 /// Playground previews render overlays inside a device frame, where they must

@@ -1795,11 +1795,6 @@ button.g3-chip:focus-visible {
 /* Declarative overlays are allowed anywhere in component composition. Keep
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
-:is(.g3-content, .g3-content-scroll, .route-transition-page, .route-transition-segment)
-    :has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-modal-overlay[data-state="open"]) {
-    overflow: visible;
-}
-
 .route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop),
 .route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
     z-index: var(--g3-z-sheet-backdrop);
@@ -5043,6 +5038,38 @@ button.g3-chip:focus-visible {
     display: inline-flex;
 }
 
+/* A top-layer wrapper is the overlay equivalent of a portal. It preserves the
+   component's DOM ownership while escaping every ancestor's clipping and
+   stacking context. Children opt back into pointer input individually. */
+.g3-overlay-layer[popover] {
+    position: fixed;
+    inset: 0;
+    display: none;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    pointer-events: none;
+}
+
+.g3-overlay-layer[popover]:popover-open {
+    display: block;
+}
+
+.g3-overlay-layer:not([popover]) {
+    display: contents;
+}
+
+.g3-overlay-layer > :is(.g3-popover, .g3-popover-backdrop, .g3-sheet, .g3-sheet-backdrop) {
+    pointer-events: auto;
+}
+
 /* Catches taps outside an open popover. Transparent: a popover does not dim
    the page. */
 .g3-popover-backdrop {
@@ -5156,11 +5183,11 @@ button.g3-chip:focus-visible {
     transform: translate3d(0, 100%, 0);
 }
 
-.g3-popover-anchor:has(> .g3-popover-sheet) > .g3-popover-backdrop {
+.g3-popover-anchor:has(.g3-popover-sheet) .g3-popover-backdrop {
     background: rgba(0, 0, 0, 0.4);
 }
 
-.g3-popover-anchor:has(> .g3-popover-sheet[data-state="open"]) > .g3-popover-backdrop {
+.g3-popover-anchor:has(.g3-popover-sheet[data-state="open"]) .g3-popover-backdrop {
     animation: g3-sheet-enter-backdrop var(--g3-backdrop-duration) ease backwards;
 }
 
@@ -5232,16 +5259,6 @@ button.g3-chip:focus-visible {
 }
 
 @container g3-app-shell (min-width: 48rem) {
-    /* A menu opened from a clipped pane escapes in viewport coordinates. This
-       keeps a table's viewport bound to its card and leaves the page's current
-       scroll position untouched while a setting menu is open. */
-    .g3-popover[data-g3-escape-clipping] {
-        position: fixed;
-        top: var(--g3-popover-fixed-top, 0px);
-        left: var(--g3-popover-fixed-left, 0px);
-        right: auto;
-        bottom: auto;
-    }
 
     .g3-popover-sheet {
         position: absolute;
@@ -5287,9 +5304,72 @@ button.g3-chip:focus-visible {
         transform: scale(0.96);
     }
 
-    .g3-popover-anchor:has(> .g3-popover-sheet) > .g3-popover-backdrop {
+    .g3-popover-anchor:has(.g3-popover-sheet) .g3-popover-backdrop {
         background: transparent;
     }
+}
+
+/* Top-layer elements no longer participate reliably in their former CSS
+   container query in every WebView. The fit script records the shell-sized
+   layout so a select remains a desktop popover after its layer opens. */
+.g3-popover-sheet[data-g3-sheet-layout="popover"] {
+    position: absolute;
+    bottom: auto;
+    inset-inline: auto;
+    min-width: max(100%, 12rem);
+    max-width: min(22rem, calc(100vw - 2rem));
+    padding-bottom: 0;
+    border-width: 1px;
+    transform-origin: top;
+    transition: opacity var(--g3-backdrop-duration) var(--g3-transition-md),
+                transform var(--g3-backdrop-duration) var(--g3-transition-md),
+                visibility 0s linear var(--g3-backdrop-duration);
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"][data-placement^="bottom"] {
+    top: calc(100% + 0.375rem);
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"][data-placement^="top"] {
+    top: auto;
+    bottom: calc(100% + 0.375rem);
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"][data-placement$="start"] {
+    inset-inline-start: 0;
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"][data-placement$="end"] {
+    inset-inline-end: 0;
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"].g3-popover-ios {
+    border-radius: 13px;
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"].g3-popover-md {
+    border-width: 0;
+    border-radius: 4px;
+}
+
+.g3-popover-sheet[data-g3-sheet-layout="popover"][data-state="closed"] {
+    transform: scale(0.96);
+}
+
+.g3-popover-anchor:has(.g3-popover-sheet[data-g3-sheet-layout="popover"]) .g3-popover-backdrop {
+    background: transparent;
+}
+
+/* Keep this after both responsive layout branches. The measured viewport
+   position must win over their anchor-relative placement declarations. */
+.g3-popover[data-g3-fixed-position][data-placement] {
+    position: fixed;
+    inset-inline: auto;
+    top: var(--g3-popover-fixed-top, 0px);
+    left: var(--g3-popover-fixed-left, 0px);
+    right: auto;
+    bottom: auto;
+    min-width: max(var(--g3-popover-anchor-width, 0px), 12rem);
 }
 
 /* -- Action sheet -- */

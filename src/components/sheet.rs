@@ -1,7 +1,7 @@
 //! What bottom sheets, side sheets, and navigation drawers share: the
 //! entrance, the backdrop, scroll locking, focus handling, and the app-wide
 //! count of open sheets.
-use super::overlay::{use_lock_body_scroll, use_overlay_focus};
+use super::overlay::{use_lock_body_scroll, use_overlay_focus, use_top_layer};
 use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
@@ -213,6 +213,7 @@ pub(crate) fn SheetFrame(
     let id = use_element_id("sheet", None);
     let title_id = format!("{id}-title");
     let handle_id = format!("{id}-handle");
+    let layer_id = format!("{id}-layer");
     let is_drawer = matches!(kind, FrameKind::Drawer { .. });
     let is_bottom = matches!(kind, FrameKind::Bottom { .. });
     let has_backdrop = !is_drawer && backdrop == SheetBackdrop::Dismiss;
@@ -272,6 +273,13 @@ pub(crate) fn SheetFrame(
 
     let locked = use_memo(move || open() && has_backdrop_signal());
     use_lock_body_scroll(locked.into());
+    if is_bottom {
+        use_top_layer(
+            open.into(),
+            layer_id.clone(),
+            std::time::Duration::from_millis(500),
+        );
+    }
 
     if !is_drawer {
         use_overlay_focus(open.into(), id.clone(), has_backdrop, dismiss);
@@ -404,7 +412,7 @@ pub(crate) fn SheetFrame(
     });
     let labelledby = title.as_ref().map(|_| title_id.clone());
 
-    rsx! {
+    let contents = rsx! {
         if has_backdrop && (modal && is_open || backdrop_present()) {
             button {
                 r#type: "button",
@@ -475,6 +483,18 @@ pub(crate) fn SheetFrame(
                 "data-padding": padding.unwrap_or(true).to_string(),
                 {children}
             }
+        }
+    };
+    rsx! {
+        if is_bottom {
+            div {
+                id: layer_id,
+                class: "g3-overlay-layer",
+                popover: "manual",
+                {contents}
+            }
+        } else {
+            {contents}
         }
     }
 }

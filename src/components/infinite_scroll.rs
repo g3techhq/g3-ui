@@ -8,10 +8,37 @@ use dioxus::prelude::*;
 const OBSERVER_SCRIPT: &str = r#"
 const sentinel = document.getElementById(__ID__);
 if (sentinel && !sentinel.g3Observer) {
+    const root = sentinel.closest(".g3-content-scroll");
+    const canLoad = () => sentinel.dataset.loading !== "true"
+        && sentinel.dataset.complete !== "true";
+    const rearm = () => {
+        if (!sentinel.isConnected || !canLoad()) return;
+        sentinel.dataset.g3Pending = "false";
+        sentinel.g3Observer.unobserve(sentinel);
+        sentinel.g3Observer.observe(sentinel);
+    };
     sentinel.g3Observer = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) dioxus.send(true);
-    }, { rootMargin: "0px 0px __MARGIN__px 0px" });
+        if (entries.some((entry) => entry.isIntersecting)
+            && canLoad()
+            && sentinel.dataset.g3Pending !== "true") {
+            sentinel.dataset.g3Pending = "true";
+            dioxus.send(true);
+        }
+    }, { root, rootMargin: "0px 0px __MARGIN__px 0px" });
     sentinel.g3Observer.observe(sentinel);
+    sentinel.g3StateObserver = new MutationObserver(rearm);
+    sentinel.g3StateObserver.observe(sentinel, {
+        attributes: true,
+        attributeFilter: ["data-loading", "data-complete"],
+    });
+    // A synchronous page (or a very fast cached request) may never toggle
+    // `loading`. Re-arm when the surrounding list changes so a sentinel that
+    // remains visible can request enough pages to fill the viewport.
+    const list = sentinel.parentElement;
+    if (list) {
+        sentinel.g3ListObserver = new MutationObserver(rearm);
+        sentinel.g3ListObserver.observe(list, { childList: true, subtree: true });
+    }
 }
 "#;
 
@@ -69,23 +96,12 @@ pub fn InfiniteScroll(
             });
         });
     }
-    // An observer only reports changes. If the end is still in view after a
-    // page loads, observing again reports it once more.
-    {
-        let id = id.clone();
-        use_effect(move || {
-            if !blocked() {
-                let _ = document::eval(&format!(
-                    "const s = document.getElementById({}); if (s && s.g3Observer) {{ s.g3Observer.unobserve(s); s.g3Observer.observe(s); }}",
-                    js_string(&id)
-                ));
-            }
-        });
-    }
     rsx! {
         div {
             id,
             class: merge_classes("g3-infinite-scroll", class.as_deref()),
+            "data-loading": loading.to_string(),
+            "data-complete": complete.to_string(),
             aria_busy: loading.then_some("true"),
             if loading {
                 Spinner { size: SpinnerSize::Md }

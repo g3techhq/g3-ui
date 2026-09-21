@@ -23,6 +23,8 @@ fn open_bottom_sheet_is_a_labelled_modal_dialog() {
         }
     }
     let html = render(app);
+    let layer = element_with_class(&html, "g3-overlay-layer");
+    assert!(layer.contains("popover=\"manual\""));
     let sheet = element_with_class(&html, "g3-sheet");
     assert!(sheet.contains("role=\"dialog\""));
     assert!(sheet.contains("aria-modal=\"true\""));
@@ -175,6 +177,8 @@ fn open_menus_expose_menu_items() {
     assert!(menu.contains("data-state=\"open\""));
     assert_eq!(html.matches("role=\"menuitem\"").count(), 2);
     assert!(html.contains("g3-popover-backdrop"));
+    let layer = element_with_class(&html, "g3-overlay-layer");
+    assert!(layer.contains("popover=\"manual\""));
 }
 
 #[test]

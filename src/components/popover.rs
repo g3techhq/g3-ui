@@ -1,6 +1,6 @@
 //! Floating panels anchored to a trigger: popovers and menus.
 use super::Color;
-use super::overlay::{js_string, use_overlay_focus_with};
+use super::overlay::{js_string, use_overlay_focus_with, use_top_layer};
 use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::state::use_element_id;
@@ -38,28 +38,35 @@ impl PopoverPlacement {
 const FIT_SCRIPT: &str = r#"
 const el = document.getElementById(__ID__);
 if (el) {
+    const layer = el.closest(".g3-overlay-layer");
+    if (layer && typeof layer.showPopover === "function" && !layer.matches(":popover-open")) {
+        layer.showPopover();
+    } else if (layer && typeof layer.showPopover !== "function") {
+        layer.removeAttribute("popover");
+    }
     const base = el.dataset.basePlacement || el.getAttribute("data-placement");
     el.dataset.basePlacement = base;
     el.setAttribute("data-placement", base);
     const anchor = el.closest(".g3-popover-anchor");
-    // Menus nested in a scrolling pane, card, list, or table must escape in
-    // viewport coordinates. Releasing an ancestor's overflow makes the table
-    // itself wider (and can reset a content scroll position), so lift only the
-    // menu that needs it instead.
-    const escapesClipping = !!el.closest(".g3-table-scroll, .g3-content-scroll, .g3-card, .g3-list");
-    el.toggleAttribute("data-g3-escape-clipping", escapesClipping);
-    if (anchor && escapesClipping) {
-        // Let the fixed rule take effect before measuring the menu.
+    const app = el.closest(".g3-app");
+    const appBox = app ? app.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    // Compact select sheets keep their bottom-sheet geometry. Every anchored
+    // panel uses viewport coordinates; the top-layer wrapper then guarantees
+    // that a scroll pane or transformed route cannot clip it.
+    const sheet = el.classList.contains("g3-popover-sheet");
+    const compactSheet = sheet && appBox.right - appBox.left < 768;
+    if (sheet) el.dataset.g3SheetLayout = compactSheet ? "sheet" : "popover";
+    el.toggleAttribute("data-g3-fixed-position", !compactSheet);
+    if (anchor && !compactSheet) {
+        const anchorBox = anchor.getBoundingClientRect();
+        el.style.setProperty("--g3-popover-anchor-width", `${anchorBox.width}px`);
         void el.offsetWidth;
-        const app = el.closest(".g3-app");
-        const appBox = app ? app.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
         const bounds = {
             left: Math.max(appBox.left, 0) + 8,
             right: Math.min(appBox.right, innerWidth) - 8,
             top: Math.max(appBox.top, 0) + 8,
             bottom: Math.min(appBox.bottom, innerHeight) - 8,
         };
-        const anchorBox = anchor.getBoundingClientRect();
         const menuBox = el.getBoundingClientRect();
         let [vertical, horizontal] = base.split("-");
         const rtl = getComputedStyle(el).direction === "rtl";
@@ -82,26 +89,6 @@ if (el) {
         el.style.setProperty("--g3-popover-fixed-left", `${Math.max(bounds.left, Math.min(left, bounds.right - menuBox.width))}px`);
         el.style.setProperty("--g3-popover-fixed-top", `${Math.max(bounds.top, Math.min(top, bounds.bottom - menuBox.height))}px`);
         el.setAttribute("data-placement", `${vertical}-${horizontal}`);
-    } else if (getComputedStyle(el).position === "absolute") {
-        const app = el.closest(".g3-app");
-        const box = app ? app.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
-        const bounds = {
-            left: Math.max(box.left, 0) + 8,
-            right: Math.min(box.right, innerWidth) - 8,
-            top: Math.max(box.top, 0) + 8,
-            bottom: Math.min(box.bottom, innerHeight) - 8,
-        };
-        const rect = el.getBoundingClientRect();
-        let [vertical, horizontal] = base.split("-");
-        const rtl = getComputedStyle(el).direction === "rtl";
-        const growsRight = (horizontal === "start") !== rtl;
-        if (growsRight ? rect.right > bounds.right : rect.left < bounds.left) {
-            horizontal = horizontal === "start" ? "end" : "start";
-        }
-        if (vertical === "bottom" ? rect.bottom > bounds.bottom : rect.top < bounds.top) {
-            vertical = vertical === "bottom" ? "top" : "bottom";
-        }
-        el.setAttribute("data-placement", vertical + "-" + horizontal);
     }
 }
 "#;
@@ -151,6 +138,12 @@ pub(crate) fn PopoverFrame(
         }
     });
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
+    let layer_id = format!("{id}-layer");
+    use_top_layer(
+        open.into(),
+        layer_id.clone(),
+        std::time::Duration::from_millis(300),
+    );
     let mut ever_opened = use_signal(|| false);
     let mut backdrop_present = use_signal(|| open());
     {
@@ -196,27 +189,34 @@ pub(crate) fn PopoverFrame(
     rsx! {
         span { id: anchor_id, class: "g3-popover-anchor",
             {trigger}
-            if is_open || backdrop_present() {
+            if is_open || ever_opened() || backdrop_present() {
                 div {
-                    class: "g3-popover-backdrop",
-                    "data-state": state,
-                    aria_hidden: "true",
-                    onclick: move |_| dismiss.call(()),
-                }
-            }
-            if is_open || ever_opened() {
-                div {
-                    id,
-                    class: merge_classes(cls, class.as_deref()),
-                    role,
-                    aria_label,
-                    aria_labelledby,
-                    tabindex: "-1",
-                    "data-state": state,
-                    "data-placement": placement.as_str(),
-                    aria_hidden: (!is_open).then_some("true"),
-                    inert: (!is_open).then_some(true),
-                    {children}
+                    id: layer_id,
+                    class: "g3-overlay-layer",
+                    popover: "manual",
+                    if is_open || backdrop_present() {
+                        div {
+                            class: "g3-popover-backdrop",
+                            "data-state": state,
+                            aria_hidden: "true",
+                            onclick: move |_| dismiss.call(()),
+                        }
+                    }
+                    if is_open || ever_opened() {
+                        div {
+                            id,
+                            class: merge_classes(cls, class.as_deref()),
+                            role,
+                            aria_label,
+                            aria_labelledby,
+                            tabindex: "-1",
+                            "data-state": state,
+                            "data-placement": placement.as_str(),
+                            aria_hidden: (!is_open).then_some("true"),
+                            inert: (!is_open).then_some(true),
+                            {children}
+                        }
+                    }
                 }
             }
         }

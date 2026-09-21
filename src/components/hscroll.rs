@@ -40,13 +40,35 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     let dragged = false;
     let startX = 0;
     let startLeft = 0;
+    let lastX = 0;
+    let lastTime = 0;
+    let velocity = 0;
     let snapTimer;
     let settleFrame = 0;
+    let wheelFrame = 0;
+    let wheelTarget = 0;
+    let wheelTimer;
+    const clamp = (value) => Math.max(0, Math.min(strip.scrollWidth - strip.clientWidth, value));
+    const nearestSnap = (position) => {
+        const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
+        const max = strip.scrollWidth - strip.clientWidth;
+        return [...strip.children].reduce((nearest, child) => {
+            const left = Math.max(0, Math.min(max, child.offsetLeft - inset));
+            return nearest === null || Math.abs(left - position) < Math.abs(nearest - position)
+                ? left : nearest;
+        }, null) ?? clamp(position);
+    };
     const stopSettling = () => {
         if (settleFrame) cancelAnimationFrame(settleFrame);
         settleFrame = 0;
     };
-    const settleTo = (target) => {
+    const stopWheel = () => {
+        if (wheelFrame) cancelAnimationFrame(wheelFrame);
+        clearTimeout(wheelTimer);
+        wheelFrame = 0;
+    };
+    const settleTo = (target, duration = 360) => {
+        target = clamp(target);
         if (calm.matches) {
             strip.scrollLeft = target;
             delete strip.dataset.dragging;
@@ -56,7 +78,6 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         const start = strip.scrollLeft;
         const distance = target - start;
         const started = performance.now();
-        const duration = 360;
         const step = (now) => {
             const progress = Math.min(1, (now - started) / duration);
             // Ease out: it keeps the release connected to the pointer, then
@@ -75,11 +96,15 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     strip.addEventListener("pointerdown", (event) => {
         if (event.pointerType !== "mouse" || event.button !== 0) return;
         stopSettling();
+        stopWheel();
         clearTimeout(snapTimer);
         down = true;
         dragged = false;
         startX = event.clientX;
         startLeft = strip.scrollLeft;
+        lastX = event.clientX;
+        lastTime = performance.now();
+        velocity = 0;
     });
     window.addEventListener("pointermove", (event) => {
         if (!down) return;
@@ -89,6 +114,12 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         strip.dataset.dragging = "true";
         event.preventDefault();
         strip.scrollLeft = startLeft - dx;
+        const now = performance.now();
+        const elapsed = Math.max(1, now - lastTime);
+        const instant = (lastX - event.clientX) / elapsed;
+        velocity = velocity * 0.72 + instant * 0.28;
+        lastX = event.clientX;
+        lastTime = now;
     });
     window.addEventListener("pointerup", () => {
         down = false;
@@ -96,14 +127,11 @@ if (strip && strip.dataset.g3Scroll !== "true") {
             delete strip.dataset.dragging;
             return;
         }
-        const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
-        const max = strip.scrollWidth - strip.clientWidth;
-        const target = [...strip.children].reduce((nearest, child) => {
-            const left = Math.max(0, Math.min(max, child.offsetLeft - inset));
-            return nearest === null || Math.abs(left - strip.scrollLeft) < Math.abs(nearest - strip.scrollLeft)
-                ? left : nearest;
-        }, null) ?? strip.scrollLeft;
-        settleTo(target);
+        // Project the release velocity before choosing a snap point. A quick
+        // mouse drag therefore flings like touch instead of merely rounding
+        // the exact pointer-up position.
+        const projected = clamp(strip.scrollLeft + velocity * 220);
+        settleTo(nearestSnap(projected), Math.min(520, 300 + Math.abs(projected - strip.scrollLeft)));
     });
     // A drag must not also press whatever it ended on.
     strip.addEventListener("click", (event) => {
@@ -125,7 +153,32 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         // Against a stop, the page keeps the scroll.
         if ((delta < 0 && strip.scrollLeft <= 0) || (delta > 0 && strip.scrollLeft >= max - 1)) return;
         event.preventDefault();
-        strip.scrollLeft = Math.max(0, Math.min(max, strip.scrollLeft + delta));
+        stopSettling();
+        strip.dataset.dragging = "true";
+        if (!wheelFrame) wheelTarget = strip.scrollLeft;
+        wheelTarget = clamp(wheelTarget + delta);
+        if (!wheelFrame) {
+            const glide = () => {
+                const distance = wheelTarget - strip.scrollLeft;
+                if (Math.abs(distance) < 0.5) {
+                    strip.scrollLeft = wheelTarget;
+                    wheelFrame = 0;
+                    return;
+                }
+                strip.scrollLeft += distance * 0.24;
+                wheelFrame = requestAnimationFrame(glide);
+            };
+            wheelFrame = requestAnimationFrame(glide);
+        }
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => {
+            stopWheel();
+            if (strip.dataset.snap === "true") {
+                settleTo(nearestSnap(wheelTarget), 300);
+            } else {
+                settleTo(wheelTarget, 180);
+            }
+        }, 120);
     }, { passive: false });
     strip.addEventListener("scroll", edges, { passive: true });
     new ResizeObserver(edges).observe(strip);
@@ -172,5 +225,7 @@ mod tests {
         assert!(SCRIPT.contains("--g3-shelf-snap-inset"));
         assert!(SCRIPT.contains("const settleTo"));
         assert!(SCRIPT.contains("requestAnimationFrame"));
+        assert!(SCRIPT.contains("const projected"));
+        assert!(SCRIPT.contains("wheelTarget"));
     }
 }
