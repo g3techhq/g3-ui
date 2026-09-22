@@ -4,7 +4,7 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.4.0] - Unreleased
+## [0.4.0] - 2026-09-21
 
 0.4 reworks the public API for use as a general-purpose library. Most
 components are renamed, several are split, and the stylesheet moves into a
