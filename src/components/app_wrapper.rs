@@ -85,6 +85,29 @@ if (shell && !shell.g3SizeObserver) {
 }
 "#;
 
+/// Mirrors the active theme's page background and color scheme onto the
+/// document element.
+///
+/// The theme is otherwise inline on the shell, which is enough for everything
+/// the shell paints. The document canvas is not: it shows through wherever the
+/// shell does not paint, and rules that resolve against `:root` never see the
+/// shell's values. Two of those matter. `g3-route-transitions` paints
+/// `html, body` from `--route-transition-bg`, which g3-ui maps to
+/// `--g3-color-bg`; and every `::view-transition-*` pseudo-element is a child
+/// of `:root`, so it resolves the same variable there. Left alone, both take
+/// the stylesheet's light default, so a dark theme paints a near-white page
+/// behind the app and flashes near-white through every route transition.
+const ROOT_THEME_SCRIPT: &str = r#"
+const root = document.documentElement;
+root.style.setProperty("--g3-color-bg", __BG__);
+root.style.setProperty("color-scheme", __SCHEME__);
+"#;
+
+/// Marks that an enclosing [`AppWrapper`] already owns the document element, so
+/// a nested wrapper - a demo frame inside a gallery, say - leaves it alone.
+#[derive(Clone, Copy)]
+struct RootShellClaimed;
+
 /// The root of a g3-ui app: loads the stylesheet, applies the mode, theme, and
 /// strings, and lays out a full-height, responsive app shell.
 ///
@@ -155,6 +178,25 @@ pub fn AppWrapper(
                 }
             });
         });
+    }
+    // Checked before the marker is provided, so only the outermost wrapper
+    // claims the document element.
+    let is_root_shell = use_hook(|| try_consume_context::<RootShellClaimed>().is_none());
+    use_context_provider(|| RootShellClaimed);
+    {
+        let root_bg = theme.bg.clone();
+        let root_scheme = theme.color_scheme.clone();
+        use_effect(use_reactive!(|(is_root_shell, root_bg, root_scheme)| {
+            if !is_root_shell {
+                return;
+            }
+            let script = ROOT_THEME_SCRIPT
+                .replace("__BG__", &js_string(&root_bg))
+                .replace("__SCHEME__", &js_string(&root_scheme));
+            spawn(async move {
+                let _ = document::eval(&script).await;
+            });
+        }));
     }
     let layout = layout.unwrap_or(true);
     let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);

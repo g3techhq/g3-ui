@@ -1,6 +1,6 @@
 [package]
 name = "g3-ui"
-version = "0.4.0"
+version = "0.4.1"
 
 edition = "2024"
 rust-version = "1.88"
@@ -28,7 +28,7 @@ dioxus-icons = "0.1.0"
 dioxus-sdk-time = "0.7.0"
 cfg-if = "1.0.0"
 manganis = "0.7.9"
-g3-route-transitions = { version = "0.4.0", optional = true }
+g3-route-transitions = { version = "0.4.1", optional = true }
 
 [dev-dependencies]
 dioxus-ssr = "0.7.9"
