@@ -1,233 +1,207 @@
-//! Checkbox component with Ionic-style label placement.
-use super::checkbox_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Checkboxes, and the label layout shared with toggles and radios.
+use super::field::{described_by, is_invalid};
+use crate::state::{use_controlled, use_element_id};
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
-use std::sync::atomic::{AtomicU64, Ordering};
-static NEXT_CHECKBOX_ID: AtomicU64 = AtomicU64::new(1);
-/// Where a checkbox, radio, or toggle sits relative to its label.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+
+/// Where a checkbox, toggle, or radio sits relative to its label.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ControlLabelPlacement {
-    /// Label on the leading side, control on the trailing side.
+    /// Label first, control at the trailing edge, as in iOS settings.
     #[default]
     Start,
-    /// Control on the leading side, label on the trailing side.
+    /// Control first, label after it.
     End,
-    /// Label in a fixed-width leading column, so labels line up across rows
-    /// of differing length.
+    /// Label in a fixed-width leading column, so labels align across rows.
     Fixed,
-    /// Label above the control, for narrow layouts and long labels.
+    /// Label above the control.
     Stacked,
 }
+
 impl ControlLabelPlacement {
     pub(crate) fn class(self) -> &'static str {
         match self {
-            Self::Start => s::PLACEMENT_START,
-            Self::End => s::PLACEMENT_END,
-            Self::Fixed => s::PLACEMENT_FIXED,
-            Self::Stacked => s::PLACEMENT_STACKED,
+            Self::Start => "g3-control-label-start",
+            Self::End => "",
+            Self::Fixed => "g3-control-label-fixed",
+            Self::Stacked => "g3-control-label-stacked",
         }
     }
 }
+
+/// Classes shared by every control row.
+pub(crate) fn control_classes(
+    kind: &'static str,
+    mode: ComponentMode,
+    placement: ControlLabelPlacement,
+    bare: bool,
+) -> String {
+    classes([
+        "g3-control",
+        kind,
+        mode.pick("g3-control-ios", "g3-control-md"),
+        if bare {
+            "g3-control-bare"
+        } else {
+            placement.class()
+        },
+    ])
+}
+
+/// A checkbox row: the box, a label, and optional helper and error text. The
+/// whole row is the control. Like Ionic's `ion-checkbox`.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// let agreed = use_signal(|| false);
+/// rsx! {
+///     Checkbox { checked: agreed, label: "I agree to the terms",
+///         error: (!agreed()).then(|| "Required".to_string()) }
+/// }
+/// # }
+/// ```
 #[component]
 pub fn Checkbox(
-    mut checked: Signal<bool>,
-    id: Option<String>,
-    label: String,
+    /// Whether it is checked. Kept internally when not given.
+    checked: Option<Signal<bool>>,
+    /// Visible label, which also names the checkbox.
+    label: Option<String>,
+    /// Accessible name when there is no visible label.
+    aria_label: Option<String>,
+    /// Show a dash for a partly selected group. Pressing still toggles
+    /// `checked`.
     indeterminate: Option<bool>,
-    disabled: Option<bool>,
+    /// Help text under the label.
+    helper: Option<String>,
+    /// Error text under the label. Marks the checkbox invalid when not empty.
     error: Option<String>,
-    hint: Option<String>,
+    /// Disable the checkbox.
+    disabled: Option<bool>,
+    /// Label position. Defaults to [`ControlLabelPlacement::Start`].
     label_placement: Option<ControlLabelPlacement>,
+    /// Called with the new state.
+    onchange: Option<EventHandler<bool>>,
+    /// Element id. Generated when not given.
+    id: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Extra classes for the row.
     class: Option<String>,
-    onchange: Option<Callback<bool>>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let is_checked = checked();
-    let is_indeterminate = indeterminate.unwrap_or(false);
-    let is_disabled = disabled.unwrap_or(false);
-    let has_error = error.as_ref().is_some_and(|value| !value.is_empty());
-    let has_hint = hint.as_ref().is_some_and(|value| !value.is_empty());
-    let placement = label_placement.unwrap_or_default();
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::CHECKBOX_IOS,
-        ComponentMode::Md => s::CHECKBOX_MD,
-    };
-    let checked_cls = if is_checked { "checked" } else { "" };
-    let indeterminate_cls = if is_indeterminate {
-        "indeterminate"
+    let id = use_element_id("checkbox", id);
+    let mut checked = use_controlled(checked, || false);
+    let aria_checked = if indeterminate.unwrap_or(false) {
+        "mixed"
+    } else if checked() {
+        "true"
     } else {
-        ""
+        "false"
     };
-    let disabled_cls = if is_disabled { "disabled" } else { "" };
-    let invalid_cls = if has_error { "invalid" } else { "" };
-    let single_line_cls = if !has_error
-        && !has_hint
-        && matches!(
-            placement,
-            ControlLabelPlacement::Start | ControlLabelPlacement::End
-        ) {
-        "g3-checkbox-single-line"
-    } else {
-        ""
-    };
-    let cls = merge_classes(
-        format!(
-            "{} {mode_cls} {} {checked_cls} {indeterminate_cls} {disabled_cls} {invalid_cls} {single_line_cls}",
-            s::CHECKBOX,
-            placement.class(),
-        ),
-        class.as_deref(),
+    let bare = label.is_none() && helper.is_none() && error.is_none();
+    let cls = control_classes(
+        "g3-checkbox",
+        mode,
+        label_placement.unwrap_or_default(),
+        bare,
     );
-    let generated_id = use_hook(next_checkbox_id);
-    let control_id = checkbox_base_id(id, &generated_id);
-    let hint_id = format!("{control_id}-hint");
-    let error_id = format!("{control_id}-error");
-    let aria_checked = if is_indeterminate {
-        "mixed".to_string()
-    } else {
-        is_checked.to_string()
-    };
-    let aria_describedby = describedby(&hint, &error, &hint_id, &error_id);
+    let describedby = described_by(&id, &helper, &error);
+    let invalid = is_invalid(&error);
     rsx! {
         button {
-            class: cls,
+            id: id.clone(),
+            class: merge_classes(cls, class.as_deref()),
             r#type: "button",
             role: "checkbox",
             aria_checked,
-            aria_invalid: has_error.to_string(),
-            id: control_id.clone(),
-            aria_describedby,
-            disabled: is_disabled,
+            aria_label,
+            aria_describedby: describedby,
+            aria_invalid: invalid.then_some("true"),
+            disabled,
             onclick: move |_| {
-                if is_disabled {
-                    return;
-                }
                 let next = !checked();
                 checked.set(next);
-                if let Some(ref onchange) = onchange {
+                if let Some(onchange) = onchange {
                     onchange.call(next);
                 }
             },
-            span { class: s::CONTROL, aria_hidden: "true",
-                span { class: s::MARK }
+            span { class: "g3-control-mark", aria_hidden: "true",
+                span { class: "g3-checkbox-box",
+                    span { class: "g3-checkbox-check" }
+                }
             }
-            span { class: s::LABEL, "{label}" }
-            if let Some(hint) = hint.filter(|value| !value.is_empty()) {
-                span { id: hint_id, class: s::HINT, "{hint}" }
-            }
-            if let Some(error) = error.filter(|value| !value.is_empty()) {
-                span { id: error_id, class: s::ERROR, "{error}" }
-            }
+            ControlText { id: id.clone(), label, helper, error }
         }
     }
 }
-fn next_checkbox_id() -> String {
-    let id = NEXT_CHECKBOX_ID.fetch_add(1, Ordering::Relaxed);
-    format!("g3-checkbox-{id}")
-}
-fn checkbox_base_id(id: Option<String>, fallback_id: &str) -> String {
-    id.filter(|value| !value.is_empty())
-        .unwrap_or_else(|| fallback_id.to_string())
-}
-fn describedby(
-    hint: &Option<String>,
-    error: &Option<String>,
-    hint_id: &str,
-    error_id: &str,
-) -> Option<String> {
-    let mut ids = Vec::new();
-    if hint.as_ref().is_some_and(|value| !value.is_empty()) {
-        ids.push(hint_id);
+
+/// Label, helper, and error text inside a control row.
+#[component]
+pub(crate) fn ControlText(
+    id: String,
+    label: Option<String>,
+    helper: Option<String>,
+    error: Option<String>,
+) -> Element {
+    rsx! {
+        if let Some(label) = label {
+            span { class: "g3-control-label", "{label}" }
+        }
+        if let Some(helper) = helper.filter(|text| !text.is_empty()) {
+            span { id: format!("{id}-helper"), class: "g3-control-helper", "{helper}" }
+        }
+        if let Some(error) = error.filter(|text| !text.is_empty()) {
+            span { id: format!("{id}-error"), class: "g3-control-error", "{error}" }
+        }
     }
-    if error.as_ref().is_some_and(|value| !value.is_empty()) {
-        ids.push(error_id);
-    }
-    (!ids.is_empty()).then(|| ids.join(" "))
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn CheckboxPlaygroundDemo() -> Element {
+fn CheckboxPlaygroundDemo() -> Element {
     let checked = use_signal(|| true);
     let disabled = use_signal(|| false);
-    let mut indeterminate = use_signal(|| false);
+    let indeterminate = use_signal(|| false);
+    let invalid = use_signal(|| false);
+    let placement = use_signal(|| ControlLabelPlacement::Start);
     rsx! {
         crate::PlaygroundDemoFrame {
-            center: false,
             controls: rsx! {
-                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
-                crate::Checkbox { checked: indeterminate, label: "Indeterminate".to_string() }
+                crate::Select {
+                    label: "Label placement",
+                    value: placement,
+                    options: vec![
+                        crate::SelectOption::new(ControlLabelPlacement::Start, "Start"),
+                        crate::SelectOption::new(ControlLabelPlacement::End, "End"),
+                        crate::SelectOption::new(ControlLabelPlacement::Fixed, "Fixed"),
+                        crate::SelectOption::new(ControlLabelPlacement::Stacked, "Stacked"),
+                    ],
+                }
+                Checkbox { checked: indeterminate, label: "Indeterminate" }
+                Checkbox { checked: disabled, label: "Disabled" }
+                Checkbox { checked: invalid, label: "Invalid" }
             },
-            div { class: "g3-checkbox-demo-stack",
+            div { class: "playground-stack",
                 Checkbox {
                     checked,
-                    label: "Push notifications",
-                    hint: "Course updates and tee-time reminders",
+                    label: "Use handicaps",
+                    helper: "Adjusts each player's score.",
+                    error: invalid().then(|| "Choose a scoring option.".to_string()),
                     indeterminate: indeterminate(),
                     disabled: disabled(),
-                    onchange: move |_| indeterminate.set(false),
+                    label_placement: placement(),
                 }
-                Checkbox {
-                    checked: use_signal(|| false),
-                    label: "Share scorecard",
-                    label_placement: ControlLabelPlacement::End,
-                    error: "Requires a signed-in player",
-                }
-                Checkbox {
-                    checked: use_signal(|| true),
-                    label: "Skins game",
-                    label_placement: ControlLabelPlacement::Stacked,
-                    hint: "Shown as a stacked mobile setting row",
-                }
+                Checkbox { aria_label: "Select row" }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Checkbox",
-    description: "Controlled checkbox with Ionic-style label placement.",
+    description: "Checkbox rows with helper, error, and label placement.",
     demo: CheckboxPlaygroundDemo,
     source: "src/components/checkbox.rs",
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::G3ThemeProvider;
-    fn render(app: fn() -> Element) {
-        let mut dom = VirtualDom::new(app);
-        dom.rebuild_in_place();
-    }
-    #[component]
-    fn CheckboxSmokeApp() -> Element {
-        let checked = use_signal(|| false);
-        rsx! {
-            G3ThemeProvider { mode: ComponentMode::Ios,
-                Checkbox {
-                    checked,
-                    label: "Accept terms",
-                    hint: "Required before play",
-                    onchange: |_| {},
-                }
-            }
-        }
-    }
-    #[test]
-    fn checkbox_renders() {
-        render(CheckboxSmokeApp);
-    }
-    #[test]
-    fn checkbox_base_id_prefers_explicit_id() {
-        assert_eq!(
-            checkbox_base_id(Some("terms-opt-in".to_string()), "g3-checkbox-99"),
-            "terms-opt-in",
-        );
-    }
-    #[test]
-    fn checkbox_generated_fallback_ids_are_distinct_and_label_independent() {
-        let first = next_checkbox_id();
-        let second = next_checkbox_id();
-        assert_ne!(first, second);
-        assert_eq!(checkbox_base_id(None, &first), first);
-        assert_eq!(checkbox_base_id(None, &second), second);
-    }
 }

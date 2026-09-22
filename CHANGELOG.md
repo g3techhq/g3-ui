@@ -4,7 +4,303 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.0] - 2026-09-21
+
+0.4 reworks the public API for use as a general-purpose library. Most
+components are renamed, several are split, and the stylesheet moves into a
+cascade layer. The README has a table of the most common renames.
+
+### Removed
+
+- **Breaking:** the `G3`-prefixed aliases. Use the unprefixed names; import
+  one under an alias if it collides with a local name.
+- **Breaking:** `g3_ui::prelude` no longer re-exports `dioxus::prelude`.
+- **Breaking:** the `*_styles.rs` class-name constants. Class names are
+  internal; style components through their `class` prop, `data-state`, and
+  ARIA attributes.
+- **Breaking:** `SheetButton` (use `InfoButton { sheet, .. }`), `ItemKind`
+  (an `Item` now infers its element from its props), `RefresherState`,
+  `can_refresh`, and `Card`'s `RightSlot` and `top_margin`.
+- **Breaking:** `InputType`'s `Date`, `Time`, `DateTime`, and `Month`. They
+  opened the browser's own picker, which ignores the mode and the theme. Use
+  `DatePicker` and `TimePicker`, which also carry a typed value instead of a
+  string; a date and a time field side by side cover `datetime-local`.
+
+### Fixed
+
+- Every documentation example compiles. They were `rust,ignore`, so nothing
+  checked them against the API, and 0.4 renamed half of it. Each now carries
+  hidden scaffolding - the imports, a wrapper, and stand-ins for the names it
+  invents - so it builds as a doctest while the rendered page shows only the
+  example. The one exception is the route-transitions snippet in the README,
+  which needs the optional `transitions` feature and its crate.
+- Package only the crate's own root files. The `include` patterns were
+  unanchored, so `deploy/README.md` shipped in the crate.
+- The stylesheet names its layer order (`theme, base, g3, components,
+  utilities`), so Tailwind's reset no longer flattens the components.
+- `RadioGroup` and `AccordionGroup` follow a new `value` signal passed on a
+  later render.
+- An `Item` with controls in `end` keeps them out of its own button, so no
+  button is nested in another.
+- Cards in a `Stack` or `Grid` are spaced by its gap alone; a card's own
+  margin no longer adds to it.
+- `Rating` stars shrink to fit a narrow column, and a press still lands on
+  the star under it.
+- A `SwipeItem` holds content of any height and collapses from that height
+  when dismissed. A vertical scroll no longer runs on under a sideways drag,
+  and with `mouse_swipe: false` its actions button shows on hover.
+- Rows in a `ReorderList` are separated like any other list's rows.
+- A `Badge` with an `aria_label` keeps an icon beside its text, and `Avatar`
+  initials skip leading punctuation, so "@ada" reads "A".
+- A `RouteTransitionPage` inside a `TabLayout` fills the space beside the
+  navigation.
+
+### Changed
+
+- **Breaking:** `to` and `BackButton`'s `default_to` take a `Destination`
+  rather than an `Option<NavigationTarget>`, so a route goes straight in -
+  `Item { label: "Profile", to: Route::Profile {} }` - the way Dioxus's own
+  `Link` takes one. That form is what the documentation always showed, but it
+  did not compile: Dioxus converts into an optional prop only for
+  `Option<String>`, so every other caller had to spell out
+  `NavigationTarget::from(..)`.
+- A dismissed `SwipeItem` leaves by the row's own width instead of a fixed
+  430px, so a wide desktop row no longer stops partway across.
+- A `Searchbar` in a `Header`'s `toolbar` keeps the room a field needs from
+  the header's edges. A segmented strip still sits flush, as it should.
+- `BottomSheet`, `SideSheet`, and `NavigationDrawer` take `padding`, the
+  same way `Content` does, so a drawer whose rows are its navigation can run
+  them to its edges.
+- The playground's two showcases are coherent mini apps. `DemoApp` gives each
+  tab one job - a feed that refreshes, a booking form, an edge-to-edge inbox,
+  and a settings page - and puts the segmented control and the searchbar in
+  the header where they belong. `RouteTransitions` is a listening app whose
+  every screen says which transition brought it in.
+- **Breaking:** renamed components:
+  - `Body` → `Content`, with `loading` and `error` fallbacks.
+  - `Navbar` → `TabLayout`.
+  - `Field` → `Input` and `TextArea`.
+  - `Line` → `Divider`.
+  - `ItemDivider` → `ListHeader`.
+  - `FabContainer` → `FabMenu`.
+- **Breaking:** `Sheet` is split by placement. `BottomSheet` rises from the
+  bottom and supports `detents`. `SideSheet` takes a logical `SheetEdge`
+  and a `SideSheetBehavior` of `Overlay`, `Push`, or `Reveal`.
+  `NavigationDrawer` replaces the `Menu` side-sheet type; it is persistent
+  navigation, not a dialog.
+- **Breaking:** `NavbarTabBar` and `NavbarTab` are replaced by
+  `AdaptiveNav`, which is a bottom bar on phones and a rail on wide shells,
+  the fixed forms `NavBar` and `NavRail`, and `NavItem`. The old
+  `visibility: RailOnly` is `AdaptiveNav { compact: AdaptiveNavCompact::Hidden }`,
+  and `desktop_placement: Bottom` is `group: NavItemGroup::Secondary`.
+  `NavItem` takes `to` or `href` and marks the current item with
+  `aria-current`.
+- **Breaking:** `Card`'s `inset: bool` is now `variant: CardVariant`:
+  `Raised` (the default, with a shadow), `Flat` (a border and no shadow), or
+  `Filled` (a tinted surface, the old `inset`).
+- **Breaking:** `List`'s `inset: bool` is now `variant: ListVariant`:
+  `EdgeToEdge` (the default) or a rounded group drawn like a card:
+  `Raised` (the old `inset: true`), `Flat`, or `Filled`.
+- **Breaking:** `SwipeItem`'s `behavior` is split into `start_behavior` and
+  `end_behavior`, so each edge can reveal, activate, or dismiss on its own.
+  Revealed actions are as wide as their buttons, and pressing one closes
+  the row.
+- **Breaking:** `Theme::warning` defaults to yellow (`#f5b400`) instead of
+  orange, with a new `on_warning` field for text drawn on it. Warning text
+  and outline buttons darken it so it stays readable.
+- **Breaking:** consistent prop names across components:
+  - `is_open` → `open`.
+  - `active` and `index` → `value`.
+  - `Button`'s `style: ButtonStyle` → `fill: ButtonFill`.
+  - `disable_text_selection` → `text_selection`.
+  - `FabSize::Normal` → `FabSize::Regular`.
+  - `SwipeState::full` → `committed`.
+- **Breaking:** color variants share one `Color` enum (`Accent`,
+  `Neutral`, `Success`, `Warning`, `Danger`) across `Button`, `Badge`,
+  `Toast`, `MenuItem`, `SwipeAction`, and `Text`.
+- **Breaking:** `Select`, `RadioGroup`/`Radio`, `SegmentGroup`/`SegmentButton`,
+  and `AccordionGroup` are generic over their value type instead of using
+  strings or indexes.
+- **Breaking:** value signals are optional. Without one, a component keeps
+  its own state. Change callbacks receive the new value (`EventHandler<T>`),
+  not a DOM event.
+- **Breaking:** `Theme` fields are renamed to match their tokens: `focused` →
+  `accent`, `card_border` → `border`, and `label_secondary` →
+  `text_tertiary`. `label_primary` and `card_inset` are removed. New fields
+  are `on_accent`, `surface`, `control`, `success`, `warning`, and `danger`.
+  `with_focused` is now `with_accent`.
+- **Breaking:** CSS custom properties use a `--g3-` prefix
+  (`--g3-color-accent`, `--g3-transition-normal`, `--g3-nav-rail-width`).
+- **Breaking:** the stylesheet is in the `g3` cascade layer and no longer uses
+  `!important`, so any unlayered app rule overrides it. Component state is
+  exposed through `data-state` and ARIA attributes rather than modifier
+  classes. Overlays use a shared z-index scale (`--g3-z-*`).
+- **Breaking:** `ConfirmModal`'s `on_confirm` is an `EventHandler<()>`, and
+  the modal is an `alertdialog`.
+- `Card` is a single stretched link or button when it has `onclick`, `to`,
+  or `href`, so controls inside it stay separately focusable.
+- `Chip` renders a plain `span` unless it is pressable.
+- `Button`, `FabButton`, and `Input` pass other HTML attributes through to
+  their element.
+- Changing `AppWrapper`'s or `ThemeProvider`'s `mode` now updates the
+  subtree.
+- The `transitions` feature now depends on `g3-route-transitions` 0.4 and
+  uses its region vocabulary. `AppWrapper` marks the shell with
+  `ROUTE_TRANSITION_OVERLAY_REGION_CLASS` and loads `RouteTransitionStyles`.
+  `TabLayout` marks itself with `ROUTE_TRANSITION_BASE_REGION_CLASS`.
+- **Breaking:** renamed `AppWrapper`'s `route_transition_root` prop to
+  `route_transition_overlay`. "Root" now names a route layer
+  (`layer = stack_root`) in `g3-route-transitions`, and this prop controls
+  the overlay region.
+- The minimum supported Rust version is 1.88.
+
+### Added
+
+- `DatePicker` and `TimePicker`: form fields that open an iOS wheel picker
+  or a Material calendar or clock dialog, chosen by `PickerStyle`. Both also
+  open in a popover anchored to the field, which becomes a sheet on phones.
+  The Material time dialog has a typing mode.
+- `Calendar`: a month grid for picking a date, usable on its own. Arrow keys
+  move by day, Home and End reach the ends of the week, and Page Up and Page
+  Down change month or year; the title opens a year list.
+- `CalendarDate` and `TimeOfDay` carry the values, parsing from and printing
+  as ISO 8601, with `today()`, `now()`, and calendar arithmetic. `HourCycle`
+  picks a 12- or 24-hour clock.
+- `Strings` gained month and weekday names, the first day of the week, AM and
+  PM, and the picker labels.
+- `use_toast`, `use_alert`, and `use_action_sheet` open overlays from code.
+  `AppWrapper` hosts them. Alerts and action sheets return a future that
+  resolves to the user's answer.
+- New components:
+  - Overlays: `Alert`, `ActionSheet`, `Popover`, and `Menu`/`MenuItem`.
+  - Navigation: `Tabs`/`TabList`/`Tab`/`TabPanel` and a router-aware
+    `BackButton`.
+  - Forms: `Range`, `Stepper`, and `Searchbar`.
+  - Content and layout: `Text`, `Img`, `Tooltip`, `Stack`, and `Grid`.
+  - Feedback: `InfiniteScroll`.
+- `Theme::system()` and `Theme::adaptive(light, dark)` follow the operating
+  system's color scheme through CSS `light-dark()`.
+- `Strings` holds every built-in label, for translation.
+- `use_theme`, `use_strings`, and `use_component_mode` read the values in
+  effect.
+- `BottomSheet` takes `backdrop_detent`: below that detent the page stays
+  visible and usable. Detents are fractions of the app's height, so `1.0`
+  fills it; they were fractions of the browser window. Detents can change
+  while the sheet is mounted.
+- `Content` takes `width: ContentWidth` (`Full`, `Readable` at 40rem, `Wide`
+  at 60rem) to narrow its children on wide shells while the scrollbar stays at the page
+  edge, and `on_refresh`/`refreshing` for pull to refresh.
+- `Select` takes `width: SelectWidth`: `Fill` (the default), `Fit` to its
+  chosen option, or a fixed `Sm`, `Md`, or `Lg`.
+- Popovers, menus, and `Select` lists flip to the other side of their
+  trigger when they would run past the edge of the app.
+- `Grid` takes `wide_columns` and `wide_gap` for shells `48rem` and wider.
+- Scrollable `SegmentGroup`s scroll by mouse drag and wheel as well as
+  touch, fade the edge that has more buttons, and keep the selected button in
+  view.
+- `Button` takes `loading`, `button_type`, `to`, `href`, `new_tab`, `start`,
+  and `end`.
+- `Input` takes `clearable`, `start`, `end`, and `debounce_ms`, and supports
+  date and time types.
+- `SwipeItem` works with a mouse and the keyboard, and has a "Show actions"
+  button for assistive technology.
+- `Modal` takes a `role` (`ModalRole`) and `size` (`ModalSize`).
+- `Toast` takes an `action`, `closable`, and `ToastDuration::Persistent`.
+- Sheets, modals, and popovers trap focus, close on Escape, restore focus
+  when they close, and lock page scrolling while open.
+- Arrow keys move between radios, segments, and tabs.
+- Every public item is documented, and docs.rs builds with the
+  `transitions` feature.
+- `Table`: a data table in a focusable, scrollable region, with an optional
+  sticky first column. Cells take a `Color` and a muted tone.
+- `ReorderList`, `ReorderItem`, and `ReorderHandle`: rows reordered by
+  dragging the handle, or with the arrow keys, announced to screen readers.
+- `Divider` takes a `label`, drawn between two rules, as in "or continue
+  with email".
+- `Card` takes `start`, content before the title, such as an avatar.
+- `Item` takes `wrap`, which lets its label and description wrap instead of
+  being cut short.
+- `ToastOptions::replace` shows a toast at once, in place of the one showing
+  and any waiting.
+- `Color::as_str` is public, for styling your own elements by color.
+
+### Fixed
+
+- Sheets animate in and out over 0.5s on a softer curve instead of 0.25s,
+  which read as popping in. The side sheet backdrop fades instead of sliding
+  in with the sheet.
+- A `BottomSheet` with detents slides in instead of appearing at the end
+  of its entrance: the rules sizing it also delayed it becoming visible. It
+  slides in at its resting height, and later detent changes still animate.
+- A popover shown as a bottom sheet on a phone slides and fades on the
+  sheet timing.
+- An `AppWrapper` with `layout: false` is still the container its wide
+  layout rules measure, so a `Select` in such a page opens as a menu on wide
+  screens instead of a full-width sheet.
+- A swipe released outside its row finishes instead of leaving the row
+  stuck mid-drag.
+- Accordion panels open without a jump: the padding no longer snaps in
+  before the height animates.
+- Wide `Content` shows a thin scrollbar without arrow buttons.
+- A `Refresher` pull released outside the refresher, or outside the
+  window, lets go instead of staying pulled. The refresher fills its scroll
+  area, so a pull can start below short content, and it no longer becomes
+  the containing block for sheets inside it.
+- Neutral outline buttons, such as `ConfirmModal`'s Cancel, use the border
+  color instead of a solid text-colored outline.
+
+- The desktop rail no longer dims and scales with the page when a routed
+  sheet opens, and the sheet no longer leaves an empty rail-width gap. With
+  the `transitions` feature, the rail is route-transition persistent chrome,
+  which stays in place above the rising sheet.
+- `SideSheet` push and reveal and `NavigationDrawer` resize the page even
+  when `AppWrapper` has `layout: false`.
+- Generated element ids are unique, so labels, descriptions, and
+  accordion panels no longer collide when a component is used twice.
+
+### Accessibility
+
+Every playground demo passes an axe-core audit in both modes.
+
+- Toasts pause their timer while the pointer is over them or focus is
+  inside, and a toast with an action defaults to the long duration.
+- A loading `Button` stays focusable: it is `aria-disabled` and busy
+  rather than `disabled`, so pressing it does not drop focus to the page.
+  Its spinner is no longer a second live region.
+- Links that open a new tab say so to screen readers.
+- A `SwipeItem` inside a `List` is the list item; the row inside it no
+  longer claims to be another one.
+- `Card`, `AccordionItem`, and `ListHeader` take `heading_level`, and
+  default to `h2` instead of `h3` so a page's outline does not skip a
+  level.
+- `NavItem`s keep their names in a rail, where the visible label is
+  hidden.
+- `Menu` and `Popover` set `aria-haspopup`, `aria-expanded`, and
+  `aria-controls` on their trigger. Menus and `Select` lists jump to the
+  next item starting with a typed letter, and `Select` opens with the
+  arrow keys.
+- `Stepper` supports Home, End, PageUp, and PageDown.
+- `Tooltip` describes its trigger automatically, stays up while hovered,
+  and hides on Escape.
+- `Badge` takes an `aria_label` for counts that need context.
+- The pull-to-refresh prompts are no longer announced on every movement;
+  only the refresh is.
+- `Content`'s scroll area can take keyboard focus, so a page with nothing
+  focusable can still be scrolled from the keyboard.
+- Fields, checkboxes, radios, and steppers use a new
+  `--g3-color-control-border` with at least 3:1 contrast. The dark preset's
+  accent and danger colors meet 4.5:1 as text, and its fills carry dark
+  text (`on_accent` is `#04162b`).
+- Focus rings for ranges, steppers, and chips; Windows High Contrast
+  support; reduced motion is respected when segments scroll.
+
+### Documentation
+
+- The README covers the 0.4 API, overlays opened from code, styling, and
+  upgrading from 0.3.
+- The route-transition section lists the region each component provides,
+  where to add `RouteTransitionPage`, and the layout rules for sheet routes,
+  segmented screens, and nested wrappers.
 
 ## [0.3.0] - 2026-09-13
 
@@ -154,9 +450,9 @@ Initial release.
 - Make mode and theme switchable at runtime: `G3Mode` now carries a `Signal<ComponentMode>` and the ambient theme is published as a `Signal<Theme>`, so changing either re-renders components that are already mounted. Previously both were read once per component and never again, and `AppWrapper` read its own published value back instead of an outer one. **Breaking:** `G3Mode.mode` changed type; construct it from a signal.
 - Add `use_ambient_theme` for reading the theme an enclosing `AppWrapper` or `G3ThemeProvider` set.
 - Replace the JavaScript first-paint guard with `AssetOptions::css().with_static_head(true)`, which puts the stylesheet `<link>` in the document head at build time and lets the browser block first paint on it. The old guard hid the shell behind `visibility: hidden` and `transition: none !important` until a polled round trip reported the stylesheet had applied; when that round trip never completed the guard never lifted, which left every transition in the app dead - swipe rows snapped back instead of animating. `AppWrapper` still links the stylesheet at runtime as well, because desktop and mobile bundles only collect assets something links at runtime - a statically-headed asset alone never reaches them. **Breaking:** `G3PreloadStyle` and the `g3-preload` class are gone.
-- Stop the swipe action colour bleeding through as a hairline along the bottom of the last swipeable row: the dragged content composites separately from the actions beneath it, and on a fractionally-tall row the two rasterize to different device pixels. Rows above the last were only ever covered by their own divider.
-- Hold a swiped row's action colour underneath until the row has slid back over it. The row reported itself closed the instant the drag was released, which hid the actions immediately and left the row animating home across bare card.
-- Link the playground stylesheet into the head at build time. Loading it at runtime left a window where the library stylesheet had applied but the playground's had not, so the device frame rendered unstyled while the app booted. The page background during that window is white, so it reads as the browser's own blank page rather than a colour of its own.
+- Stop the swipe action color bleeding through as a hairline along the bottom of the last swipeable row: the dragged content composites separately from the actions beneath it, and on a fractionally-tall row the two rasterize to different device pixels. Rows above the last were only ever covered by their own divider.
+- Hold a swiped row's action color underneath until the row has slid back over it. The row reported itself closed the instant the drag was released, which hid the actions immediately and left the row animating home across bare card.
+- Link the playground stylesheet into the head at build time. Loading it at runtime left a window where the library stylesheet had applied but the playground's had not, so the device frame rendered unstyled while the app booted. The page background during that window is white, so it reads as the browser's own blank page rather than a color of its own.
 - Drop the compact-shell/wide-shell chips above each playground preview; the header toggle already names the width.
 - 25 mobile-first components with iOS and Material Design variants of each.
 - Configurable `Theme` of 17 CSS custom-property tokens, with built-in light

@@ -1,0 +1,143 @@
+//! A search field.
+use crate::components::{Input, InputType};
+use crate::state::use_controlled;
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
+use dioxus::prelude::*;
+use dioxus_icons::lucide::Search;
+#[cfg(feature = "playground")]
+use dioxus_icons::lucide::SlidersHorizontal;
+
+/// A search field with an icon and a clear button. Like Ionic's
+/// `ion-searchbar`.
+///
+/// `onchange` fires after typing pauses for `debounce_ms` (300 by default),
+/// which suits live filtering. `on_submit` fires on Enter.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let query = use_signal(String::new);
+/// # fn filter(_query: String) {}
+/// rsx! {
+///     Header { title: "Players",
+///         toolbar: rsx! { Searchbar { value: query, onchange: move |q| filter(q) } } }
+/// }
+/// # }
+/// ```
+#[component]
+pub fn Searchbar(
+    /// The query. Kept internally when not given.
+    value: Option<Signal<String>>,
+    /// Hint shown while empty. Defaults to
+    /// [`Strings::search`](crate::Strings::search).
+    placeholder: Option<String>,
+    /// Accessible name. Defaults to the placeholder.
+    aria_label: Option<String>,
+    /// Delay before `onchange`, in milliseconds. Defaults to 300.
+    debounce_ms: Option<u64>,
+    /// Called with the query after typing pauses.
+    onchange: Option<EventHandler<String>>,
+    /// Called with the query when the user presses Enter.
+    on_submit: Option<EventHandler<String>>,
+    /// A control inside the field after the clear button, such as a filter
+    /// button. It is separated from the text controls by a vertical rule.
+    end: Option<Element>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
+    /// Extra classes for the search form.
+    class: Option<String>,
+) -> Element {
+    let mode = use_component_mode(mode);
+    let strings = use_strings();
+    let value = use_controlled(value, String::new);
+    let placeholder = placeholder.unwrap_or(strings.search);
+    let aria_label = aria_label.unwrap_or_else(|| placeholder.clone());
+    let cls = classes([
+        "g3-searchbar",
+        mode.pick("g3-searchbar-ios", "g3-searchbar-md"),
+    ]);
+    rsx! {
+        form {
+            class: merge_classes(cls, class.as_deref()),
+            role: "search",
+            onsubmit: move |event| {
+                event.prevent_default();
+                if let Some(on_submit) = on_submit {
+                    on_submit.call(value());
+                }
+            },
+            Input {
+                value,
+                input_type: InputType::Search,
+                placeholder,
+                aria_label,
+                clearable: true,
+                debounce_ms: debounce_ms.unwrap_or(300),
+                onchange,
+                mode,
+                start: rsx! {
+                    Search { size: 18 }
+                },
+                end: end.map(|end| rsx! {
+                    span { class: "g3-searchbar-end", {end} }
+                }),
+                autocomplete: "off",
+            }
+        }
+    }
+}
+
+#[cfg(feature = "playground")]
+#[component]
+fn SearchbarPlaygroundDemo() -> Element {
+    let query = use_signal(String::new);
+    let mut committed = use_signal(String::new);
+    let show_end = use_signal(|| true);
+    let mut filters_open = use_signal(|| false);
+    let nearby = use_signal(|| true);
+    let available = use_signal(|| false);
+    rsx! {
+        crate::PlaygroundDemoFrame {
+            controls: rsx! {
+                crate::Checkbox { checked: show_end, label: "End action" }
+            },
+            crate::Stack {
+                Searchbar {
+                    value: query,
+                    onchange: move |q| committed.set(q),
+                    end: show_end().then(|| rsx! {
+                        crate::Button {
+                            fill: crate::ButtonFill::Clear,
+                            size: crate::ButtonSize::Sm,
+                            aria_label: "Filters",
+                            onclick: move |_| filters_open.set(true),
+                            SlidersHorizontal { size: 18 }
+                        }
+                    }),
+                }
+                crate::Text { tone: crate::TextTone::Secondary,
+                    if committed().is_empty() { "Type to filter." } else { "Filtering by \"{committed}\"" }
+                }
+            }
+            crate::BottomSheet { open: filters_open, title: "Search filters",
+                crate::Stack {
+                    crate::Toggle { checked: nearby, label: "Nearby results" }
+                    crate::Toggle { checked: available, label: "Available now" }
+                    crate::Button {
+                        expand: crate::ButtonExpand::Block,
+                        onclick: move |_| filters_open.set(false),
+                        "Show results"
+                    }
+                }
+            }
+        }
+    }
+}
+
+crate::g3_playground! {
+    name: "Searchbar",
+    description: "Search field with debounced changes and a clear button.",
+    demo: SearchbarPlaygroundDemo,
+    source: "src/components/searchbar.rs",
+}

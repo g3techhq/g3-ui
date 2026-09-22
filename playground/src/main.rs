@@ -1,71 +1,74 @@
 //! g3-ui playground - component-owned demos rendered in responsive device contexts.
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
-use g3_route_transitions::{Platform, animated_navigate, route_transitions, set_platform};
+use g3_route_transitions::{
+    Platform, RouteTransitions, animated_navigate, set_platform, use_browser_history_transitions,
+};
 use g3_ui::{
-    AppWrapper, ComponentMode, ComponentPlaygroundDemo, G3Theme, SegmentButton, SegmentGroup,
-    Select, SelectOption, Sheet, SheetPlacement, component_playground_demos,
+    AppWrapper, Button, ButtonFill, ButtonSize, ComponentMode, ComponentPlaygroundDemo, Header,
+    Item, List, ListLines, NavigationDrawer, SegmentButton, SegmentGroup, Select, SelectOption,
+    SideSheet, Theme as G3Theme, ThemeProvider, component_playground_demos,
 };
 use gloo_timers::future::TimeoutFuture;
 use manganis::{AssetOptions, asset};
 
 mod transition_showcase;
 use transition_showcase::{
-    TransitionArticle, TransitionArticleDetail, TransitionDetail, TransitionHome,
-    TransitionProfile, TransitionQueue, TransitionRatings,
+    TransitionAlbum, TransitionEpisode, TransitionLibrary, TransitionListen, TransitionProfile,
+    TransitionQueue, TransitionRadio,
 };
 #[allow(dead_code)]
 const PLAYGROUND_CSS: Asset = asset!(
     "/assets/playground.css",
     AssetOptions::css().with_static_head(true)
 );
+const FAVICON: Asset = asset!("/assets/favicon.svg");
 
-#[route_transitions]
-#[derive(Clone, Debug, PartialEq, Routable)]
+#[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 #[rustfmt::skip]
 enum Route {
     #[layout(Playground)]
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/")]
         Landing {},
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/components/:slug")]
         ComponentDemo { slug: String },
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/transitions")]
-        TransitionHome {},
+        TransitionListen {},
 
-        #[transition(pushed)]
-        #[route("/transitions/detail")]
-        TransitionDetail {},
+        #[transition(layer = stack_page)]
+        #[route("/transitions/album")]
+        TransitionAlbum {},
 
-        #[transition(cover)]
+        #[transition(layer = sheet)]
         #[route("/transitions/queue")]
         TransitionQueue {},
 
-        #[transition(base, replace, push(group = showcase_tabs, order = tab))]
-        #[route("/transitions/ratings/:tab")]
-        TransitionRatings { tab: u8 },
+        #[transition(history = replace, peers(group = showcase_tabs, order = tab))]
+        #[route("/transitions/library/:tab")]
+        TransitionLibrary { tab: u8 },
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/transitions/profile")]
         TransitionProfile {},
 
-        #[transition(base)]
-        #[route("/transitions/article")]
-        TransitionArticle {},
+        #[transition(forward_to = TransitionEpisode)]
+        #[route("/transitions/radio")]
+        TransitionRadio {},
 
-        #[transition(morph)]
-        #[route("/transitions/article/read")]
-        TransitionArticleDetail {},
+        #[transition(layer = stack_page)]
+        #[route("/transitions/radio/episode")]
+        TransitionEpisode {},
 
-        #[transition(root)]
+        #[transition(layer = stack_root)]
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlaygroundTheme {
     Blue,
     Green,
@@ -73,14 +76,6 @@ pub enum PlaygroundTheme {
     Forest,
 }
 impl PlaygroundTheme {
-    fn from_value(value: &str) -> Self {
-        match value {
-            "Green" | "green" | "Fairway" | "fairway" => Self::Green,
-            "Night" | "night" | "Twilight" | "twilight" => Self::Night,
-            "Forest" | "forest" | "Terminal" | "terminal" => Self::Forest,
-            _ => Self::Blue,
-        }
-    }
     fn label(self) -> &'static str {
         match self {
             Self::Blue => "Blue",
@@ -97,60 +92,52 @@ impl PlaygroundTheme {
     fn to_theme(self) -> G3Theme {
         match self {
             Self::Blue => G3Theme {
-                focused: "#2563eb".into(),
+                accent: "#2563eb".into(),
                 bg: "#eef5ff".into(),
                 bg_secondary: "#dbeafe".into(),
-                card_inset: "#f8fbff".into(),
                 control: "#eaf2ff".into(),
-                card_border: "rgba(37, 99, 235, 0.2)".into(),
-                label_primary: "#102033".into(),
-                label_secondary: "#496278".into(),
+                border: "rgba(37, 99, 235, 0.2)".into(),
+                text_tertiary: "#496278".into(),
                 text: "#102033".into(),
                 text_secondary: "#53677f".into(),
                 shadow: "rgba(30, 64, 175, 0.16)".into(),
                 ..G3Theme::default_light()
             },
             Self::Green => G3Theme {
-                focused: "#1f7a4d".into(),
+                accent: "#1f7a4d".into(),
                 bg: "#edf7f0".into(),
                 bg_secondary: "#dceee2".into(),
-                card_inset: "#f5fbf7".into(),
                 control: "#e5f3ea".into(),
-                card_border: "rgba(31, 122, 77, 0.24)".into(),
-                label_primary: "#12251a".into(),
-                label_secondary: "#4d6657".into(),
+                border: "rgba(31, 122, 77, 0.24)".into(),
+                text_tertiary: "#4d6657".into(),
                 text: "#12251a".into(),
                 text_secondary: "#52685c".into(),
                 shadow: "rgba(24, 74, 47, 0.16)".into(),
                 ..G3Theme::default_light()
             },
             Self::Night => G3Theme {
-                focused: "#7dd3fc".into(),
+                accent: "#7dd3fc".into(),
                 bg: "#07111f".into(),
                 bg_secondary: "#0e1b2e".into(),
                 card: "#111d2e".into(),
-                card_inset: "#172438".into(),
                 surface: "#101a2b".into(),
                 control: "#1b2a40".into(),
-                card_border: "rgba(148, 163, 184, 0.24)".into(),
-                label_primary: "#e5edf6".into(),
-                label_secondary: "#b8c7d8".into(),
+                border: "rgba(148, 163, 184, 0.24)".into(),
+                text_tertiary: "#b8c7d8".into(),
                 text: "#e5edf6".into(),
                 text_secondary: "#9fb0c3".into(),
                 shadow: "rgba(0, 0, 0, 0.54)".into(),
                 ..G3Theme::default_dark()
             },
             Self::Forest => G3Theme {
-                focused: "#34d399".into(),
+                accent: "#34d399".into(),
                 bg: "#050806".into(),
                 bg_secondary: "#0b130d".into(),
                 card: "#101811".into(),
-                card_inset: "#162218".into(),
                 surface: "#0e1610".into(),
                 control: "#18241b".into(),
-                card_border: "rgba(134, 239, 172, 0.2)".into(),
-                label_primary: "#e6f4e8".into(),
-                label_secondary: "#b8d4bd".into(),
+                border: "rgba(134, 239, 172, 0.2)".into(),
+                text_tertiary: "#b8d4bd".into(),
                 text: "#e6f4e8".into(),
                 text_secondary: "#9eb5a4".into(),
                 shadow: "rgba(0, 0, 0, 0.62)".into(),
@@ -159,25 +146,19 @@ impl PlaygroundTheme {
         }
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlaygroundViewport {
     Mobile,
     Desktop,
 }
 #[derive(Clone, Copy)]
 struct PlaygroundSettings {
-    mode_index: Signal<usize>,
-    viewport_index: Signal<usize>,
-    theme_value: Signal<String>,
+    mode: Signal<ComponentMode>,
+    viewport: Signal<PlaygroundViewport>,
+    theme: Signal<PlaygroundTheme>,
 }
 
 impl PlaygroundViewport {
-    fn from_index(index: usize) -> Self {
-        match index {
-            1 => Self::Desktop,
-            _ => Self::Mobile,
-        }
-    }
     fn as_str(self) -> &'static str {
         match self {
             Self::Mobile => "mobile",
@@ -241,43 +222,35 @@ fn main() {
 }
 #[component]
 fn App() -> Element {
+    use_browser_history_transitions::<Route>();
     rsx! {
+        document::Link { rel: "icon", r#type: "image/svg+xml", href: FAVICON }
         Router::<Route> {}
     }
 }
 #[component]
 fn Playground() -> Element {
     let demos = component_playground_demos();
-    let mode_index = use_signal(|| 0_usize);
-    let viewport_index = use_signal(|| 0_usize);
+    let mode = use_signal(|| ComponentMode::Md);
+    let viewport = use_signal(|| PlaygroundViewport::Mobile);
     // Open from the first paint on a wide shell, where the drawer is a
     // persistent `Menu` that reserves its own space beside the page. Closed on
     // a phone, where it is a dismissible `Overlay` summoned from the header.
     let mut selector_open = use_signal(|| !initial_compact_shell().unwrap_or(true));
     let source_value = use_signal(Vec::<String>::new);
-    let theme_value = use_signal(|| PlaygroundTheme::Blue.label().to_string());
+    let theme = use_signal(|| PlaygroundTheme::Blue);
     let mut playing = use_signal(|| false);
     let current_route: Route = use_route();
     let selected = selected_demo(&demos, &current_route);
     let showing_transitions = current_route.is_transition_showcase();
     let count = demos.len() + 1;
-    let active_mode = if mode_index() == 1 {
-        ComponentMode::Ios
-    } else {
-        ComponentMode::Md
-    };
-    let active_theme = PlaygroundTheme::from_value(&theme_value());
-    let active_viewport = PlaygroundViewport::from_index(viewport_index());
+    let active_mode = mode();
+    let active_viewport = viewport();
     let compact_shell = use_compact_shell();
     let is_compact = compact_shell().unwrap_or(false);
-    let selector_side_type = if is_compact {
-        g3_ui::SideSheetType::Overlay
-    } else {
-        g3_ui::SideSheetType::Menu
-    };
     set_platform(match active_mode {
         ComponentMode::Ios => Platform::Ios,
-        ComponentMode::Md => Platform::Md,
+        ComponentMode::Md => Platform::Material,
     });
     // The wide-shell drawer is a persistent `Menu` that reserves its own space
     // beside the page, so it is part of the layout rather than something to
@@ -292,7 +265,7 @@ fn Playground() -> Element {
     });
     g3_ui::set_mode(active_mode);
     let page_title = if showing_transitions {
-        "Route transitions".to_string()
+        "RouteTransitions".to_string()
     } else {
         selected.descriptor.name.to_string()
     };
@@ -301,10 +274,13 @@ fn Playground() -> Element {
     } else {
         selected.descriptor.description
     };
-    let selected_source = if showing_transitions {
-        transition_showcase::SOURCE.to_string()
+    let source_panels = if showing_transitions {
+        vec![(
+            "Transition showcase routes".to_string(),
+            transition_showcase::SOURCE.to_string(),
+        )]
     } else {
-        playground_demo_source(selected.source)
+        source_panels(&selected)
     };
     let play_all = move |_| {
         if playing() {
@@ -319,30 +295,43 @@ fn Playground() -> Element {
     let theme_options = PlaygroundTheme::all()
         .iter()
         .copied()
-        .map(|theme| SelectOption::from((theme.label(), theme.label())))
+        .map(|theme| SelectOption::new(theme, theme.label()))
         .collect::<Vec<_>>();
     provide_context(PlaygroundSettings {
-        mode_index,
-        viewport_index,
-        theme_value,
+        mode,
+        viewport,
+        theme,
     });
+    let selector = rsx! {
+        div { class: "playground-sidebar-header",
+            h2 { "g3_ui" }
+            div { class: "subtitle", "{count} demos" }
+        }
+        PlaygroundNav {
+            demos: demos.clone(),
+            current_route: current_route.clone(),
+            selector_open,
+            dismiss_on_select: is_compact,
+        }
+    };
     rsx! {
         AppWrapper {
-            theme: active_theme.to_theme(),
+            theme: theme().to_theme(),
             mode: active_mode,
             class: "playground-root",
             layout: false,
-            route_transition_root: false,
+            route_transition_overlay: false,
             div { class: "playground-page",
-                g3_ui::Header {
+                Header {
                     title: page_title,
                     mode: active_mode,
                     class: "playground-header",
-                    start_button: rsx! {
-                        g3_ui::Button {
-                            style: g3_ui::ButtonStyle::Clear,
-                            size: g3_ui::ButtonSize::Sm,
-                            aria_label: "Toggle component menu".to_string(),
+                    start: rsx! {
+                        Button {
+                            fill: ButtonFill::Clear,
+                            size: ButtonSize::Sm,
+                            aria_label: "Toggle component menu",
+                            aria_expanded: selector_open(),
                             class: "playground-menu-button",
                             onclick: move |_| selector_open.toggle(),
                             span { class: "playground-menu-icon", aria_hidden: "true",
@@ -352,18 +341,23 @@ fn Playground() -> Element {
                             }
                         }
                     },
-                    end_button: rsx! {
-                        Select { value: theme_value, mode: active_mode, options: theme_options }
+                    end: rsx! {
+                        Select {
+                            value: theme,
+                            aria_label: "Theme",
+                            width: g3_ui::SelectWidth::Fit,
+                            options: theme_options,
+                        }
                     },
                     toolbar: rsx! {
                         div { class: "playground-header-toggles",
-                            SegmentGroup { active: mode_index, mode: active_mode,
-                                SegmentButton { index: 0, mode: active_mode, "MD" }
-                                SegmentButton { index: 1, mode: active_mode, "iOS" }
+                            SegmentGroup { value: mode, aria_label: "Platform",
+                                SegmentButton { value: ComponentMode::Md, "MD" }
+                                SegmentButton { value: ComponentMode::Ios, "iOS" }
                             }
-                            SegmentGroup { active: viewport_index, mode: active_mode,
-                                SegmentButton { index: 0, mode: active_mode, "Mobile" }
-                                SegmentButton { index: 1, mode: active_mode, "Desktop" }
+                            SegmentGroup { value: viewport, aria_label: "Viewport",
+                                SegmentButton { value: PlaygroundViewport::Mobile, "Mobile" }
+                                SegmentButton { value: PlaygroundViewport::Desktop, "Desktop" }
                             }
                         }
                     },
@@ -372,9 +366,9 @@ fn Playground() -> Element {
                     div { class: "playground-intro",
                         p { class: "playground-description", "{page_description}" }
                         if showing_transitions {
-                            g3_ui::Button {
+                            Button {
                                 disabled: playing(),
-                                aria_label: "Play every route transition".to_string(),
+                                aria_label: "Play every route transition",
                                 onclick: play_all,
                                 if playing() { "Playing tour…" } else { "Play transition tour" }
                             }
@@ -385,32 +379,38 @@ fn Playground() -> Element {
                         "data-playground-viewport": active_viewport.as_str(),
                         Outlet::<Route> {}
                     }
-                    g3_ui::AccordionGroup { value: source_value, class: "source-panel",
-                        g3_ui::AccordionItem {
-                            value: "source".to_string(),
-                            label: "Source".to_string(),
-                            Code {
-                                src: SourceCode::new(Language::Rust, selected_source.clone()),
-                                theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                    g3_ui::AccordionGroup { value: source_value, multiple: true, class: "source-panel",
+                        for (title, code) in source_panels {
+                            g3_ui::AccordionItem {
+                                key: "{title}",
+                                value: title.clone(),
+                                label: title.clone(),
+                                Code {
+                                    src: SourceCode::new(Language::Rust, code),
+                                    theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
+                                }
                             }
                         }
                     }
                 }
             }
-            Sheet {
-                is_open: selector_open,
-                placement: SheetPlacement::Left(selector_side_type),
-                mode: active_mode,
-                class: "playground-selector-sheet",
-                div { class: "playground-sidebar-header",
-                    h2 { "g3_ui" }
-                    div { class: "subtitle", "{count} demos" }
+            // A phone has no room to keep the menu beside the page, so it
+            // becomes a dismissible sheet there.
+            if is_compact {
+                SideSheet {
+                    open: selector_open,
+                    aria_label: "Components",
+                    padding: false,
+                    class: "playground-selector-sheet",
+                    {selector}
                 }
-                PlaygroundNav {
-                    demos: demos.clone(),
-                    current_route,
-                    selector_open,
-                    dismiss_on_select: is_compact,
+            } else {
+                NavigationDrawer {
+                    open: selector_open,
+                    aria_label: "Components",
+                    padding: false,
+                    class: "playground-selector-sheet",
+                    {selector}
                 }
             }
         }
@@ -421,13 +421,13 @@ impl Route {
     fn is_transition_showcase(&self) -> bool {
         matches!(
             self,
-            Self::TransitionHome {}
-                | Self::TransitionDetail {}
+            Self::TransitionListen {}
+                | Self::TransitionAlbum {}
                 | Self::TransitionQueue {}
-                | Self::TransitionRatings { .. }
+                | Self::TransitionLibrary { .. }
                 | Self::TransitionProfile {}
-                | Self::TransitionArticle {}
-                | Self::TransitionArticleDetail {}
+                | Self::TransitionRadio {}
+                | Self::TransitionEpisode {}
         )
     }
 }
@@ -466,16 +466,7 @@ fn selected_demo(demos: &[ComponentPlaygroundDemo], route: &Route) -> ComponentP
 
 fn active_playground_settings() -> (ComponentMode, PlaygroundTheme, PlaygroundViewport) {
     let settings = use_context::<PlaygroundSettings>();
-    let mode = if (settings.mode_index)() == 1 {
-        ComponentMode::Ios
-    } else {
-        ComponentMode::Md
-    };
-    (
-        mode,
-        PlaygroundTheme::from_value(&(settings.theme_value)()),
-        PlaygroundViewport::from_index((settings.viewport_index)()),
-    )
+    ((settings.mode)(), (settings.theme)(), (settings.viewport)())
 }
 
 #[component]
@@ -526,23 +517,23 @@ async fn pause_between_transitions() {
 }
 
 async fn play_transition_tour() {
-    animated_navigate(Route::TransitionHome {}).await;
+    animated_navigate(Route::TransitionListen {}).await;
     TimeoutFuture::new(1_400).await;
     for route in [
-        Route::TransitionDetail {},
-        Route::TransitionHome {},
+        Route::TransitionAlbum {},
+        Route::TransitionListen {},
         Route::TransitionQueue {},
-        Route::TransitionHome {},
+        Route::TransitionListen {},
         Route::TransitionProfile {},
-        Route::TransitionHome {},
-        Route::TransitionRatings { tab: 0 },
-        Route::TransitionRatings { tab: 1 },
-        Route::TransitionRatings { tab: 2 },
-        Route::TransitionRatings { tab: 0 },
-        Route::TransitionArticle {},
-        Route::TransitionArticleDetail {},
-        Route::TransitionArticle {},
-        Route::TransitionHome {},
+        Route::TransitionListen {},
+        Route::TransitionLibrary { tab: 0 },
+        Route::TransitionLibrary { tab: 1 },
+        Route::TransitionLibrary { tab: 2 },
+        Route::TransitionLibrary { tab: 0 },
+        Route::TransitionRadio {},
+        Route::TransitionEpisode {},
+        Route::TransitionRadio {},
+        Route::TransitionListen {},
     ] {
         animated_navigate(route).await;
         pause_between_transitions().await;
@@ -568,45 +559,29 @@ fn PlaygroundViewportDemo(
             div {
                 class: "playground-viewport-demo",
                 "data-g3-mode": mode.as_str(),
-                g3_ui::G3ThemeProvider { mode, theme: theme
-                            .to_theme(),
+                ThemeProvider { mode, theme: theme.to_theme(),
                     RenderSelectedDemo { demo, mode, theme }
                 }
             }
         }
     }
 }
-fn playground_demo_source(source: &str) -> String {
-    let Some(marker_index) = source.find("PlaygroundDemo") else {
-        return source.trim().to_string();
-    };
-    let function_start = source[..marker_index]
-        .rfind("pub fn")
-        .unwrap_or(marker_index);
-    let start = source[..function_start]
-        .rfind("#[component]")
-        .unwrap_or(function_start);
-    let Some(open_brace) = source[function_start..]
-        .find('{')
-        .map(|index| function_start + index)
-    else {
-        return source[start..].trim().to_string();
-    };
-    let mut depth = 0_i32;
-    for (index, ch) in source[open_brace..].char_indices() {
-        match ch {
-            '{' => depth += 1,
-            '}' => {
-                depth -= 1;
-                if depth == 0 {
-                    let end = open_brace + index + ch.len_utf8();
-                    return source[start..end].trim().to_string();
-                }
-            }
-            _ => {}
+/// The source panels under a demo: the demo itself, then each component it
+/// shows, titled so the reader knows which is which.
+fn source_panels(demo: &ComponentPlaygroundDemo) -> Vec<(String, String)> {
+    let mut panels = Vec::new();
+    let demo_code = g3_ui::function_source(demo.source, &format!("fn {}", demo.demo_name))
+        .unwrap_or(demo.source);
+    panels.push((
+        format!("{} demo source", demo.descriptor.name),
+        demo_code.trim().to_string(),
+    ));
+    for name in demo.components {
+        if let Some(code) = g3_ui::component_source(name) {
+            panels.push((format!("{name} source"), code.trim().to_string()));
         }
     }
-    source[start..].trim().to_string()
+    panels
 }
 #[component]
 fn PlaygroundNav(
@@ -618,14 +593,14 @@ fn PlaygroundNav(
     let demo_app = demos
         .iter()
         .copied()
-        .find(|demo| demo.descriptor.name == "Demo App");
+        .find(|demo| demo.descriptor.name == "DemoApp");
     let mut component_demos = demos
         .into_iter()
-        .filter(|demo| demo.descriptor.name != "Demo App")
+        .filter(|demo| demo.descriptor.name != "DemoApp")
         .collect::<Vec<_>>();
     component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
     rsx! {
-        g3_ui::List { class: "playground-nav", lines: g3_ui::ListLines::None,
+        List { class: "playground-nav", lines: ListLines::None,
             if let Some(demo) = demo_app {
                 ComponentNavButton {
                     demo,
@@ -634,16 +609,14 @@ fn PlaygroundNav(
                     dismiss_on_select,
                 }
             }
-            g3_ui::Item {
-                kind: g3_ui::ItemKind::Button,
+            Item {
                 selected: current_route.is_transition_showcase(),
-                label: "Route transitions".to_string(),
-                description: "Navigation showcase".to_string(),
+                label: "RouteTransitions",
                 onclick: move |_| async move {
                     if dismiss_on_select {
                         selector_open.set(false);
                     }
-                    animated_navigate(Route::TransitionHome {}).await;
+                    animated_navigate(Route::TransitionListen {}).await;
                 },
             }
             for demo in component_demos {
@@ -679,8 +652,7 @@ fn ComponentNavButton(
         Route::ComponentDemo { slug: selected_slug } if selected_slug == &slug
     );
     rsx! {
-        g3_ui::Item {
-            kind: g3_ui::ItemKind::Button,
+        Item {
             selected: is_selected,
             label: demo.descriptor.name.to_string(),
             onclick: move |_| {
@@ -697,32 +669,38 @@ fn ComponentNavButton(
 }
 #[cfg(test)]
 mod tests {
-    use super::{PlaygroundViewport, demo_slug, playground_demo_source};
+    use super::{PlaygroundViewport, demo_slug, source_panels};
     #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
-        assert_eq!(PlaygroundViewport::from_index(0).as_str(), "mobile");
-        assert_eq!(PlaygroundViewport::from_index(1).as_str(), "desktop");
-        assert_eq!(PlaygroundViewport::from_index(2).as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::Mobile.as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::Desktop.as_str(), "desktop");
     }
     #[test]
-    fn source_panel_extracts_only_playground_demo_function() {
-        let source = r#"
-fn helper() {}
-#[component]
-pub fn ButtonPlaygroundDemo() -> Element {
-    rsx! { div { "Button" } }
-}
-crate::g3_playground! { name: "Button" }
-"#;
-        let extracted = playground_demo_source(source);
-        assert!(extracted.contains("pub fn ButtonPlaygroundDemo"));
-        assert!(extracted.contains("Button"));
-        assert!(!extracted.contains("fn helper"));
-        assert!(!extracted.contains("g3_playground"));
+    fn every_demo_lists_its_demo_and_component_sources() {
+        for demo in g3_ui::component_playground_demos() {
+            let panels = source_panels(&demo);
+            let (title, code) = &panels[0];
+            assert!(title.ends_with("demo source"), "{title}");
+            assert!(
+                code.contains(&format!("fn {}", demo.demo_name))
+                    && !code.contains("g3_playground!"),
+                "{} demo source is not just the demo function",
+                demo.descriptor.name
+            );
+            assert_eq!(
+                panels.len(),
+                demo.components.len() + 1,
+                "{} names a component with no source",
+                demo.descriptor.name
+            );
+            for (name, (_, code)) in demo.components.iter().zip(&panels[1..]) {
+                assert!(code.contains(&format!("pub fn {name}")), "{name}");
+            }
+        }
     }
     #[test]
     fn component_names_have_stable_shareable_slugs() {
-        assert_eq!(demo_slug("Demo App"), "demo-app");
+        assert_eq!(demo_slug("DemoApp"), "demoapp");
         assert_eq!(demo_slug("SegmentGroup"), "segmentgroup");
         assert_eq!(demo_slug("Confirm Modal"), "confirm-modal");
     }

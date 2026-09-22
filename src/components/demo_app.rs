@@ -1,675 +1,670 @@
-//! A small end-to-end demo that composes the full g3-ui component set into one app.
-//! Kitchen-sink reference app for the playground gallery.
+//! Fairway: a round-of-golf app built from the library, for the playground.
 //!
-//! This is a component-owned playground demo (like every other component), but instead
-//! of exercising a single component it wires the whole library together into a responsive
-//! app shell so the gallery has a "kitchen sink" reference to open first.
-#[cfg(feature = "playground")]
+//! Each tab is one kind of screen a real app has, so the components land where
+//! they belong rather than being piled together: a feed that refreshes, a form
+//! that books something, an edge-to-edge inbox, and a settings page.
+#![cfg(feature = "playground")]
+use crate::*;
 use dioxus::prelude::*;
-#[cfg(feature = "playground")]
 use dioxus_icons::lucide::{
-    Activity, Bell, CalendarDays, ChevronRight, CircleUserRound, Heart, House, LogOut, MapPin,
-    Menu, Search, Settings, Star, Trophy, Zap,
+    Bell, BookOpen, CalendarDays, CircleUserRound, Flag, House, LogOut, MapPin, Menu as MenuIcon,
+    Plus, RotateCcw, Search, SlidersHorizontal, Star, Trophy, UserPlus,
 };
-#[cfg(feature = "playground")]
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+enum Screen {
+    Today,
+    Book,
+    Activity,
+    Profile,
+}
+
+impl Screen {
+    fn title(self) -> &'static str {
+        match self {
+            Screen::Today => "Today",
+            Screen::Book => "Book a tee time",
+            Screen::Activity => "Activity",
+            Screen::Profile => "Profile",
+        }
+    }
+}
+
 #[component]
-pub fn DemoAppPlaygroundDemo() -> Element {
-    let mode = crate::use_component_mode(None);
-    let mut tab = use_signal(|| 0_usize);
-    let toolbar_segment = use_signal(|| 0_usize);
-    let mut toast_open = use_signal(|| false);
-    let mut menu_open = use_signal(|| false);
-    let mut filter_sheet_open = use_signal(|| false);
-    let mut leave_modal_open = use_signal(|| false);
-    let mut confirm_open = use_signal(|| false);
-    let info_open = use_signal(|| false);
-    let mut fab_open = use_signal(|| false);
-    let refreshing = use_signal(|| false);
-    let filter_nearby = use_signal(|| true);
-    let filter_friends = use_signal(|| false);
-    let filter_weekend = use_signal(|| false);
-    let accordion = use_signal(|| vec!["round".to_string()]);
-    let course = use_signal(|| "Pebble Creek".to_string());
-    let handicap = use_signal(|| "12".to_string());
-    let tee = use_signal(|| "White".to_string());
-    let format_segment = use_signal(|| 0_usize);
-    let walking = use_signal(|| true);
-    let scoring = use_signal(|| "skins".to_string());
-    let screen = match tab() {
-        1 => {
+fn DemoAppPlaygroundDemo() -> Element {
+    let mode = use_component_mode(None);
+    let mut screen = use_signal(|| Screen::Today);
+    let mut drawer_open = use_signal(|| false);
+    let mut filters_open = use_signal(|| false);
+    // Owned here because they live in the header's toolbar, above the page.
+    let when = use_signal(|| 0_usize);
+    let query = use_signal(String::new);
+    let nearby = use_signal(|| true);
+    let friends = use_signal(|| false);
+    let within = use_signal(|| 25.0_f64);
+    let filters = nearby() as u8 + friends() as u8;
+    let nav_item =
+        move |target: Screen, label: &'static str, icon: Element, group: NavItemGroup| {
             rsx! {
-                DiscoverScreen {
-                    accordion,
-                    course,
-                    handicap,
-                    tee,
-                    format_segment,
-                    walking,
-                    scoring,
-                    filter_sheet_open,
+                NavItem {
+                    label,
+                    icon,
+                    group,
+                    selected: screen() == target,
+                    onclick: move |_| screen.set(target),
                 }
             }
-        }
-        2 => {
-            rsx! {
-                ProfileScreen { leave_modal_open, confirm_open }
-            }
-        }
-        3 => {
-            rsx! {
-                ActivityScreen {}
-            }
-        }
-        _ => {
-            rsx! {
-                RoundsScreen {
-                    toolbar_segment,
-                    refreshing,
-                    toast_open,
-                    info_open,
-                }
-            }
-        }
-    };
-    let title = match tab() {
-        1 => "Discover",
-        2 => "Profile",
-        3 => "Activity",
-        _ => "Fairway",
-    };
+        };
     rsx! {
-        crate::PlaygroundDemoFrame { app: false,
-            crate::AppWrapper { mode, class: "g3-playground-device-app",
-                crate::Navbar {
-                    crate::Header {
-                        title: title
-                                .to_string(),
-                        start_button: rsx! {
-                            crate::Button {
-                                style: crate::ButtonStyle::Clear,
-                                size: crate::ButtonSize::Sm,
-                                aria_label: "Open menu"
-                                        .to_string(),
-                                onclick: move |_| menu_open.set(true),
-                                Menu { size: 22 }
+        PlaygroundDemoFrame { app: false,
+            AppWrapper { mode, class: "g3-playground-device-app",
+                // Everything the tab bar has no room for.
+                // `padding: false`: the rows are the navigation, so they
+                // press from edge to edge.
+                SideSheet { open: drawer_open, title: "Fairway", padding: false,
+                    List { lines: ListLines::None,
+                        Item {
+                            label: "Matthew W.",
+                            description: "Handicap 12.4",
+                            start: rsx! { Avatar { name: "Matthew W." } },
+                        }
+                        Divider {}
+                        Item {
+                            label: "Saved courses",
+                            metadata: "6",
+                            start: rsx! { Star { size: 20 } },
+                            onclick: move |_| drawer_open.set(false),
+                        }
+                        Item {
+                            label: "Handicap history",
+                            start: rsx! { Trophy { size: 20 } },
+                            onclick: move |_| drawer_open.set(false),
+                        }
+                        Item {
+                            label: "Rules of golf",
+                            start: rsx! { BookOpen { size: 20 } },
+                            onclick: move |_| drawer_open.set(false),
+                        }
+                        Divider {}
+                        Item {
+                            label: "Sign out",
+                            start: rsx! { LogOut { size: 20 } },
+                            onclick: move |_| drawer_open.set(false),
+                        }
+                    }
+                }
+                TabLayout {
+                    Header {
+                        title: screen().title(),
+                        start: rsx! {
+                            Button {
+                                fill: ButtonFill::Clear,
+                                size: ButtonSize::Sm,
+                                aria_label: "Open menu",
+                                onclick: move |_| drawer_open.set(true),
+                                MenuIcon { size: 22 }
                             }
                         },
-                        end_button: rsx! {
-                            crate::Button {
-                                style: crate::ButtonStyle::Clear,
-                                size: crate::ButtonSize::Sm,
-                                aria_label: "Notifications"
-                                        .to_string(),
-                                onclick: move |_| toast_open.set(true),
-                                Bell { size: 20 }
+                        // Only the booking screen has anything to filter.
+                        end: (screen() == Screen::Book).then(|| rsx! {
+                            Button {
+                                fill: ButtonFill::Clear,
+                                size: ButtonSize::Sm,
+                                aria_label: "Filters",
+                                onclick: move |_| filters_open.set(true),
+                                SlidersHorizontal { size: 20 }
+                                if filters > 0 {
+                                    Badge { color: Color::Accent, "{filters}" }
+                                }
                             }
+                        }),
+                        // The second row belongs to the screen below it: the
+                        // feed switches between two lists, the booking screen
+                        // searches courses.
+                        // `None`, not an empty element: a header with an
+                        // empty second row still reserves its height.
+                        toolbar: match screen() {
+                            Screen::Today => Some(rsx! {
+                                SegmentGroup { value: when, aria_label: "Rounds",
+                                    SegmentButton { value: 0_usize, "Live" }
+                                    SegmentButton { value: 1_usize, "Upcoming" }
+                                }
+                            }),
+                            Screen::Book => Some(rsx! {
+                                Searchbar { value: query, placeholder: "Search courses" }
+                            }),
+                            Screen::Activity | Screen::Profile => None,
                         },
-                        toolbar: (tab() == 0).then(|| rsx! {
-                            crate::SegmentGroup { active: toolbar_segment,
-                                crate::SegmentButton { index: 0, "Live" }
-                                crate::SegmentButton { index: 1, "Upcoming" }
-                            }
-                        }),
                     }
-                    crate::Body {
-                        has_footer_space: false,
-                        fab: (tab() == 0).then_some(rsx! {
-                            crate::Fab {
-                                vertical: crate::FabVertical::Bottom,
-                                horizontal: crate::FabHorizontal::End,
-                                class: "g3-demo-fab",
-                                crate::FabButton { onclick: move |_| fab_open.toggle(),
-                                    Zap { size: 22 }
-                                }
-                                crate::FabList { activated: fab_open(),
-                                    crate::FabButton { onclick: move |_| {}, size: crate::FabSize::Small,
-                                        Star { size: 18 }
-                                    }
-                                    crate::FabButton { onclick: move |_| {}, size: crate::FabSize::Small,
-                                        MapPin { size: 18 }
-                                    }
-                                }
-                            }
-                        }),
-                        {screen}
+                    match screen() {
+                        Screen::Today => rsx! { TodayScreen { when } },
+                        Screen::Book => rsx! { BookScreen { within } },
+                        Screen::Activity => rsx! { ActivityScreen {} },
+                        Screen::Profile => rsx! { ProfileScreen {} },
                     }
-                    crate::NavbarTabBar {
-                        crate::NavbarTab {
-                            label: "Rounds"
-                                    .to_string(),
-                            selected: tab() == 0,
-                            icon: rsx! {
-                                House { size: 20 }
-                            },
-                            onclick: move |_| tab.set(0),
-                        }
-                        crate::NavbarTab {
-                            label: "Discover".to_string(),
-                            selected: tab() == 1,
-                            icon: rsx! {
-                                Search { size: 20 }
-                            },
-                            onclick: move |_| tab.set(1),
-                        }
-                        crate::NavbarTab {
-                            label: "Profile".to_string(),
-                            selected: tab() == 2,
-                            desktop_placement: crate::NavbarTabDesktopPlacement::Bottom,
-                            icon: rsx! {
-                                CircleUserRound { size: 20 }
-                            },
-                            onclick: move |_| tab.set(2),
-                        }
-                        crate::NavbarTab {
-                            label: "Activity".to_string(),
-                            selected: tab() == 3,
-                            icon: rsx! {
-                                Activity { size: 20 }
-                            },
-                            onclick: move |_| tab.set(3),
-                        }
+                    AdaptiveNav {
+                        {nav_item(Screen::Today, "Today", rsx! { House { size: 20 } }, NavItemGroup::Primary)}
+                        {nav_item(Screen::Book, "Book", rsx! { Search { size: 20 } }, NavItemGroup::Primary)}
+                        {nav_item(Screen::Activity, "Activity", rsx! { Bell { size: 20 } }, NavItemGroup::Primary)}
+                        {nav_item(Screen::Profile, "Profile", rsx! { CircleUserRound { size: 20 } }, NavItemGroup::Secondary)}
                     }
                 }
-                crate::Toast {
-                    open: toast_open,
-                    message: "You have 3 new invites".to_string(),
-                    color: crate::StatusColor::Accent,
-                    position: crate::ToastPosition::Bottom,
-                    duration_ms: 2500,
-                }
-                crate::Modal {
-                    open: leave_modal_open,
-                    title: "Round details".to_string(),
-                    description: rsx! { "Started 42 minutes ago at Pebble Creek." },
-                    actions: rsx! {
-                        crate::Button {
-                            style: crate::ButtonStyle::Clear,
-                            onclick: move |_| leave_modal_open
-                                    .set(false),
-                            "Close"
-                        }
-                    },
-                    crate::List { lines: crate::ListLines::Full,
-                        crate::Item {
-                            label: "Front nine".to_string(),
-                            metadata: "+2".to_string(),
-                        }
-                        crate::Item {
-                            label: "Back nine".to_string(),
-                            metadata: "E".to_string(),
-                        }
-                    }
-                }
-                crate::ConfirmModal {
-                    open: confirm_open,
-                    title: "Leave this round?".to_string(),
-                    description: rsx! { "Your scores are saved. You can rejoin any time." },
-                    confirm_text: "Leave".to_string(),
-                    on_confirm: move |_| confirm_open
-                            .set(false),
-                }
-                crate::Sheet {
-                    is_open: menu_open,
-                    placement: crate::SheetPlacement::Left(crate::SideSheetType::Overlay),
-                    div { class: "g3-demo-menu",
-                        div { class: "g3-demo-menu-head",
-                            crate::Avatar { fallback: "MW" }
-                            span { class: "g3-demo-menu-name", "Matthew W." }
-                        }
-                        crate::List { lines: crate::ListLines::Full,
-                            crate::Item {
-                                kind: crate::ItemKind::Button,
-                                label: "Rounds".to_string(),
-                                start: rsx! {
-                                    House { size: 20 }
-                                },
-                                onclick: move |_| {
-                                    tab.set(0);
-                                    menu_open.set(false);
-                                },
-                            }
-                            crate::Item {
-                                kind: crate::ItemKind::Button,
-                                label: "Discover".to_string(),
-                                start: rsx! {
-                                    Search { size: 20 }
-                                },
-                                onclick: move |_| {
-                                    tab.set(1);
-                                    menu_open.set(false);
-                                },
-                            }
-                            crate::Item {
-                                kind: crate::ItemKind::Button,
-                                label: "Profile".to_string(),
-                                start: rsx! {
-                                    CircleUserRound { size: 20 }
-                                },
-                                onclick: move |_| {
-                                    tab.set(2);
-                                    menu_open.set(false);
-                                },
-                            }
-                            crate::Item {
-                                kind: crate::ItemKind::Button,
-                                label: "Sign out".to_string(),
-                                start: rsx! {
-                                    LogOut { size: 20 }
-                                },
-                                onclick: move |_|
-                                        menu_open.set(false),
-                            }
-                        }
-                    }
-                }
-                crate::Sheet {
-                    is_open: filter_sheet_open,
-                    placement: crate::SheetPlacement::Bottom,
-                    div { class: "g3-demo-sheet-body",
-                        h3 { "Filters" }
-                        crate::List { inset: true, lines: crate::ListLines::Inset,
-                            crate::Item {
-                                start: rsx! {
-                                    MapPin { size: 20 }
-                                },
-                                label: "Nearby courses".to_string(),
-                                description: "Within 25 miles".to_string(),
-                                end: rsx! {
-                                    crate::Toggle { checked: filter_nearby }
-                                },
-                            }
-                            crate::Item {
-                                start: rsx! {
-                                    CircleUserRound { size: 20 }
-                                },
-                                label: "Friends only".to_string(),
-                                description: "Rounds with people you follow"
-                                        .to_string(),
-                                end: rsx! {
-                                    crate::Toggle { checked: filter_friends }
-                                },
-                            }
-                            crate::Item {
-                                start: rsx! {
-                                    CalendarDays { size: 20 }
-                                },
-                                label: "This weekend".to_string(),
-                                description: "Sat and Sun tee times".to_string(),
-                                end: rsx! {
-                                    crate::Toggle { checked: filter_weekend }
-                                },
-                            }
-                        }
-                        crate::Button {
-                            expand: true,
-                            onclick: move |_| filter_sheet_open.set(false),
-                            {
-                                let count = filter_nearby() as u8 + filter_friends() as u8
-                                    + filter_weekend() as u8;
-                                format!("Apply ({count})")
-                            }
-                        }
-                    }
-                }
-                crate::Sheet {
-                    is_open: info_open,
-                    placement: crate::SheetPlacement::Bottom,
-                    div { class: "g3-demo-info",
-                        h3 { class: "g3-demo-info-title", "How scoring works" }
-                        p { class: "g3-demo-info-lead",
-                            "Standings update after every hole, relative to par."
-                        }
-                        div { class: "g3-demo-info-row",
-                            crate::Badge { color: crate::StatusColor::Success, "-3" }
-                            div { class: "g3-demo-info-text",
-                                span { class: "g3-demo-info-term", "Under par" }
-                                span { class: "g3-demo-info-desc", "Fewer strokes than the course par." }
-                            }
-                        }
-                        div { class: "g3-demo-info-row",
-                            crate::Badge { "E" }
-                            div { class: "g3-demo-info-text",
-                                span { class: "g3-demo-info-term", "Even" }
-                                span { class: "g3-demo-info-desc", "Exactly on par for holes played." }
-                            }
-                        }
-                        div { class: "g3-demo-info-row",
-                            crate::Badge { color: crate::StatusColor::Warning, "+1" }
-                            div { class: "g3-demo-info-text",
-                                span { class: "g3-demo-info-term", "Over par" }
-                                span { class: "g3-demo-info-desc", "More strokes than the course par." }
-                            }
-                        }
-                    }
-                }
+                FiltersSheet { open: filters_open, nearby, friends, within }
             }
         }
     }
 }
-/// Tab 1 — a scrollable feed showcasing cards, lists, primitives, feedback + refresh.
-#[cfg(feature = "playground")]
+
+/// The feed: what is happening now, or what is booked next. Pulls to refresh
+/// and carries the app's one create action.
 #[component]
-fn RoundsScreen(
-    toolbar_segment: Signal<usize>,
-    refreshing: Signal<bool>,
-    toast_open: Signal<bool>,
-    info_open: Signal<bool>,
-) -> Element {
-    let mut refreshing = refreshing;
-    let mut info_open = info_open;
-    let live = toolbar_segment() == 0;
+fn TodayScreen(when: Signal<usize>) -> Element {
+    let mut refreshing = use_signal(|| false);
+    let toaster = use_toast();
+    let actions = use_action_sheet();
     rsx! {
-        crate::Refresher {
+        Content {
             refreshing: refreshing(),
-            can_refresh: true,
             on_refresh: move |_| {
                 refreshing.set(true);
                 spawn(async move {
-                    dioxus_sdk_time::sleep(std::time::Duration::from_millis(700)).await;
+                    dioxus_sdk_time::sleep(std::time::Duration::from_millis(900)).await;
                     refreshing.set(false);
+                    toaster.show("Scores up to date");
                 });
             },
-            crate::Card {
-                title: "Today's round",
-                right_slot: crate::RightSlot::Text("Par 72".to_string()),
-                div { class: "g3-demo-progress-row",
-                    span { "Thru 12 holes" }
-                    crate::Progress { value: 66.0 }
-                }
-                div { class: "g3-demo-chip-row",
-                    crate::Chip {
-                        selected: true,
-                        onclick: move |_| {},
-                        start: rsx! {
-                            Trophy { size: 14 }
+            fab: rsx! {
+                FabMenu {
+                    aria_label: "Create",
+                    icon: rsx! { Plus { size: 24 } },
+                    FabButton {
+                        size: FabSize::Small,
+                        aria_label: "Start a round",
+                        onclick: move |_| {
+                            toaster.success("Round started");
                         },
-                        "Match play"
+                        Flag { size: 18 }
                     }
-                    crate::Chip { onclick: move |_| {}, "Skins" }
-                    crate::Chip { onclick: move |_|
-                                {}, "Walking" }
-                }
-            }
-            div { class: "g3-demo-section-head",
-                span { class: "g3-demo-section-title",
-                    if live {
-                        "Live players"
-                    } else {
-                        "Upcoming tee times"
+                    FabButton { size: FabSize::Small, aria_label: "Invite a player",
+                        UserPlus { size: 18 }
                     }
                 }
-                crate::InfoButton {
-                    onclick: move |_| info_open.set(true),
-                    aria_label: "About scoring".to_string(),
-                }
-            }
-            crate::List { inset: true, lines: crate::ListLines::Inset,
-                crate::Item {
-                    start: rsx! {
-                        crate::Avatar { fallback: "JD" }
-                    },
-                    label: "Jordan Diaz".to_string(),
-                    description: "3 under · leader"
-                            .to_string(),
-                    end: rsx! {
-                        crate::Badge { color: crate::StatusColor::Success, "-3" }
-                    },
-                    detail: crate::ItemDetail::Show,
-                }
-                crate::Item {
-                    start: rsx! {
-                        crate::Avatar { fallback: "SM" }
-                    },
-                    label: "Sam Meyer".to_string(),
-                    description: "1 over".to_string(),
-                    end: rsx! {
-                        crate::Badge { color: crate::StatusColor::Warning, "+1" }
-                    },
-                    detail: crate::ItemDetail::Show,
-                }
-                crate::Item {
-                    start: rsx! {
-                        crate::Avatar { fallback: "AL" }
-                    },
-                    label: "Alex Lin"
-                            .to_string(),
-                    description: "even".to_string(),
-                    end: rsx! {
-                        crate::Badge { "E" }
-                    },
-                    detail: crate::ItemDetail::Show,
-                }
-            }
-            crate::Line { class: "g3-demo-separator" }
-            div { class: "g3-demo-button-row",
-                crate::Button { onclick: move |_| toast_open.set(true), "Invite" }
-                crate::Button { style: crate::ButtonStyle::Outline, onclick: move |_| {}, "Share" }
-            }
-        }
-    }
-}
-/// Tab 2 — a settings-style form built from disclosures, inputs and choice controls.
-#[cfg(feature = "playground")]
-#[component]
-fn DiscoverScreen(
-    accordion: Signal<Vec<String>>,
-    course: Signal<String>,
-    handicap: Signal<String>,
-    tee: Signal<String>,
-    format_segment: Signal<usize>,
-    walking: Signal<bool>,
-    scoring: Signal<String>,
-    filter_sheet_open: Signal<bool>,
-) -> Element {
-    let mut filter_sheet_open = filter_sheet_open;
-    let notify_scores = use_signal(|| true);
-    let notify_cheers = use_signal(|| false);
-    rsx! {
-        crate::AccordionGroup { value: accordion,
-            crate::AccordionItem {
-                value: "round".to_string(),
-                label: "Round setup".to_string(),
-                description: "Course, handicap and tees".to_string(),
-                crate::Field { label: "Course"
-                            .to_string(), value: course }
-                crate::Field {
-                    label: "Handicap".to_string(),
-                    value: handicap,
-                    r#type: "number".to_string(),
-                }
-                div { class: "g3-demo-field-label",
-                    span { "Tees" }
-                }
-                crate::Select {
-                    value: tee,
-                    options: vec![
-                        crate::SelectOption::from("White"),
-                        crate::SelectOption::from("Blue"),
-                        crate::SelectOption::from("Gold"),
-                    ],
-                }
-            }
-            crate::AccordionItem {
-                value: "format".to_string(),
-                label: "Format".to_string(),
-                description: "How the group scores".to_string(),
-                crate::SegmentGroup { active: format_segment,
-                    crate::SegmentButton { index: 0, "Stroke" }
-                    crate::SegmentButton { index: 1, "Match" }
-                    crate::SegmentButton { index: 2, "Stable" }
-                }
-                div { class: "g3-demo-radio-group",
-                    crate::RadioGroup { value: scoring,
-                        crate::Radio {
-                            value: "skins".to_string(),
-                            label: "Skins"
-                                    .to_string(),
+            },
+            if when() == 0 {
+                Stack { gap: Space::Lg,
+                    Card {
+                        title: "Saturday four-ball",
+                        subtitle: "Pebble Creek · hole 7",
+                        start: rsx! { Flag { size: 22 } },
+                        end: rsx! { Badge { color: Color::Success, "-2" } },
+                        onclick: move |_| {
+                            spawn(async move {
+                                let choice = actions
+                                    .show(ActionSheetOptions {
+                                        title: Some("Saturday four-ball".into()),
+                                        message: None,
+                                        buttons: vec![
+                                            ActionSheetButton::new("Share scorecard"),
+                                            ActionSheetButton::destructive("Leave round"),
+                                        ],
+                                    })
+                                    .await;
+                                if choice == Some(0) {
+                                    toaster.show("Scorecard link copied");
+                                }
+                            });
+                        },
+                        Progress { value: 7.0, max: 18.0, label: "Holes played", value_text: "7 of 18" }
+                    }
+                    // A scorecard is rows of data, so it is a table. The
+                    // names stay in view while the holes scroll past.
+                    Table { caption: "Leaderboard", sticky_first_column: true,
+                        thead {
+                            tr {
+                                th { scope: "col", "Player" }
+                                for hole in 1..=7 {
+                                    th { key: "{hole}", scope: "col", "{hole}" }
+                                }
+                                th { scope: "col", "Total" }
+                            }
                         }
-                        crate::Radio {
-                            value: "nassau".to_string(),
-                            label: "Nassau"
-                                    .to_string(),
+                        tbody {
+                            tr {
+                                th { scope: "row", "Par" }
+                                for par in PARS {
+                                    td { "data-muted": "true", "{par}" }
+                                }
+                                td { "data-muted": "true", "28" }
+                            }
+                            for (name, strokes, total) in LEADERBOARD {
+                                tr { key: "{name}",
+                                    th { scope: "row", "{name}" }
+                                    for (hole, score) in strokes.iter().enumerate() {
+                                        td {
+                                            key: "{hole}",
+                                            "data-color": score_color(*score, PARS[hole]),
+                                            "{score}"
+                                        }
+                                    }
+                                    td { "{total}" }
+                                }
+                            }
                         }
-                        crate::Radio {
-                            value: "none".to_string(),
-                            label: "No side bets".to_string(),
+                    }
+                    // A sideways strip: more courses than fit across, each
+                    // with its rating shown rather than asked for.
+                    Shelf { title: "Courses near you", gap: Space::Md,
+                        for (course, rating, reviews) in NEARBY {
+                            CourseCard { key: "{course}", course, rating, reviews }
                         }
                     }
                 }
-                crate::Checkbox { checked: walking, label: "Walking round".to_string() }
-            }
-            crate::AccordionItem {
-                value: "notify"
-                        .to_string(),
-                label: "Notifications".to_string(),
-                description: "Live scoring alerts".to_string(),
-                crate::List { lines: crate::ListLines::Full,
-                    crate::Item {
-                        start: rsx! {
-                            Bell { size: 20 }
-                        },
-                        label: "Score updates".to_string(),
-                        end: rsx! {
-                            crate::Toggle { checked: notify_scores }
-                        },
-                    }
-                    crate::Item {
-                        start: rsx! {
-                            Heart { size: 20 }
-                        },
-                        label: "Cheers".to_string(),
-                        end: rsx! {
-                            crate::Toggle { checked: notify_cheers }
-                        },
-                    }
-                }
-            }
-        }
-        div { class: "g3-demo-button-row",
-            crate::Button {
-                style: crate::ButtonStyle::Neutral,
-                expand: true,
-                onclick: move |_| filter_sheet_open.set(true),
-                start: rsx! {
-                    Settings { size: 18 }
-                },
-                "More filters"
-            }
-        }
-    }
-}
-/// Tab 3 — an identity/summary screen with avatar, stats, links and a loading state.
-#[cfg(feature = "playground")]
-#[component]
-fn ProfileScreen(leave_modal_open: Signal<bool>, confirm_open: Signal<bool>) -> Element {
-    let mut leave_modal_open = leave_modal_open;
-    let mut confirm_open = confirm_open;
-    rsx! {
-        crate::Card {
-            div { class: "g3-demo-profile-head",
-                crate::Avatar { fallback: "MW", size: crate::AvatarSize::Lg }
-                div { class: "g3-demo-profile-meta",
-                    div { class: "g3-demo-profile-name",
-                        span { "Matthew W." }
-                        crate::Badge { color: crate::StatusColor::Accent, "Pro" }
-                    }
-                    div { class: "g3-demo-chip-row",
-                        crate::Chip {
+            } else {
+                List { variant: ListVariant::Raised,
+                    ListHeader { "Booked" }
+                    for (course, day, time) in [
+                        ("Pebble Creek", "Saturday", "10:40 AM"),
+                        ("Oak Hollow", "Sunday", "7:20 AM"),
+                        ("Mill Ridge", "Next Thursday", "4:05 PM"),
+                    ] {
+                        Item {
+                            key: "{course}{day}",
+                            label: course,
+                            description: day,
+                            metadata: time,
+                            start: rsx! { CalendarDays { size: 20 } },
+                            detail: ItemDetail::Show,
                             onclick: move |_| {},
-                            start: rsx! {
-                                Star { size: 14 }
-                            },
-                            "8.4 hcp"
                         }
-                        crate::Chip { onclick: move |_| {}, "42 rounds" }
                     }
                 }
             }
         }
-        crate::List { inset: true,
-            crate::Item {
-                start: rsx! {
-                    Trophy { size: 20 }
-                },
-                label: "Achievements".to_string(),
-                detail: crate::ItemDetail::Show,
-                kind: crate::ItemKind::Button,
-                onclick: move |_|
-                        leave_modal_open.set(true),
-            }
-            crate::Item {
-                start: rsx! {
-                    CalendarDays { size: 20 }
-                },
-                label: "Round history".to_string(),
-                metadata: "42"
-                        .to_string(),
-                detail: crate::ItemDetail::Show,
-                kind: crate::ItemKind::Button,
-                onclick: move |_| leave_modal_open.set(true),
-            }
-            crate::Item {
-                start: rsx! {
-                    Settings { size: 20 }
-                },
-                label: "Settings".to_string(),
-                end: rsx! {
-                    ChevronRight { size: 18 }
-                },
-                kind: crate::ItemKind::Button,
-                onclick: move |_| {},
-            }
+    }
+}
+
+/// Par for the first seven holes, which the live round has reached.
+const PARS: [u8; 7] = [4, 5, 3, 4, 4, 3, 5];
+
+/// Each player's strokes on those holes, and their score against par.
+const LEADERBOARD: [(&str, [u8; 7], &str); 3] = [
+    ("Alex Morgan", [4, 4, 3, 3, 4, 3, 4], "-3"),
+    ("Grace Park", [4, 5, 3, 4, 4, 3, 5], "E"),
+    ("Sam Ortiz", [5, 5, 3, 4, 4, 3, 5], "+1"),
+];
+
+/// Nearby courses, with their average rating out of five.
+const NEARBY: [(&str, f64, u32); 4] = [
+    ("Pebble Creek", 4.5, 212),
+    ("Oak Hollow", 3.5, 87),
+    ("Mill Ridge", 4.0, 140),
+    ("Cedar Point", 5.0, 31),
+];
+
+/// One course in the nearby strip. Its own component, so its rating has a
+/// signal of its own rather than one made on every render.
+#[component]
+fn CourseCard(course: &'static str, rating: f64, reviews: u32) -> Element {
+    let rating = use_signal(|| rating);
+    rsx! {
+        Card { class: "w-44", title: course, subtitle: "{reviews} reviews",
+            Rating { aria_label: "Average for {course}", value: rating, readonly: true, size: 16 }
         }
-        div { class: "g3-demo-section-head",
-            span { class: "g3-demo-section-title", "Syncing latest scores" }
-        }
-        crate::List { inset: true, lines: crate::ListLines::Inset,
-            crate::Item {
-                start: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Avatar }
-                },
-                children: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Row }
-                },
-            }
-            crate::Item {
-                start: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Avatar }
-                },
-                children: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Row }
-                },
-            }
-            crate::Item {
-                start: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Avatar }
-                },
-                children: rsx! {
-                    crate::Skeleton { shape: crate::SkeletonShape::Row }
-                },
-            }
-        }
-        div { class: "g3-demo-button-row",
-            crate::Button {
-                style: crate::ButtonStyle::Outline,
-                expand: true,
-                onclick: move |_| confirm_open.set(true),
-                "Leave round"
+    }
+}
+
+/// A birdie or better is good news, a bogey or worse is not. The cell says
+/// the score as well, since color alone does not reach everyone.
+fn score_color(strokes: u8, par: u8) -> Option<&'static str> {
+    match strokes.cmp(&par) {
+        std::cmp::Ordering::Less => Some(Color::Success.as_str()),
+        std::cmp::Ordering::Equal => None,
+        std::cmp::Ordering::Greater => Some(Color::Warning.as_str()),
+    }
+}
+
+/// The form screen: choose a course and a time, then ask for it.
+#[component]
+fn BookScreen(within: Signal<f64>) -> Element {
+    let alerts = use_alert();
+    let toaster = use_toast();
+    let course = use_signal(|| "pebble".to_string());
+    let format = use_signal(|| Some("stroke"));
+    let walking = use_signal(|| true);
+    let players = use_signal(|| 4_i64);
+    let date = use_signal(|| None::<CalendarDate>);
+    let time = use_signal(|| None::<TimeOfDay>);
+    let mut weekend = use_signal(|| true);
+    let mut twilight = use_signal(|| false);
+    rsx! {
+        Content {
+            Stack { gap: Space::Lg,
+                Stack { horizontal: true, wrap: true, gap: Space::Sm,
+                    Chip { start: rsx! { MapPin { size: 14 } }, "Within {within() as i64} mi" }
+                    Chip {
+                        selected: weekend(),
+                        onclick: move |_| weekend.toggle(),
+                        "This weekend"
+                    }
+                    Chip {
+                        selected: twilight(),
+                        onclick: move |_| twilight.toggle(),
+                        "Twilight rate"
+                    }
+                }
+                Card { title: "Tee time",
+                    Stack {
+                        Select {
+                            label: "Course",
+                            value: course,
+                            options: vec![
+                                SelectOption::new("pebble".to_string(), "Pebble Creek"),
+                                SelectOption::new("oak".to_string(), "Oak Hollow").description("Closed Mondays"),
+                                SelectOption::new("mill".to_string(), "Mill Ridge"),
+                            ],
+                        }
+                        DatePicker { label: "Day", value: date, min: CalendarDate::today() }
+                        TimePicker { label: "Time", value: time, minute_step: 10 }
+                        Stepper { label: "Players", value: players, min: 1, max: 4 }
+                        RadioGroup { value: format, label: "Format",
+                            Radio { value: "stroke", label: "Stroke play" }
+                            Radio { value: "match", label: "Match play" }
+                        }
+                        Toggle { checked: walking, label: "Walking", helper: "No cart needed" }
+                    }
+                }
+                Button {
+                    expand: ButtonExpand::Block,
+                    onclick: move |_| async move {
+                        let confirmed = alerts
+                            .confirm("Request this tee time?", "The pro shop confirms by email.")
+                            .await;
+                        if confirmed {
+                            toaster.success("Tee time requested");
+                        }
+                    },
+                    "Request tee time"
+                }
+                AccordionGroup::<&'static str> {
+                    AccordionItem { value: "rules", label: "Local rules", "Lift, clean, and place in the fairway." }
+                    AccordionItem { value: "pace", label: "Pace of play", "Four hours fifteen for eighteen holes." }
+                    AccordionItem { value: "dress", label: "Dress code", "Collared shirts. Soft spikes only." }
+                }
             }
         }
     }
 }
-/// Tab 4 — a dedicated loading screen showcasing spinner + skeleton placeholders.
-#[cfg(feature = "playground")]
+/// What a row's two edges do. Between the three rows every
+/// [`SwipeBehavior`] appears on both sides.
+#[derive(Clone, Copy, PartialEq)]
+enum Swipes {
+    /// Activate one way, dismiss the other.
+    ArchiveOrDelete,
+    /// Hold actions open on both sides.
+    RevealBoth,
+    /// Dismiss one way, activate the other.
+    DeleteOrRead,
+}
+
+impl Swipes {
+    fn start(self) -> SwipeBehavior {
+        match self {
+            Swipes::ArchiveOrDelete => SwipeBehavior::Activate,
+            Swipes::RevealBoth => SwipeBehavior::Reveal,
+            Swipes::DeleteOrRead => SwipeBehavior::Dismiss,
+        }
+    }
+
+    fn end(self) -> SwipeBehavior {
+        match self {
+            Swipes::ArchiveOrDelete => SwipeBehavior::Dismiss,
+            Swipes::RevealBoth => SwipeBehavior::Reveal,
+            Swipes::DeleteOrRead => SwipeBehavior::Activate,
+        }
+    }
+}
+
+type Row = (&'static str, &'static str, Swipes);
+
+const ACTIVITY_ROWS: [Row; 3] = [
+    (
+        "Birdie on 7",
+        "Swipe right to archive, left to delete",
+        Swipes::ArchiveOrDelete,
+    ),
+    (
+        "Invite from Grace",
+        "Swipe either way to uncover buttons",
+        Swipes::RevealBoth,
+    ),
+    (
+        "Round saved",
+        "Swipe right to delete, left to mark read",
+        Swipes::DeleteOrRead,
+    ),
+];
+
+/// The inbox: rows that run to both edges, because nothing insets them, and
+/// that swipe differently on each side.
 #[component]
 fn ActivityScreen() -> Element {
+    let toaster = use_toast();
+    let mut rows = use_signal(|| ACTIVITY_ROWS.to_vec());
+    let mut gone = use_signal(Vec::<Row>::new);
+    let mut take_row = move |label: &'static str| {
+        let at = rows.peek().iter().position(|(row, ..)| *row == label);
+        if let Some(at) = at {
+            let row = rows.write().remove(at);
+            gone.write().push(row);
+        }
+    };
     rsx! {
-        crate::Spinner { center: true }
+        // `padding: false` is what lets an edge-to-edge list reach the edges.
+        Content { padding: false,
+            List {
+                ListHeader { "This week" }
+                for (label, description, swipes) in rows() {
+                    SwipeItem {
+                        key: "{label}",
+                        start_behavior: swipes.start(),
+                        end_behavior: swipes.end(),
+                        start_actions: match swipes {
+                            Swipes::ArchiveOrDelete => rsx! {
+                                SwipeAction { color: Color::Success, "Archive" }
+                            },
+                            Swipes::RevealBoth => rsx! {
+                                SwipeAction {
+                                    color: Color::Accent,
+                                    onclick: move |_| { toaster.success("Invite accepted"); },
+                                    "Accept"
+                                }
+                            },
+                            Swipes::DeleteOrRead => rsx! {
+                                SwipeAction { color: Color::Danger, "Delete" }
+                            },
+                        },
+                        end_actions: match swipes {
+                            Swipes::ArchiveOrDelete | Swipes::DeleteOrRead => rsx! {
+                                SwipeAction {
+                                    color: if swipes == Swipes::DeleteOrRead { Color::Accent } else { Color::Danger },
+                                    onclick: move |_| {
+                                        if swipes == Swipes::DeleteOrRead {
+                                            toaster.show(ToastOptions::new("Marked read").replace());
+                                        } else {
+                                            take_row(label);
+                                        }
+                                    },
+                                    if swipes == Swipes::DeleteOrRead { "Mark read" } else { "Delete" }
+                                }
+                            },
+                            Swipes::RevealBoth => rsx! {
+                                SwipeAction {
+                                    onclick: move |_| { toaster.show("Muted"); },
+                                    "Mute"
+                                }
+                                SwipeAction {
+                                    color: Color::Danger,
+                                    onclick: move |_| take_row(label),
+                                    "Decline"
+                                }
+                            },
+                        },
+                        on_activate: move |state: SwipeState| match state.side {
+                            SwipeSide::Start => {
+                                take_row(label);
+                                toaster.success("Archived");
+                            }
+                            SwipeSide::End => {
+                                // Read one, then another: each toast takes the
+                                // last one's place rather than queueing.
+                                toaster.show(ToastOptions::new("Marked read").replace());
+                            }
+                        },
+                        on_dismiss: move |_| take_row(label),
+                        Item {
+                            label,
+                            description,
+                            start: rsx! { Bell { size: 20 } },
+                        }
+                    }
+                }
+            }
+            if rows().is_empty() {
+                EmptyState {
+                    title: "All caught up",
+                    icon: rsx! { Bell { size: 40 } },
+                    "Nothing new this week."
+                }
+            }
+            if !gone().is_empty() {
+                List { lines: ListLines::None,
+                    Item {
+                        label: "Bring them back",
+                        metadata: "{gone().len()}",
+                        start: rsx! { RotateCcw { size: 20 } },
+                        onclick: move |_| {
+                            let mut restored = gone.take();
+                            restored.append(&mut rows.write());
+                            restored.sort_by_key(|row| {
+                                ACTIVITY_ROWS.iter().position(|(label, ..)| *label == row.0)
+                            });
+                            rows.set(restored);
+                        },
+                    }
+                }
+            }
+        }
     }
 }
+
+/// The settings screen: who you are, and the switches that follow you around.
+#[component]
+fn ProfileScreen() -> Element {
+    let alerts = use_alert();
+    let toaster = use_toast();
+    let notifications = use_signal(|| true);
+    let mut favorites = use_signal(|| vec!["Pebble Creek", "Oak Hollow", "Mill Ridge"]);
+    rsx! {
+        Content {
+            Stack { gap: Space::Lg,
+                Stack { horizontal: true, align: StackAlign::Center,
+                    Avatar { name: "Matthew W.", size: AvatarSize::Lg }
+                    Stack { gap: Space::Xs,
+                        Text { variant: TextVariant::Heading, "Matthew W." }
+                        Text { variant: TextVariant::Caption, tone: TextTone::Secondary, "Handicap 12.4 · 42 rounds" }
+                    }
+                }
+                List { variant: ListVariant::Raised,
+                    Item {
+                        label: "Notifications",
+                        end: rsx! { Toggle { checked: notifications, aria_label: "Notifications" } },
+                    }
+                    Item { label: "Home course", metadata: "Pebble Creek", detail: ItemDetail::Show, onclick: |_| {} }
+                    Item { label: "Handicap index", metadata: "12.4", detail: ItemDetail::Show, onclick: |_| {} }
+                    Item { label: "Version", metadata: "0.4.0" }
+                }
+                // Dragged, or moved with the arrow keys from the handle.
+                ReorderList {
+                    onreorder: move |(from, to): (usize, usize)| {
+                        favorites.with_mut(|courses| {
+                            let course = courses.remove(from);
+                            courses.insert(to, course);
+                        });
+                    },
+                    List { variant: ListVariant::Raised,
+                        ListHeader { "Favorite courses" }
+                        for (index, course) in favorites().into_iter().enumerate() {
+                            ReorderItem { key: "{course}", index,
+                                Item {
+                                    label: course,
+                                    description: (index == 0).then(|| "Shown first when you book".to_string()),
+                                    end: rsx! { ReorderHandle {
+                                        label: format!("Move {course}"),
+                                        position: ReorderHandlePosition::End,
+                                    } },
+                                }
+                            }
+                        }
+                    }
+                }
+                List { variant: ListVariant::Raised,
+                    // Text the reader needs in full wraps rather than being cut.
+                    Item {
+                        label: "Handicap",
+                        description: "Your index is the average of your best eight differentials from your last twenty rounds, updated the day after each round.",
+                        wrap: true,
+                    }
+                }
+                Button {
+                    fill: ButtonFill::Outline,
+                    color: Color::Danger,
+                    expand: ButtonExpand::Block,
+                    onclick: move |_| async move {
+                        if alerts.confirm("Sign out?", "You can sign back in any time.").await {
+                            toaster.show("Signed out");
+                        }
+                    },
+                    "Sign out"
+                }
+            }
+        }
+    }
+}
+
+/// The booking screen's filters, in a sheet because they modify the page
+/// behind them rather than replacing it.
+#[component]
+fn FiltersSheet(
+    open: Signal<bool>,
+    nearby: Signal<bool>,
+    friends: Signal<bool>,
+    within: Signal<f64>,
+) -> Element {
+    rsx! {
+        BottomSheet { open, title: "Filters",
+            Stack {
+                Toggle { checked: nearby, label: "Nearby courses" }
+                Range {
+                    label: "Distance",
+                    value: within,
+                    min: 5.0,
+                    max: 50.0,
+                    step: 5.0,
+                    disabled: !nearby(),
+                    show_value: true,
+                    helper: format!("Within {} miles", within() as i64),
+                }
+                Toggle { checked: friends, label: "Friends playing" }
+                Button { expand: ButtonExpand::Block, onclick: move |_| open.set(false), "Show courses" }
+            }
+        }
+    }
+}
+
 crate::g3_playground! {
-    name: "Demo App",
-    description: "A complete responsive app shell that composes every g3_ui component together.",
+    name: "DemoApp",
+    description: "One app, four screen types: a feed, a form, an inbox, and settings.",
+    components: [],
     demo: DemoAppPlaygroundDemo,
     source: "src/components/demo_app.rs",
 }

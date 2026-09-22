@@ -1,97 +1,74 @@
-//! Pull-to-refresh wrapper component.
-use super::refresher_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Pull to refresh.
+use super::overlay::js_string;
+use crate::state::use_element_id;
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
-use std::sync::atomic::{AtomicU64, Ordering};
-pub const DEFAULT_REFRESH_THRESHOLD: f64 = 48.0;
-pub const REFRESH_ELASTIC_FACTOR: f64 = 0.42;
-static REFRESHER_INSTANCE_ID: AtomicU64 = AtomicU64::new(0);
-/// Live state of a pull-to-refresh gesture, handed to the refresher's
-/// render callback so a custom indicator can follow the pull.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct RefresherState {
-    /// Current pull distance in pixels.
-    pub pull: f64,
-    /// `pull` as a fraction of the trigger threshold; reaches `1.0` at the
-    /// point where releasing would start a refresh.
-    pub progress: f64,
-    /// Whether a refresh is currently running. Stays `true` from release
-    /// until the refresh completes.
-    pub refreshing: bool,
-}
-const REFRESHER_DRAG_SCRIPT: &str = r#"
-const root = document.getElementById("__ROOT_ID__");
-const label = document.getElementById("__LABEL_ID__");
-if (root) {
+
+const ELASTIC_FACTOR: f64 = 0.42;
+
+/// The gesture runs in the page: it needs non-passive touch listeners to stop
+/// the page scrolling while the user pulls. It reports a completed pull with
+/// `true`.
+const DRAG_SCRIPT: &str = r#"
+const root = document.getElementById(__ROOT__);
+const label = document.getElementById(__LABEL__);
+if (root && root.dataset.g3Bound !== "true") {
+    root.dataset.g3Bound = "true";
     const THRESHOLD = __THRESHOLD__;
     const ELASTIC = __ELASTIC__;
+    const TEXT = { pull: __PULL__, release: __RELEASE__, refreshing: __REFRESHING__ };
     let dragging = false;
     let engaged = false;
     let startX = 0;
     let startY = 0;
     let pull = 0;
-
     const scrollParent = () => {
         let el = root.parentElement;
         while (el) {
-            const oy = getComputedStyle(el).overflowY;
-            if ((oy === "auto" || oy === "scroll") && el.scrollHeight > el.clientHeight) {
+            const overflow = getComputedStyle(el).overflowY;
+            if ((overflow === "auto" || overflow === "scroll") && el.scrollHeight > el.clientHeight) {
                 return el;
             }
             el = el.parentElement;
         }
         return null;
     };
-
-    const gateOk = () =>
-        root.dataset.canRefresh === "true" &&
-        root.dataset.refreshing !== "true" &&
-        root.dataset.disabled !== "true";
-
+    const available = () => root.dataset.refreshing !== "true" && root.dataset.disabled !== "true";
     const atTop = () => {
-        const sp = scrollParent();
-        return !sp || sp.scrollTop <= 0;
+        const parent = scrollParent();
+        return !parent || parent.scrollTop <= 0;
     };
-
-    const setPull = (p) => {
-        pull = p;
-        root.style.setProperty("--g3-refresher-pull", p + "px");
-        root.style.setProperty("--g3-refresher-progress", Math.min(p / THRESHOLD, 1.4));
-        root.setAttribute("data-state", p > 0 ? "pulling" : "idle");
-        if (label) {
-            label.textContent = p >= THRESHOLD ? "Release to refresh" : "Pull to refresh";
-        }
+    const setPull = (distance) => {
+        pull = distance;
+        root.style.setProperty("--g3-refresher-pull", distance + "px");
+        root.style.setProperty("--g3-refresher-progress", Math.min(distance / THRESHOLD, 1.4));
+        root.setAttribute("data-state", distance > 0 ? "pulling" : "idle");
+        if (label) label.textContent = distance >= THRESHOLD ? TEXT.release : TEXT.pull;
     };
-
-    // The drag script mutates the label outside Dioxus. Restore it ourselves
-    // once the caller's controlled `refreshing` prop settles, because a very
-    // fast refresh can batch true -> false without a virtual-DOM text patch.
-    const settleAfterRefresh = () => {
+    // The script edits the label outside Dioxus, so it restores it itself once
+    // the app's `refreshing` flag clears; a fast refresh may never re-render it.
+    const settle = () => {
         if (root.dataset.refreshing === "true") {
-            if (label) label.textContent = "Refreshing";
-            setTimeout(settleAfterRefresh, 100);
+            if (label) label.textContent = TEXT.refreshing;
+            setTimeout(settle, 100);
             return;
         }
         root.setAttribute("data-state", "idle");
         root.style.setProperty("--g3-refresher-progress", "0");
-        if (label) label.textContent = "Pull to refresh";
+        if (label) label.textContent = TEXT.pull;
     };
-
-    const onDown = (x, y) => {
-        if (!gateOk() || !atTop()) return;
+    const down = (x, y) => {
+        if (!available() || !atTop()) return;
         dragging = true;
         engaged = false;
         startX = x;
         startY = y;
     };
-
-    // `e` is optional (touch path passes it so we can preventDefault the scroll).
-    const onMove = (x, y, e) => {
+    const move = (x, y, event) => {
         if (!dragging) return;
         const dy = y - startY;
-        // A sideways drag belongs to whatever scrolls sideways under the finger
-        // (a chip strip, a carousel). Any downward drift would otherwise engage
-        // the pull and cancel that pan, so the strip could not be dragged at all.
+        // A sideways drag belongs to whatever scrolls sideways under the
+        // finger, such as a chip strip.
         if (!engaged && Math.abs(x - startX) > Math.abs(dy)) {
             dragging = false;
             return;
@@ -107,204 +84,189 @@ if (root) {
             if (!atTop()) return;
             engaged = true;
         }
-        // Non-passive touchmove: this is what actually stops the page scrolling.
-        if (e && e.cancelable) e.preventDefault();
-        const dist = dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy;
-        setPull(dist);
+        if (event && event.cancelable) event.preventDefault();
+        setPull(Math.min(dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy, THRESHOLD * 2.5));
     };
-
-    const onEnd = () => {
+    const up = () => {
         if (!dragging) return;
         dragging = false;
         if (!engaged) return;
         engaged = false;
-        if (pull >= THRESHOLD && root.dataset.hasRefresh === "true") {
-            // Hand off to the Rust `refreshing` state. Clear the pull var so the
-            // content settles flush again once refreshing ends; while refreshing
-            // the indicator is driven by the `data-state="refreshing"` rules.
+        if (pull >= THRESHOLD) {
             root.style.setProperty("--g3-refresher-pull", "0px");
             root.style.setProperty("--g3-refresher-progress", "1");
             root.setAttribute("data-state", "refreshing");
-            if (label) label.textContent = "Refreshing";
+            if (label) label.textContent = TEXT.refreshing;
             dioxus.send(true);
-            setTimeout(settleAfterRefresh, 100);
+            setTimeout(settle, 100);
         } else {
             setPull(0);
         }
     };
-
-    // Mouse (desktop) rides pointer events; touch uses touch events so the
-    // touchmove listener can be non-passive and cancel the scroll.
-    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") onDown(e.clientX, e.clientY); });
-    root.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse") onMove(e.clientX, e.clientY, null); });
-    root.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") onEnd(); });
-    root.addEventListener("touchstart", (e) => { onDown(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-    root.addEventListener("touchmove", (e) => { onMove(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false });
-    root.addEventListener("touchend", () => onEnd());
-    root.addEventListener("touchcancel", () => onEnd());
+    // A pull starts on the refresher but may end anywhere: moves and releases
+    // are heard on the window, so dragging past the refresher (or out of the
+    // window) still lets go instead of leaving the indicator stuck.
+    const listeners = new AbortController();
+    const alive = () => {
+        if (root.isConnected) return true;
+        listeners.abort();
+        return false;
+    };
+    const opts = { signal: listeners.signal };
+    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" && e.button === 0) down(e.clientX, e.clientY); }, opts);
+    window.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && alive()) move(e.clientX, e.clientY, null); }, opts);
+    window.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse" && alive()) up(); }, opts);
+    window.addEventListener("pointercancel", () => { if (alive()) up(); }, opts);
+    window.addEventListener("blur", () => { if (alive()) up(); }, opts);
+    document.addEventListener("mouseleave", () => { if (alive()) up(); }, opts);
+    root.addEventListener("touchstart", (e) => down(e.touches[0].clientX, e.touches[0].clientY), { passive: true, signal: listeners.signal });
+    root.addEventListener("touchmove", (e) => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false, signal: listeners.signal });
+    root.addEventListener("touchend", up, opts);
+    root.addEventListener("touchcancel", up, opts);
 }
 "#;
+
+/// Pull-to-refresh around scrollable content. Like Ionic's `ion-refresher`.
+///
+/// Pulling past the threshold at the top of the scroll area calls
+/// `on_refresh`. Set `refreshing` while the refresh runs; the indicator stays
+/// until it is `false` again.
+///
+/// Usually you set [`Content`](crate::Content)'s `on_refresh` and
+/// `refreshing` instead, which wraps the whole page in a refresher. Use this
+/// component directly to refresh only part of a page. It grows to fill its
+/// scroll area, so a pull can start anywhere below the content too.
+///
+/// A pull needs a pointer. Offer another way to refresh as well, such as a
+/// button in the header, for keyboard and switch users.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[component] fn RoundList() -> Element { rsx! {} }
+/// # async fn reload() {}
+/// let mut refreshing = use_signal(|| false);
+/// rsx! {
+///     Refresher {
+///         refreshing: refreshing(),
+///         on_refresh: move |_| async move {
+///             refreshing.set(true);
+///             reload().await;
+///             refreshing.set(false);
+///         },
+///         RoundList {}
+///     }
+/// }
+/// # }
+/// ```
 #[component]
 pub fn Refresher(
-    refreshing: Option<bool>,
+    /// Whether a refresh is running.
+    refreshing: bool,
+    /// Called when the user completes a pull.
+    on_refresh: EventHandler<()>,
+    /// Pull distance, in pixels, that triggers a refresh. Defaults to 48.
     threshold: Option<f64>,
+    /// Turn pulling off.
     disabled: Option<bool>,
-    can_refresh: Option<bool>,
-    class: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
-    on_refresh: Option<Callback<()>>,
+    /// Extra classes for the wrapper.
+    class: Option<String>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let refreshing = refreshing.unwrap_or(false);
-    let disabled = disabled.unwrap_or(false);
-    let can_refresh = can_refresh.unwrap_or(false);
-    let threshold = threshold.unwrap_or(DEFAULT_REFRESH_THRESHOLD).max(1.0);
-    let has_refresh = on_refresh.is_some();
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::REFRESHER_IOS,
-        ComponentMode::Md => s::REFRESHER_MD,
-    };
-    let instance_id = use_hook(|| REFRESHER_INSTANCE_ID.fetch_add(1, Ordering::Relaxed));
-    let root_id = format!("g3-refresher-{instance_id}");
-    let label_id = format!("g3-refresher-label-{instance_id}");
+    let strings = use_strings();
+    let root_id = use_element_id("refresher", None);
+    let label_id = format!("{root_id}-label");
+    let threshold = threshold.unwrap_or(48.0).max(1.0);
     {
         let root_id = root_id.clone();
         let label_id = label_id.clone();
+        let strings = strings.clone();
         use_effect(move || {
-            let script = REFRESHER_DRAG_SCRIPT
-                .replace("__ROOT_ID__", &root_id)
-                .replace("__LABEL_ID__", &label_id)
+            let script = DRAG_SCRIPT
+                .replace("__ROOT__", &js_string(&root_id))
+                .replace("__LABEL__", &js_string(&label_id))
                 .replace("__THRESHOLD__", &threshold.to_string())
-                .replace("__ELASTIC__", &REFRESH_ELASTIC_FACTOR.to_string());
+                .replace("__ELASTIC__", &ELASTIC_FACTOR.to_string())
+                .replace("__PULL__", &js_string(&strings.pull_to_refresh))
+                .replace("__RELEASE__", &js_string(&strings.release_to_refresh))
+                .replace("__REFRESHING__", &js_string(&strings.refreshing));
             spawn(async move {
                 let mut eval = document::eval(&script);
                 while let Ok(true) = eval.recv::<bool>().await {
-                    if let Some(on_refresh) = on_refresh {
-                        on_refresh.call(());
-                    }
+                    on_refresh.call(());
                 }
             });
         });
     }
-    let state = if refreshing { "refreshing" } else { "idle" };
+    let cls = classes(["g3-refresher", mode.pick("", "g3-refresher-md")]);
     rsx! {
         div {
             id: root_id,
-            class: merge_classes(format!("{} {mode_cls}", s::REFRESHER), class.as_deref()),
-            "data-state": state,
-            "data-can-refresh": can_refresh
-                    .to_string(),
+            class: merge_classes(cls, class.as_deref()),
+            "data-state": if refreshing { "refreshing" } else { "idle" },
             "data-refreshing": refreshing.to_string(),
-            "data-disabled": disabled.to_string(),
-            "data-has-refresh": has_refresh.to_string(),
-            div { class: s::INDICATOR, role: "status", aria_live: "polite",
-                span { class: s::SPINNER, aria_hidden: "true" }
-                span { id: label_id, class: s::LABEL,
+            "data-disabled": disabled.unwrap_or(false).to_string(),
+            aria_busy: refreshing.then_some("true"),
+            // Only the refresh itself is announced. The pull prompts change on
+            // every movement and would be read over and over.
+            span { class: "g3-sr-only", role: "status",
+                if refreshing {
+                    "{strings.refreshing}"
+                }
+            }
+            div { class: "g3-refresher-indicator", aria_hidden: "true",
+                span { class: "g3-refresher-spinner" }
+                span { id: label_id, class: "g3-refresher-label",
                     if refreshing {
-                        "Refreshing"
+                        "{strings.refreshing}"
                     } else {
-                        "Pull to refresh"
+                        "{strings.pull_to_refresh}"
                     }
                 }
             }
-            div { class: s::CONTENT, {children} }
+            div { class: "g3-refresher-content", {children} }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn RefresherPlaygroundDemo() -> Element {
+fn RefresherPlaygroundDemo() -> Element {
     let mut refreshing = use_signal(|| false);
+    let mut count = use_signal(|| 0);
     rsx! {
-        crate::PlaygroundDemoFrame { center: false,
-            Refresher {
-                refreshing: refreshing(),
-                can_refresh: true,
-                on_refresh: move |_| {
-                    refreshing.set(true);
-                    spawn(async move {
-                        dioxus_sdk_time::sleep(std::time::Duration::from_millis(1200)).await;
-                        refreshing.set(false);
-                    });
-                },
-                crate::List { inset: true,
-                    crate::Item {
-                        label: "Leaderboard".to_string(),
-                        description: "Pull down to simulate refresh".to_string(),
-                    }
-                    crate::Item {
-                        label: "Skins"
-                                .to_string(),
-                        metadata: "$12".to_string(),
+        crate::PlaygroundDemoFrame {
+            app: false,
+            crate::AppWrapper { class: "g3-playground-device-app",
+                crate::Header { title: "Leaderboard" }
+                crate::Content {
+                    refreshing: refreshing(),
+                    on_refresh: move |_| {
+                        refreshing.set(true);
+                        spawn(async move {
+                            dioxus_sdk_time::sleep(std::time::Duration::from_millis(1200)).await;
+                            count += 1;
+                            refreshing.set(false);
+                        });
+                    },
+                    crate::List { variant: crate::ListVariant::Raised,
+                        crate::Item { label: "Pull down anywhere to refresh" }
+                        crate::Item { label: "Refreshed", metadata: "{count} times" }
                     }
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Refresher",
-    description: "Pull-to-refresh container with thresholded mobile gestures.",
+    description: "Pull-to-refresh with a threshold and elastic pull.",
+    components: ["Refresher", "Content"],
     demo: RefresherPlaygroundDemo,
     source: "src/components/refresher.rs",
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::G3ThemeProvider;
-    fn render(app: fn() -> Element) {
-        let mut dom = VirtualDom::new(app);
-        dom.rebuild_in_place();
-    }
-    #[test]
-    fn refresher_gates_on_scroll_top_and_can_refresh() {
-        let source = include_str!("refresher.rs");
-        assert!(source.contains("can_refresh.unwrap_or(false)"));
-        assert!(source.contains("root.dataset.canRefresh === \"true\""));
-        assert!(source.contains("sp.scrollTop <= 0"));
-    }
-    #[test]
-    fn refresher_takes_over_the_touch_gesture() {
-        let source = include_str!("refresher.rs");
-        assert!(source.contains("\"touchmove\""));
-        assert!(source.contains("{ passive: false }"));
-        assert!(source.contains("e.preventDefault()"));
-    }
-    #[test]
-    fn refresher_leaves_sideways_drags_to_horizontal_scrollers() {
-        let script = REFRESHER_DRAG_SCRIPT;
-        let axis_check = script
-            .find("Math.abs(x - startX) > Math.abs(dy)")
-            .expect("a sideways drag is released");
-        let prevent = script
-            .find("e.preventDefault()")
-            .expect("pull cancels the scroll");
-        assert!(
-            axis_check < prevent,
-            "the axis is decided before the scroll is cancelled"
-        );
-    }
-    #[test]
-    fn refresher_hands_off_to_rust_refreshing_state() {
-        let source = include_str!("refresher.rs");
-        assert!(source.contains("dioxus.send(true)"));
-        assert!(source.contains("root.dataset.hasRefresh === \"true\""));
-        assert!(source.contains("setTimeout(settleAfterRefresh, 100)"));
-        assert!(source.contains("label.textContent = \"Pull to refresh\""));
-    }
-    #[component]
-    fn RefresherSmokeApp() -> Element {
-        rsx! {
-            G3ThemeProvider { mode: ComponentMode::Ios,
-                Refresher { refreshing: false, can_refresh: true,
-                    div { "Rows" }
-                }
-            }
-        }
-    }
-    #[test]
-    fn refresher_renders() {
-        render(RefresherSmokeApp);
-    }
 }

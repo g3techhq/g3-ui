@@ -1,1170 +1,459 @@
-//! General mobile list, item, and swipe row components.
-use super::list_styles as s;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Lists and list rows.
+use super::pressable::Destination;
+use crate::components::pressable::{Pressable, Target};
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::ChevronRight;
-use std::time::Duration;
-/// Which edge of a list row a swipe gesture belongs to.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SwipeSide {
-    /// The leading edge - swiping from it drags content toward the trailing side.
-    Start,
-    /// The trailing edge - the conventional side for destructive actions.
-    End,
-}
-/// What a swipe does once it passes the commit threshold.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum SwipeBehavior {
-    /// Swiping uncovers the actions and holds them open until one is tapped
-    /// or the row is swiped closed.
-    #[default]
-    Reveal,
-    /// Swiping past the threshold fires the leading action directly, without
-    /// leaving the actions on screen.
-    Activate,
-    /// Swiping past the threshold removes the row entirely.
-    Dismiss,
-}
-pub const DEFAULT_SWIPE_ACTION_WIDTH: f64 = 88.0;
-pub const DEFAULT_ACTIVATE_ACTION_WIDTH: f64 = 136.0;
-pub const DEFAULT_DISMISS_ACTION_WIDTH: f64 = 104.0;
-pub const FULL_SWIPE_MARGIN: f64 = 30.0;
-pub const ELASTIC_FACTOR: f64 = 0.55;
-pub const ACTIVATE_SWIPE_RATIO: f64 = 0.48;
-pub const ACTIVATE_SOFTENING_RATIO: f64 = 0.72;
-pub const DISMISS_SWIPE_OFFSET: f64 = 430.0;
-pub const DISMISS_EXIT_MS: u64 = 560;
-pub const DISMISS_COLLAPSE_MS: u64 = 180;
-pub const LONG_PRESS_MS: u64 = 500;
-pub const LONG_PRESS_CANCEL_DISTANCE: f64 = 8.0;
-pub const HORIZONTAL_COMMIT_DISTANCE: f64 = 10.0;
-pub fn elastic_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
-    let limit = action_width.max(1.0);
-    if raw_offset > limit {
-        limit + (raw_offset - limit) * ELASTIC_FACTOR
-    } else if raw_offset < -limit {
-        -limit + (raw_offset + limit) * ELASTIC_FACTOR
-    } else {
-        raw_offset
-    }
-}
-pub fn should_full_swipe(offset: f64, action_width: f64) -> bool {
-    offset.abs() >= action_width.max(1.0) + FULL_SWIPE_MARGIN
-}
-pub fn swipe_side(offset: f64) -> Option<SwipeSide> {
-    if offset > 0.0 {
-        Some(SwipeSide::Start)
-    } else if offset < 0.0 {
-        Some(SwipeSide::End)
-    } else {
-        None
-    }
-}
-pub fn swipe_ratio(offset: f64, action_width: f64) -> f64 {
-    offset / action_width.max(1.0)
-}
-pub fn should_cancel_long_press(delta_x: f64, delta_y: f64) -> bool {
-    delta_x.hypot(delta_y) > LONG_PRESS_CANCEL_DISTANCE
-}
-/// Whether a drag has moved far enough, and squarely enough sideways, to be a
-/// swipe rather than the beginning of a scroll.
-///
-/// The slop matches the browser's own: below it every gesture looks diagonal,
-/// and claiming one there would steal ordinary scrolls.
-pub fn is_horizontal_gesture(delta_x: f64, delta_y: f64) -> bool {
-    delta_x.abs() > HORIZONTAL_COMMIT_DISTANCE && delta_x.abs() > delta_y.abs()
-}
-pub fn is_swipe_side_available(
-    offset: f64,
-    has_start_actions: bool,
-    has_end_actions: bool,
-) -> bool {
-    match swipe_side(offset) {
-        Some(SwipeSide::Start) => has_start_actions,
-        Some(SwipeSide::End) => has_end_actions,
-        None => false,
-    }
-}
-pub fn reveal_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
-    raw_offset.clamp(-action_width.max(1.0), action_width.max(1.0))
-}
-pub fn activate_swipe_offset(raw_offset: f64, action_width: f64) -> f64 {
-    let limit = action_width.max(1.0);
-    let sign = raw_offset.signum();
-    let distance = raw_offset.abs();
-    let soften_start = limit * ACTIVATE_SOFTENING_RATIO;
-    if distance <= soften_start {
-        raw_offset
-    } else {
-        let extra = distance - soften_start;
-        let remaining = (limit - soften_start).max(1.0);
-        sign * (soften_start + remaining * (extra / (extra + remaining)))
-    }
-}
-pub fn should_activate_swipe(offset: f64, action_width: f64) -> bool {
-    offset.abs() >= action_width.max(1.0) * ACTIVATE_SWIPE_RATIO
-}
-pub fn swipe_offset_for_behavior(
-    raw_offset: f64,
-    action_width: f64,
-    has_start_actions: bool,
-    has_end_actions: bool,
-    behavior: SwipeBehavior,
-) -> f64 {
-    if !is_swipe_side_available(raw_offset, has_start_actions, has_end_actions) {
-        return 0.0;
-    }
-    match behavior {
-        SwipeBehavior::Reveal => reveal_swipe_offset(raw_offset, action_width),
-        SwipeBehavior::Activate => activate_swipe_offset(raw_offset, action_width),
-        SwipeBehavior::Dismiss => elastic_swipe_offset(raw_offset, action_width),
-    }
-}
-pub fn action_width_for_behavior(behavior: SwipeBehavior) -> f64 {
-    match behavior {
-        SwipeBehavior::Reveal => DEFAULT_SWIPE_ACTION_WIDTH,
-        SwipeBehavior::Activate => DEFAULT_ACTIVATE_ACTION_WIDTH,
-        SwipeBehavior::Dismiss => DEFAULT_DISMISS_ACTION_WIDTH,
-    }
-}
-#[allow(dead_code)]
-pub fn constrained_swipe_offset(
-    raw_offset: f64,
-    action_width: f64,
-    has_start_actions: bool,
-    has_end_actions: bool,
-) -> f64 {
-    swipe_offset_for_behavior(
-        raw_offset,
-        action_width,
-        has_start_actions,
-        has_end_actions,
-        SwipeBehavior::Dismiss,
-    )
-}
-fn swipe_state(offset: f64, action_width: f64, full: bool) -> Option<SwipeState> {
-    swipe_side(offset).map(|side| SwipeState {
-        side,
-        offset,
-        ratio: swipe_ratio(offset, action_width),
-        full,
-    })
-}
-fn settled_swipe_offset(offset: f64, action_width: f64) -> f64 {
-    if offset.abs() > action_width.max(1.0) / 2.0 {
-        match swipe_side(offset) {
-            Some(SwipeSide::Start) => action_width.max(1.0),
-            Some(SwipeSide::End) => -action_width.max(1.0),
-            None => 0.0,
-        }
-    } else {
-        0.0
-    }
-}
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum DismissPhase {
-    Idle,
-    Exiting,
-    Collapsing,
-}
-impl DismissPhase {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::Idle => "idle",
-            Self::Exiting => "exiting",
-            Self::Collapsing => "collapsing",
-        }
-    }
-}
+
 /// How separators are drawn between list rows.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ListLines {
-    /// Separators span the full width of the list.
+    /// Separators span the full width.
     Full,
-    /// Separators are inset to align with row text, leaving leading icons
-    /// and avatars clear.
+    /// Separators start at the text, clear of leading icons.
     #[default]
     Inset,
     /// No separators.
     None,
 }
+
 impl ListLines {
-    fn class(self) -> &'static str {
+    fn as_str(self) -> &'static str {
         match self {
-            Self::Full => s::ITEM_LINES_FULL,
-            Self::Inset => s::ITEM_LINES_INSET,
-            Self::None => s::ITEM_LINES_NONE,
+            ListLines::Full => "full",
+            ListLines::Inset => "inset",
+            ListLines::None => "none",
         }
     }
 }
-/// What a list row behaves as, which determines its semantics and
-/// keyboard handling as well as its look.
-#[derive(Clone, PartialEq, Eq, Default)]
-pub enum ItemKind {
-    /// Plain content. Not focusable and not interactive.
+
+/// How a [`List`] sits on the page. Apart from `EdgeToEdge`, these match
+/// [`CardVariant`](crate::CardVariant): the rows sit in a rounded group,
+/// like an iOS settings screen, drawn the way a card with that variant is.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ListVariant {
+    /// Rows span the full width of the screen, with no group around them,
+    /// like a phone inbox or a settings page on Android. Put the list in
+    /// [`Content`](crate::Content) with `padding: false` so nothing insets
+    /// it; a sheet or drawer takes the same `padding` prop.
     #[default]
-    Static,
-    /// Behaves as a button: focusable, keyboard-activatable, and it shows
-    /// a press state.
-    Button,
-    /// Navigates to the given href. Renders as an anchor, so it supports
-    /// middle-click and open-in-new-tab.
-    Link(String),
+    EdgeToEdge,
+    /// A rounded group lifted off the page with a shadow.
+    Raised,
+    /// A rounded group outlined by a border.
+    Flat,
+    /// A rounded group on a tinted surface.
+    Filled,
 }
-/// Whether a list row shows a trailing detail chevron.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+
+/// Marks the children of a [`List`], so rows know to be list items.
+#[derive(Clone, Copy)]
+pub(crate) struct InList;
+
+/// Marks the content of a [`SwipeItem`](crate::SwipeItem): the swipe row is
+/// the list item, so the row inside it is not another one.
+#[derive(Clone, Copy)]
+pub(crate) struct InSwipeRow;
+
+/// Whether an [`Item`] shows a trailing chevron.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ItemDetail {
-    /// Show the chevron when the row is interactive, hide it otherwise.
+    /// Show it for tappable rows on both platforms.
     #[default]
     Auto,
-    /// Always show the trailing chevron.
+    /// Always show it.
     Show,
-    /// Never show the trailing chevron.
+    /// Never show it.
     Hide,
 }
-/// Live state of an in-progress swipe, handed to swipe-action render
-/// callbacks so they can track the gesture.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct SwipeState {
-    /// Which edge the gesture started from.
-    pub side: SwipeSide,
-    /// Current horizontal displacement of the row, in pixels.
-    pub offset: f64,
-    /// `offset` as a fraction of the width of the revealed actions, so `1.0`
-    /// means the actions are fully open.
-    pub ratio: f64,
-    /// Whether the swipe has passed the threshold at which `Activate` or
-    /// `Dismiss` would commit on release.
-    pub full: bool,
-}
+
+/// A vertical list of [`Item`]s. Like Ionic's `ion-list`.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Routable, Clone, Debug, PartialEq)]
+/// # enum Route {
+/// #     #[route("/")]
+/// #     Profile {},
+/// # }
+/// # #[component] fn Profile() -> Element { rsx! {} }
+/// # let notify = use_signal(|| false);
+/// rsx! {
+///     List { variant: ListVariant::Raised,
+///         ListHeader { "Account" }
+///         Item { label: "Profile", to: Route::Profile {} }
+///         Item { label: "Notifications", end: rsx! { Toggle { checked: notify, aria_label: "Notifications" } } }
+///     }
+/// }
+/// # }
+/// ```
 #[component]
 pub fn List(
-    inset: Option<bool>,
+    /// Edge to edge, or a rounded group drawn like a card. Defaults to
+    /// [`ListVariant::EdgeToEdge`].
+    variant: Option<ListVariant>,
+    /// Separators between rows. Defaults to [`ListLines::Inset`].
     lines: Option<ListLines>,
-    class: Option<String>,
+    /// Accessible name of the list.
+    aria_label: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Extra classes for the list.
+    class: Option<String>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::LIST_IOS,
-        ComponentMode::Md => s::LIST_MD,
-    };
-    let inset_cls = if inset.unwrap_or(false) {
-        s::LIST_INSET
-    } else {
-        ""
-    };
-    let lines = match lines.unwrap_or_default() {
-        ListLines::Full => "full",
-        ListLines::Inset => "inset",
-        ListLines::None => "none",
-    };
+    use_context_provider(|| InList);
+    let cls = classes([
+        "g3-list",
+        mode.pick("g3-list-ios", "g3-list-md"),
+        match variant.unwrap_or_default() {
+            ListVariant::EdgeToEdge => "",
+            ListVariant::Raised => "g3-list-grouped",
+            ListVariant::Flat => "g3-list-grouped g3-list-flat",
+            ListVariant::Filled => "g3-list-grouped g3-list-filled",
+        },
+    ]);
     rsx! {
         div {
-            class: merge_classes(format!("{} {mode_cls} {inset_cls}", s::LIST), class
-                    .as_deref()),
+            class: merge_classes(cls, class.as_deref()),
             role: "list",
-            "data-lines": lines,
+            aria_label,
+            "data-lines": lines.unwrap_or_default().as_str(),
             {children}
         }
     }
 }
+
+/// A section heading inside a [`List`].
+#[component]
+pub fn ListHeader(
+    /// Heading level of the header, 1 to 6. Defaults to 2; set it so the page's
+    /// headings do not skip a level.
+    heading_level: Option<u8>,
+    /// Extra classes for the header row.
+    class: Option<String>,
+    children: Element,
+) -> Element {
+    rsx! {
+        div {
+            class: merge_classes("g3-list-header-row", class.as_deref()),
+            role: "listitem",
+            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-list-header", {children} }
+        }
+    }
+}
+
+/// A list row with leading content, text lines, metadata, and trailing
+/// content. Like Ionic's `ion-item`.
+///
+/// It is tappable when given `onclick`, `to`, or `href`: a button, a router
+/// link, or a plain link. With `checked` it is a checkbox row and `onclick`
+/// should flip the value.
 #[component]
 pub fn Item(
-    kind: Option<ItemKind>,
-    lines: Option<ListLines>,
-    selected: Option<bool>,
-    disabled: Option<bool>,
-    detail: Option<ItemDetail>,
-    start: Option<Element>,
-    end: Option<Element>,
-    /// When `Some`, renders a checkbox-style indicator in the end slot
-    /// (taking over from `end`/`detail`) instead of a custom `end` element
-    /// or chevron — the row itself is the toggle, driven by the caller's
-    /// `onclick`, rather than nesting a second interactive control inside
-    /// the row (which `Checkbox` can't do without becoming a button inside
-    /// a button when the row also needs to be tappable).
-    checked: Option<bool>,
-    overline: Option<String>,
+    /// Main text.
     label: Option<String>,
+    /// Small text above the label.
+    overline: Option<String>,
+    /// Secondary text under the label.
     description: Option<String>,
+    /// Short trailing text, such as a value or date.
     metadata: Option<String>,
-    class: Option<String>,
+    /// Leading content: an icon, avatar, or thumbnail.
+    start: Option<Element>,
+    /// Trailing content: a badge, toggle, or button.
+    end: Option<Element>,
+    /// Called when the row is pressed.
+    onclick: Option<EventHandler<MouseEvent>>,
+    /// Router destination.
+    #[props(default, into)]
+    to: Destination,
+    /// Plain link destination, used when `to` is not set.
+    href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
+    /// Make the row a checkbox with this state, drawn in place of `end`.
+    checked: Option<bool>,
+    /// Highlight the row as the current one.
+    selected: Option<bool>,
+    /// Disable the row.
+    disabled: Option<bool>,
+    /// Trailing chevron. Defaults to [`ItemDetail::Auto`].
+    detail: Option<ItemDetail>,
+    /// Separator under this row, overriding the list's.
+    lines: Option<ListLines>,
+    /// Let the label and description wrap onto more lines instead of being
+    /// cut short, for text the reader needs in full. Like Ionic's
+    /// `ion-text-wrap`.
+    wrap: Option<bool>,
+    /// Accessible name, when the visible text is not enough.
+    aria_label: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
-    onclick: Option<Callback<Event<MouseData>>>,
-    children: Option<Element>,
+    /// Extra classes for the row.
+    class: Option<String>,
+    /// Extra content under the text lines.
+    children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let kind = match (kind.unwrap_or_default(), onclick.is_some()) {
-        (ItemKind::Static, true) => ItemKind::Button,
-        (kind, _) => kind,
-    };
-    let disabled = disabled.unwrap_or(false);
+    let list_item = use_hook(|| {
+        try_consume_context::<InList>().is_some() && try_consume_context::<InSwipeRow>().is_none()
+    });
+    let target = Target::from_props(href, to, new_tab.unwrap_or(false));
+    let interactive = onclick.is_some() || target.is_link() || checked.is_some();
     let selected = selected.unwrap_or(false);
-    let detail = detail.unwrap_or_default();
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::ITEM_IOS,
-        ComponentMode::Md => s::ITEM_MD,
-    };
-    let interactive = !matches!(kind, ItemKind::Static) || onclick.is_some();
+    let disabled = disabled.unwrap_or(false);
     let show_detail = checked.is_none()
-        && (matches!(detail, ItemDetail::Show)
-            || (matches!(detail, ItemDetail::Auto) && interactive && mode == ComponentMode::Ios));
+        && match detail.unwrap_or_default() {
+            ItemDetail::Show => true,
+            ItemDetail::Hide => false,
+            ItemDetail::Auto => interactive,
+        };
+    let lines_cls = match lines {
+        Some(ListLines::Full) => "g3-item-lines-full",
+        Some(ListLines::Inset) => "g3-item-lines-inset",
+        Some(ListLines::None) => "g3-item-lines-none",
+        None => "",
+    };
     let cls = merge_classes(
-        format!(
-            "{} {mode_cls} {} {} {} {}",
-            s::ITEM,
-            lines.map(ListLines::class).unwrap_or(""),
-            if interactive { s::ITEM_BUTTON } else { "" },
-            if selected { s::ITEM_SELECTED } else { "" },
-            if disabled { s::ITEM_DISABLED } else { "" },
-        ),
+        classes([
+            "g3-item",
+            mode.pick("g3-item-ios", "g3-item-md"),
+            lines_cls,
+            if interactive { "g3-item-button" } else { "" },
+            if selected { "g3-item-selected" } else { "" },
+            if disabled { "g3-item-disabled" } else { "" },
+            if wrap.unwrap_or(false) {
+                "g3-item-wrap"
+            } else {
+                ""
+            },
+        ]),
         class.as_deref(),
     );
-    let aria_disabled = disabled.then(|| "true".to_string());
-    let role = checked.map(|_| "checkbox");
-    let aria_checked = checked.map(|value| value.to_string());
-    let end = if let Some(checked) = checked {
-        Some(rsx! {
-            span {
-                class: if checked { "g3-item-check checked" } else { "g3-item-check" },
-                aria_hidden: "true",
+    // Controls in `end`, such as a Follow button, cannot sit inside the row's
+    // own button: a button in a button is invalid, and neither can then be
+    // reached properly by keyboard or a screen reader. Such a row makes only
+    // its text the action, stretched over the row, and keeps the controls
+    // beside it, as a Card does.
+    let split = interactive && checked.is_none() && end.is_some();
+    let end = match checked {
+        Some(_) => Some(rsx! {
+            span { class: "g3-item-check", aria_hidden: "true",
                 span { class: "g3-item-check-mark" }
             }
-        })
-    } else {
-        end
+        }),
+        None => end.map(|end| {
+            rsx! {
+                span { class: "g3-item-end", {end} }
+            }
+        }),
     };
-    match kind {
-        ItemKind::Link(href) if !disabled => {
-            rsx! {
-                div { class: s::ITEM_ROW, role: "listitem",
-                    a { class: cls, href,
-                        if let Some(start) = start {
-                            span { class: s::ITEM_START, {start} }
-                        }
-                        span { class: s::ITEM_MAIN,
-                            if let Some(overline) = overline {
-                                span { class: s::ITEM_OVERLINE, "{overline}" }
-                            }
-                            if let Some(label) = label {
-                                span { class: s::ITEM_LABEL, "{label}" }
-                            }
-                            if let Some(description) = description {
-                                span { class: s::ITEM_DESCRIPTION, "{description}" }
-                            }
-                            if let Some(children) = children {
-                                {children}
-                            }
-                        }
-                        if let Some(metadata) = metadata {
-                            span { class: s::ITEM_METADATA, "{metadata}" }
-                        }
-                        if let Some(end) = end {
-                            span { class: s::ITEM_END, {end} }
-                        }
-                        if show_detail {
-                            span { aria_hidden: "true",
-                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
-                            }
-                        }
-                    }
-                }
+    let text = rsx! {
+        if let Some(overline) = overline {
+            span { class: "g3-item-overline", "{overline}" }
+        }
+        if let Some(label) = label {
+            span { class: "g3-item-label", "{label}" }
+        }
+        if let Some(description) = description {
+            span { class: "g3-item-description", "{description}" }
+        }
+        {children}
+    };
+    let start = start.map(|start| {
+        rsx! {
+            span { class: "g3-item-start", {start} }
+        }
+    });
+    let trailing = rsx! {
+        if let Some(metadata) = metadata {
+            span { class: "g3-item-metadata", "{metadata}" }
+        }
+        {end}
+        if show_detail {
+            span { class: "g3-item-detail", aria_hidden: "true",
+                ChevronRight { size: 18 }
             }
         }
-        ItemKind::Link(_) => {
-            rsx! {
-                div { class: s::ITEM_ROW, role: "listitem",
-                    div { class: cls, role: "link", aria_disabled,
-                        if let Some(start) = start {
-                            span { class: s::ITEM_START, {start} }
-                        }
-                        span { class: s::ITEM_MAIN,
-                            if let Some(overline) = overline {
-                                span { class: s::ITEM_OVERLINE, "{overline}" }
-                            }
-                            if let Some(label) = label {
-                                span { class: s::ITEM_LABEL, "{label}" }
-                            }
-                            if let Some(description) = description {
-                                span { class: s::ITEM_DESCRIPTION, "{description}" }
-                            }
-                            if let Some(children) = children {
-                                {children}
-                            }
-                        }
-                        if let Some(metadata) = metadata {
-                            span { class: s::ITEM_METADATA, "{metadata}" }
-                        }
-                        if let Some(end) = end {
-                            span { class: s::ITEM_END, {end} }
-                        }
-                        if show_detail {
-                            span { aria_hidden: "true",
-                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ItemKind::Button => {
-            rsx! {
-                div { class: s::ITEM_ROW, role: "listitem",
-                    button {
-                        class: cls,
-                        r#type: "button",
+    };
+    let mut attributes = Vec::new();
+    if let Some(checked) = checked {
+        attributes.push(Attribute::new("role", "checkbox", None, false));
+        attributes.push(Attribute::new(
+            "aria-checked",
+            checked.to_string(),
+            None,
+            false,
+        ));
+    }
+    if selected && interactive {
+        attributes.push(Attribute::new("aria-current", "true", None, false));
+    }
+    // A name belongs on the control when there is one, otherwise on the list
+    // item; a plain `div` may not carry one.
+    let (control_label, row_label) = if interactive {
+        (aria_label, None)
+    } else {
+        (None, aria_label)
+    };
+    if let Some(label) = control_label {
+        attributes.push(Attribute::new("aria-label", label, None, false));
+    }
+    rsx! {
+        div {
+            class: "g3-item-row",
+            role: list_item.then_some("listitem"),
+            aria_label: row_label.filter(|_| list_item),
+            if split {
+                div { class: merge_classes(cls, Some("g3-item-split")),
+                    {start}
+                    Pressable {
+                        class: "g3-item-main g3-item-action",
+                        target,
                         disabled,
-                        role,
-                        aria_checked,
-                        onclick: move |event| {
-                            if let Some(onclick) = onclick {
-                                onclick.call(event);
-                            }
-                        },
-                        if let Some(start) = start {
-                            span { class: s::ITEM_START, {start} }
-                        }
-                        span { class: s::ITEM_MAIN,
-                            if let Some(overline) = overline {
-                                span { class: s::ITEM_OVERLINE, "{overline}" }
-                            }
-                            if let Some(label) = label {
-                                span { class: s::ITEM_LABEL, "{label}" }
-                            }
-                            if let Some(description) = description {
-                                span { class: s::ITEM_DESCRIPTION, "{description}" }
-                            }
-                            if let Some(children) = children {
-                                {children}
-                            }
-                        }
-                        if let Some(metadata) = metadata {
-                            span { class: s::ITEM_METADATA, "{metadata}" }
-                        }
-                        if let Some(end) = end {
-                            span { class: s::ITEM_END, {end} }
-                        }
-                        if show_detail {
-                            span { aria_hidden: "true",
-                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
-                            }
-                        }
+                        onclick,
+                        attributes,
+                        {text}
                     }
+                    {trailing}
                 }
-            }
-        }
-        ItemKind::Static => {
-            rsx! {
-                div { class: s::ITEM_ROW, role: "listitem",
-                    div { class: cls,
-                        if let Some(start) = start {
-                            span { class: s::ITEM_START, {start} }
-                        }
-                        span { class: s::ITEM_MAIN,
-                            if let Some(overline) = overline {
-                                span { class: s::ITEM_OVERLINE, "{overline}" }
-                            }
-                            if let Some(label) = label {
-                                span { class: s::ITEM_LABEL, "{label}" }
-                            }
-                            if let Some(description) = description {
-                                span { class: s::ITEM_DESCRIPTION, "{description}" }
-                            }
-                            if let Some(children) = children {
-                                {children}
-                            }
-                        }
-                        if let Some(metadata) = metadata {
-                            span { class: s::ITEM_METADATA, "{metadata}" }
-                        }
-                        if let Some(end) = end {
-                            span { class: s::ITEM_END, {end} }
-                        }
-                        if show_detail {
-                            span { aria_hidden: "true",
-                                ChevronRight { class: s::ITEM_DETAIL, size: 18 }
-                            }
-                        }
-                    }
+            } else if interactive {
+                Pressable { class: cls, target, disabled, onclick, attributes,
+                    {start}
+                    span { class: "g3-item-main", {text} }
+                    {trailing}
+                }
+            } else {
+                div { class: cls,
+                    {start}
+                    span { class: "g3-item-main", {text} }
+                    {trailing}
                 }
             }
         }
     }
 }
-#[component]
-pub fn ItemDivider(class: Option<String>, children: Element) -> Element {
-    rsx! {
-        div {
-            class: merge_classes(s::ITEM_DIVIDER, class.as_deref()),
-            role: "separator",
-            {children}
-        }
-    }
-}
-#[component]
-pub fn SwipeAction(
-    side: SwipeSide,
-    destructive: Option<bool>,
-    accent: Option<bool>,
-    class: Option<String>,
-    onclick: Option<Callback<Event<MouseData>>>,
-    children: Element,
-) -> Element {
-    let variant = if destructive.unwrap_or(false) {
-        s::SWIPE_ACTION_DESTRUCTIVE
-    } else if accent.unwrap_or(false) {
-        s::SWIPE_ACTION_ACCENT
-    } else {
-        ""
-    };
-    let side = match side {
-        SwipeSide::Start => "start",
-        SwipeSide::End => "end",
-    };
-    rsx! {
-        button {
-            class: merge_classes(format!("{} {variant}", s::SWIPE_ACTION), class
-                    .as_deref()),
-            r#type: "button",
-            "data-side": side,
-            onclick: move |event| {
-                if let Some(onclick) = onclick {
-                    onclick.call(event);
-                }
-            },
-            {children}
-        }
-    }
-}
-#[component]
-pub fn SwipeItem(
-    start_actions: Option<Element>,
-    end_actions: Option<Element>,
-    behavior: Option<SwipeBehavior>,
-    disabled: Option<bool>,
-    /// Whether mouse drags may start a swipe. Touch and pen gestures are still
-    /// available when this is false, which lets responsive consumers keep the
-    /// mobile gesture while using explicit actions on desktop.
-    mouse_swipe_enabled: Option<bool>,
-    class: Option<String>,
-    on_drag: Option<Callback<SwipeState>>,
-    on_full_swipe: Option<Callback<SwipeState>>,
-    on_swipe_action: Option<Callback<SwipeState>>,
-    on_long_press: Option<Callback<()>>,
-    children: Element,
-) -> Element {
-    let behavior = behavior.unwrap_or_default();
-    let action_width = action_width_for_behavior(behavior);
-    let has_start_actions = start_actions.is_some();
-    let has_end_actions = end_actions.is_some();
-    let disabled = disabled.unwrap_or(false);
-    let mouse_swipe_enabled = mouse_swipe_enabled.unwrap_or(true);
-    let mut start_x = use_signal(|| 0.0);
-    let mut start_y = use_signal(|| 0.0);
-    let mut offset = use_signal(|| 0.0);
-    let mut dragging = use_signal(|| false);
-    // Set once the gesture is unambiguously sideways. Two jobs: it tells the CSS
-    // to stop transitioning so the row tracks the finger exactly, and it starts
-    // cancelling touchmove so the page cannot scroll out from under a swipe.
-    let mut horizontal = use_signal(|| false);
-    let mut long_press_generation = use_signal(|| 0_u64);
-    let mut dismiss_phase = use_signal(|| DismissPhase::Idle);
-    let mut suppress_click = use_signal(|| false);
-    let mut click_suppress_generation = use_signal(|| 0_u64);
-    let on_drag_move = on_drag;
-    let on_long_press_down = on_long_press;
-    let on_drag_up = on_drag;
-    let on_full_swipe_up = on_full_swipe;
-    let on_swipe_action_up = on_swipe_action;
-    let start_actions_hidden = offset() <= 0.0;
-    let end_actions_hidden = offset() >= 0.0;
-    let start_actions_inert = start_actions_hidden.then(|| "".to_string());
-    let end_actions_inert = end_actions_hidden.then(|| "".to_string());
-    rsx! {
-        div {
-            class: merge_classes(s::SWIPE_ITEM, class.as_deref()),
-            style: format!(
-                "--g3-swipe-offset: {}px; --g3-swipe-progress: {}; --g3-swipe-action-width: {}px;",
-                offset(),
-                swipe_ratio(offset(), action_width).abs().min(1.4),
-                action_width,
-            ),
-            "data-behavior": match behavior {
-                SwipeBehavior::Reveal => "reveal",
-                SwipeBehavior::Activate => "activate",
-                SwipeBehavior::Dismiss => "dismiss",
-            },
-            "data-state": dismiss_phase().as_str(),
-            "data-dragging": (dragging() && horizontal()).then_some("true"),
-            // `touch-action: pan-y` lets the browser start a vertical scroll at any
-            // point in the gesture, including after a swipe is already underway.
-            // Cancelling touchmove once the swipe has committed takes the scroll
-            // off the table for the rest of this gesture - it stays available for
-            // gestures that begin vertically, which never set `horizontal`.
-            ontouchmove: move |event: TouchEvent| {
-                if horizontal() {
-                    event.prevent_default();
-                }
-            },
-            onpointerdown: move |event: PointerEvent| {
-                if disabled
-                    || (!mouse_swipe_enabled && event.data.pointer_type() == "mouse")
-                    || dismiss_phase() != DismissPhase::Idle
-                {
-                    return;
-                }
-                dragging.set(true);
-                horizontal.set(false);
-                start_x.set(event.client_coordinates().x);
-                start_y.set(event.client_coordinates().y);
-                click_suppress_generation.with_mut(|value| *value += 1);
-                let generation = long_press_generation
-                    .with_mut(|value| {
-                        *value += 1;
-                        *value
-                    });
-                if let Some(on_long_press) = on_long_press_down {
-                    spawn(async move {
-                        dioxus_sdk_time::sleep(Duration::from_millis(LONG_PRESS_MS)).await;
-                        if long_press_generation() == generation && dragging() {
-                            on_long_press.call(());
-                        }
-                    });
-                }
-            },
-            onpointermove: move |event: PointerEvent| {
-                if !dragging() || disabled || dismiss_phase() != DismissPhase::Idle {
-                    return;
-                }
-                let dx = event.client_coordinates().x - start_x();
-                let dy = event.client_coordinates().y - start_y();
-                if should_cancel_long_press(dx, dy) {
-                    long_press_generation.with_mut(|value| *value += 1);
-                    suppress_click.set(true);
-                }
-                if !horizontal() && is_horizontal_gesture(dx, dy) {
-                    horizontal.set(true);
-                }
-                let next = swipe_offset_for_behavior(
-                    dx,
-                    action_width,
-                    has_start_actions,
-                    has_end_actions,
-                    behavior,
-                );
-                offset.set(next);
-                let active = match behavior {
-                    SwipeBehavior::Reveal | SwipeBehavior::Dismiss => {
-                        should_full_swipe(next, action_width)
-                    }
-                    SwipeBehavior::Activate => should_activate_swipe(next, action_width),
-                };
-                if let Some(state) = swipe_state(next, action_width, active)
-                    && let Some(on_drag) = on_drag_move
-                {
-                    on_drag.call(state);
-                }
-            },
-            onpointerup: move |_| {
-                if disabled || dismiss_phase() != DismissPhase::Idle {
-                    return;
-                }
-                dragging.set(false);
-                horizontal.set(false);
-                long_press_generation.with_mut(|value| *value += 1);
-                let current = offset();
-                match behavior {
-                    SwipeBehavior::Reveal => {
-                        offset.set(settled_swipe_offset(current, action_width));
-                    }
-                    SwipeBehavior::Activate => {
-                        if should_activate_swipe(current, action_width)
-                            && is_swipe_side_available(
-                                current,
-                                has_start_actions,
-                                has_end_actions,
-                            ) && let Some(state) = swipe_state(current, action_width, true)
-                        {
-                            if let Some(on_drag) = on_drag_up {
-                                on_drag.call(state);
-                            }
-                            if let Some(on_swipe_action) = on_swipe_action_up {
-                                on_swipe_action.call(state);
-                            }
-                        }
-                        offset.set(0.0);
-                    }
-                    SwipeBehavior::Dismiss => {
-                        if should_full_swipe(current, action_width)
-                            && is_swipe_side_available(
-                                current,
-                                has_start_actions,
-                                has_end_actions,
-                            )
-                        {
-                            if let Some(state) = swipe_state(current, action_width, true) {
-                                if let Some(on_drag) = on_drag_up {
-                                    on_drag.call(state);
-                                }
-                                let direction = if state.side == SwipeSide::Start {
-                                    1.0
-                                } else {
-                                    -1.0
-                                };
-                                offset.set(direction * DISMISS_SWIPE_OFFSET);
-                                dismiss_phase.set(DismissPhase::Exiting);
-                                spawn(async move {
-                                    dioxus_sdk_time::sleep(
-                                            Duration::from_millis(DISMISS_EXIT_MS),
-                                        )
-                                        .await;
-                                    dismiss_phase.set(DismissPhase::Collapsing);
-                                    dioxus_sdk_time::sleep(
-                                            Duration::from_millis(DISMISS_COLLAPSE_MS),
-                                        )
-                                        .await;
-                                    if let Some(on_full_swipe) = on_full_swipe_up {
-                                        on_full_swipe.call(state);
-                                    }
-                                });
-                            }
-                        } else {
-                            offset.set(0.0);
-                        }
-                    }
-                }
-                if suppress_click() {
-                    let generation = click_suppress_generation
-                        .with_mut(|value| {
-                            *value += 1;
-                            *value
-                        });
-                    spawn(async move {
-                        dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
-                        if click_suppress_generation() == generation {
-                            suppress_click.set(false);
-                        }
-                    });
-                }
-            },
-            onpointercancel: move |_| {
-                if dismiss_phase() != DismissPhase::Idle {
-                    return;
-                }
-                dragging.set(false);
-                horizontal.set(false);
-                long_press_generation.with_mut(|value| *value += 1);
-                offset.set(0.0);
-                suppress_click.set(false);
-            },
-            onpointerleave: move |_| {
-                if dismiss_phase() != DismissPhase::Idle {
-                    return;
-                }
-                if !dragging() {
-                    return;
-                }
-                dragging.set(false);
-                horizontal.set(false);
-                long_press_generation.with_mut(|value| *value += 1);
-                offset
-                    .set(
-                        if behavior == SwipeBehavior::Reveal {
-                            settled_swipe_offset(offset(), action_width)
-                        } else {
-                            0.0
-                        },
-                    );
-            },
-            if let Some(start_actions) = start_actions {
-                div {
-                    class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_START),
-                    aria_hidden: start_actions_hidden.to_string(),
-                    inert: start_actions_inert,
-                    {start_actions}
-                }
-            }
-            if let Some(end_actions) = end_actions {
-                div {
-                    class: format!("{} {}", s::SWIPE_ACTIONS, s::SWIPE_ACTIONS_END),
-                    aria_hidden: end_actions_hidden.to_string(),
-                    inert: end_actions_inert,
-                    {end_actions}
-                }
-            }
-            div {
-                class: s::SWIPE_CONTENT,
-                style: if suppress_click() { "pointer-events: none;" } else { "" },
-                {children}
-            }
-        }
-    }
-}
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn ListPlaygroundDemo() -> Element {
-    let mut last_action = use_signal(|| "Long-press the reveal row or swipe any row".to_string());
-    let mut dismiss_visible = use_signal(|| true);
-    let inset = use_signal(|| true);
-    let lines_index = use_signal(|| 1_usize);
-    let lines = match lines_index() {
-        0 => ListLines::Full,
-        2 => ListLines::None,
-        _ => ListLines::Inset,
-    };
+fn ListPlaygroundDemo() -> Element {
+    use crate::{Color, SwipeAction, SwipeBehavior, SwipeItem, use_toast};
+    let variant = use_signal(|| ListVariant::Raised);
+    let lines = use_signal(|| ListLines::Inset);
+    let start_behavior = use_signal(|| SwipeBehavior::Activate);
+    let end_behavior = use_signal(|| SwipeBehavior::Reveal);
+    let mut notify = use_signal(|| true);
+    const ROWS: [&str; 4] = ["Round 12", "Round 11", "Round 10", "Round 9"];
+    let mut rows = use_signal(|| ROWS.to_vec());
+    let toast = use_toast();
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
+            // An edge-to-edge list is meant to touch the screen edges.
+            padding: variant() != ListVariant::EdgeToEdge,
             controls: rsx! {
-                crate::Checkbox { checked: inset, label: "Inset".to_string() }
-                div {
-                    span { "Dividers" }
-                    crate::SegmentGroup { active: lines_index,
-                        crate::SegmentButton { index: 0, "Full" }
-                        crate::SegmentButton { index: 1, "Inset" }
-                        crate::SegmentButton { index: 2, "None" }
-                    }
+                crate::SegmentGroup { value: variant, aria_label: "Variant",
+                    crate::SegmentButton { value: ListVariant::EdgeToEdge, "Edge to edge" }
+                    crate::SegmentButton { value: ListVariant::Raised, "Raised" }
+                    crate::SegmentButton { value: ListVariant::Flat, "Flat" }
+                    crate::SegmentButton { value: ListVariant::Filled, "Filled" }
+                }
+                crate::SegmentGroup { value: lines, aria_label: "Lines",
+                    crate::SegmentButton { value: ListLines::Full, "Full lines" }
+                    crate::SegmentButton { value: ListLines::Inset, "Inset lines" }
+                    crate::SegmentButton { value: ListLines::None, "No lines" }
+                }
+                crate::Button {
+                    fill: crate::ButtonFill::Outline,
+                    color: crate::Color::Neutral,
+                    disabled: rows.read().len() == ROWS.len(),
+                    onclick: move |_| rows.set(ROWS.to_vec()),
+                    "Restore deleted rows"
+                }
+                crate::Select {
+                    label: "Swipe right",
+                    value: start_behavior,
+                    options: vec![
+                        crate::SelectOption::new(SwipeBehavior::Reveal, "Reveal buttons"),
+                        crate::SelectOption::new(SwipeBehavior::Activate, "Activate (archive)"),
+                        crate::SelectOption::new(SwipeBehavior::Dismiss, "Dismiss"),
+                    ],
+                }
+                crate::Select {
+                    label: "Swipe left",
+                    value: end_behavior,
+                    options: vec![
+                        crate::SelectOption::new(SwipeBehavior::Reveal, "Reveal buttons"),
+                        crate::SelectOption::new(SwipeBehavior::Activate, "Activate (delete)"),
+                        crate::SelectOption::new(SwipeBehavior::Dismiss, "Dismiss"),
+                    ],
                 }
             },
-            div { class: "g3-list-demo-stack",
-                List { inset: inset(), lines,
-                    ItemDivider { "Round" }
+            crate::Stack {
+                gap: if variant() == ListVariant::EdgeToEdge { crate::Space::None } else { crate::Space::Lg },
+                List { variant: variant(), lines: lines(),
+                    ListHeader { "Settings" }
+                    Item { label: "Profile", description: "Name and handicap", onclick: |_| {} }
+                    Item { label: "Notifications", checked: notify(), onclick: move |_| notify.toggle() }
+                    Item { label: "Version", metadata: "0.4.0" }
                     Item {
-                        start: rsx! {
-                            crate::Avatar { fallback: "MW" }
-                        },
-                        label: "Matthew Weisfeld",
-                        description: "Walking 18 holes",
-                        metadata: "9:40",
-                    }
-                    Item {
-                        kind: ItemKind::Link("https://example.com".to_string()),
-                        label: "Link row",
-                        description: "Opens a destination",
-                    }
-                    Item {
-                        kind: ItemKind::Button,
-                        label: "Button row",
-                        description: "Tap action",
-                        detail: ItemDetail::Show,
-                        onclick: move |_| last_action.set("Tapped button row".to_string()),
-                    }
-                    ItemDivider { "Swipe" }
-                    SwipeItem {
-                        behavior: SwipeBehavior::Reveal,
-                        start_actions: rsx! {
-                            SwipeAction {
-                                side: SwipeSide::Start,
-                                accent: true,
-                                onclick: move |_| last_action.set("Pinned from revealed action".to_string()),
-                                "Pin"
-                            }
-                        },
-                        end_actions: rsx! {
-                            SwipeAction {
-                                side: SwipeSide::End,
-                                destructive: true,
-                                onclick: move |_| last_action.set("Deleted from revealed action".to_string()),
-                                "Delete"
-                            }
-                        },
-                        on_long_press: move |_| last_action.set("Long press fired".to_string()),
-                        Item {
-                            kind: ItemKind::Button,
-                            label: "Reveal actions",
-                            description: "Long press or expose side buttons",
-                            onclick: |_| {},
-                        }
-                    }
-                    SwipeItem {
-                        behavior: SwipeBehavior::Activate,
-                        start_actions: rsx! {
-                            SwipeAction { side: SwipeSide::Start, accent: true, "Archive" }
-                        },
-                        end_actions: rsx! {
-                            SwipeAction { side: SwipeSide::End, destructive: true, "Flag" }
-                        },
-                        on_swipe_action: move |state: SwipeState| {
-                            last_action.set(format!("Quick swipe activated: {:?}", state.side))
-                        },
-                        Item {
-                            label: "Quick swipe",
-                            description: "Stops early and emits the side action",
-                        }
-                    }
-                    if dismiss_visible() {
-                        SwipeItem {
-                            behavior: SwipeBehavior::Dismiss,
-                            end_actions: rsx! {
-                                SwipeAction { side: SwipeSide::End, destructive: true, "Remove" }
-                            },
-                            on_full_swipe: move |state: SwipeState| {
-                                last_action.set(format!("Dismissed by {:?} swipe", state.side));
-                                dismiss_visible.set(false);
-                            },
-                            Item {
-                                label: "Dismiss swipe",
-                                description: "Full swipe removes the row",
-                            }
-                        }
+                        label: "Handicap",
+                        description: "Wraps rather than cutting short: the average of your best eight differentials from your last twenty rounds.",
+                        wrap: true,
                     }
                 }
-                crate::Badge { color: crate::StatusColor::Neutral, "{last_action()}" }
-                if !dismiss_visible() {
-                    crate::Button {
-                        style: crate::ButtonStyle::Clear,
-                        onclick: move |_| dismiss_visible.set(true),
-                        "Restore dismiss row"
+                List { variant: variant(), lines: lines(),
+                    ListHeader { "Rounds — swipe either way" }
+                    for row in rows() {
+                        SwipeItem {
+                            key: "{row}",
+                            start_behavior: start_behavior(),
+                            end_behavior: end_behavior(),
+                            start_actions: rsx! {
+                                SwipeAction {
+                                    color: Color::Success,
+                                    onclick: move |_| { toast.success(format!("{row} archived")); },
+                                    "Archive"
+                                }
+                            },
+                            end_actions: rsx! {
+                                if end_behavior() == SwipeBehavior::Reveal {
+                                    SwipeAction {
+                                        color: Color::Accent,
+                                        onclick: move |_| { toast.show(format!("{row} pinned")); },
+                                        "Pin"
+                                    }
+                                }
+                                SwipeAction {
+                                    color: Color::Danger,
+                                    onclick: move |_| rows.write().retain(|r| *r != row),
+                                    "Delete"
+                                }
+                            },
+                            on_activate: move |state: crate::SwipeState| match state.side {
+                                crate::SwipeSide::Start => {
+                                    toast.success(format!("{row} archived"));
+                                }
+                                crate::SwipeSide::End => rows.write().retain(|r| *r != row),
+                            },
+                            on_dismiss: move |_| rows.write().retain(|r| *r != row),
+                            Item { label: row, description: "Pebble Creek" }
+                        }
                     }
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "List",
-    description: "Mobile list rows with slots, dividers, and swipe actions.",
+    description: "Lists, rows, section headers, and swipeable rows.",
+    components: ["List", "ListHeader", "Item", "SwipeItem", "SwipeAction"],
     demo: ListPlaygroundDemo,
     source: "src/components/list.rs",
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::G3ThemeProvider;
-    fn render(app: fn() -> Element) {
-        let mut dom = VirtualDom::new(app);
-        dom.rebuild_in_place();
-    }
-    #[test]
-    fn elastic_swipe_offset_slows_after_action_width() {
-        assert_eq!(elastic_swipe_offset(44.0, 88.0), 44.0);
-        assert_eq!(elastic_swipe_offset(188.0, 88.0), 143.0);
-        assert_eq!(elastic_swipe_offset(-188.0, 88.0), -143.0);
-    }
-    #[test]
-    fn full_swipe_requires_action_width_plus_margin() {
-        assert!(!should_full_swipe(117.0, 88.0));
-        assert!(should_full_swipe(118.0, 88.0));
-        assert!(should_full_swipe(-118.0, 88.0));
-    }
-    #[test]
-    fn swipe_side_follows_offset_direction() {
-        assert_eq!(swipe_side(12.0), Some(SwipeSide::Start));
-        assert_eq!(swipe_side(-12.0), Some(SwipeSide::End));
-        assert_eq!(swipe_side(0.0), None);
-    }
-    #[test]
-    fn swipe_ratio_follows_action_width() {
-        assert_eq!(swipe_ratio(44.0, 88.0), 0.5);
-        assert_eq!(swipe_ratio(-88.0, 88.0), -1.0);
-    }
-    #[test]
-    fn long_press_cancels_after_movement_threshold() {
-        assert!(!should_cancel_long_press(4.0, 4.0));
-        assert!(should_cancel_long_press(9.0, 0.0));
-    }
-    #[test]
-    fn reveal_swipe_offsets_stop_at_action_width() {
-        assert_eq!(
-            swipe_offset_for_behavior(188.0, 88.0, true, true, SwipeBehavior::Reveal),
-            88.0,
-        );
-        assert_eq!(
-            swipe_offset_for_behavior(-188.0, 88.0, true, true, SwipeBehavior::Reveal),
-            -88.0,
-        );
-    }
-    #[test]
-    fn activate_swipe_offsets_slow_toward_limit() {
-        let offset = swipe_offset_for_behavior(400.0, 88.0, true, true, SwipeBehavior::Activate);
-        assert!(offset > 44.0);
-        assert!(offset < 88.0);
-    }
-    #[test]
-    fn activate_swipe_follows_farther_before_soft_limit() {
-        assert_eq!(activate_swipe_offset(80.0, 136.0), 80.0);
-        let midpoint = activate_swipe_offset(136.0, 136.0);
-        assert!(midpoint > 110.0);
-        assert!(midpoint < 136.0);
-        let long_drag = activate_swipe_offset(400.0, 136.0);
-        assert!(long_drag > 130.0);
-        assert!(long_drag < 136.0);
-    }
-    #[test]
-    fn dismiss_swipe_delays_callback_until_exit_and_gap_collapse() {
-        let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3-ui.css");
-        assert!(source.contains("DismissPhase::Exiting"));
-        assert!(source.contains("DISMISS_EXIT_MS"));
-        assert!(source.contains("DISMISS_COLLAPSE_MS"));
-        assert!(source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS))",),);
-        assert!(
-            source.contains("dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS))",),
-        );
-        assert!(
-            source
-                .find("offset.set(direction * DISMISS_SWIPE_OFFSET)")
-                .unwrap()
-                < source.find("on_full_swipe.call(state)").unwrap(),
-        );
-        assert!(stylesheet.contains(".g3-swipe-item[data-state=\"exiting\"]"));
-        assert!(stylesheet.contains(".g3-swipe-item[data-state=\"collapsing\"]"));
-        assert!(stylesheet.contains("max-height"));
-    }
-    #[test]
-    fn activate_swipe_uses_early_threshold() {
-        assert!(!should_activate_swipe(39.0, 88.0));
-        assert!(should_activate_swipe(44.0, 88.0));
-    }
-    #[test]
-    fn constrained_swipe_offset_ignores_missing_action_sides() {
-        assert_eq!(constrained_swipe_offset(44.0, 88.0, false, true), 0.0);
-        assert_eq!(constrained_swipe_offset(-44.0, 88.0, true, false), 0.0);
-        assert_eq!(constrained_swipe_offset(44.0, 88.0, true, false), 44.0);
-        assert_eq!(constrained_swipe_offset(-44.0, 88.0, false, true), -44.0);
-    }
-    #[test]
-    fn item_lines_can_defer_to_parent_list() {
-        let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3-ui.css");
-        assert!(source.contains("lines.map(ListLines::class).unwrap_or"));
-        assert!(stylesheet.contains(".g3-list[data-lines=\"full\"] .g3-item"));
-        assert!(stylesheet.contains(
-            ":not(.g3-item-lines-full):not(.g3-item-lines-inset):not(.g3-item-lines-none)",
-        ),);
-        assert!(
-            stylesheet
-                .contains(".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item",),
-        );
-        assert!(
-            stylesheet.contains(
-                ".g3-list > :is(.g3-item-row, .g3-swipe-item):last-child .g3-item::after",
-            ),
-        );
-    }
-    #[test]
-    fn swipe_actions_are_hidden_from_keyboard_when_closed() {
-        let source = include_str!("list.rs");
-        let stylesheet = include_str!("../../assets/g3-ui.css");
-        assert!(source.contains("start_actions_hidden"));
-        assert!(source.contains("inert: start_actions_inert"));
-        assert!(source.contains("aria_hidden: start_actions_hidden.to_string()"));
-        assert!(
-            stylesheet
-                .contains(".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;",),
-        );
-    }
-    #[test]
-    fn dismiss_actions_use_a_stable_layer_beneath_an_opaque_item() {
-        let stylesheet = include_str!("../../assets/g3-ui.css");
-        assert!(stylesheet.contains(
-            ".g3-swipe-item[data-behavior=\"dismiss\"] .g3-swipe-actions {\n    width: 100%;",
-        ),);
-        let swipe_item = stylesheet
-            .split(".g3-swipe-item {")
-            .nth(1)
-            .expect("missing swipe item block")
-            .split('}')
-            .next()
-            .expect("missing end of swipe item block");
-        let swipe_content = stylesheet
-            .split(".g3-swipe-content {")
-            .nth(1)
-            .expect("missing swipe content block")
-            .split('}')
-            .next()
-            .expect("missing end of swipe content block");
-        let swipe_actions = stylesheet
-            .split(".g3-swipe-actions {")
-            .nth(1)
-            .expect("missing swipe actions block")
-            .split('}')
-            .next()
-            .expect("missing end of swipe actions block");
-        assert!(swipe_item.contains("background: var(--color-card);"));
-        assert!(!swipe_actions.contains("transform:"));
-        assert!(swipe_content.contains("overflow: hidden;"));
-        assert!(swipe_content.contains("background: var(--color-card);"));
-        assert!(!swipe_content.contains("contain: paint;"));
-        assert!(!swipe_content.contains("backface-visibility: hidden;"));
-        assert!(swipe_content.contains("box-shadow: 0 1px 0 var(--g3-swipe-edge)"));
-        assert!(swipe_content.contains("0 -1px 0 var(--g3-swipe-edge)"));
-        assert!(swipe_content.contains("--g3-swipe-edge: var(--color-card);"));
-        assert!(stylesheet.contains(".g3-swipe-content:has(.g3-item-selected)"));
-        assert!(swipe_item.contains("overflow: hidden;"));
-        assert!(swipe_actions.contains("transition: visibility 0s linear 0s;"));
-        assert!(
-            stylesheet
-                .contains(
-                    ".g3-swipe-actions[aria-hidden=\"true\"] {\n    visibility: hidden;\n    transition-delay: var(--transition-normal);",
-                ),
-        );
-    }
-    #[test]
-    fn item_controls_keep_native_roles() {
-        let source = include_str!("list.rs");
-        assert!(!source.contains("a { class: cls, href, role: \"listitem\""));
-        assert!(!source.contains("button { class: cls, r#type: \"button\", role: \"listitem\""),);
-        assert!(source.contains("div { class: s::ITEM_ROW, role: \"listitem\""));
-    }
-    #[test]
-    fn default_item_with_onclick_promotes_to_button_semantics() {
-        let source = include_str!("list.rs");
-        assert!(source.contains("(ItemKind::Static, true) => ItemKind::Button"));
-        assert!(source.contains("button { class: cls"));
-    }
-    #[test]
-    fn disabled_links_drop_anchor_navigation() {
-        let source = include_str!("list.rs");
-        assert!(source.contains("ItemKind::Link(href) if !disabled"));
-        assert!(source.contains("ItemKind::Link(_)"));
-        assert!(source.contains("role: \"link\", aria_disabled"));
-    }
-    #[test]
-    fn full_swipe_requires_available_action_side() {
-        let source = include_str!("list.rs");
-        assert!(
-            source.contains("should_full_swipe(current, action_width) && is_swipe_side_available",),
-        );
-        assert!(!is_swipe_side_available(44.0, false, true));
-        assert!(is_swipe_side_available(-44.0, false, true));
-    }
-    #[test]
-    fn pointer_leave_cleans_up_drag_state() {
-        let source = include_str!("list.rs");
-        assert!(source.contains("onpointerleave"));
-        assert!(source.contains("if !dragging() { return; }"));
-        assert!(source.contains("offset.set(settled_swipe_offset(offset(), action_width))"),);
-    }
-    #[test]
-    fn settled_swipe_offset_opens_after_midpoint() {
-        assert_eq!(settled_swipe_offset(45.0, 88.0), 88.0);
-        assert_eq!(settled_swipe_offset(-45.0, 88.0), -88.0);
-        assert_eq!(settled_swipe_offset(40.0, 88.0), 0.0);
-    }
-    #[component]
-    fn ListSmokeApp() -> Element {
-        rsx! {
-            G3ThemeProvider { mode: ComponentMode::Ios,
-                List { inset: true,
-                    Item { label: "Static", description: "Description" }
-                    SwipeItem {
-                        start_actions: rsx! {
-                            SwipeAction { side: SwipeSide::Start, accent: true, "Pin" }
-                        },
-                        end_actions: rsx! {
-                            SwipeAction { side: SwipeSide::End, destructive: true, "Delete" }
-                        },
-                        Item { label: "Swipe", description: "Drag row" }
-                    }
-                }
-            }
-        }
-    }
-    #[test]
-    fn list_family_renders() {
-        render(ListSmokeApp);
-    }
 }

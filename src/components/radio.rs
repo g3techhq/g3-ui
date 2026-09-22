@@ -1,259 +1,245 @@
-//! Radio group and radio components.
-use super::checkbox::ControlLabelPlacement;
-use super::radio_styles as s;
+//! Radio groups.
+use super::checkbox::{ControlLabelPlacement, ControlText, control_classes};
+use super::field::described_by;
+use crate::state::{provide_live_context, use_controlled, use_element_id, use_live_context};
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
-use std::sync::atomic::{AtomicU64, Ordering};
-static NEXT_RADIO_GROUP_NAME: AtomicU64 = AtomicU64::new(1);
-#[derive(Clone)]
-struct RadioGroupContext {
-    value: Signal<String>,
-    name: String,
-    disabled: ReadSignal<bool>,
-    allow_empty_selection: bool,
-    on_change: Option<Callback<String>>,
+
+struct RadioContext<T: 'static> {
+    value: Signal<Option<T>>,
+    name: Signal<String>,
+    disabled: Signal<bool>,
+    allow_empty: Signal<bool>,
+    placement: Signal<ControlLabelPlacement>,
+    onchange: Option<EventHandler<Option<T>>>,
 }
+
+// Written out: a derive would demand `T: Copy`.
+impl<T> Clone for RadioContext<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T> Copy for RadioContext<T> {}
+
+impl<T> PartialEq for RadioContext<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+            && self.name == other.name
+            && self.disabled == other.disabled
+            && self.allow_empty == other.allow_empty
+            && self.placement == other.placement
+            && self.onchange == other.onchange
+    }
+}
+
+/// A set of [`Radio`] choices where one may be selected. Like Ionic's
+/// `ion-radio-group`.
+///
+/// Radios use native inputs, so arrow keys move between them. The value type
+/// is anything comparable; `None` means nothing is selected.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # #[derive(Clone, Copy, PartialEq)] enum Format { Stroke, Match }
+/// let format = use_signal(|| Some(Format::Stroke));
+/// rsx! {
+///     RadioGroup { value: format, label: "Format",
+///         Radio { value: Format::Stroke, label: "Stroke play" }
+///         Radio { value: Format::Match, label: "Match play" }
+///     }
+/// }
+/// # }
+/// ```
 #[component]
-pub fn RadioGroup(
-    value: Signal<String>,
+pub fn RadioGroup<T: Clone + PartialEq + 'static>(
+    /// The selected value. Kept internally, starting empty, when not given.
+    value: Option<Signal<Option<T>>>,
+    /// Visible group label, which also names the group.
+    label: Option<String>,
+    /// Accessible name when there is no visible label.
+    aria_label: Option<String>,
+    /// Help text under the group.
+    helper: Option<String>,
+    /// The inputs' shared `name`. Generated when not given.
     name: Option<String>,
+    /// Disable every radio.
     disabled: Option<bool>,
-    allow_empty_selection: Option<bool>,
+    /// Let pressing the selected radio clear the selection.
+    allow_empty: Option<bool>,
+    /// Label position for every radio. Defaults to
+    /// [`ControlLabelPlacement::Start`].
+    label_placement: Option<ControlLabelPlacement>,
+    /// Called with the new selection.
+    onchange: Option<EventHandler<Option<T>>>,
+    /// Extra classes for the group.
     class: Option<String>,
-    on_change: Option<Callback<String>>,
     children: Element,
 ) -> Element {
-    let generated_name = use_hook(next_radio_group_name);
-    let group_name = radio_group_name(name, &generated_name);
-    let is_disabled = disabled.unwrap_or(false);
-    let aria_disabled = is_disabled.then(|| "true".to_string());
-    let mut disabled_signal = use_signal(|| is_disabled);
-    if *disabled_signal.peek() != is_disabled {
-        disabled_signal.set(is_disabled);
-    }
-    provide_context(RadioGroupContext {
+    let id = use_element_id("radio-group", None);
+    let value = use_controlled(value, || None);
+    let name = use_element_id("radio", name);
+    let name = crate::state::use_synced_signal(name);
+    let disabled = crate::state::use_synced_signal(disabled.unwrap_or(false));
+    let allow_empty = crate::state::use_synced_signal(allow_empty.unwrap_or(false));
+    let placement = crate::state::use_synced_signal(label_placement.unwrap_or_default());
+    provide_live_context(RadioContext {
         value,
-        name: group_name,
-        disabled: disabled_signal.into(),
-        allow_empty_selection: allow_empty_selection.unwrap_or(false),
-        on_change,
+        name,
+        disabled,
+        allow_empty,
+        placement,
+        onchange,
     });
+    let label_id = format!("{id}-label");
+    let group_name = if label.is_none() { aria_label } else { None };
+    let labelledby = label.is_some().then(|| label_id.clone());
+    let group_describedby = described_by(&id, &helper, &None);
     rsx! {
         div {
-            class: merge_classes(s::GROUP, class.as_deref()),
+            id: id.clone(),
+            class: merge_classes("g3-radio-group", class.as_deref()),
             role: "radiogroup",
-            aria_disabled,
+            aria_label: group_name,
+            aria_labelledby: labelledby,
+            aria_describedby: group_describedby,
+            aria_disabled: disabled().then_some("true"),
+            if let Some(label) = label {
+                div { id: label_id, class: "g3-radio-group-label", "{label}" }
+            }
             {children}
+            if let Some(helper) = helper {
+                p { id: format!("{id}-helper"), class: "g3-field-helper", "{helper}" }
+            }
         }
     }
 }
+
+/// One choice in a [`RadioGroup`].
 #[component]
-pub fn Radio(
-    value: String,
+pub fn Radio<T: Clone + PartialEq + 'static>(
+    /// The value this radio selects.
+    value: T,
+    /// Visible label.
     label: Option<String>,
+    /// Accessible name when there is no visible label.
+    aria_label: Option<String>,
+    /// Help text under the label.
+    helper: Option<String>,
+    /// Disable this radio.
     disabled: Option<bool>,
-    placement: Option<ControlLabelPlacement>,
-    class: Option<String>,
+    /// Label position. Defaults to the group's.
+    label_placement: Option<ControlLabelPlacement>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
+    /// Extra classes for the row.
+    class: Option<String>,
 ) -> Element {
-    debug_assert!(
-        !value.is_empty(),
-        "Radio values must not be empty because RadioGroup uses an empty string as its no-selection sentinel",
-    );
     let mode = use_component_mode(mode);
-    let context = use_context::<RadioGroupContext>();
-    let selected = (context.value)() == value;
-    let is_disabled = disabled.unwrap_or(false) || (context.disabled)();
-    let placement = placement.unwrap_or_default();
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::RADIO_IOS,
-        ComponentMode::Md => s::RADIO_MD,
-    };
-    let checked_cls = if selected { "checked" } else { "" };
-    let disabled_cls = if is_disabled { "disabled" } else { "" };
-    let cls = merge_classes(
-        format!(
-            "{} {mode_cls} {} {checked_cls} {disabled_cls}",
-            s::RADIO,
-            placement.class(),
-        ),
-        class.as_deref(),
+    let id = use_element_id("radio", None);
+    let context = use_live_context::<RadioContext<T>>();
+    let RadioContext {
+        value: mut group_value,
+        name,
+        disabled: group_disabled,
+        allow_empty,
+        placement,
+        onchange,
+    } = context;
+    let selected = group_value.read().as_ref() == Some(&value);
+    let disabled = disabled.unwrap_or(false) || group_disabled();
+    let bare = label.is_none() && helper.is_none();
+    let cls = control_classes(
+        "g3-radio",
+        mode,
+        label_placement.unwrap_or(placement()),
+        bare,
     );
-    let aria_checked = selected.to_string();
-    let pointer_value = value.clone();
-    let change_value = value.clone();
-    let mut pointer_context = context.clone();
-    let mut change_context = context.clone();
-    let mut suppress_click = use_signal(|| false);
+    let mut select = move |next: Option<T>| {
+        group_value.set(next.clone());
+        if let Some(onchange) = onchange {
+            onchange.call(next);
+        }
+    };
+    let pick = value.clone();
+    let describedby = described_by(&id, &helper, &None);
+    let clear_on_press = selected && allow_empty();
     rsx! {
         label {
-            class: cls,
-            onpointerdown: move |event| {
-                if is_disabled {
-                    event.prevent_default();
-                    suppress_click.set(true);
-                    return;
-                }
-                let current = (pointer_context.value).peek().clone();
-                let Some(next) = next_radio_value(
-                    &current,
-                    &pointer_value,
-                    pointer_context.allow_empty_selection,
-                ) else {
-                    return;
-                };
-                if !next.is_empty() {
-                    return;
-                }
-                event.prevent_default();
-                suppress_click.set(true);
-                (pointer_context.value).set(next.clone());
-                if let Some(ref on_change) = pointer_context.on_change {
-                    on_change.call(next);
-                }
-            },
+            class: merge_classes(cls, class.as_deref()),
+            // A native radio cannot be unchecked by clicking it, so clearing
+            // an allow-empty selection happens on the press, before the click.
             onclick: move |event| {
-                if suppress_click() {
+                if clear_on_press && !disabled {
                     event.prevent_default();
-                    suppress_click.set(false);
+                    select(None);
                 }
             },
             input {
-                class: s::INPUT,
+                id: id.clone(),
+                class: "g3-radio-input",
                 r#type: "radio",
-                role: "radio",
-                name: context.name.clone(),
-                value: value.clone(),
+                name: name(),
                 checked: selected,
-                aria_checked,
-                disabled: is_disabled,
+                disabled,
+                aria_label,
+                aria_describedby: describedby,
                 onchange: move |_| {
-                    if is_disabled {
-                        return;
-                    }
-                    let current = (change_context.value).peek().clone();
-                    let Some(next) = next_radio_value(&current, &change_value, false) else {
-                        return;
-                    };
-                    (change_context.value).set(next.clone());
-                    if let Some(ref on_change) = change_context.on_change {
-                        on_change.call(next);
+                    if !disabled {
+                        select(Some(pick.clone()));
                     }
                 },
             }
-            span { class: s::CONTROL, aria_hidden: "true",
-                span { class: s::MARK, aria_hidden: "true" }
+            span { class: "g3-control-mark", aria_hidden: "true",
+                span { class: "g3-radio-circle",
+                    span { class: "g3-radio-dot" }
+                }
             }
-            if let Some(label) = label.filter(|value| !value.is_empty()) {
-                span { class: s::LABEL, "{label}" }
-            }
+            ControlText { id: id.clone(), label, helper }
         }
     }
 }
-fn next_radio_group_name() -> String {
-    let id = NEXT_RADIO_GROUP_NAME.fetch_add(1, Ordering::Relaxed);
-    format!("g3-radio-group-{id}")
-}
-fn radio_group_name(name: Option<String>, fallback_name: &str) -> String {
-    name.filter(|value| !value.is_empty())
-        .unwrap_or_else(|| fallback_name.to_string())
-}
-/// `String::new()` is the controlled no-selection sentinel for RadioGroup.
-fn next_radio_value(current: &str, clicked: &str, allow_empty_selection: bool) -> Option<String> {
-    if current == clicked {
-        allow_empty_selection.then(String::new)
-    } else {
-        Some(clicked.to_string())
-    }
-}
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn RadioPlaygroundDemo() -> Element {
-    let selected = use_signal(|| "push".to_string());
-    let disabled = use_signal(|| false);
+fn RadioPlaygroundDemo() -> Element {
+    let format = use_signal(|| Some("stroke"));
     let allow_empty = use_signal(|| false);
+    let disabled = use_signal(|| false);
+    let placement = use_signal(|| ControlLabelPlacement::Start);
     rsx! {
         crate::PlaygroundDemoFrame {
-            center: false,
             controls: rsx! {
-                crate::Checkbox { checked: disabled, label: "Disabled".to_string() }
-                crate::Checkbox { checked: allow_empty, label: "Allow empty".to_string() }
-            },
-            div { class: "g3-radio-demo-stack",
-                RadioGroup {
-                    value: selected,
-                    disabled: disabled(),
-                    allow_empty_selection: allow_empty(),
-                    Radio { value: "push", label: "Push notifications" }
-                    Radio { value: "email", label: "Email summaries" }
-                    Radio {
-                        value: "none",
-                        label: "No reminders",
-                        placement: ControlLabelPlacement::End,
-                    }
+                crate::SegmentGroup { value: placement, aria_label: "Label placement",
+                    crate::SegmentButton { value: ControlLabelPlacement::Start, "Start" }
+                    crate::SegmentButton { value: ControlLabelPlacement::End, "End" }
+                    crate::SegmentButton { value: ControlLabelPlacement::Stacked, "Stacked" }
                 }
+                crate::Checkbox { checked: allow_empty, label: "Allow empty" }
+                crate::Checkbox { checked: disabled, label: "Disabled" }
+            },
+            RadioGroup {
+                value: format,
+                label: "Format",
+                helper: format!("Selected: {}", format().unwrap_or("none")),
+                allow_empty: allow_empty(),
+                disabled: disabled(),
+                label_placement: placement(),
+                Radio { value: "stroke", label: "Stroke play" }
+                Radio { value: "match", label: "Match play", helper: "Hole by hole." }
+                Radio { value: "scramble", label: "Scramble" }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Radio",
-    description: "Single-select radio group.",
+    description: "Radio groups with optional empty selection.",
+    components: ["RadioGroup", "Radio"],
     demo: RadioPlaygroundDemo,
     source: "src/components/radio.rs",
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::G3ThemeProvider;
-    fn render(app: fn() -> Element) {
-        let mut dom = VirtualDom::new(app);
-        dom.rebuild_in_place();
-    }
-    #[component]
-    fn RadioSmokeApp() -> Element {
-        let selected = use_signal(|| "walking".to_string());
-        rsx! {
-            G3ThemeProvider { mode: ComponentMode::Ios,
-                RadioGroup { value: selected, on_change: |_| {},
-                    Radio { value: "walking", label: "Walking" }
-                    Radio {
-                        value: "riding",
-                        label: "Riding",
-                        placement: ControlLabelPlacement::End,
-                    }
-                }
-            }
-        }
-    }
-    #[test]
-    fn radio_group_renders() {
-        render(RadioSmokeApp);
-    }
-    #[test]
-    fn radio_selection_selects_clicked_value() {
-        assert_eq!(
-            next_radio_value("walking", "riding", false),
-            Some("riding".to_string()),
-        );
-    }
-    #[test]
-    fn radio_selection_clears_selected_value_only_when_allowed() {
-        assert_eq!(
-            next_radio_value("walking", "walking", true),
-            Some(String::new())
-        );
-        assert_eq!(next_radio_value("walking", "walking", false), None);
-    }
-    #[test]
-    fn radio_group_name_prefers_non_empty_explicit_name() {
-        assert_eq!(
-            radio_group_name(Some("pace".to_string()), "g3-radio-group-99"),
-            "pace",
-        );
-        assert_eq!(
-            radio_group_name(Some(String::new()), "g3-radio-group-99"),
-            "g3-radio-group-99",
-        );
-    }
 }

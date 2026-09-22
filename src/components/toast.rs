@@ -1,272 +1,294 @@
-//! Toast component for transient mobile feedback.
-use super::toast_styles as s;
-use crate::components::StatusColor;
-use crate::theme::{ComponentMode, merge_classes, use_component_mode};
+//! Brief, non-blocking messages.
+use super::Color;
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
 use std::time::Duration;
-/// Where a toast appears on screen.
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
+
+/// Where a toast appears.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum ToastPosition {
-    /// Below the header, for confirmations tied to the top of the screen.
+    /// Near the top of the screen.
     Top,
-    /// Centered, for messages that should interrupt.
+    /// Centred, for messages that should interrupt.
     Middle,
-    /// Above the tab bar. The default, and the least obstructive.
+    /// Above the bottom edge. The least obstructive.
     #[default]
     Bottom,
 }
-impl ToastPosition {
-    fn class(self) -> &'static str {
+
+/// How long a toast stays up.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ToastDuration {
+    /// Three seconds.
+    #[default]
+    Short,
+    /// Six seconds, for longer messages or ones with an action.
+    Long,
+    /// A custom time.
+    Custom(Duration),
+    /// Until the user or the app closes it.
+    Persistent,
+}
+
+impl ToastDuration {
+    pub(crate) fn as_duration(self) -> Option<Duration> {
         match self {
-            Self::Top => s::POSITION_TOP,
-            Self::Middle => s::POSITION_MIDDLE,
-            Self::Bottom => s::POSITION_BOTTOM,
+            ToastDuration::Short => Some(Duration::from_secs(3)),
+            ToastDuration::Long => Some(Duration::from_secs(6)),
+            ToastDuration::Custom(duration) => Some(duration),
+            ToastDuration::Persistent => None,
         }
     }
 }
-fn color_class(color: StatusColor) -> &'static str {
-    match color {
-        StatusColor::Neutral => s::COLOR_NEUTRAL,
-        StatusColor::Accent => s::COLOR_ACCENT,
-        StatusColor::Success => s::COLOR_SUCCESS,
-        StatusColor::Warning => s::COLOR_WARNING,
-        StatusColor::Danger => s::COLOR_DANGER,
-    }
-}
+
+/// A brief message that does not block the page. Like Ionic's `ion-toast`.
+///
+/// To show toasts from event handlers without keeping a signal for each,
+/// use [`use_toast`](crate::use_toast).
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let saved = use_signal(|| false);
+/// # let undo = move |_: MouseEvent| {};
+/// rsx! {
+///     Toast { open: saved, message: "Round saved", color: Color::Success,
+///         action: rsx! { Button { fill: ButtonFill::Clear, onclick: undo, "Undo" } } }
+/// }
+/// # }
+/// ```
 #[component]
 pub fn Toast(
-    mut open: Signal<bool>,
-    message: String,
+    /// Whether the toast is showing.
+    open: Signal<bool>,
+    /// The message. Use `children` for richer content.
+    message: Option<String>,
+    /// Where it appears. Defaults to [`ToastPosition::Bottom`].
     position: Option<ToastPosition>,
-    color: Option<StatusColor>,
-    duration_ms: Option<u64>,
-    close_label: Option<String>,
+    /// Color of the status dot and tint. Defaults to [`Color::Neutral`].
+    /// [`Color::Danger`] and [`Color::Warning`] are announced assertively.
+    color: Option<Color>,
+    /// How long it stays up. Defaults to [`ToastDuration::Short`], or
+    /// [`ToastDuration::Long`] when there is an `action`. The timer pauses
+    /// while the pointer is over the toast or focus is inside it, so there is
+    /// time to reach the action.
+    duration: Option<ToastDuration>,
+    /// A button beside the message, such as "Undo".
     action: Option<Element>,
-    class: Option<String>,
+    /// Show a close button. Defaults to `true`.
+    closable: Option<bool>,
+    /// Called whenever the toast closes, however it closed.
+    on_dismiss: Option<EventHandler<()>>,
+    /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
-    on_dismiss: Option<Callback<()>>,
+    /// Extra classes for the toast.
+    class: Option<String>,
+    children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let color = color.unwrap_or_default();
+    let strings = use_strings();
+    let color = color.unwrap_or(Color::Neutral);
     let position = position.unwrap_or_default();
-    let close_label = close_label.unwrap_or_else(|| "Dismiss".to_string());
-    let role = if matches!(color, StatusColor::Danger | StatusColor::Warning) {
-        "alert"
-    } else {
-        "status"
-    };
-    let mode_cls = match mode {
-        ComponentMode::Ios => s::TOAST_IOS,
-        ComponentMode::Md => s::TOAST_MD,
-    };
-    let state = if open() { "open" } else { "closed" };
-    let auto_dismiss_ms = duration_ms.unwrap_or(3000);
-    let timer_state = if auto_dismiss_ms == 0 {
-        "none"
-    } else {
-        "active"
-    };
-    let closed_inert = (!open()).then(|| "".to_string());
-    let mut dismiss_generation = use_signal(|| 0_u64);
+    let lifetime = duration
+        .unwrap_or(if action.is_some() {
+            ToastDuration::Long
+        } else {
+            ToastDuration::Short
+        })
+        .as_duration();
+    let mut hovered = use_signal(|| false);
+    let mut focused = use_signal(|| false);
+    let paused = hovered() || focused();
+    let urgent = matches!(color, Color::Danger | Color::Warning);
+    let is_open = open();
+
+    // Auto-dismiss, restarted each time the toast opens. The generation keeps
+    // a timer from an earlier opening from closing a later one.
+    let mut generation = use_signal(|| 0_u64);
     use_effect(move || {
-        let generation = dismiss_generation.with_mut(|value| {
-            *value += 1;
-            *value
+        let current = generation.with_mut(|g| {
+            *g += 1;
+            *g
         });
         if !open() {
             return;
         }
-        if auto_dismiss_ms == 0 {
-            return;
-        }
-        spawn(async move {
-            dioxus_sdk_time::sleep(Duration::from_millis(auto_dismiss_ms)).await;
-            if dismiss_generation() == generation && open() {
-                open.set(false);
-                if let Some(on_dismiss) = on_dismiss {
-                    on_dismiss.call(());
+        if let Some(lifetime) = lifetime {
+            spawn(async move {
+                // Count only the time the toast is not paused.
+                let tick = Duration::from_millis(100);
+                let mut elapsed = Duration::ZERO;
+                while elapsed < lifetime {
+                    dioxus_sdk_time::sleep(tick).await;
+                    if *generation.peek() != current || !*open.peek() {
+                        return;
+                    }
+                    if !*hovered.peek() && !*focused.peek() {
+                        elapsed += tick;
+                    }
                 }
-            }
-        });
+                let mut open = open;
+                open.set(false);
+            });
+        }
     });
+
+    // Report every close, including ones the owner makes.
+    let mut was_open = use_signal(|| is_open);
+    use_effect(move || {
+        let now = open();
+        if *was_open.peek()
+            && !now
+            && let Some(on_dismiss) = on_dismiss
+        {
+            on_dismiss.call(());
+        }
+        if *was_open.peek() != now {
+            was_open.set(now);
+        }
+    });
+
+    let position_cls = match position {
+        ToastPosition::Top => "g3-toast-top",
+        ToastPosition::Middle => "g3-toast-middle",
+        ToastPosition::Bottom => "g3-toast-bottom",
+    };
+    let color_cls = format!("g3-toast-{}", color.as_str());
+    let cls = classes([
+        "g3-toast",
+        mode.pick("g3-toast-ios", "g3-toast-md"),
+        position_cls,
+        &color_cls,
+    ]);
+    let duration_ms = lifetime.map_or(0, |lifetime| lifetime.as_millis());
     rsx! {
         div {
-            class: merge_classes(
-                format!("{} {mode_cls} {} {}", s::TOAST, position.class(), color_class(color)),
-                class.as_deref(),
-            ),
-            role,
-            aria_live: if role == "alert" { "assertive" } else { "polite" },
-            aria_hidden: (!open()).to_string(),
-            inert: closed_inert,
-            "data-state": state,
-            "data-timer": timer_state,
-            style: format!("--g3-toast-duration: {auto_dismiss_ms}ms;"),
-            span { class: s::INDICATOR, aria_hidden: "true" }
-            div { class: s::MESSAGE, "{message}" }
-            if let Some(action) = action {
-                div { class: s::ACTION, {action} }
-            }
-            button {
-                class: s::CLOSE,
-                r#type: "button",
-                aria_label: close_label.clone(),
-                disabled: !open(),
-                onclick: move |_| {
-                    dismiss_generation.with_mut(|value| *value += 1);
-                    open.set(false);
-                    if let Some(on_dismiss) = on_dismiss {
-                        on_dismiss.call(());
+            class: merge_classes(cls, class.as_deref()),
+            role: if urgent { "alert" } else { "status" },
+            aria_live: if urgent { "assertive" } else { "polite" },
+            aria_atomic: "true",
+            "data-state": if is_open { "open" } else { "closed" },
+            "data-timer": if lifetime.is_some() { "active" } else { "none" },
+            "data-paused": paused.then_some("true"),
+            onpointerenter: move |_| hovered.set(true),
+            onpointerleave: move |_| hovered.set(false),
+            onfocusin: move |_| focused.set(true),
+            onfocusout: move |_| focused.set(false),
+            style: "--g3-toast-duration: {duration_ms}ms;",
+            // Keep the live region in the page but empty while closed, so the
+            // message is announced when it appears rather than when it mounts.
+            if is_open {
+                span { class: "g3-toast-indicator", aria_hidden: "true" }
+                div { class: "g3-toast-message",
+                    if let Some(message) = message {
+                        "{message}"
                     }
-                },
-                X { class: s::CLOSE_ICON, size: 18 }
+                    {children}
+                }
+                if let Some(action) = action {
+                    div { class: "g3-toast-action", {action} }
+                }
+                if closable.unwrap_or(true) {
+                    button {
+                        class: "g3-toast-close",
+                        r#type: "button",
+                        aria_label: strings.dismiss,
+                        onclick: move |_| open.set(false),
+                        X { class: "g3-toast-close-icon", size: 18 }
+                    }
+                }
+                div { class: "g3-toast-timer", aria_hidden: "true" }
             }
-            div { class: s::TIMER, aria_hidden: "true" }
         }
     }
 }
+
 #[cfg(feature = "playground")]
 #[component]
-pub fn ToastPlaygroundDemo() -> Element {
-    let mut open = use_signal(|| true);
-    let duration_index = use_signal(|| 1_usize);
-    let position_index = use_signal(|| 2_usize);
-    let color_index = use_signal(|| 1_usize);
-    let duration_ms = match duration_index() {
-        0 => 1500,
-        2 => 5000,
-        3 => 0,
-        _ => 2500,
-    };
-    let position = match position_index() {
-        0 => ToastPosition::Top,
-        1 => ToastPosition::Middle,
-        _ => ToastPosition::Bottom,
-    };
-    let color = match color_index() {
-        0 => StatusColor::Neutral,
-        1 => StatusColor::Accent,
-        3 => StatusColor::Warning,
-        4 => StatusColor::Danger,
-        _ => StatusColor::Success,
-    };
+fn ToastPlaygroundDemo() -> Element {
+    let mut open = use_signal(|| false);
+    let color = use_signal(|| Color::Success);
+    let position = use_signal(|| ToastPosition::Bottom);
+    let toaster = crate::use_toast();
     rsx! {
         crate::PlaygroundDemoFrame {
-            center: false,
+            app: false,
             controls: rsx! {
-                crate::Button { onclick: move |_| open.set(true), "Show toast" }
-                div {
-                    span { "Duration" }
-                    crate::SegmentGroup { active: duration_index,
-                        crate::SegmentButton { index: 0, "1.5s" }
-                        crate::SegmentButton { index: 1, "2.5s" }
-                        crate::SegmentButton { index: 2, "5s" }
-                        crate::SegmentButton { index: 3, "Off" }
-                    }
+                crate::SegmentGroup { value: position, aria_label: "Position",
+                    crate::SegmentButton { value: ToastPosition::Top, "Top" }
+                    crate::SegmentButton { value: ToastPosition::Middle, "Middle" }
+                    crate::SegmentButton { value: ToastPosition::Bottom, "Bottom" }
                 }
-                div {
-                    span { "Position" }
-                    crate::SegmentGroup { active: position_index,
-                        crate::SegmentButton { index: 0, "Top" }
-                        crate::SegmentButton { index: 1, "Middle" }
-                        crate::SegmentButton { index: 2, "Bottom" }
-                    }
-                }
-                div {
-                    span { "Color" }
-                    crate::SegmentGroup { active: color_index,
-                        crate::SegmentButton { index: 0, "Neutral" }
-                        crate::SegmentButton { index: 1, "Accent" }
-                        crate::SegmentButton { index: 2, "Success" }
-                        crate::SegmentButton { index: 3, "Warn" }
-                        crate::SegmentButton { index: 4, "Danger" }
-                    }
+                crate::Select {
+                    label: "Color",
+                    value: color,
+                    options: vec![
+                        crate::SelectOption::new(Color::Neutral, "Neutral"),
+                        crate::SelectOption::new(Color::Accent, "Accent"),
+                        crate::SelectOption::new(Color::Success, "Success"),
+                        crate::SelectOption::new(Color::Warning, "Warning"),
+                        crate::SelectOption::new(Color::Danger, "Danger"),
+                    ],
                 }
             },
-            div { class: "g3-toast-demo-stage",
+            crate::AppWrapper { class: "g3-playground-device-app",
+                crate::Content {
+                    div { class: "playground-stack",
+                        crate::Button { onclick: move |_| open.set(true), "Show toast" }
+                        crate::Button {
+                            fill: crate::ButtonFill::Outline,
+                            onclick: move |_| {
+                                toaster
+                                    .show(
+                                        crate::ToastOptions::new("Queued from code")
+                                            .color(color())
+                                            .position(position()),
+                                    );
+                            },
+                            "Queue a toast with use_toast"
+                        }
+                        // For feedback on a repeatable action: press it a few
+                        // times and each toast takes the last one's place.
+                        crate::Button {
+                            fill: crate::ButtonFill::Outline,
+                            onclick: move |_| {
+                                toaster
+                                    .show(
+                                        crate::ToastOptions::new("Replaced the one showing")
+                                            .color(color())
+                                            .position(position())
+                                            .replace(),
+                                    );
+                            },
+                            "Replace the toast showing"
+                        }
+                    }
+                }
                 Toast {
                     open,
-                    message: "Round saved".to_string(),
-                    color,
-                    position,
-                    duration_ms,
+                    message: "Round saved",
+                    color: color(),
+                    position: position(),
+                    duration: ToastDuration::Long,
+                    action: rsx! {
+                        crate::Button {
+                            fill: crate::ButtonFill::Clear,
+                            size: crate::ButtonSize::Sm,
+                            onclick: move |_| open.set(false),
+                            "Undo"
+                        }
+                    },
                 }
             }
         }
     }
 }
+
 crate::g3_playground! {
     name: "Toast",
-    description: "Transient mobile feedback banner with positions and status colors.",
+    description: "Brief messages, declared in markup or queued from code.",
     demo: ToastPlaygroundDemo,
     source: "src/components/toast.rs",
-}
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::G3ThemeProvider;
-    fn render(app: fn() -> Element) {
-        let mut dom = VirtualDom::new(app);
-        dom.rebuild_in_place();
-    }
-    #[component]
-    fn ToastSmokeApp() -> Element {
-        let open = use_signal(|| true);
-        rsx! {
-            G3ThemeProvider { mode: ComponentMode::Ios,
-                Toast {
-                    open,
-                    message: "Saved"
-                                .to_string(),
-                    color: StatusColor::Success,
-                    duration_ms: 0,
-                }
-            }
-        }
-    }
-    #[test]
-    fn toast_renders() {
-        render(ToastSmokeApp);
-    }
-    #[test]
-    fn toast_uses_alert_role_for_urgent_colors() {
-        assert_eq!(color_class(StatusColor::Danger), s::COLOR_DANGER);
-        let source = include_str!("toast.rs");
-        assert!(source.contains("StatusColor::Danger | StatusColor::Warning"));
-        assert!(source.contains("aria_live"));
-    }
-    #[test]
-    fn closed_toasts_are_not_keyboard_focusable() {
-        let source = include_str!("toast.rs");
-        assert!(source.contains("inert: closed_inert"));
-        assert!(source.contains("disabled: !open()"));
-    }
-    #[test]
-    fn toast_autodismiss_uses_generation_guard() {
-        let source = include_str!("toast.rs");
-        assert!(source.contains("dismiss_generation"));
-        assert!(source.contains("dismiss_generation() == generation && open()"));
-    }
-    #[test]
-    fn toast_autodismiss_uses_dioxus_sdk_time() {
-        let source = include_str!("toast.rs")
-            .split("#[cfg(test)]")
-            .next()
-            .expect("toast source should have production section");
-        assert!(source.contains("dioxus_sdk_time::sleep"));
-        assert!(source.contains("duration_ms.unwrap_or(3000)"));
-        assert!(!source.contains("document::eval"));
-    }
-    #[test]
-    fn toast_close_button_owns_the_trailing_column_without_an_action() {
-        let stylesheet = include_str!("../../assets/g3-ui.css");
-        let close = stylesheet
-            .split(".g3-toast-close {")
-            .nth(1)
-            .and_then(|rest| rest.split('}').next())
-            .expect("missing toast close style");
-        assert!(close.contains("grid-column: 4"));
-        assert!(close.contains("justify-self: end"));
-    }
 }
