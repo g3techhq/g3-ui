@@ -145,7 +145,8 @@ pub(crate) fn PopoverFrame(
         std::time::Duration::from_millis(300),
     );
     let mut ever_opened = use_signal(|| false);
-    let mut backdrop_present = use_signal(|| open());
+    let starts_open = open();
+    let mut backdrop_present = use_signal(move || starts_open);
     {
         let id = id.clone();
         use_effect(move || {
