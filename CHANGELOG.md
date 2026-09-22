@@ -4,6 +4,27 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-09-22
+
+### Fixed
+
+- A dark theme painted a near-white page behind the app and flashed near-white
+  through every route transition. The theme is applied inline on the shell,
+  but `g3-route-transitions` paints `html, body` from `--route-transition-bg`,
+  which g3-ui maps to `--g3-color-bg`, and every `::view-transition-*`
+  pseudo-element is a child of `:root` and resolves that variable there too.
+  Both therefore took the stylesheet's light default no matter which theme was
+  active. `AppWrapper` now mirrors the active theme's page background and
+  `color-scheme` onto the document element, so the canvas and every transition
+  snapshot match the theme. A nested `AppWrapper`, such as a demo frame inside
+  a gallery, leaves the document element to the outermost one.
+- A navigation rail is now the persistent route-transition chrome that
+  `AdaptiveNav` and `NavRail` always documented it to be. The class was never
+  applied, so the rail sat inside the base region: a routed sheet covered it
+  and it popped back when the transition ended. `NavRail` is persistent at
+  every width and `AdaptiveNav` only on wide shells, so a phone's bottom bar
+  still rises under a sheet. Needs the `transitions` feature.
+
 ## [0.4.0] - 2026-09-21
 
 0.4 reworks the public API for use as a general-purpose library. Most

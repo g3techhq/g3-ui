@@ -4,6 +4,11 @@ use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 
+#[cfg(feature = "transitions")]
+use crate::components::use_shell_size;
+#[cfg(feature = "transitions")]
+use g3_route_transitions::ROUTE_TRANSITION_PERSISTENT_CLASS;
+
 /// What an [`AdaptiveNav`] does on a compact shell (narrower than `48rem`).
 /// On wide shells it is always a rail.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -49,7 +54,34 @@ fn NavContainer(
         NavKind::Adaptive(AdaptiveNavCompact::Bar) => "g3-nav-adaptive",
         NavKind::Adaptive(AdaptiveNavCompact::Hidden) => "g3-nav-adaptive g3-nav-compact-hidden",
     };
-    let cls = classes(["g3-nav", mode.pick("g3-nav-ios", "g3-nav-md"), kind_cls]);
+    // A rail stays reachable while a routed sheet is up, so it is captured as
+    // persistent chrome and paints above the sheet. A bottom bar is not: on a
+    // phone a sheet is meant to cover it, so it stays inside the base region
+    // and rises under the sheet as before. An adaptive nav is a rail only on a
+    // wide shell, so it follows the measured shell size.
+    #[cfg(feature = "transitions")]
+    let persistent_cls = {
+        // Called unconditionally: a hook may not sit behind a match arm.
+        let wide = use_shell_size().is_wide();
+        let is_rail = match kind {
+            NavKind::Bar => false,
+            NavKind::Rail => true,
+            NavKind::Adaptive(_) => wide,
+        };
+        if is_rail {
+            ROUTE_TRANSITION_PERSISTENT_CLASS
+        } else {
+            ""
+        }
+    };
+    #[cfg(not(feature = "transitions"))]
+    let persistent_cls = "";
+    let cls = classes([
+        "g3-nav",
+        mode.pick("g3-nav-ios", "g3-nav-md"),
+        kind_cls,
+        persistent_cls,
+    ]);
     rsx! {
         nav { class: merge_classes(cls, class.as_deref()), aria_label, {children} }
     }
