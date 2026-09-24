@@ -48,6 +48,7 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     let wheelFrame = 0;
     let wheelTarget = 0;
     let wheelTimer;
+    let wheelSettled = false;
     const clamp = (value) => Math.max(0, Math.min(strip.scrollWidth - strip.clientWidth, value));
     const nearestSnap = (position) => {
         const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
@@ -92,6 +93,20 @@ if (strip && strip.dataset.g3Scroll !== "true") {
             }
         };
         settleFrame = requestAnimationFrame(step);
+    };
+    // Eases toward `wheelTarget`, covering a share of the way each frame. The
+    // step is at least a pixel, since a smaller one can round away to nothing
+    // and leave the glide running forever.
+    const glide = () => {
+        const distance = wheelTarget - strip.scrollLeft;
+        if (Math.abs(distance) <= 1) {
+            strip.scrollLeft = wheelTarget;
+            wheelFrame = 0;
+            if (wheelSettled) delete strip.dataset.dragging;
+            return;
+        }
+        strip.scrollLeft += Math.sign(distance) * Math.max(1, Math.abs(distance) * 0.2);
+        wheelFrame = requestAnimationFrame(glide);
     };
     strip.addEventListener("pointerdown", (event) => {
         if (event.pointerType !== "mouse" || event.button !== 0) return;
@@ -157,27 +172,16 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         strip.dataset.dragging = "true";
         if (!wheelFrame) wheelTarget = strip.scrollLeft;
         wheelTarget = clamp(wheelTarget + delta);
-        if (!wheelFrame) {
-            const glide = () => {
-                const distance = wheelTarget - strip.scrollLeft;
-                if (Math.abs(distance) < 0.5) {
-                    strip.scrollLeft = wheelTarget;
-                    wheelFrame = 0;
-                    return;
-                }
-                strip.scrollLeft += distance * 0.24;
-                wheelFrame = requestAnimationFrame(glide);
-            };
-            wheelFrame = requestAnimationFrame(glide);
-        }
+        wheelSettled = false;
+        if (!wheelFrame) wheelFrame = requestAnimationFrame(glide);
         clearTimeout(wheelTimer);
+        // Once the wheel goes quiet, the glide already under way is aimed at
+        // the nearest item. Stopping it and starting a fresh ease-out instead
+        // made the row slow down and then lurch into place.
         wheelTimer = setTimeout(() => {
-            stopWheel();
-            if (strip.dataset.snap === "true") {
-                settleTo(nearestSnap(wheelTarget), 300);
-            } else {
-                settleTo(wheelTarget, 180);
-            }
+            if (strip.dataset.snap === "true") wheelTarget = nearestSnap(wheelTarget);
+            wheelSettled = true;
+            if (!wheelFrame) wheelFrame = requestAnimationFrame(glide);
         }, 120);
     }, { passive: false });
     strip.addEventListener("scroll", edges, { passive: true });

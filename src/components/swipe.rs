@@ -1,11 +1,10 @@
 //! Swipeable list rows.
 use super::Color;
+use super::gesture::{Gesture, GestureScript, gesture_command, use_gesture};
 use super::list::{InList, InSwipeRow};
-use super::overlay::js_string;
 use crate::state::use_element_id;
 use crate::theme::{classes, merge_classes, use_strings};
 use dioxus::prelude::*;
-use std::time::Duration;
 
 /// Which edge of a row a swipe uncovers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -53,78 +52,45 @@ pub struct SwipeState {
     pub committed: bool,
 }
 
-/// Width of one revealed action, and the fallback before the actions are
-/// measured.
-const REVEAL_WIDTH: f64 = 88.0;
-const ACTIVATE_WIDTH: f64 = 136.0;
-const DISMISS_WIDTH: f64 = 104.0;
-const FULL_SWIPE_MARGIN: f64 = 30.0;
-const ELASTIC_FACTOR: f64 = 0.55;
-const ACTIVATE_RATIO: f64 = 0.48;
-const ACTIVATE_SOFTENING: f64 = 0.72;
-const DISMISS_OFFSET: f64 = 430.0;
-const DISMISS_EXIT_MS: u64 = 560;
-const DISMISS_COLLAPSE_MS: u64 = 180;
-const LONG_PRESS_MS: u64 = 500;
-const LONG_PRESS_SLOP: f64 = 8.0;
-/// Matches the browser's own slop: below it every gesture looks diagonal, and
-/// claiming one would steal ordinary scrolls.
-const HORIZONTAL_SLOP: f64 = 10.0;
+/// Runs every row's gesture inside the webview, so Rust hears only how each
+/// one ended. See [`super::gesture`] for why.
+const SWIPE_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.swipe",
+    source: include_str!("swipe.js"),
+};
 
-/// How one edge of a row behaves: what a swipe does, and how far it travels
-/// before that happens.
+/// What the script reports about one row.
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct Edge {
-    behavior: SwipeBehavior,
-    width: f64,
+enum SwipeEvent {
+    /// The row came to rest at this offset: closed, or open on one edge.
+    Rest(f64),
+    /// The row moved; only reported when someone listens.
+    Move(SwipeState),
+    Activate(SwipeState),
+    Dismiss(SwipeState),
+    LongPress,
 }
 
-impl Edge {
-    /// `revealed` is the measured width of the edge's actions.
-    fn new(behavior: SwipeBehavior, revealed: f64) -> Self {
-        let width = match behavior {
-            SwipeBehavior::Reveal => revealed.max(1.0),
-            SwipeBehavior::Activate => ACTIVATE_WIDTH,
-            SwipeBehavior::Dismiss => DISMISS_WIDTH,
+impl SwipeEvent {
+    /// Reads `[offset, ratio, committed]`.
+    fn parse(gesture: &Gesture) -> Option<Self> {
+        let (offset, ratio) = (gesture.value(0), gesture.value(1));
+        let committed = gesture.value(2) != 0.0;
+        let state = || {
+            side_of(offset).map(|side| SwipeState {
+                side,
+                offset,
+                ratio,
+                committed,
+            })
         };
-        Self { behavior, width }
-    }
-
-    /// Where the row sits for a raw drag distance toward this edge.
-    fn offset(self, raw: f64) -> f64 {
-        match self.behavior {
-            SwipeBehavior::Reveal => raw.clamp(-self.width, self.width),
-            SwipeBehavior::Activate => activate_offset(raw, self.width),
-            SwipeBehavior::Dismiss => elastic_offset(raw, self.width),
-        }
-    }
-
-    /// Whether releasing at `offset` commits the behaviour.
-    fn committed(self, offset: f64) -> bool {
-        match self.behavior {
-            SwipeBehavior::Activate => offset.abs() >= self.width * ACTIVATE_RATIO,
-            SwipeBehavior::Reveal | SwipeBehavior::Dismiss => {
-                offset.abs() >= self.width + FULL_SWIPE_MARGIN
-            }
-        }
-    }
-
-    /// Where a released Reveal row settles: open past halfway, closed
-    /// otherwise.
-    fn settle(self, offset: f64) -> f64 {
-        if offset.abs() > self.width / 2.0 {
-            self.width.copysign(offset)
-        } else {
-            0.0
-        }
-    }
-
-    fn state(self, offset: f64, committed: bool) -> Option<SwipeState> {
-        side_of(offset).map(|side| SwipeState {
-            side,
-            offset,
-            ratio: offset / self.width,
-            committed,
+        Some(match gesture.kind.as_str() {
+            "rest" => SwipeEvent::Rest(offset),
+            "move" => SwipeEvent::Move(state()?),
+            "activate" => SwipeEvent::Activate(state()?),
+            "dismiss" => SwipeEvent::Dismiss(state()?),
+            "long-press" => SwipeEvent::LongPress,
+            _ => return None,
         })
     }
 }
@@ -136,54 +102,6 @@ fn side_of(offset: f64) -> Option<SwipeSide> {
         Some(SwipeSide::End)
     } else {
         None
-    }
-}
-
-fn elastic_offset(raw: f64, width: f64) -> f64 {
-    let limit = width.max(1.0);
-    if raw > limit {
-        limit + (raw - limit) * ELASTIC_FACTOR
-    } else if raw < -limit {
-        -limit + (raw + limit) * ELASTIC_FACTOR
-    } else {
-        raw
-    }
-}
-
-fn activate_offset(raw: f64, width: f64) -> f64 {
-    let limit = width.max(1.0);
-    let soften_from = limit * ACTIVATE_SOFTENING;
-    let distance = raw.abs();
-    if distance <= soften_from {
-        return raw;
-    }
-    let extra = distance - soften_from;
-    let remaining = (limit - soften_from).max(1.0);
-    raw.signum() * (soften_from + remaining * (extra / (extra + remaining)))
-}
-
-/// The edge a drag of `raw` pixels moves toward, if it has actions.
-fn edge_for(raw: f64, start: Option<Edge>, end: Option<Edge>) -> Option<Edge> {
-    match side_of(raw)? {
-        SwipeSide::Start => start,
-        SwipeSide::End => end,
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Phase {
-    Idle,
-    Exiting,
-    Collapsing,
-}
-
-impl Phase {
-    fn as_str(self) -> &'static str {
-        match self {
-            Phase::Idle => "idle",
-            Phase::Exiting => "exiting",
-            Phase::Collapsing => "collapsing",
-        }
     }
 }
 
@@ -292,270 +210,100 @@ pub fn SwipeItem(
     let has_end = end_actions.is_some();
     let disabled = disabled.unwrap_or(false);
     let mouse_swipe = mouse_swipe.unwrap_or(true);
-    let mut start = use_signal(|| (0.0, 0.0));
-    let mut offset = use_signal(|| 0.0_f64);
-    let mut dragging = use_signal(|| false);
-    // Set once a drag is clearly sideways: the row then tracks the finger with
-    // no transition, and touchmove is cancelled so the page cannot scroll.
-    let mut horizontal = use_signal(|| false);
-    let mut moved = use_signal(|| false);
-    let mut press_generation = use_signal(|| 0_u64);
-    let mut phase = use_signal(|| Phase::Idle);
-    // The row's height, so a dismissed row can collapse from exactly that,
-    // whatever it holds - a one-line item or a whole card.
-    let mut row_height = use_signal(|| None::<f64>);
-    // A click that ends a swipe must not also activate the row, so the
-    // content ignores pointers briefly after one.
-    let mut suppress_click = use_signal(|| false);
-    // Revealed actions are as wide as their buttons, measured once mounted.
-    let mut start_mount = use_signal(|| None::<std::rc::Rc<MountedData>>);
-    let mut end_mount = use_signal(|| None::<std::rc::Rc<MountedData>>);
-    let start_width = use_signal(|| REVEAL_WIDTH);
-    let end_width = use_signal(|| REVEAL_WIDTH);
-    let measure = move || {
-        spawn(async move {
-            for (mount, mut width) in [(start_mount, start_width), (end_mount, end_width)] {
-                let Some(mount) = mount.peek().clone() else {
-                    continue;
-                };
-                if let Ok(rect) = mount.get_client_rect().await
-                    && rect.width() > 0.0
-                    && (rect.width() - *width.peek()).abs() > 0.5
-                {
-                    width.set(rect.width());
+    // Where the row rests, as the script last reported it. Only used to keep
+    // closed actions out of reach; the live offset never leaves the webview.
+    let mut rest = use_signal(|| 0.0_f64);
+
+    let start_script =
+        use_gesture(
+            SWIPE_SCRIPT,
+            row_id.clone(),
+            move |gesture| match SwipeEvent::parse(&gesture) {
+                Some(SwipeEvent::Rest(offset)) => rest.set(offset),
+                Some(SwipeEvent::Move(state)) => {
+                    if let Some(on_swipe) = on_swipe {
+                        on_swipe.call(state);
+                    }
                 }
-            }
-        });
-    };
-
-    let start_edge = has_start.then(|| Edge::new(start_behavior, start_width()));
-    let end_edge = has_end.then(|| Edge::new(end_behavior, end_width()));
-
-    let current = offset();
-    let start_hidden = current <= 0.0;
-    let end_hidden = current >= 0.0;
-    let open = current != 0.0;
-    let current_width = edge_for(current, start_edge, end_edge).map_or(REVEAL_WIDTH, |e| e.width);
-
-    let mut close = move || {
-        offset.set(0.0);
-        dragging.set(false);
-        horizontal.set(false);
-    };
-    let reveal_side = move |side: SwipeSide| {
-        let mut offset = offset;
-        match side {
-            SwipeSide::Start if has_start => offset.set(*start_width.peek()),
-            SwipeSide::End if has_end => offset.set(-*end_width.peek()),
-            _ => {}
-        }
-    };
-
-    // Ends a gesture, however it ends: released over the row, or anywhere
-    // else once the pointer is captured.
-    let release = use_callback(move |()| {
-        if !dragging() || phase() != Phase::Idle {
-            return;
-        }
-        dragging.set(false);
-        let was_horizontal = horizontal();
-        horizontal.set(false);
-        if !was_horizontal {
-            return;
-        }
-        suppress_click.set(true);
-        spawn(async move {
-            dioxus_sdk_time::sleep(Duration::from_millis(300)).await;
-            suppress_click.set(false);
-        });
-        let released = offset();
-        let Some(edge) = edge_for(released, start_edge, end_edge) else {
-            offset.set(0.0);
-            return;
-        };
-        let committed = edge.committed(released);
-        match edge.behavior {
-            SwipeBehavior::Reveal => offset.set(edge.settle(released)),
-            SwipeBehavior::Activate => {
-                if committed
-                    && let Some(state) = edge.state(released, true)
-                    && let Some(on_activate) = on_activate
-                {
-                    on_activate.call(state);
+                Some(SwipeEvent::Activate(state)) => {
+                    if let Some(on_activate) = on_activate {
+                        on_activate.call(state);
+                    }
                 }
-                offset.set(0.0);
-            }
-            SwipeBehavior::Dismiss => {
-                let Some(state) = edge.state(released, true).filter(|_| committed) else {
-                    offset.set(0.0);
-                    return;
-                };
-                offset.set(DISMISS_OFFSET.copysign(released));
-                phase.set(Phase::Exiting);
-                spawn(async move {
-                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_EXIT_MS)).await;
-                    phase.set(Phase::Collapsing);
-                    dioxus_sdk_time::sleep(Duration::from_millis(DISMISS_COLLAPSE_MS)).await;
+                Some(SwipeEvent::Dismiss(state)) => {
                     if let Some(on_dismiss) = on_dismiss {
                         on_dismiss.call(state);
                     }
-                });
-            }
-        }
+                }
+                Some(SwipeEvent::LongPress) => {
+                    if let Some(on_long_press) = on_long_press {
+                        on_long_press.call(());
+                    }
+                }
+                None => {}
+            },
+        );
+
+    let current = rest();
+    let open = current != 0.0;
+    // Opens or closes the row: `"start"`, `"end"` or `"close"`.
+    let command = use_callback({
+        let row_id = row_id.clone();
+        move |to: &'static str| gesture_command(SWIPE_SCRIPT, &row_id, to)
     });
 
     rsx! {
         div {
-            id: row_id.clone(),
+            id: row_id,
             class: merge_classes("g3-swipe-item", class.as_deref()),
             role: in_list.then_some("listitem"),
-            style: format!(
-                "--g3-swipe-offset: {current}px; --g3-swipe-progress: {}; --g3-swipe-exit: {};{}",
-                (current / current_width).abs().min(1.4),
-                // Which way a dismissed row leaves. The distance is the row's
-                // own width, in CSS, so it clears a desktop row as surely as a
-                // phone one.
-                if current < 0.0 { -1 } else { 1 },
-                row_height().map(|height| format!(" --g3-swipe-row-height: {height}px;")).unwrap_or_default(),
-            ),
-            onresize: move |event: ResizeEvent| {
-                // Only while idle: a collapsing row is shrinking on purpose.
-                if *phase.peek() == Phase::Idle
-                    && let Ok(size) = event.data().get_border_box_size()
-                    && size.height > 0.0
-                {
-                    row_height.set(Some(size.height));
-                }
-            },
+            onmounted: move |_| start_script.call(()),
+            // Read by the script at each press, so a change takes effect on
+            // the next gesture.
             "data-start-behavior": start_behavior.as_str(),
             "data-end-behavior": end_behavior.as_str(),
-            "data-committed": edge_for(current, start_edge, end_edge)
-                .is_some_and(|edge| edge.behavior != SwipeBehavior::Reveal && edge.committed(current))
-                .then_some("true"),
-            "data-state": phase().as_str(),
-            "data-dragging": (dragging() && horizontal()).then_some("true"),
+            "data-has-start": has_start.to_string(),
+            "data-has-end": has_end.to_string(),
+            "data-disabled": disabled.then_some("true"),
             // A mouse cannot drag this row, so its actions button shows on hover.
             "data-mouse-swipe": (!mouse_swipe).then_some("false"),
+            "data-long-press": on_long_press.is_some().then_some("true"),
+            "data-report-swipe": on_swipe.is_some().then_some("true"),
             onkeydown: move |event| {
-                if disabled || phase() != Phase::Idle {
+                if disabled {
                     return;
                 }
                 match event.key() {
-                    Key::ArrowLeft => reveal_side(SwipeSide::End),
-                    Key::ArrowRight => reveal_side(SwipeSide::Start),
+                    Key::ArrowLeft => command.call("end"),
+                    Key::ArrowRight => command.call("start"),
                     Key::Escape if open => {
                         event.stop_propagation();
-                        close();
+                        command.call("close");
                     }
                     _ => {}
-                }
-            },
-            ontouchmove: move |event| {
-                if horizontal() {
-                    event.prevent_default();
-                }
-            },
-            onpointerdown: move |event| {
-                if disabled
-                    || phase() != Phase::Idle
-                    || (!mouse_swipe && event.data.pointer_type() == "mouse")
-                {
-                    return;
-                }
-                measure();
-                let point = event.client_coordinates();
-                // Resume from where an open row rests.
-                start.set((point.x - offset(), point.y));
-                dragging.set(true);
-                horizontal.set(false);
-                moved.set(false);
-                // Capture immediately. Touch browsers can dispatch a leave as
-                // soon as the finger moves off the original hit-test box; if
-                // capture waits for horizontal intent, that leave ends the
-                // gesture and the row appears to snap back before it can act.
-                document::eval(&format!(
-                    "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
-                    js_string(&row_id),
-                    event.data.pointer_id(),
-                ));
-                let generation = press_generation.with_mut(|g| {
-                    *g += 1;
-                    *g
-                });
-                if let Some(on_long_press) = on_long_press {
-                    spawn(async move {
-                        dioxus_sdk_time::sleep(Duration::from_millis(LONG_PRESS_MS)).await;
-                        if press_generation() == generation && dragging() && !moved() {
-                            on_long_press.call(());
-                        }
-                    });
-                }
-            },
-            onpointermove: move |event| {
-                if !dragging() || disabled || phase() != Phase::Idle {
-                    return;
-                }
-                let point = event.client_coordinates();
-                let (x, y) = start();
-                let (dx, dy) = (point.x - x, point.y - y);
-                if dx.hypot(dy) > LONG_PRESS_SLOP {
-                    moved.set(true);
-                }
-                if !horizontal() {
-                    if (dx - offset()).abs() > HORIZONTAL_SLOP && (dx - offset()).abs() > dy.abs() {
-                        horizontal.set(true);
-                    } else {
-                        return;
-                    }
-                }
-                let Some(edge) = edge_for(dx, start_edge, end_edge) else {
-                    offset.set(0.0);
-                    return;
-                };
-                let next = edge.offset(dx);
-                offset.set(next);
-                if let (Some(on_swipe), Some(state)) = (on_swipe, edge.state(next, edge.committed(next))) {
-                    on_swipe.call(state);
-                }
-            },
-            onpointerup: move |_| release(()),
-            onlostpointercapture: move |_| release(()),
-            onpointercancel: move |_| {
-                if phase() == Phase::Idle {
-                    press_generation.with_mut(|g| *g += 1);
-                    close();
                 }
             },
             if let Some(actions) = start_actions {
                 div {
                     class: "g3-swipe-actions g3-swipe-actions-start",
-                    aria_hidden: start_hidden.to_string(),
-                    inert: start_hidden.then_some(true),
-                    onmounted: move |event| {
-                        start_mount.set(Some(event.data()));
-                        measure();
-                    },
+                    aria_hidden: (current <= 0.0).to_string(),
+                    inert: (current <= 0.0).then_some(true),
                     // Pressing a revealed action finishes the swipe.
-                    onclick: move |_| close(),
+                    onclick: move |_| command.call("close"),
                     {actions}
                 }
             }
             if let Some(actions) = end_actions {
                 div {
                     class: "g3-swipe-actions g3-swipe-actions-end",
-                    aria_hidden: end_hidden.to_string(),
-                    inert: end_hidden.then_some(true),
-                    onmounted: move |event| {
-                        end_mount.set(Some(event.data()));
-                        measure();
-                    },
-                    onclick: move |_| close(),
+                    aria_hidden: (current >= 0.0).to_string(),
+                    inert: (current >= 0.0).then_some(true),
+                    onclick: move |_| command.call("close"),
                     {actions}
                 }
             }
             div {
                 class: "g3-swipe-content",
-                style: suppress_click().then_some("pointer-events: none;"),
                 {children}
                 if (has_start || has_end) && !disabled {
                     button {
@@ -564,11 +312,11 @@ pub fn SwipeItem(
                         aria_expanded: open.to_string(),
                         onclick: move |_| {
                             if open {
-                                close();
+                                command.call("close");
                             } else if has_end {
-                                reveal_side(SwipeSide::End);
+                                command.call("end");
                             } else {
-                                reveal_side(SwipeSide::Start);
+                                command.call("start");
                             }
                         },
                         "{strings.show_actions}"
@@ -583,33 +331,6 @@ pub fn SwipeItem(
 mod tests {
     use super::*;
 
-    const REVEAL: Edge = Edge {
-        behavior: SwipeBehavior::Reveal,
-        width: 88.0,
-    };
-
-    #[test]
-    fn elastic_offset_slows_past_the_action_width() {
-        assert_eq!(elastic_offset(44.0, 88.0), 44.0);
-        assert_eq!(elastic_offset(188.0, 88.0), 143.0);
-        assert_eq!(elastic_offset(-188.0, 88.0), -143.0);
-    }
-
-    #[test]
-    fn full_swipe_needs_the_width_plus_a_margin() {
-        let dismiss = Edge::new(SwipeBehavior::Dismiss, 0.0);
-        assert!(!dismiss.committed(133.0));
-        assert!(dismiss.committed(134.0));
-        assert!(dismiss.committed(-134.0));
-    }
-
-    #[test]
-    fn activation_commits_early() {
-        let activate = Edge::new(SwipeBehavior::Activate, 0.0);
-        assert!(!activate.committed(64.0));
-        assert!(activate.committed(66.0));
-    }
-
     #[test]
     fn side_follows_direction() {
         assert_eq!(side_of(12.0), Some(SwipeSide::Start));
@@ -618,33 +339,26 @@ mod tests {
     }
 
     #[test]
-    fn reveal_stops_at_the_measured_width() {
-        assert_eq!(REVEAL.offset(188.0), 88.0);
-        assert_eq!(REVEAL.offset(-188.0), -88.0);
-        let two_buttons = Edge::new(SwipeBehavior::Reveal, 176.0);
-        assert_eq!(two_buttons.offset(-300.0), -176.0);
+    fn reports_name_their_side() {
+        let parse = |kind: &str, values: [f64; 3]| {
+            SwipeEvent::parse(&Gesture {
+                kind: kind.into(),
+                values: values.into(),
+            })
+        };
+        let Some(SwipeEvent::Activate(state)) = parse("activate", [-70.0, -0.5, 1.0]) else {
+            panic!("an activation is parsed");
+        };
+        assert_eq!(state.side, SwipeSide::End);
+        assert!(state.committed);
+        assert_eq!(parse("rest", [0.0, 0.0, 0.0]), Some(SwipeEvent::Rest(0.0)));
+        // Only a row that moved has a side to report.
+        assert_eq!(parse("activate", [0.0, 0.0, 1.0]), None);
+        assert_eq!(parse("unknown", [4.0, 0.0, 0.0]), None);
     }
 
     #[test]
-    fn activation_softens_toward_its_limit() {
-        assert_eq!(activate_offset(80.0, 136.0), 80.0);
-        let long = activate_offset(400.0, 136.0);
-        assert!(long > 130.0 && long < 136.0);
-    }
-
-    #[test]
-    fn each_edge_keeps_its_own_behaviour() {
-        let activate = Edge::new(SwipeBehavior::Activate, 0.0);
-        assert_eq!(edge_for(44.0, Some(activate), Some(REVEAL)), Some(activate));
-        assert_eq!(edge_for(-44.0, Some(activate), Some(REVEAL)), Some(REVEAL));
-        assert_eq!(edge_for(-44.0, Some(activate), None), None);
-        assert_eq!(edge_for(0.0, Some(activate), Some(REVEAL)), None);
-    }
-
-    #[test]
-    fn reveal_settles_open_past_halfway() {
-        assert_eq!(REVEAL.settle(50.0), 88.0);
-        assert_eq!(REVEAL.settle(-50.0), -88.0);
-        assert_eq!(REVEAL.settle(30.0), 0.0);
+    fn script_stays_alive_and_never_waits_on_rust() {
+        super::super::gesture::assert_gesture_script(SWIPE_SCRIPT);
     }
 }

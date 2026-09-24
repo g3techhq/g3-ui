@@ -2729,6 +2729,9 @@ button.g3-chip:focus-visible {
     box-shadow: none;
 }
 .g3-header-md {
+    /* Android 15 draws apps edge-to-edge, so the status bar sits over the
+       page just as the iOS notch does. */
+    padding-top: env(safe-area-inset-top);
     background: var(--g3-color-card);
     box-shadow: 0 2px 8px var(--g3-color-shadow);
 }
@@ -3330,6 +3333,11 @@ button.g3-chip:focus-visible {
     z-index: 2;
     transition: none;
     box-shadow: var(--g3-shadow-md-elevation-2, 0 6px 16px var(--g3-color-shadow));
+}
+
+/* Once let go, it glides from the pointer into its slot. */
+.g3-reorder-item[data-dragging="true"][data-settling="true"] {
+    transition: transform var(--g3-reorder-drop, 200ms) cubic-bezier(0.2, 0, 0, 1);
 }
 
 .g3-reorder[data-dragging="true"] {
@@ -4017,6 +4025,14 @@ button.g3-chip:focus-visible {
 .g3-swipe-actions[aria-hidden="true"] {
     visibility: hidden;
     transition-delay: var(--g3-transition-normal);
+}
+
+/* The drag runs in the script, which marks the edge it is uncovering; the
+   `aria-hidden` above only catches up when the row comes to rest. */
+.g3-swipe-item[data-exposed="start"] > .g3-swipe-actions-start,
+.g3-swipe-item[data-exposed="end"] > .g3-swipe-actions-end {
+    visibility: visible;
+    transition-delay: 0s;
 }
 
 .g3-swipe-actions-start {
@@ -5616,9 +5632,11 @@ button.g3-chip:focus-visible {
 }
 
 .g3-shelf-track[data-snap="true"] {
-    /* Proximity rather than mandatory: mandatory snapping fights a mouse
-       wheel, pulling back to an item after every notch. */
-    scroll-snap-type: x proximity;
+    /* Mandatory, so a touch fling lands on an item in one motion. Proximity
+       lets the fling stop first and then slides to an item as a second move.
+       A wheel or mouse drag never meets this: the shelf's script turns
+       snapping off while it scrolls and settles on an item itself. */
+    scroll-snap-type: x mandatory;
     scroll-padding-inline: var(--g3-shelf-snap-inset);
 }
 

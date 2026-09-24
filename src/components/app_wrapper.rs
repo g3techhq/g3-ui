@@ -234,12 +234,28 @@ pub fn AppWrapper(
     #[cfg(feature = "transitions")]
     return rsx! {
         StylesheetLink {}
+        ViewportMeta {}
         RouteTransitionStyles { {shell} }
     };
     #[cfg(not(feature = "transitions"))]
     rsx! {
         StylesheetLink {}
+        ViewportMeta {}
         {shell}
+    }
+}
+
+/// Repeats Dioxus's own viewport tag with `viewport-fit=cover` added; the
+/// later tag wins. Without it a WebView reports every
+/// `env(safe-area-inset-*)` as 0, and on Android 15, which draws apps
+/// edge-to-edge, the status bar then covers the header.
+#[component]
+fn ViewportMeta() -> Element {
+    rsx! {
+        document::Meta {
+            name: "viewport",
+            content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover",
+        }
     }
 }
 
