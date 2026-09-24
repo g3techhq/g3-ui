@@ -1666,8 +1666,9 @@ button.g3-chip:focus-visible {
 }
 
 /* In a Stack or Grid the gap spaces the cards; a card's own margin would
-   add to it. */
-:is(.g3-stack, .g3-grid) > .g3-card {
+   add to it. A reorderable card sits one level down, inside its item. */
+:is(.g3-stack, .g3-grid) > .g3-card,
+:is(.g3-stack, .g3-grid) > .g3-reorder-item > .g3-card {
     margin-bottom: 0;
 }
 
@@ -3328,15 +3329,26 @@ button.g3-chip:focus-visible {
     transition: transform var(--g3-transition-fast, 160ms) ease;
 }
 
-/* The dragged row follows the pointer exactly and rides above the rest. */
-.g3-reorder-item[data-dragging="true"] {
+/* The dragged row follows the pointer exactly and rides above the rest. It
+   has to outrank the rule above: with only its own class, the dragged row
+   kept the others' transition and trailed behind the pointer. */
+.g3-reorder .g3-reorder-item[data-dragging="true"] {
     z-index: 2;
     transition: none;
     box-shadow: var(--g3-shadow-md-elevation-2, 0 6px 16px var(--g3-color-shadow));
 }
 
+/* A lifted card casts its shadow from its own rounded corners. */
+.g3-reorder-item:has(> .g3-card-ios) {
+    border-radius: 8px;
+}
+
+.g3-reorder-item:has(> .g3-card-md) {
+    border-radius: 4px;
+}
+
 /* Once let go, it glides from the pointer into its slot. */
-.g3-reorder-item[data-dragging="true"][data-settling="true"] {
+.g3-reorder .g3-reorder-item[data-dragging="true"][data-settling="true"] {
     transition: transform var(--g3-reorder-drop, 200ms) cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -5631,17 +5643,19 @@ button.g3-chip:focus-visible {
     flex: 0 0 auto;
 }
 
-.g3-shelf-track[data-snap="true"] {
-    /* Mandatory, so a touch fling lands on an item in one motion. Proximity
-       lets the fling stop first and then slides to an item as a second move.
-       A wheel or mouse drag never meets this: the shelf's script turns
-       snapping off while it scrolls and settles on an item itself. */
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: var(--g3-shelf-snap-inset);
-}
+/* Snapping is for touch. A mouse drag or wheel scrolls freely and coasts to a
+   stop; settling on an item after letting go read as the row jumping. On
+   touch it is mandatory, so a fling lands on an item in one motion, where
+   proximity lets the fling stop and then slides to an item as a second move. */
+@media (pointer: coarse) {
+    .g3-shelf-track[data-snap="true"] {
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: var(--g3-shelf-snap-inset);
+    }
 
-.g3-shelf-track[data-snap="true"] > * {
-    scroll-snap-align: start;
+    .g3-shelf-track[data-snap="true"] > * {
+        scroll-snap-align: start;
+    }
 }
 
 .g3-shelf-track[data-dragging="true"] {

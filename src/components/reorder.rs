@@ -175,9 +175,7 @@ pub fn ReorderList(
             "data-layout": layout().as_str(),
             onmounted: move |_| start_script.call(()),
             {children}
-            span { class: "g3-sr-only", role: "status", aria_live: "polite",
-                "{announcement}"
-            }
+            span { class: "g3-sr-only", role: "status", aria_live: "polite", "{announcement}" }
         }
     }
 }
@@ -304,14 +302,15 @@ fn ReorderPlaygroundDemo() -> Element {
             "Back nine",
             "Par threes",
             "Longest drive",
-            "Closest to the pin",
+            "Closest to pin",
             "Best round",
         ]
     });
     let position = use_signal(|| ReorderHandlePosition::End);
     let layout = use_signal(ReorderLayout::default);
     rsx! {
-        crate::PlaygroundDemoFrame { center: false,
+        crate::PlaygroundDemoFrame {
+            center: false,
             controls: rsx! {
                 crate::SegmentGroup { value: layout, aria_label: "Layout",
                     crate::SegmentButton { value: ReorderLayout::Rows, "Rows" }
@@ -333,8 +332,10 @@ fn ReorderPlaygroundDemo() -> Element {
                     });
                 },
                 if layout() == ReorderLayout::Grid {
-                    crate::Grid { columns: crate::GridColumns::Count(3), gap: crate::Space::Sm,
-                        for (index, row) in rows().into_iter().enumerate() {
+                    crate::Grid {
+                        columns: crate::GridColumns::Count(3),
+                        gap: crate::Space::Sm,
+                        for (index , row) in rows().into_iter().enumerate() {
                             ReorderItem { key: "{row}", index,
                                 crate::Card {
                                     title: row.to_string(),
@@ -346,7 +347,7 @@ fn ReorderPlaygroundDemo() -> Element {
                     }
                 } else {
                     crate::List { variant: crate::ListVariant::Raised,
-                        for (index, row) in rows().into_iter().enumerate() {
+                        for (index , row) in rows().into_iter().enumerate() {
                             ReorderItem { key: "{row}", index,
                                 crate::Item {
                                     label: row,
