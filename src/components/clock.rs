@@ -1,11 +1,11 @@
 //! The clock face of a Material time picker.
+use super::gesture::{GestureScript, use_gesture};
 use super::keyboard::use_roving_selection;
-use super::overlay::js_string;
 use crate::state::use_element_id;
 use dioxus::prelude::*;
 
-/// The dial is drawn at this size, in CSS pixels.
-const SIZE: f64 = 256.0;
+/// Radii of the dial's rings, in CSS pixels. `clock.js` shares them, with
+/// the dial's size, to turn a pointer into a value.
 const OUTER_RADIUS: f64 = 100.0;
 const INNER_RADIUS: f64 = 64.0;
 
@@ -20,6 +20,17 @@ pub(crate) enum DialMode {
     Minutes,
 }
 
+impl DialMode {
+    /// How `clock.js` knows the mode.
+    fn as_str(self) -> &'static str {
+        match self {
+            DialMode::Hours12 => "hours12",
+            DialMode::Hours24 => "hours24",
+            DialMode::Minutes => "minutes",
+        }
+    }
+}
+
 /// Where `value` sits on the dial: its angle in degrees clockwise from the
 /// top, and its distance from the centre.
 fn position(mode: DialMode, value: u8) -> (f64, f64) {
@@ -30,28 +41,6 @@ fn position(mode: DialMode, value: u8) -> (f64, f64) {
         }
         DialMode::Hours24 => (f64::from(value % 12) * 30.0, INNER_RADIUS),
         DialMode::Minutes => (f64::from(value) * 6.0, OUTER_RADIUS),
-    }
-}
-
-/// The value under a point on the dial, given relative to its centre.
-fn value_at(mode: DialMode, dx: f64, dy: f64) -> u8 {
-    let angle = dx.atan2(-dy).to_degrees().rem_euclid(360.0);
-    match mode {
-        DialMode::Hours12 => match ((angle / 30.0).round() as u8) % 12 {
-            0 => 12,
-            hour => hour,
-        },
-        DialMode::Hours24 => {
-            let hour = ((angle / 30.0).round() as u8) % 12;
-            let inner = dx.hypot(dy) < (OUTER_RADIUS + INNER_RADIUS) / 2.0;
-            match (inner, hour) {
-                (false, 0) => 12,
-                (false, hour) => hour,
-                (true, 0) => 0,
-                (true, hour) => hour + 12,
-            }
-        }
-        DialMode::Minutes => ((angle / 6.0).round() as u8) % 60,
     }
 }
 
@@ -69,11 +58,12 @@ fn marks(mode: DialMode) -> Vec<(u8, String)> {
     }
 }
 
-/// Keeps pointer events coming to the dial while a finger or mouse drags
-/// past its edge.
-const CAPTURE_SCRIPT: &str = r#"
-try { document.getElementById(__ID__).setPointerCapture(__POINTER__); } catch (error) {}
-"#;
+/// Follows a press or drag on the face in the webview, and reports each value
+/// it lands on. See [`super::gesture`] for why.
+const CLOCK_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.clock",
+    source: include_str!("clock.js"),
+};
 
 /// A clock face that picks an hour or a minute, as in Material's time
 /// picker. Drag or tap anywhere on the face; the numbers are also a radio
@@ -92,14 +82,21 @@ pub(crate) fn ClockDial(
     let id = use_element_id("clock", None);
     let face_id = format!("{id}-face");
     use_roving_selection(id.clone(), "[role=radio]", false);
-    let mut pressed = use_signal(|| false);
-    let pick = move |event: PointerEvent| {
-        let point = event.element_coordinates();
-        let picked = value_at(mode, point.x - SIZE / 2.0, point.y - SIZE / 2.0);
-        if picked != value {
-            onchange.call(picked);
+    // The script turns the pointer into values; each one it lands on arrives
+    // here, and so does the end of the press.
+    let start_script = use_gesture(CLOCK_SCRIPT, face_id.clone(), move |gesture| match gesture
+        .kind
+        .as_str()
+    {
+        "pick" => {
+            let picked = gesture.value(0) as u8;
+            if picked != value {
+                onchange.call(picked);
+            }
         }
-    };
+        "release" => on_release.call(()),
+        _ => {}
+    });
     let (angle, radius) = position(mode, value);
     // The keyboard stop: the selected mark, or for minutes between the
     // labels, the nearest one.
@@ -112,31 +109,10 @@ pub(crate) fn ClockDial(
     rsx! {
         div {
             class: "g3-clock",
-            "data-dragging": pressed().then_some("true"),
-            onpointerdown: {
-                let face_id = face_id.clone();
-                move |event: PointerEvent| {
-                    pressed.set(true);
-                    document::eval(
-                        &CAPTURE_SCRIPT
-                            .replace("__ID__", &js_string(&face_id))
-                            .replace("__POINTER__", &event.data.pointer_id().to_string()),
-                    );
-                    pick(event);
-                }
-            },
-            onpointermove: move |event| {
-                if pressed() {
-                    pick(event);
-                }
-            },
-            onpointerup: move |_| {
-                if pressed() {
-                    pressed.set(false);
-                    on_release.call(());
-                }
-            },
-            onpointercancel: move |_| pressed.set(false),
+            // Read by the script at each press; it marks the face while
+            // dragging.
+            "data-mode": mode.as_str(),
+            onmounted: move |_| start_script.call(()),
             id: face_id,
             div { class: "g3-clock-center", aria_hidden: "true" }
             div {
@@ -185,36 +161,33 @@ pub(crate) fn ClockDial(
 mod tests {
     use super::*;
 
-    fn at(mode: DialMode, degrees: f64, radius: f64) -> u8 {
-        let radians = degrees.to_radians();
-        value_at(mode, radius * radians.sin(), -radius * radians.cos())
-    }
-
     #[test]
-    fn hours_follow_the_clock_face() {
-        assert_eq!(at(DialMode::Hours12, 0.0, OUTER_RADIUS), 12);
-        assert_eq!(at(DialMode::Hours12, 90.0, OUTER_RADIUS), 3);
-        assert_eq!(at(DialMode::Hours12, 184.0, OUTER_RADIUS), 6);
-        assert_eq!(at(DialMode::Hours12, 350.0, OUTER_RADIUS), 12);
-    }
-
-    #[test]
-    fn a_24_hour_dial_uses_its_inner_ring_for_the_afternoon() {
-        assert_eq!(at(DialMode::Hours24, 0.0, OUTER_RADIUS), 12);
-        assert_eq!(at(DialMode::Hours24, 0.0, INNER_RADIUS), 0);
-        assert_eq!(at(DialMode::Hours24, 90.0, INNER_RADIUS), 15);
-        assert_eq!(at(DialMode::Hours24, 90.0, OUTER_RADIUS), 3);
+    fn a_24_hour_dial_puts_the_afternoon_on_its_inner_ring() {
+        assert_eq!(position(DialMode::Hours24, 3), (90.0, OUTER_RADIUS));
         assert_eq!(position(DialMode::Hours24, 15), (90.0, INNER_RADIUS));
         assert_eq!(position(DialMode::Hours24, 0), (0.0, INNER_RADIUS));
+        assert_eq!(position(DialMode::Minutes, 7), (42.0, OUTER_RADIUS));
     }
 
     #[test]
-    fn minutes_resolve_to_single_minutes() {
-        assert_eq!(at(DialMode::Minutes, 0.0, OUTER_RADIUS), 0);
-        assert_eq!(at(DialMode::Minutes, 42.0, OUTER_RADIUS), 7);
-        assert_eq!(at(DialMode::Minutes, 359.0, OUTER_RADIUS), 0);
-        assert_eq!(at(DialMode::Minutes, 356.0, OUTER_RADIUS), 59);
+    fn marks_label_every_hour_and_every_five_minutes() {
         assert_eq!(marks(DialMode::Minutes).len(), 12);
         assert_eq!(marks(DialMode::Hours24).len(), 24);
+    }
+
+    /// The script reads the rings' radii from its own copy.
+    #[test]
+    fn script_shares_the_dial_geometry() {
+        super::super::gesture::assert_gesture_script(CLOCK_SCRIPT);
+        assert!(
+            CLOCK_SCRIPT
+                .source
+                .contains(&format!("OUTER_RADIUS = {OUTER_RADIUS}"))
+        );
+        assert!(
+            CLOCK_SCRIPT
+                .source
+                .contains(&format!("INNER_RADIUS = {INNER_RADIUS}"))
+        );
     }
 }

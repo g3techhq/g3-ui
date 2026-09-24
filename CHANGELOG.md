@@ -4,6 +4,35 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-09-24
+
+### Added
+
+- `ReorderList` lays out grid cells as well as rows (`layout:
+  ReorderLayout::Grid`): a dragged cell steps into the next slot, which may be
+  at the other end of the row above or below.
+
+### Changed
+
+- Swipe rows, reorder lists, star ratings and the clock face now follow the
+  pointer in the page itself and report only what the gesture decided. On
+  native renderers every Rust event handler is a round trip that blocks the
+  WebView, so a drag handled in Rust lagged the finger, badly on Android.
+- A dropped reorder item glides from the pointer into its slot, and a
+  cancelled drag glides back, instead of jumping.
+- A shelf dragged with a mouse coasts to a stop at the speed it was let go,
+  and a wheel eases it along; neither snaps to an item. Snapping is now for
+  touch alone, where it is mandatory so a fling lands on an item in one
+  motion.
+
+### Fixed
+
+- A dragged reorder item trailed behind the pointer: it kept the list's
+  transform transition, whose rule outranked its own.
+- `AppWrapper` adds `viewport-fit=cover` to the viewport, without which a
+  WebView reports every safe-area inset as 0 and Android 15's edge-to-edge
+  status bar covers the header.
+
 ## [0.4.1] - 2026-09-22
 
 ### Fixed

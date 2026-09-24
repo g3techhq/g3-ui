@@ -9,7 +9,8 @@ use dioxus::prelude::*;
 /// of posters or a store's "New this week". Items keep their own width, so
 /// the row overflows and is scrolled rather than squeezed.
 ///
-/// Touch pans it natively, and a mouse can drag it or turn the wheel over it;
+/// Touch pans it natively, and a mouse can drag it, coasting on when let go,
+/// or turn the wheel over it;
 /// a wheel over a row already at one of its ends scrolls the page instead, so
 /// a row never traps the page. The edges fade while there is more past them.
 ///
@@ -42,7 +43,8 @@ pub fn Shelf(
     aria_label: Option<String>,
     /// Space between items. Defaults to [`Space::Md`].
     gap: Option<Space>,
-    /// Settle on an item's leading edge when scrolling stops. Defaults to
+    /// On touch, settle on an item's leading edge when scrolling stops. A
+    /// mouse or wheel always scrolls freely. Defaults to
     /// `true`.
     snap: Option<bool>,
     /// Heading level of the title, 1 to 6. Defaults to 2.

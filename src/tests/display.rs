@@ -494,6 +494,27 @@ fn a_row_with_a_control_at_its_end_does_not_nest_buttons() {
 }
 
 #[test]
+fn a_reorder_list_tells_its_script_how_its_items_are_laid_out() {
+    fn app() -> Element {
+        rsx! {
+            ReorderList { onreorder: |_| {},
+                List { ReorderItem { index: 0, Item { label: "Row" } } }
+            }
+            ReorderList { onreorder: |_| {}, layout: ReorderLayout::Grid,
+                Grid { ReorderItem { index: 0, Card { title: "Cell" } } }
+            }
+        }
+    }
+    let html = render(app);
+    assert!(html.contains("data-layout=\"rows\""), "rows by default");
+    assert!(html.contains("data-layout=\"grid\""));
+    assert!(
+        element_with_class(&html, "g3-reorder-item").contains("data-index=\"0\""),
+        "the script orders items by their position"
+    );
+}
+
+#[test]
 fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
     fn app() -> Element {
         rsx! {

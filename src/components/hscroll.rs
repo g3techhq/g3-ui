@@ -43,61 +43,68 @@ if (strip && strip.dataset.g3Scroll !== "true") {
     let lastX = 0;
     let lastTime = 0;
     let velocity = 0;
-    let snapTimer;
-    let settleFrame = 0;
+    let coastFrame = 0;
     let wheelFrame = 0;
     let wheelTarget = 0;
     let wheelTimer;
+    let wheelSettled = false;
     const clamp = (value) => Math.max(0, Math.min(strip.scrollWidth - strip.clientWidth, value));
-    const nearestSnap = (position) => {
-        const inset = parseFloat(getComputedStyle(strip).getPropertyValue("--g3-shelf-snap-inset")) || 0;
-        const max = strip.scrollWidth - strip.clientWidth;
-        return [...strip.children].reduce((nearest, child) => {
-            const left = Math.max(0, Math.min(max, child.offsetLeft - inset));
-            return nearest === null || Math.abs(left - position) < Math.abs(nearest - position)
-                ? left : nearest;
-        }, null) ?? clamp(position);
-    };
-    const stopSettling = () => {
-        if (settleFrame) cancelAnimationFrame(settleFrame);
-        settleFrame = 0;
+    const stopCoasting = () => {
+        if (coastFrame) cancelAnimationFrame(coastFrame);
+        coastFrame = 0;
     };
     const stopWheel = () => {
         if (wheelFrame) cancelAnimationFrame(wheelFrame);
         clearTimeout(wheelTimer);
         wheelFrame = 0;
     };
-    const settleTo = (target, duration = 360) => {
-        target = clamp(target);
-        if (calm.matches) {
-            strip.scrollLeft = target;
+    // A mouse or wheel scrolls freely and never snaps: settling on an item
+    // after the pointer let go read as the row jumping. Snapping is left to
+    // the stylesheet, which applies it to touch alone.
+    //
+    // A released drag carries on at the speed it was let go, slowing under
+    // friction, so the motion never changes speed abruptly.
+    const coast = (speed) => {
+        stopCoasting();
+        if (calm.matches || Math.abs(speed) < 0.05) {
             delete strip.dataset.dragging;
             return;
         }
-        stopSettling();
-        const start = strip.scrollLeft;
-        const distance = target - start;
-        const started = performance.now();
+        let last = performance.now();
         const step = (now) => {
-            const progress = Math.min(1, (now - started) / duration);
-            // Ease out: it keeps the release connected to the pointer, then
-            // settles gently instead of snapping to the closest card.
-            const eased = 1 - Math.pow(1 - progress, 3);
-            strip.scrollLeft = start + distance * eased;
-            if (progress < 1) {
-                settleFrame = requestAnimationFrame(step);
-            } else {
-                settleFrame = 0;
+            const elapsed = Math.min(48, now - last);
+            last = now;
+            speed *= Math.pow(0.994, elapsed);
+            const before = strip.scrollLeft;
+            strip.scrollLeft = clamp(before + speed * elapsed);
+            // Stopped by friction, or by an end of the row.
+            if (Math.abs(speed) < 0.02 || strip.scrollLeft === before) {
+                coastFrame = 0;
                 delete strip.dataset.dragging;
+                return;
             }
+            coastFrame = requestAnimationFrame(step);
         };
-        settleFrame = requestAnimationFrame(step);
+        coastFrame = requestAnimationFrame(step);
+    };
+    // Eases toward `wheelTarget`, covering a share of the way each frame. The
+    // step is at least a pixel, since a smaller one can round away to nothing
+    // and leave the glide running forever.
+    const glide = () => {
+        const distance = wheelTarget - strip.scrollLeft;
+        if (Math.abs(distance) <= 1) {
+            strip.scrollLeft = wheelTarget;
+            wheelFrame = 0;
+            if (wheelSettled) delete strip.dataset.dragging;
+            return;
+        }
+        strip.scrollLeft += Math.sign(distance) * Math.max(1, Math.abs(distance) * 0.2);
+        wheelFrame = requestAnimationFrame(glide);
     };
     strip.addEventListener("pointerdown", (event) => {
         if (event.pointerType !== "mouse" || event.button !== 0) return;
-        stopSettling();
+        stopCoasting();
         stopWheel();
-        clearTimeout(snapTimer);
         down = true;
         dragged = false;
         startX = event.clientX;
@@ -122,16 +129,15 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         lastTime = now;
     });
     window.addEventListener("pointerup", () => {
+        if (!down) return;
         down = false;
-        if (!dragged || strip.dataset.snap !== "true") {
+        if (!dragged) {
             delete strip.dataset.dragging;
             return;
         }
-        // Project the release velocity before choosing a snap point. A quick
-        // mouse drag therefore flings like touch instead of merely rounding
-        // the exact pointer-up position.
-        const projected = clamp(strip.scrollLeft + velocity * 220);
-        settleTo(nearestSnap(projected), Math.min(520, 300 + Math.abs(projected - strip.scrollLeft)));
+        // A pointer held still before letting go has no speed left, even
+        // though the last move it reported did.
+        coast(performance.now() - lastTime > 80 ? 0 : velocity);
     });
     // A drag must not also press whatever it ended on.
     strip.addEventListener("click", (event) => {
@@ -153,31 +159,18 @@ if (strip && strip.dataset.g3Scroll !== "true") {
         // Against a stop, the page keeps the scroll.
         if ((delta < 0 && strip.scrollLeft <= 0) || (delta > 0 && strip.scrollLeft >= max - 1)) return;
         event.preventDefault();
-        stopSettling();
+        stopCoasting();
         strip.dataset.dragging = "true";
         if (!wheelFrame) wheelTarget = strip.scrollLeft;
         wheelTarget = clamp(wheelTarget + delta);
-        if (!wheelFrame) {
-            const glide = () => {
-                const distance = wheelTarget - strip.scrollLeft;
-                if (Math.abs(distance) < 0.5) {
-                    strip.scrollLeft = wheelTarget;
-                    wheelFrame = 0;
-                    return;
-                }
-                strip.scrollLeft += distance * 0.24;
-                wheelFrame = requestAnimationFrame(glide);
-            };
-            wheelFrame = requestAnimationFrame(glide);
-        }
+        wheelSettled = false;
+        if (!wheelFrame) wheelFrame = requestAnimationFrame(glide);
         clearTimeout(wheelTimer);
+        // The glide finishes where the wheel sent it; only then does the row
+        // stop counting as scrolled by hand.
         wheelTimer = setTimeout(() => {
-            stopWheel();
-            if (strip.dataset.snap === "true") {
-                settleTo(nearestSnap(wheelTarget), 300);
-            } else {
-                settleTo(wheelTarget, 180);
-            }
+            wheelSettled = true;
+            if (!wheelFrame) wheelFrame = requestAnimationFrame(glide);
         }, 120);
     }, { passive: false });
     strip.addEventListener("scroll", edges, { passive: true });
@@ -221,11 +214,11 @@ mod tests {
     }
 
     #[test]
-    fn shelf_drag_settles_smoothly_clear_of_its_fade() {
-        assert!(SCRIPT.contains("--g3-shelf-snap-inset"));
-        assert!(SCRIPT.contains("const settleTo"));
-        assert!(SCRIPT.contains("requestAnimationFrame"));
-        assert!(SCRIPT.contains("const projected"));
+    fn a_mouse_drag_coasts_to_a_stop_instead_of_snapping() {
+        assert!(SCRIPT.contains("const coast"));
         assert!(SCRIPT.contains("wheelTarget"));
+        // The stylesheet snaps touch alone; the script must not snap either,
+        // or a released drag jumps to the nearest item.
+        assert!(!SCRIPT.contains("nearestSnap"));
     }
 }

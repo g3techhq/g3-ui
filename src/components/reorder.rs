@@ -1,6 +1,7 @@
 //! Lists whose rows can be dragged, or moved with the keyboard, into a new
 //! order.
-use crate::state::{provide_live_context, use_live_context};
+use super::gesture::{GestureScript, use_gesture};
+use crate::state::{provide_live_context, use_element_id, use_live_context};
 use crate::theme::{merge_classes, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::GripVertical;
@@ -17,52 +18,47 @@ pub enum ReorderHandlePosition {
     End,
 }
 
-/// A drag in progress: which row, where it started, and where it would land.
-#[derive(Clone, Copy, PartialEq, Debug)]
-struct Drag {
-    from: usize,
-    target: usize,
-    start_y: f64,
-    delta: f64,
-    /// Height of the dragged row, which the rows it passes move by.
-    height: f64,
+/// How the items of a [`ReorderList`] are laid out, which decides where a
+/// dragged item lands and how the others make room.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum ReorderLayout {
+    /// One item per row, top to bottom. A dragged row takes the place of
+    /// each row whose middle it passes, and the rows between move up or down
+    /// by its height, so rows of any height work.
+    #[default]
+    Rows,
+    /// Items that wrap across rows in reading order, such as the cells of a
+    /// [`Grid`](crate::Grid). A dragged item lands on the cell whose middle
+    /// is nearest the pointer, and the cells between each step into the
+    /// neighbouring slot, wrapping between rows. Suits cells of one size.
+    Grid,
 }
+
+impl ReorderLayout {
+    fn as_str(self) -> &'static str {
+        match self {
+            ReorderLayout::Rows => "rows",
+            ReorderLayout::Grid => "grid",
+        }
+    }
+}
+
+/// Follows a dragged item in the webview, moving the others aside, and
+/// reports where it was dropped. See [`super::gesture`] for why.
+const REORDER_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.reorder",
+    source: include_str!("reorder.js"),
+};
 
 #[derive(Clone, Copy, PartialEq)]
 struct ReorderContext {
-    drag: Signal<Option<Drag>>,
-    /// Vertical middle of each row when the drag began, in viewport pixels.
-    middles: Signal<Vec<f64>>,
+    /// Every item's element, by position, so the keyboard knows how many
+    /// places there are.
     rows: Signal<HashMap<usize, Rc<MountedData>>>,
     announcement: Signal<String>,
     onreorder: EventHandler<(usize, usize)>,
     disabled: Signal<bool>,
-}
-
-/// Where a row dragged from `from` would land, given the pointer's `y` and
-/// the middle of every row before the drag began.
-fn target_index(from: usize, y: f64, middles: &[f64]) -> usize {
-    let mut target = from;
-    for (index, middle) in middles.iter().enumerate() {
-        if index < from && y < *middle {
-            target = target.min(index);
-        }
-        if index > from && y > *middle {
-            target = target.max(index);
-        }
-    }
-    target
-}
-
-/// How far a row that is not being dragged moves aside for the one that is.
-fn shift(index: usize, drag: &Drag) -> f64 {
-    if drag.from < drag.target && index > drag.from && index <= drag.target {
-        -drag.height
-    } else if drag.target < drag.from && index >= drag.target && index < drag.from {
-        drag.height
-    } else {
-        0.0
-    }
+    layout: Signal<ReorderLayout>,
 }
 
 /// A list whose rows can be put in a new order. Like Ionic's
@@ -101,10 +97,44 @@ fn shift(index: usize, drag: &Drag) -> f64 {
 /// }
 /// # }
 /// ```
+///
+/// With [`ReorderLayout::Grid`] the items can wrap across rows, as the cells
+/// of a [`Grid`](crate::Grid) do, and the left and right arrows move a cell
+/// too. The list does not lay its items out itself, so any grid works:
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// let mut posters = use_signal(|| vec!["Dune", "Heat", "Alien", "Up"]);
+/// rsx! {
+///     ReorderList {
+///         layout: ReorderLayout::Grid,
+///         onreorder: move |(from, to): (usize, usize)| {
+///             posters.with_mut(|posters| {
+///                 let poster = posters.remove(from);
+///                 posters.insert(to, poster);
+///             });
+///         },
+///         Grid { columns: GridColumns::Count(2),
+///             for (index, title) in posters().into_iter().enumerate() {
+///                 ReorderItem { key: "{title}", index,
+///                     Card { title: title.to_string(),
+///                         ReorderHandle { label: format!("Move {title}") }
+///                     }
+///                 }
+///             }
+///         }
+///     }
+/// }
+/// # }
+/// ```
 #[component]
 pub fn ReorderList(
     /// Called with `(from, to)` when a row is moved.
     onreorder: EventHandler<(usize, usize)>,
+    /// How the items are laid out. Defaults to [`ReorderLayout::Rows`].
+    layout: Option<ReorderLayout>,
     /// Turn reordering off, leaving the rows where they are.
     disabled: Option<bool>,
     /// Extra classes for the list wrapper.
@@ -112,48 +142,40 @@ pub fn ReorderList(
     /// The list, whose rows are [`ReorderItem`]s.
     children: Element,
 ) -> Element {
+    let id = use_element_id("reorder", None);
     let rows = use_signal(HashMap::<usize, Rc<MountedData>>::new);
     let disabled = crate::state::use_synced_signal(disabled.unwrap_or(false));
-    let mut drag = use_signal(|| None::<Drag>);
-    let middles = use_signal(Vec::<f64>::new);
     let announcement = use_signal(String::new);
+    let layout = crate::state::use_synced_signal(layout.unwrap_or_default());
     let context = ReorderContext {
-        drag,
-        middles,
         rows,
         announcement,
         onreorder,
         disabled,
+        layout,
     };
     provide_live_context(context);
 
-    let finish = move |_| {
-        if let Some(done) = drag.take()
-            && done.target != done.from
-        {
-            (context.onreorder)((done.from, done.target));
+    // The script moves the rows while they are dragged; a drop that changes
+    // the order arrives here once.
+    let start_script = use_gesture(REORDER_SCRIPT, id.clone(), move |gesture| {
+        if gesture.kind == "reorder" && !disabled() {
+            let (from, to) = (gesture.value(0) as usize, gesture.value(1) as usize);
+            if from != to {
+                onreorder((from, to));
+            }
         }
-    };
+    });
 
     rsx! {
         div {
+            id,
             class: merge_classes("g3-reorder", class.as_deref()),
-            "data-dragging": drag.read().is_some().then_some("true"),
-            onpointermove: move |event: PointerEvent| {
-                let Some(mut current) = *drag.peek() else {
-                    return;
-                };
-                let y = event.client_coordinates().y;
-                current.delta = y - current.start_y;
-                current.target = target_index(current.from, y, &middles.peek());
-                drag.set(Some(current));
-            },
-            onpointerup: finish,
-            onpointercancel: move |_| drag.set(None),
+            // Read by the script at each press.
+            "data-layout": layout().as_str(),
+            onmounted: move |_| start_script.call(()),
             {children}
-            span { class: "g3-sr-only", role: "status", aria_live: "polite",
-                "{announcement}"
-            }
+            span { class: "g3-sr-only", role: "status", aria_live: "polite", "{announcement}" }
         }
     }
 }
@@ -181,12 +203,6 @@ pub fn ReorderItem(
             rows.write().insert(index, element);
         }
     });
-    let drag = *context.drag.read();
-    let (offset, dragging) = match drag {
-        Some(drag) if drag.from == index => (drag.delta, true),
-        Some(drag) => (shift(index, &drag), false),
-        None => (0.0, false),
-    };
     use_drop(move || {
         let index = *position.peek();
         let ours = match (rows.peek().get(&index), mounted.peek().as_ref()) {
@@ -200,8 +216,9 @@ pub fn ReorderItem(
     rsx! {
         div {
             class: merge_classes("g3-reorder-item", class.as_deref()),
-            "data-dragging": dragging.then_some("true"),
-            style: (offset != 0.0).then(|| format!("transform: translateY({offset}px);")),
+            // The script orders the rows by this, and waits for it to change
+            // before letting go of a dropped row.
+            "data-index": "{index}",
             onmounted: move |event: MountedEvent| mounted.set(Some(event.data())),
             {children}
         }
@@ -213,7 +230,8 @@ pub fn ReorderItem(
 struct ReorderPosition(Signal<usize>);
 
 /// The grip that moves a row of a [`ReorderList`]. Drag it, or focus it and
-/// press the up and down arrows.
+/// press the up and down arrows; in a [`ReorderLayout::Grid`], left and
+/// right move it back and on too.
 #[component]
 pub fn ReorderHandle(
     /// Accessible name, naming the row, such as "Move Dune". Defaults to
@@ -234,66 +252,20 @@ pub fn ReorderHandle(
     let disabled = (context.disabled)();
     let position = position.unwrap_or_default();
     let rows = context.rows;
-    let mut drag = context.drag;
-    let mut middles = context.middles;
-
-    let start = move |event: PointerEvent| {
-        if disabled {
-            return;
-        }
-        event.prevent_default();
-        event.stop_propagation();
-        let start_y = event.client_coordinates().y;
-        // The drag starts at once, so a quick flick is not lost while the
-        // rows are measured; the measurements land a moment later.
-        middles.set(Vec::new());
-        drag.set(Some(Drag {
-            from: index,
-            target: index,
-            start_y,
-            delta: 0.0,
-            height: 0.0,
-        }));
-        spawn(async move {
-            // Measured as the drag begins, so rows of any height make room
-            // for each other correctly.
-            let mounted: Vec<(usize, Rc<MountedData>)> =
-                rows.peek().iter().map(|(i, m)| (*i, m.clone())).collect();
-            let mut measured = vec![0.0; mounted.len()];
-            let mut height = 0.0;
-            for (row, mount) in mounted {
-                if let Ok(rect) = mount.get_client_rect().await {
-                    if row < measured.len() {
-                        measured[row] = rect.origin.y + rect.size.height / 2.0;
-                    }
-                    if row == index {
-                        height = rect.size.height;
-                    }
-                }
-            }
-            middles.set(measured);
-            // The pointer may already have moved: place the row for where it
-            // is now, if the drag has not ended meanwhile.
-            let current = *drag.peek();
-            if let Some(mut current) = current
-                && current.from == index
-            {
-                current.height = height;
-                current.target =
-                    target_index(index, current.start_y + current.delta, &middles.peek());
-                drag.set(Some(current));
-            }
-        });
-    };
 
     let count = rows.read().len();
+    let grid = (context.layout)() == ReorderLayout::Grid;
     let key = move |event: KeyboardEvent| {
         if disabled {
             return;
         }
-        let to = match event.key() {
-            Key::ArrowUp if index > 0 => index - 1,
-            Key::ArrowDown if index + 1 < count => index + 1,
+        // In a grid the item moves along the reading order, so left and
+        // right move it too.
+        let back = matches!(event.key(), Key::ArrowUp) || (grid && event.key() == Key::ArrowLeft);
+        let on = matches!(event.key(), Key::ArrowDown) || (grid && event.key() == Key::ArrowRight);
+        let to = match (back, on) {
+            (true, _) if index > 0 => index - 1,
+            (_, true) if index + 1 < count => index + 1,
             _ => return,
         };
         event.prevent_default();
@@ -311,8 +283,8 @@ pub fn ReorderHandle(
                 ReorderHandlePosition::End => "end",
             },
             aria_label: label.clone(),
+            // Also how the script knows not to start a drag.
             aria_disabled: disabled.then_some("true"),
-            onpointerdown: start,
             onkeydown: key,
             // A press on the handle is for dragging, not for the row.
             onclick: move |event| event.stop_propagation(),
@@ -330,37 +302,63 @@ fn ReorderPlaygroundDemo() -> Element {
             "Back nine",
             "Par threes",
             "Longest drive",
-            "Closest to the pin",
+            "Closest to pin",
+            "Best round",
         ]
     });
     let position = use_signal(|| ReorderHandlePosition::End);
+    let layout = use_signal(ReorderLayout::default);
     rsx! {
-        crate::PlaygroundDemoFrame { center: false,
+        crate::PlaygroundDemoFrame {
+            center: false,
             controls: rsx! {
-                crate::SegmentGroup { value: position, aria_label: "Handle edge",
-                    crate::SegmentButton { value: ReorderHandlePosition::Start, "Start" }
-                    crate::SegmentButton { value: ReorderHandlePosition::End, "End" }
+                crate::SegmentGroup { value: layout, aria_label: "Layout",
+                    crate::SegmentButton { value: ReorderLayout::Rows, "Rows" }
+                    crate::SegmentButton { value: ReorderLayout::Grid, "Grid" }
+                }
+                if layout() == ReorderLayout::Rows {
+                    crate::SegmentGroup { value: position, aria_label: "Handle edge",
+                        crate::SegmentButton { value: ReorderHandlePosition::Start, "Start" }
+                        crate::SegmentButton { value: ReorderHandlePosition::End, "End" }
+                    }
                 }
             },
             ReorderList {
+                layout: layout(),
                 onreorder: move |(from, to): (usize, usize)| {
                     rows.with_mut(|rows| {
                         let row = rows.remove(from);
                         rows.insert(to, row);
                     });
                 },
-                crate::List { variant: crate::ListVariant::Raised,
-                    for (index, row) in rows().into_iter().enumerate() {
-                        ReorderItem { key: "{row}", index,
-                            crate::Item {
-                                label: row,
-                                description: format!("Position {}", index + 1),
-                                start: (position() == ReorderHandlePosition::Start).then(|| rsx! {
-                                    ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::Start }
-                                }),
-                                end: (position() == ReorderHandlePosition::End).then(|| rsx! {
-                                    ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::End }
-                                }),
+                if layout() == ReorderLayout::Grid {
+                    crate::Grid {
+                        columns: crate::GridColumns::Count(3),
+                        gap: crate::Space::Sm,
+                        for (index , row) in rows().into_iter().enumerate() {
+                            ReorderItem { key: "{row}", index,
+                                crate::Card {
+                                    title: row.to_string(),
+                                    subtitle: format!("Position {}", index + 1),
+                                    ReorderHandle { label: format!("Move {row}") }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    crate::List { variant: crate::ListVariant::Raised,
+                        for (index , row) in rows().into_iter().enumerate() {
+                            ReorderItem { key: "{row}", index,
+                                crate::Item {
+                                    label: row,
+                                    description: format!("Position {}", index + 1),
+                                    start: (position() == ReorderHandlePosition::Start).then(|| rsx! {
+                                        ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::Start }
+                                    }),
+                                    end: (position() == ReorderHandlePosition::End).then(|| rsx! {
+                                        ReorderHandle { label: format!("Move {row}"), position: ReorderHandlePosition::End }
+                                    }),
+                                }
                             }
                         }
                     }
@@ -372,7 +370,7 @@ fn ReorderPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Reorder",
-    description: "Rows moved by dragging a handle, or with the arrow keys.",
+    description: "Rows or grid cells moved by dragging a handle, or with the arrow keys.",
     components: ["ReorderList", "ReorderItem", "ReorderHandle"],
     demo: ReorderPlaygroundDemo,
     source: "src/components/reorder.rs",
@@ -383,38 +381,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_row_lands_past_the_middles_it_crosses() {
-        let middles = [25.0, 75.0, 125.0, 175.0];
-        // Dragging row 1 (middle 75) down past row 2's middle.
-        assert_eq!(target_index(1, 130.0, &middles), 2);
-        assert_eq!(target_index(1, 180.0, &middles), 3);
-        // Up past row 0's middle.
-        assert_eq!(target_index(1, 20.0, &middles), 0);
-        // Short of any middle, it stays.
-        assert_eq!(target_index(1, 90.0, &middles), 1);
-    }
-
-    #[test]
-    fn rows_between_make_room() {
-        let down = Drag {
-            from: 1,
-            target: 3,
-            start_y: 0.0,
-            delta: 0.0,
-            height: 50.0,
-        };
-        assert_eq!(shift(2, &down), -50.0);
-        assert_eq!(shift(3, &down), -50.0);
-        assert_eq!(shift(0, &down), 0.0);
-        let up = Drag {
-            from: 3,
-            target: 1,
-            start_y: 0.0,
-            delta: 0.0,
-            height: 50.0,
-        };
-        assert_eq!(shift(1, &up), 50.0);
-        assert_eq!(shift(2, &up), 50.0);
-        assert_eq!(shift(0, &up), 0.0);
+    fn script_stays_alive_and_never_waits_on_rust() {
+        super::super::gesture::assert_gesture_script(REORDER_SCRIPT);
     }
 }

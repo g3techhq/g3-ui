@@ -1,30 +1,19 @@
 //! A row of stars for giving or showing a rating.
 use super::color::Color;
 use super::field::{FieldShell, described_by};
+use super::gesture::{GestureScript, use_gesture};
 use crate::state::{use_controlled, use_element_id};
 use dioxus::prelude::*;
 
 /// A five-point star, on a 24 x 24 grid.
 const STAR: &str = "M12 1.6l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.7l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z";
 
-/// Space between stars, in pixels, which the pointer maths has to know.
-const GAP: f64 = 2.0;
-
-/// The value a press at `offset` pixels along the row picks, where each star
-/// is `size` pixels wide. Snaps to whole stars, or halves when `half`, and
-/// never goes below the smallest step: clearing is the keyboard's Home.
-fn value_at(offset: f64, size: f64, max: u8, half: bool) -> f64 {
-    let pitch = size + GAP;
-    let index = (offset / pitch).floor().clamp(0.0, f64::from(max) - 1.0);
-    let within = offset - index * pitch;
-    let step = if half && within < size / 2.0 {
-        0.5
-    } else {
-        1.0
-    };
-    let lowest = if half { 0.5 } else { 1.0 };
-    (index + step).clamp(lowest, f64::from(max))
-}
+/// Follows a press or drag across the stars in the webview, and reports each
+/// value it lands on. See [`super::gesture`] for why.
+const RATING_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.rating",
+    source: include_str!("rating.js"),
+};
 
 /// How much of star `index` (0-based) a value of `value` fills, 0 to 1.
 fn fill_of(value: f64, index: u8) -> f64 {
@@ -111,13 +100,6 @@ pub fn Rating(
     let disabled = disabled.unwrap_or(false);
     let interactive = !readonly && !disabled;
     let size = f64::from(size.unwrap_or(24));
-    // The row's drawn width, once known: the stars may be narrower than
-    // `size`, and a press has to map to the star it lands on.
-    let mut row_width = use_signal(|| None::<f64>);
-    let star_size = move || match row_width() {
-        Some(width) if width > 0.0 => ((width + GAP) / f64::from(max) - GAP).min(size),
-        _ => size,
-    };
     let mut value = use_controlled(value, || 0.0);
     let mut dragging = use_signal(|| false);
     let step = if half { 0.5 } else { 1.0 };
@@ -151,6 +133,19 @@ pub fn Rating(
         }
     };
 
+    // The script measures the stars and picks values; each one it lands on
+    // arrives here, and the drag's end commits the last.
+    let start_script = use_gesture(RATING_SCRIPT, id.clone(), move |gesture| {
+        match gesture.kind.as_str() {
+            "input" if interactive => {
+                dragging.set(true);
+                set(snap(gesture.value(0), max, half), true);
+            }
+            "commit" => commit(),
+            _ => {}
+        }
+    });
+
     let labelled_by = label.as_ref().map(|_| format!("{id}-label"));
     // A display is an image, whose name is all a screen reader hears of it, so
     // the name has to carry the value. It cannot point at the visible label
@@ -170,27 +165,6 @@ pub fn Rating(
                 key: "{index}",
                 class: "g3-rating-star",
                 style: "width: {px}px;",
-                // Each star knows where it sits, so a press on it, or a drag
-                // that the browser keeps delivering to it, maps to a place
-                // along the whole row.
-                onpointerdown: move |event: PointerEvent| {
-                    if !interactive {
-                        return;
-                    }
-                    event.prevent_default();
-                    dragging.set(true);
-                    let size = star_size();
-                    let offset = f64::from(index) * (size + GAP) + event.element_coordinates().x;
-                    set(value_at(offset, size, max, half), true);
-                },
-                onpointermove: move |event: PointerEvent| {
-                    if !interactive || !dragging() {
-                        return;
-                    }
-                    let size = star_size();
-                    let offset = f64::from(index) * (size + GAP) + event.element_coordinates().x;
-                    set(value_at(offset, size, max, half), true);
-                },
                 svg {
                     view_box: "0 0 24 24",
                     "aria-hidden": "true",
@@ -241,7 +215,10 @@ pub fn Rating(
                     role: "slider",
                     tabindex: if disabled { "-1" } else { "0" },
                     "data-color": color.unwrap_or(Color::Warning).as_str(),
+                    // Read by the script at each press.
                     "data-interactive": interactive.then_some("true"),
+                    "data-half": half.then_some("true"),
+                    onmounted: move |_| start_script.call(()),
                     aria_label: if labelled_by.is_none() { aria_label } else { None },
                     aria_labelledby: labelled_by,
                     aria_describedby: describedby,
@@ -250,14 +227,6 @@ pub fn Rating(
                     aria_valuenow: "{shown}",
                     aria_valuetext: spoken_value,
                     aria_disabled: disabled.then_some("true"),
-                    onresize: move |event: ResizeEvent| {
-                        if let Ok(box_size) = event.data().get_border_box_size() {
-                            row_width.set(Some(box_size.width));
-                        }
-                    },
-                    onpointerup: move |_| commit(),
-                    onpointercancel: move |_| commit(),
-                    onpointerleave: move |_| commit(),
                     onkeydown: move |event: KeyboardEvent| {
                         if !interactive {
                             return;
@@ -333,19 +302,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn a_press_picks_the_star_under_it() {
-        // 24px stars, 2px gaps: star 3 spans 78..102.
-        assert_eq!(value_at(80.0, 24.0, 5, false), 4.0);
-        assert_eq!(value_at(0.0, 24.0, 5, false), 1.0);
-        // Its left half is a half star when halves are on.
-        assert_eq!(value_at(80.0, 24.0, 5, true), 3.5);
-        assert_eq!(value_at(95.0, 24.0, 5, true), 4.0);
-    }
-
-    #[test]
-    fn a_drag_off_either_end_stops_at_the_ends() {
-        assert_eq!(value_at(-40.0, 24.0, 5, true), 0.5);
-        assert_eq!(value_at(900.0, 24.0, 5, true), 5.0);
+    fn script_stays_alive_and_never_waits_on_rust() {
+        super::super::gesture::assert_gesture_script(RATING_SCRIPT);
     }
 
     #[test]

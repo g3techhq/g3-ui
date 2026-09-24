@@ -169,3 +169,16 @@ fn overlays_enter_on_a_keyframe_rather_than_a_transition() {
         );
     }
 }
+
+#[test]
+fn a_dragged_reorder_item_follows_the_pointer_without_a_transition() {
+    // The list gives every item a transition while dragging, so the dragged
+    // item's own rule has to outrank it or it trails behind the pointer.
+    assert!(
+        rule_body(".g3-reorder[data-dragging=\"true\"] .g3-reorder-item").contains("transition")
+    );
+    assert!(
+        rule_body(".g3-reorder .g3-reorder-item[data-dragging=\"true\"]")
+            .contains("transition: none;")
+    );
+}
