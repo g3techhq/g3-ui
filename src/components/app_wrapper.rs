@@ -1,7 +1,6 @@
 //! The root of a g3-ui app.
 use super::overlay::js_string;
 use super::overlay_host::{OverlayHost, use_provide_overlay_queues};
-#[cfg(not(target_arch = "wasm32"))]
 use crate::UI_CSS;
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, Strings, Theme, classes, merge_classes, use_provide_ambient};
@@ -183,21 +182,21 @@ pub fn AppWrapper(
     // claims the document element.
     let is_root_shell = use_hook(|| try_consume_context::<RootShellClaimed>().is_none());
     use_context_provider(|| RootShellClaimed);
-    {
-        let root_bg = theme.bg.clone();
-        let root_scheme = theme.color_scheme.clone();
-        use_effect(use_reactive!(|(is_root_shell, root_bg, root_scheme)| {
-            if !is_root_shell {
-                return;
-            }
-            let script = ROOT_THEME_SCRIPT
-                .replace("__BG__", &js_string(&root_bg))
-                .replace("__SCHEME__", &js_string(&root_scheme));
-            spawn(async move {
-                let _ = document::eval(&script).await;
-            });
-        }));
-    }
+    // Reruns when the theme's page color or scheme changes, and only then.
+    let root_colors =
+        crate::state::use_synced_signal((theme.bg.clone(), theme.color_scheme.clone()));
+    use_effect(move || {
+        if !is_root_shell {
+            return;
+        }
+        let (root_bg, root_scheme) = root_colors();
+        let script = ROOT_THEME_SCRIPT
+            .replace("__BG__", &js_string(&root_bg))
+            .replace("__SCHEME__", &js_string(&root_scheme));
+        spawn(async move {
+            let _ = document::eval(&script).await;
+        });
+    });
     let layout = layout.unwrap_or(true);
     let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);
     #[cfg(feature = "transitions")]
@@ -259,20 +258,20 @@ fn ViewportMeta() -> Element {
     }
 }
 
-/// Links [`UI_CSS`](crate::UI_CSS) where the build has not already put it in
-/// the document head: desktop and mobile. On the web a second link would only
-/// add a duplicate request.
+/// Links [`UI_CSS`](crate::UI_CSS) for desktop and mobile, where the build has
+/// not already put it in the document head.
+///
+/// Rendered on every build, web included, even though a web page already has
+/// the static-head link. Each head element takes a slot in the fullstack
+/// hydration data: a fullstack server (native) that renders this link while
+/// the wasm client does not shifts every later slot by one, so the client
+/// reads a head element's `true` where an `ErrorBoundary` expects its
+/// `Option<CapturedError>`. The markup must match; the hydrating client
+/// skips re-inserting a link the server already wrote.
 #[component]
 fn StylesheetLink() -> Element {
-    #[cfg(target_arch = "wasm32")]
-    {
-        rsx! {}
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        rsx! {
-            document::Link { rel: "stylesheet", href: UI_CSS }
-        }
+    rsx! {
+        document::Link { rel: "stylesheet", href: UI_CSS }
     }
 }
 

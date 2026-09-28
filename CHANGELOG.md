@@ -4,6 +4,21 @@ All notable changes to `g3-ui` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- A tappable row inside a `SwipeItem` (an `Item` with `onclick`, a `Card`
+  with `onclick`) opens again when tapped. The swipe script captured the
+  pointer on every press, so the release, and the click after it, landed on
+  the row instead of the control under the finger. It now captures once the
+  pointer moves past the tap slop.
+- `AppWrapper` renders its stylesheet `document::Link` on the web client too.
+  Rendering it only on native builds meant a fullstack server wrote one more
+  head-element hydration entry than the wasm client read, so every later entry
+  was off by one and each page load logged `Error deserializing data: ...
+  expected string` for the first `ErrorBoundary` (every `Content`).
+
 ## [0.4.2] - 2026-09-24
 
 ### Added

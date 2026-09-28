@@ -130,10 +130,6 @@ const onPointerDown = (event) => {
         moved: false,
         timer: null,
     };
-    // Capture at once. Touch browsers can dispatch a leave as soon as the
-    // finger moves off the original hit-test box; if capture waits for
-    // horizontal intent, that leave ends the gesture and the row snaps back.
-    try { row.setPointerCapture(event.pointerId); } catch (error) {}
     if (row.dataset.longPress === "true") {
         const gesture = active;
         gesture.timer = setTimeout(() => {
@@ -147,7 +143,17 @@ const onPointerMove = (event) => {
     if (!gesture || event.pointerId !== gesture.pointerId || !idle(gesture.row)) return;
     const moveX = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
-    if (Math.hypot(moveX, dy) > LONG_PRESS_SLOP) gesture.moved = true;
+    if (!gesture.moved && Math.hypot(moveX, dy) > LONG_PRESS_SLOP) {
+        gesture.moved = true;
+        // Capture once the pointer moves, not at the press. A captured
+        // pointer's release targets the row, so the click that ends a tap
+        // would land on the row instead of the button under the finger, and
+        // a tappable row would never open. Nor can capture wait for
+        // horizontal intent: touch browsers can dispatch a leave as soon as
+        // the finger crosses the original hit-test box, which would end the
+        // gesture and snap the row back. The slop is well inside any row.
+        try { gesture.row.setPointerCapture(event.pointerId); } catch (error) {}
+    }
     if (!gesture.horizontal) {
         if (Math.abs(moveX) > HORIZONTAL_SLOP && Math.abs(moveX) > Math.abs(dy)) {
             gesture.horizontal = true;

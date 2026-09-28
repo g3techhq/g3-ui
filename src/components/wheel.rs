@@ -112,13 +112,15 @@ pub(crate) fn WheelColumn(
             });
         });
     }
-    use_effect(use_reactive!(|index| {
+    // Reads `current`, so it reruns when the parent passes a new index.
+    use_effect(move || {
+        let index = current();
         if let Some(eval) = *session.peek() {
             let smooth = !*first.peek();
             first.set(false);
             let _ = eval.send((index, smooth));
         }
-    }));
+    });
     // The session exists only after the first effect ran; position it then.
     use_effect(move || {
         if let Some(eval) = session() {
