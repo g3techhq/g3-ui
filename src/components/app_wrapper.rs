@@ -1,7 +1,6 @@
 //! The root of a g3-ui app.
 use super::overlay::js_string;
 use super::overlay_host::{OverlayHost, use_provide_overlay_queues};
-#[cfg(not(target_arch = "wasm32"))]
 use crate::UI_CSS;
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, Strings, Theme, classes, merge_classes, use_provide_ambient};
@@ -259,20 +258,20 @@ fn ViewportMeta() -> Element {
     }
 }
 
-/// Links [`UI_CSS`](crate::UI_CSS) where the build has not already put it in
-/// the document head: desktop and mobile. On the web a second link would only
-/// add a duplicate request.
+/// Links [`UI_CSS`](crate::UI_CSS) for desktop and mobile, where the build has
+/// not already put it in the document head.
+///
+/// Rendered on every build, web included, even though a web page already has
+/// the static-head link. Each head element takes a slot in the fullstack
+/// hydration data: a fullstack server (native) that renders this link while
+/// the wasm client does not shifts every later slot by one, so the client
+/// reads a head element's `true` where an `ErrorBoundary` expects its
+/// `Option<CapturedError>`. The markup must match; the hydrating client
+/// skips re-inserting a link the server already wrote.
 #[component]
 fn StylesheetLink() -> Element {
-    #[cfg(target_arch = "wasm32")]
-    {
-        rsx! {}
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        rsx! {
-            document::Link { rel: "stylesheet", href: UI_CSS }
-        }
+    rsx! {
+        document::Link { rel: "stylesheet", href: UI_CSS }
     }
 }
 
