@@ -8,6 +8,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A tappable row inside a `SwipeItem` (an `Item` with `onclick`, a `Card`
+  with `onclick`) opens again when tapped. The swipe script captured the
+  pointer on every press, so the release, and the click after it, landed on
+  the row instead of the control under the finger. It now captures once the
+  pointer moves past the tap slop.
 - `AppWrapper` renders its stylesheet `document::Link` on the web client too.
   Rendering it only on native builds meant a fullstack server wrote one more
   head-element hydration entry than the wasm client read, so every later entry
