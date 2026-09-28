@@ -6,6 +6,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-09-28
+
+### Fixed
+
+- A phone's bottom tab bar no longer vanishes while a routed sheet rises
+  over it or falls away. `TabLayout` now carries g3-route-transitions'
+  `ROUTE_TRANSITION_PAGE_FRAME_CLASS`, so the layout, bar included, is what
+  dims under the sheet. The `transitions` feature requires
+  g3-route-transitions 0.4.3.
+
 ## [0.4.3] - 2026-09-28
 
 ### Changed

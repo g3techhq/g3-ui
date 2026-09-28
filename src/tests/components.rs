@@ -18,6 +18,22 @@ mod shell {
         assert!(shell.contains("color-scheme: dark;"));
     }
 
+    #[cfg(feature = "transitions")]
+    #[test]
+    fn tab_layout_is_the_page_frame_for_route_transitions() {
+        // So a phone's bottom bar stays under a rising sheet: see
+        // g3-route-transitions' ROUTE_TRANSITION_PAGE_FRAME_CLASS.
+        fn app() -> Element {
+            rsx! {
+                TabLayout { route_transition_base: false, "Body" }
+            }
+        }
+        let html = render(app);
+        let layout = element_with_class(&html, "g3-tab-layout");
+        assert!(layout.contains(g3_route_transitions::ROUTE_TRANSITION_PAGE_FRAME_CLASS));
+        assert!(!layout.contains("route-transition-base-region"));
+    }
+
     #[test]
     fn app_wrapper_without_layout_has_no_shell_class() {
         fn app() -> Element {
