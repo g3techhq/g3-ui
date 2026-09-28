@@ -2,7 +2,7 @@
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
-use g3_route_transitions::ROUTE_TRANSITION_BASE_REGION_CLASS;
+use g3_route_transitions::{ROUTE_TRANSITION_BASE_REGION_CLASS, ROUTE_TRANSITION_PAGE_FRAME_CLASS};
 
 /// A page with persistent navigation: a [`Header`](crate::Header), its
 /// [`Content`](crate::Content), and a navigation component side by side. Like
@@ -68,9 +68,17 @@ pub fn TabLayout(
         let _ = route_transition_base;
         ""
     };
+    // Under a routed sheet only the page stays on screen. Marking the layout
+    // as the page's frame keeps a phone's bottom bar, which sits beside the
+    // page, under the rising sheet instead of vanishing. Harmless where the
+    // layout holds no page, or a persistent rail: the stylesheet skips those.
+    #[cfg(feature = "transitions")]
+    let frame_cls = ROUTE_TRANSITION_PAGE_FRAME_CLASS;
+    #[cfg(not(feature = "transitions"))]
+    let frame_cls = "";
     rsx! {
         div {
-            class: merge_classes(classes(["g3-tab-layout", base_cls]), class.as_deref()),
+            class: merge_classes(classes(["g3-tab-layout", base_cls, frame_cls]), class.as_deref()),
             "data-g3-mode": mode.as_str(),
             {children}
         }
