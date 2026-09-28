@@ -182,21 +182,21 @@ pub fn AppWrapper(
     // claims the document element.
     let is_root_shell = use_hook(|| try_consume_context::<RootShellClaimed>().is_none());
     use_context_provider(|| RootShellClaimed);
-    {
-        let root_bg = theme.bg.clone();
-        let root_scheme = theme.color_scheme.clone();
-        use_effect(use_reactive!(|(is_root_shell, root_bg, root_scheme)| {
-            if !is_root_shell {
-                return;
-            }
-            let script = ROOT_THEME_SCRIPT
-                .replace("__BG__", &js_string(&root_bg))
-                .replace("__SCHEME__", &js_string(&root_scheme));
-            spawn(async move {
-                let _ = document::eval(&script).await;
-            });
-        }));
-    }
+    // Reruns when the theme's page color or scheme changes, and only then.
+    let root_colors =
+        crate::state::use_synced_signal((theme.bg.clone(), theme.color_scheme.clone()));
+    use_effect(move || {
+        if !is_root_shell {
+            return;
+        }
+        let (root_bg, root_scheme) = root_colors();
+        let script = ROOT_THEME_SCRIPT
+            .replace("__BG__", &js_string(&root_bg))
+            .replace("__SCHEME__", &js_string(&root_scheme));
+        spawn(async move {
+            let _ = document::eval(&script).await;
+        });
+    });
     let layout = layout.unwrap_or(true);
     let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);
     #[cfg(feature = "transitions")]

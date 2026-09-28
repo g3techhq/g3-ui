@@ -64,7 +64,16 @@ pub(crate) fn use_element_id(prefix: &'static str, explicit: Option<String>) -> 
 }
 
 /// A signal that tracks a prop value, so effects and memos can depend on it.
-/// `peek` keeps the owner from subscribing to its own signal.
+///
+/// This writes a signal during render, which components should not do. It is
+/// the one sanctioned place, for three reasons: it writes only when the value
+/// changed, so a re-render it causes writes nothing; it compares with `peek`,
+/// so the owner never subscribes to its own signal; and it does in the
+/// child's body what `#[component]` does while diffing for a `ReadSignal`
+/// prop. It exists so plain `Option<T>` props, which callers pass as plain
+/// values, can feed hooks without `use_reactive!` and without changing the
+/// public prop types. New code inside a component uses it rather than writing
+/// a signal in the body itself.
 pub(crate) fn use_synced_signal<T: PartialEq + Clone + 'static>(value: T) -> Signal<T> {
     let mut signal = use_signal(|| value.clone());
     if *signal.peek() != value {

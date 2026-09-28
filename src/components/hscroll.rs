@@ -185,11 +185,12 @@ if (strip && strip.dataset.g3Scroll !== "true") {
 /// Gives the element with this id sideways scrolling, once it is mounted.
 /// `enabled` lets a component switch it on only when it overflows by design.
 pub(crate) fn use_horizontal_scroll(id: String, enabled: bool) {
-    use_effect(use_reactive!(|enabled| {
-        if enabled {
+    let enabled = crate::state::use_synced_signal(enabled);
+    use_effect(move || {
+        if enabled() {
             document::eval(&SCRIPT.replace("__ID__", &js_string(&id)));
         }
-    }));
+    });
 }
 
 #[cfg(test)]
