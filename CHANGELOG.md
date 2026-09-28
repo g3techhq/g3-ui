@@ -6,6 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-09-28
+
+### Changed
+
+- The `transitions` feature requires g3-route-transitions 0.4.2, whose
+  navigation no longer hangs on a page the browser does not paint.
+
 ### Fixed
 
 - A tappable row inside a `SwipeItem` (an `Item` with `onclick`, a `Card`
