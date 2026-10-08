@@ -241,6 +241,32 @@ let paired = Theme::adaptive(light_brand, dark_brand);
 # }
 ```
 
+Beyond color, `Theme::look` shapes the surfaces: a page gradient and how cards are cut, edged and
+lit. Every field is optional and unset ones keep the platform look:
+
+```
+# use g3_ui::prelude::*;
+let theme = Theme {
+    look: Look {
+        background: Some("radial-gradient(60% 40% at 90% 0%, #f9a8d4aa, transparent 70%)".into()),
+        card_radius: Some("1.125rem".into()),
+        card_border: Some("1px solid var(--g3-color-border)".into()),
+        card_shadow: Some("0 0.625rem 1.875rem -0.75rem var(--g3-color-shadow)".into()),
+        ..Look::default()
+    },
+    ..Theme::default_light()
+};
+```
+
+`Theme::accent_secondary` is a second brand color, and `Look::accent_fill` can use it: the primary
+`Button` then paints `accent_fill` (a gradient from `var(--g3-color-accent)` to
+`var(--g3-color-accent-secondary)`, say) while success, warning, danger and neutral buttons keep
+their own fills. A `ThemeProvider` replaces its parent's look rather than adding to it.
+
+A gradient cannot be written as `light-dark()`, so `Theme::adaptive` keeps both themes' looks and
+applies the dark one under `prefers-color-scheme: dark`. A translucent `Theme::card` pairs with
+`card_backdrop_filter: Some("blur(18px)".into())`.
+
 The theme is written as inline custom properties on the wrapper, so passing a different `Theme`
 re-themes the tree in place. `use_theme()` returns the theme in effect for code that needs the
 values.

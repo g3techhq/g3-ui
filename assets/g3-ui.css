@@ -25,6 +25,7 @@
 :root {
     /* Theme tokens - kept identical to `Theme::default_light()`. */
     --g3-color-accent: #0066d6;
+    --g3-color-accent-secondary: #0066d6;
     --g3-color-on-accent: #ffffff;
     --g3-color-text: #111827;
     --g3-color-text-secondary: #555c68;
@@ -40,6 +41,12 @@
     --g3-color-warning: #f5b400;
     --g3-color-on-warning: #1f1a00;
     --g3-color-danger: #d92d20;
+
+    /* Surface shape, set by a theme's `Look`. Left undeclared here: each use
+       falls back to the platform default, so an unset field changes nothing.
+       --g3-page-background, --g3-card-radius, --g3-card-border,
+       --g3-card-shadow, --g3-card-sheen, --g3-card-backdrop-filter,
+       --g3-accent-fill */
 
     --g3-shadow-ios-card: 0 4px 16px rgba(0, 0, 0, 0.12);
     --g3-shadow-ios-float: 0 12px 30px rgba(0, 0, 0, 0.18);
@@ -115,6 +122,9 @@ body.g3-overlay-scroll-locked {
 
 .g3-btn {
     --g3-btn-color: var(--g3-color-accent);
+    /* Only the accent button takes a theme's `Look::accent_fill`; the colors
+       below put it back to their own. */
+    --g3-btn-fill: var(--g3-accent-fill, var(--g3-btn-color));
     --g3-btn-on-color: var(--g3-color-on-accent);
     position: relative;
     box-sizing: border-box;
@@ -200,15 +210,18 @@ body.g3-overlay-scroll-locked {
 
 /* Colors */
 .g3-btn-neutral {
+    --g3-btn-fill: var(--g3-btn-color);
     --g3-btn-color: var(--g3-color-text);
     --g3-btn-on-color: var(--g3-color-text);
 }
 
 .g3-btn-success {
+    --g3-btn-fill: var(--g3-btn-color);
     --g3-btn-color: var(--g3-color-success);
 }
 
 .g3-btn-warning {
+    --g3-btn-fill: var(--g3-btn-color);
     --g3-btn-color: var(--g3-color-warning);
     --g3-btn-on-color: var(--g3-color-on-warning);
 }
@@ -220,12 +233,13 @@ body.g3-overlay-scroll-locked {
 }
 
 .g3-btn-danger {
+    --g3-btn-fill: var(--g3-btn-color);
     --g3-btn-color: var(--g3-color-danger);
 }
 
 /* Fills */
 .g3-btn-solid {
-    background: var(--g3-btn-color);
+    background: var(--g3-btn-fill);
     color: var(--g3-btn-on-color);
 }
 
@@ -1647,8 +1661,10 @@ button.g3-chip:focus-visible {
     position: relative;
     min-width: 0;
     padding: 1rem;
-    border: 0;
+    border: var(--g3-card-border, 0);
     background: var(--g3-card-surface);
+    background-image: var(--g3-card-sheen, none);
+    backdrop-filter: var(--g3-card-backdrop-filter, none);
     color: var(--g3-color-text);
 }
 
@@ -1657,9 +1673,10 @@ button.g3-chip:focus-visible {
 }
 
 .g3-card-ios {
+    --g3-card-elevation: var(--g3-card-shadow, var(--g3-shadow-ios-card));
     margin-bottom: 1.5rem;
-    border-radius: 8px;
-    box-shadow: var(--g3-shadow-ios-card);
+    border-radius: var(--g3-card-radius, 8px);
+    box-shadow: var(--g3-card-elevation);
     transition: transform 500ms cubic-bezier(0.12, 0.72, 0.29, 1),
                 box-shadow var(--g3-transition-normal) var(--g3-transition-ios),
                 background var(--g3-transition-fast) var(--g3-transition-ios);
@@ -1673,9 +1690,10 @@ button.g3-chip:focus-visible {
 }
 
 .g3-card-md {
+    --g3-card-elevation: var(--g3-card-shadow, var(--g3-shadow-md-elevation-1));
     margin-bottom: 0.75rem;
-    border-radius: 4px;
-    box-shadow: var(--g3-shadow-md-elevation-1);
+    border-radius: var(--g3-card-radius, 4px);
+    box-shadow: var(--g3-card-elevation);
     transition: box-shadow var(--g3-transition-normal) var(--g3-transition-md),
                 transform var(--g3-transition-fast) var(--g3-transition-md),
                 background var(--g3-transition-fast) var(--g3-transition-md);
@@ -1830,11 +1848,11 @@ button.g3-chip:focus-visible {
 }
 
 .g3-card-ios.g3-card-selected {
-    box-shadow: var(--g3-shadow-ios-card), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
+    box-shadow: var(--g3-card-elevation), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
 }
 
 .g3-card-md.g3-card-selected {
-    box-shadow: var(--g3-shadow-md-elevation-1), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
+    box-shadow: var(--g3-card-elevation), 0 0 0 2px color-mix(in srgb, var(--g3-color-accent) 30%, transparent);
 }
 
 /* Flat and filled cards sit level with the page: no elevation, and no press
@@ -2852,7 +2870,7 @@ button.g3-chip:focus-visible {
 .g3-app-shell {
     display: flex;
     flex-direction: column;
-    background: var(--g3-color-bg);
+    background: var(--g3-page-background, var(--g3-color-bg));
     color: var(--g3-color-text);
     overflow: hidden;
     height: 100dvh;
@@ -2882,7 +2900,7 @@ button.g3-chip:focus-visible {
     height: 100%;
     min-height: 0;
     overflow: hidden;
-    background: var(--g3-color-bg);
+    background: var(--g3-page-background, var(--g3-color-bg));
 }
 
 .g3-content-scroll {
@@ -3605,6 +3623,14 @@ button.g3-chip:focus-visible {
 /* A grouped list inside a card is another surface, just like a nested card.
    Without this it inherits the parent card fill and its toggles/rows merge
    into the container instead of reading as a distinct control group. */
+/* A plain list in a card is part of the card, so its rows paint nothing and
+   the card's own surface shows. Repainting the card color would stack a
+   translucent card on itself, and sit flat against a card's sheen, leaving a
+   visible slab. A swipe row still paints its own, as it must cover its actions. */
+.g3-card .g3-list:not(.g3-list-grouped) {
+    --g3-list-row-surface: transparent;
+}
+
 .g3-card .g3-list-grouped {
     --g3-list-surface: color-mix(in srgb, var(--g3-color-text) 9%, var(--g3-color-card));
     background: var(--g3-list-surface);
@@ -3657,7 +3683,7 @@ button.g3-chip:focus-visible {
     min-height: 56px;
     padding: 0.75rem 1rem;
     border: 0;
-    background: var(--g3-list-surface);
+    background: var(--g3-list-row-surface, var(--g3-list-surface));
     color: var(--g3-color-text);
     text-align: left;
     text-decoration: none;
@@ -4748,7 +4774,7 @@ button.g3-chip:focus-visible {
     min-height: 0;
     flex-direction: column;
     overflow: hidden;
-    background: var(--g3-color-bg);
+    background: var(--g3-page-background, var(--g3-color-bg));
     color: var(--g3-color-text);
 }
 
@@ -6978,7 +7004,7 @@ td[aria-selected="true"] > .g3-calendar-day {
 :root,
 .g3-app-shell,
 .g3-theme-provider {
-    --route-transition-bg: var(--g3-color-bg);
+    --route-transition-bg: var(--g3-page-background, var(--g3-color-bg));
 }
 
 .g3-tab-layout.route-transition-base-region:has(> .g3-nav-rail) {

@@ -41,6 +41,113 @@ impl ComponentMode {
     }
 }
 
+/// The shape of the surfaces, beside a [`Theme`]'s colors: a page gradient and
+/// how cards are cut, edged, lit and blurred.
+///
+/// Every field is optional, and `None` keeps the platform default (a flat page,
+/// 8px iOS or 4px Material corners, no border, the platform shadow). A set
+/// field becomes a `--g3-*` custom property that the components read, so an app
+/// can restyle every card without a CSS override.
+///
+/// ```
+/// use g3_ui::{Look, Theme};
+///
+/// let theme = Theme {
+///     look: Look {
+///         card_radius: Some("1.125rem".into()),
+///         card_border: Some("1px solid var(--g3-color-border)".into()),
+///         ..Look::default()
+///     },
+///     ..Theme::default_dark()
+/// };
+/// # let _ = theme;
+/// ```
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+pub struct Look {
+    /// The page background: CSS `<background>` image layers (gradients,
+    /// usually), painted over `Theme::bg`. `--g3-page-background`.
+    pub background: Option<String>,
+    /// Corner radius of cards. `--g3-card-radius`.
+    pub card_radius: Option<String>,
+    /// The fill of solid accent surfaces (a primary `Button`), as a
+    /// `background` value: a gradient from `--g3-color-accent` to
+    /// `--g3-color-accent-secondary`, say. Other colors keep their own fill,
+    /// and a disabled button its muted one. `--g3-accent-fill`.
+    pub accent_fill: Option<String>,
+    /// A card's border, as a `border` shorthand. `--g3-card-border`.
+    pub card_border: Option<String>,
+    /// A card's resting shadow, as a `box-shadow` value. `--g3-card-shadow`.
+    pub card_shadow: Option<String>,
+    /// An image layer drawn over a card's fill, such as a faint highlight
+    /// gradient. `--g3-card-sheen`.
+    pub card_sheen: Option<String>,
+    /// A `backdrop-filter` for cards, to blur what shows through a translucent
+    /// `Theme::card`. `--g3-card-backdrop-filter`.
+    pub card_backdrop_filter: Option<String>,
+}
+
+/// Every custom property a [`Look`] can set.
+const LOOK_PROPERTIES: [&str; 7] = [
+    "--g3-page-background",
+    "--g3-accent-fill",
+    "--g3-card-radius",
+    "--g3-card-border",
+    "--g3-card-shadow",
+    "--g3-card-sheen",
+    "--g3-card-backdrop-filter",
+];
+
+impl Look {
+    /// The custom properties this look sets, as `(name, value)` pairs. A
+    /// property that is not set is left out, so the stylesheet's fallback
+    /// applies.
+    pub fn tokens(&self) -> Vec<(&'static str, String)> {
+        let mut tokens = Vec::new();
+        if let Some(layers) = &self.background {
+            // The page color goes last: a background shorthand puts its color
+            // in the final layer, and a gradient alone is see-through.
+            tokens.push((
+                "--g3-page-background",
+                format!("{layers}, var(--g3-color-bg)"),
+            ));
+        }
+        for (name, value) in [
+            ("--g3-accent-fill", &self.accent_fill),
+            ("--g3-card-radius", &self.card_radius),
+            ("--g3-card-border", &self.card_border),
+            ("--g3-card-shadow", &self.card_shadow),
+            ("--g3-card-sheen", &self.card_sheen),
+            ("--g3-card-backdrop-filter", &self.card_backdrop_filter),
+        ] {
+            if let Some(value) = value {
+                tokens.push((name, value.clone()));
+            }
+        }
+        tokens
+    }
+
+    /// Every look property as a declaration. With `reset`, the ones this look
+    /// leaves unset are written as `initial`, which makes the stylesheet's
+    /// fallback apply again: a nested provider then drops an outer look
+    /// instead of inheriting it.
+    fn declarations(&self, reset: bool) -> String {
+        let set = self.tokens();
+        let mut all: Vec<String> = set
+            .iter()
+            .map(|(name, value)| format!("{name}: {value};"))
+            .collect();
+        if reset {
+            all.extend(
+                LOOK_PROPERTIES
+                    .iter()
+                    .filter(|name| !set.iter().any(|(set_name, _)| set_name == *name))
+                    .map(|name| format!("{name}: initial;")),
+            );
+        }
+        all.join(" ")
+    }
+}
+
 /// Color tokens for g3-ui components.
 ///
 /// Each field is any CSS color value and becomes a `--g3-color-*` custom
@@ -60,6 +167,10 @@ pub struct Theme {
     /// Brand color: primary buttons, selected controls, focus rings, links.
     /// Most tints in the stylesheet are mixed from it.
     pub accent: String,
+    /// A second brand color, for gradients and highlights that run out of
+    /// `accent` (see [`Look::accent_fill`]). Defaults to the accent itself, so
+    /// it changes nothing until it is set.
+    pub accent_secondary: String,
     /// Text and icons drawn on an `accent` fill.
     pub on_accent: String,
     /// Body text.
@@ -94,6 +205,13 @@ pub struct Theme {
     /// The CSS `color-scheme`: `"light"`, `"dark"`, or `"light dark"`. Native
     /// form controls and scrollbars follow it.
     pub color_scheme: String,
+    /// Surface shape: page gradient and card styling. Defaults to the
+    /// platform look. See [`Look`].
+    pub look: Look,
+    /// The look to use when the system is dark. Set by [`Theme::adaptive`]
+    /// when its two themes' looks differ, because a gradient cannot be a
+    /// `light-dark()` value; `look` then applies when the system is light.
+    pub look_dark: Option<Look>,
 }
 
 impl Default for Theme {
@@ -108,6 +226,7 @@ impl Theme {
     pub fn default_light() -> Self {
         Self {
             accent: "#0066d6".into(),
+            accent_secondary: "#0066d6".into(),
             on_accent: "#ffffff".into(),
             text: "#111827".into(),
             text_secondary: "#555c68".into(),
@@ -124,6 +243,8 @@ impl Theme {
             on_warning: "#1f1a00".into(),
             danger: "#d92d20".into(),
             color_scheme: "light".into(),
+            look: Look::default(),
+            look_dark: None,
         }
     }
 
@@ -133,6 +254,7 @@ impl Theme {
         Self {
             // Light enough for 4.5:1 as text on cards, so fills carry dark text.
             accent: "#4ea3ff".into(),
+            accent_secondary: "#4ea3ff".into(),
             on_accent: "#04162b".into(),
             text: "#ffffff".into(),
             text_secondary: "#d1d5db".into(),
@@ -149,6 +271,8 @@ impl Theme {
             on_warning: "#1f1a00".into(),
             danger: "#ff6b61".into(),
             color_scheme: "dark".into(),
+            look: Look::default(),
+            look_dark: None,
         }
     }
 
@@ -171,6 +295,7 @@ impl Theme {
         };
         Self {
             accent: pair(light.accent, dark.accent),
+            accent_secondary: pair(light.accent_secondary, dark.accent_secondary),
             on_accent: pair(light.on_accent, dark.on_accent),
             text: pair(light.text, dark.text),
             text_secondary: pair(light.text_secondary, dark.text_secondary),
@@ -187,6 +312,8 @@ impl Theme {
             on_warning: pair(light.on_warning, dark.on_warning),
             danger: pair(light.danger, dark.danger),
             color_scheme: "light dark".into(),
+            look_dark: (light.look != dark.look).then(|| dark.look.clone()),
+            look: light.look,
         }
     }
 
@@ -195,16 +322,22 @@ impl Theme {
         Self::adaptive(Self::default_light(), Self::default_dark())
     }
 
-    /// Return this theme with a different accent color.
+    /// Return this theme with a different accent color. A second accent that
+    /// was still the same as the accent follows it.
     pub fn with_accent(mut self, accent: impl Into<String>) -> Self {
-        self.accent = accent.into();
+        let accent = accent.into();
+        if self.accent_secondary == self.accent {
+            self.accent_secondary = accent.clone();
+        }
+        self.accent = accent;
         self
     }
 
     /// Every token as `(custom property, value)` pairs, in declaration order.
-    pub fn tokens(&self) -> [(&'static str, &str); 16] {
+    pub fn tokens(&self) -> [(&'static str, &str); 17] {
         [
             ("--g3-color-accent", &self.accent),
+            ("--g3-color-accent-secondary", &self.accent_secondary),
             ("--g3-color-on-accent", &self.on_accent),
             ("--g3-color-text", &self.text),
             ("--g3-color-text-secondary", &self.text_secondary),
@@ -225,6 +358,12 @@ impl Theme {
 
     /// Every token as CSS declarations for an inline `style` attribute.
     pub fn to_style_attr(&self) -> String {
+        self.style_attr(false)
+    }
+
+    /// `to_style_attr`, optionally clearing the look properties this theme
+    /// leaves unset (see `Look::declarations`). Nested wrappers use it.
+    pub(crate) fn style_attr(&self, reset_look: bool) -> String {
         let mut style = String::new();
         for (name, value) in self.tokens() {
             style.push_str(name);
@@ -235,7 +374,32 @@ impl Theme {
         style.push_str("color-scheme: ");
         style.push_str(&self.color_scheme);
         style.push(';');
+        // A look that differs by scheme is written by `look_css` instead:
+        // inline declarations would beat its `prefers-color-scheme` rule.
+        let look = self.look.declarations(reset_look);
+        if self.look_dark.is_none() && !look.is_empty() {
+            style.push(' ');
+            style.push_str(&look);
+        }
         style
+    }
+
+    /// A stylesheet for the element with `id`, when the look differs between
+    /// light and dark ([`Theme::adaptive`]); `None` when `to_style_attr`
+    /// already carries the whole look.
+    pub fn look_css(&self, id: &str) -> Option<String> {
+        self.scoped_look_css(id, false)
+    }
+
+    pub(crate) fn scoped_look_css(&self, id: &str, reset_look: bool) -> Option<String> {
+        let dark = self.look_dark.as_ref()?;
+        let css = format!(
+            "#{id} {{ {light} }} @media (prefers-color-scheme: dark) {{ #{id} {{ {dark} }} }}",
+            light = self.look.declarations(reset_look),
+            dark = dark.declarations(reset_look),
+        );
+        // Written as raw markup, so a value cannot close the element early.
+        Some(css.replace("</", "<\\/"))
     }
 }
 
@@ -596,11 +760,19 @@ pub fn ThemeProvider(
     children: Element,
 ) -> Element {
     let (mode, theme) = use_provide_ambient(mode, theme, strings);
+    let id = crate::state::use_element_id("theme", None);
+    // A provider inside an app replaces its look entirely rather than adding
+    // to it, as it does the colors.
+    let look_css = theme.scoped_look_css(&id, true);
     rsx! {
         div {
+            id,
             class: "g3-theme-provider",
-            style: theme.to_style_attr(),
+            style: theme.style_attr(true),
             "data-g3-mode": mode.as_str(),
+            if let Some(css) = look_css {
+                style { dangerous_inner_html: css }
+            }
             {children}
         }
     }

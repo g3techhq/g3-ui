@@ -220,12 +220,16 @@ pub fn AppWrapper(
         },
         overlay_cls,
     ]);
+    let look_css = theme.scoped_look_css(&shell_id, !is_root_shell);
     let shell = rsx! {
         div {
             id: shell_id,
             class: merge_classes(shell_cls, class.as_deref()),
-            style: theme.to_style_attr(),
+            style: theme.style_attr(!is_root_shell),
             "data-g3-mode": mode.as_str(),
+            if let Some(css) = look_css {
+                style { dangerous_inner_html: css }
+            }
             {children}
             OverlayHost { queues }
         }

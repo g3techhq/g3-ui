@@ -31,8 +31,8 @@ pub use descriptor::{
     function_source,
 };
 pub use theme::{
-    ComponentMode, Strings, Theme, ThemeProvider, detect_platform_mode, get_mode, init_auto_mode,
-    merge_classes, set_mode, use_component_mode, use_strings, use_theme,
+    ComponentMode, Look, Strings, Theme, ThemeProvider, detect_platform_mode, get_mode,
+    init_auto_mode, merge_classes, set_mode, use_component_mode, use_strings, use_theme,
 };
 
 #[cfg(test)]

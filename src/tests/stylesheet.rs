@@ -1,6 +1,6 @@
 //! Stylesheet contracts.
 use super::STYLESHEET;
-use crate::Theme;
+use crate::{Look, Theme};
 
 /// The body of the first rule whose selector is exactly `selector`.
 fn rule_body(selector: &str) -> &'static str {
@@ -48,6 +48,130 @@ fn adaptive_themes_use_light_dark_only_where_presets_differ() {
     assert_eq!(theme.warning, "light-dark(#f5b400, #ffd60a)");
     assert_eq!(theme.on_warning, "#1f1a00");
     assert_eq!(theme.accent, "light-dark(#0066d6, #4ea3ff)");
+}
+
+#[test]
+fn an_unset_look_writes_nothing_and_a_set_one_writes_its_tokens() {
+    assert!(Theme::default_light().look.tokens().is_empty());
+    assert!(!Theme::default_light().to_style_attr().contains("--g3-card"));
+
+    let theme = Theme {
+        look: Look {
+            background: Some("linear-gradient(red, blue)".into()),
+            card_radius: Some("18px".into()),
+            ..Look::default()
+        },
+        ..Theme::default_light()
+    };
+    let style = theme.to_style_attr();
+    // The page color closes the background, so the gradient is not see-through.
+    assert!(
+        style.contains("--g3-page-background: linear-gradient(red, blue), var(--g3-color-bg);")
+    );
+    assert!(style.contains("--g3-card-radius: 18px;"));
+    assert!(theme.look_css("x").is_none());
+}
+
+#[test]
+fn adaptive_themes_keep_both_looks_in_a_scheme_rule_not_inline() {
+    let with = |radius: &str, base: Theme| Theme {
+        look: Look {
+            card_radius: Some(radius.into()),
+            ..Look::default()
+        },
+        ..base
+    };
+    let theme = Theme::adaptive(
+        with("4px", Theme::default_light()),
+        with("20px", Theme::default_dark()),
+    );
+    // Inline declarations would beat the media rule, so none are written.
+    assert!(!theme.to_style_attr().contains("--g3-card-radius"));
+    let css = theme.look_css("shell").expect("a scheme rule");
+    assert!(css.contains("#shell { --g3-card-radius: 4px; }"));
+    assert!(css.contains("prefers-color-scheme: dark"));
+    assert!(css.contains("--g3-card-radius: 20px;"));
+
+    let same = Theme::adaptive(
+        with("4px", Theme::default_light()),
+        with("4px", Theme::default_dark()),
+    );
+    assert!(same.look_dark.is_none());
+    assert!(same.to_style_attr().contains("--g3-card-radius: 4px;"));
+}
+
+#[test]
+fn cards_and_page_layers_read_the_look_tokens() {
+    let css = code();
+    for token in [
+        "--g3-page-background",
+        "--g3-card-radius",
+        "--g3-card-border",
+        "--g3-card-shadow",
+        "--g3-card-sheen",
+        "--g3-card-backdrop-filter",
+        "--g3-accent-fill",
+    ] {
+        assert!(css.contains(&format!("var({token}")), "{token} is unused");
+    }
+    // The route-transition layers paint `--route-transition-bg`.
+    assert!(css.contains("--route-transition-bg: var(--g3-page-background"));
+}
+
+#[test]
+fn a_nested_theme_clears_the_look_it_does_not_set() {
+    let theme = Theme {
+        look: Look {
+            card_radius: Some("18px".into()),
+            ..Look::default()
+        },
+        ..Theme::default_light()
+    };
+    let nested = theme.style_attr(true);
+    assert!(nested.contains("--g3-card-radius: 18px;"));
+    // `initial` is the guaranteed-invalid value, so `var(--x, fallback)` falls back.
+    assert!(nested.contains("--g3-page-background: initial;"));
+    assert!(nested.contains("--g3-accent-fill: initial;"));
+    assert!(!nested.contains("--g3-card-radius: initial;"));
+    assert!(!theme.to_style_attr().contains("initial"));
+}
+
+#[test]
+fn a_plain_list_in_a_card_paints_no_row_fill_of_its_own() {
+    let css = code();
+    assert!(css.contains("background: var(--g3-list-row-surface, var(--g3-list-surface));"));
+    assert!(
+        rule_body(".g3-card .g3-list:not(.g3-list-grouped)")
+            .contains("--g3-list-row-surface: transparent;")
+    );
+    // A swipe row slides over its actions, so it keeps an opaque fill.
+    assert!(css.contains("background: var(--g3-list-surface, var(--g3-color-card));"));
+}
+
+#[test]
+fn the_accent_fill_reaches_only_the_accent_button() {
+    let css = code();
+    assert!(css.contains("--g3-btn-fill: var(--g3-accent-fill, var(--g3-btn-color));"));
+    for color in ["neutral", "success", "warning", "danger"] {
+        let body = rule_body(&format!(".g3-btn-{color}"));
+        assert!(
+            body.contains("--g3-btn-fill: var(--g3-btn-color);"),
+            ".g3-btn-{color} keeps its own fill"
+        );
+    }
+    assert!(rule_body(".g3-btn-solid").contains("background: var(--g3-btn-fill);"));
+}
+
+#[test]
+fn the_second_accent_follows_the_accent_until_set() {
+    let theme = Theme::default_light().with_accent("#1f7a4d");
+    assert_eq!(theme.accent_secondary, "#1f7a4d");
+    let split = Theme {
+        accent_secondary: "#ff8800".into(),
+        ..Theme::default_light()
+    }
+    .with_accent("#1f7a4d");
+    assert_eq!(split.accent_secondary, "#ff8800");
 }
 
 #[test]
