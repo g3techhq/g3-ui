@@ -2746,6 +2746,10 @@ button.g3-chip:focus-visible {
     padding: 0 0.5rem;
     box-sizing: border-box;
 }
+/* Start slot and title, grouped only so a wide header can give them one column. */
+.g3-header-lead {
+    display: contents;
+}
 .g3-header-ios .g3-header-row {
     min-height: 44px;
 }
@@ -4392,8 +4396,12 @@ button.g3-chip:focus-visible {
     transform: translate3d(0, 0, 0) scale(1);
 }
 
+/* An app with chrome along an edge, such as a bottom tab bar, sets
+   `--g3-toast-top` or `--g3-toast-bottom` to where its toasts should clear
+   that chrome. Left unset, a toast sits `1rem` in from the screen edge, or the
+   safe area when that is larger. */
 .g3-toast-top {
-    top: max(1rem, env(safe-area-inset-top));
+    top: var(--g3-toast-top, max(1rem, env(safe-area-inset-top)));
 }
 
 .g3-toast-middle {
@@ -4406,7 +4414,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-toast-bottom {
-    bottom: max(1rem, env(safe-area-inset-bottom));
+    bottom: var(--g3-toast-bottom, max(1rem, env(safe-area-inset-bottom)));
 }
 
 /* iOS: a frosted, translucent pill with generous rounding and a soft, diffuse
@@ -4772,6 +4780,11 @@ button.g3-chip:focus-visible {
     box-shadow: 0 -2px 8px color-mix(in srgb, var(--g3-color-shadow) 18%, transparent);
 }
 
+/* The collapse button belongs to rails; a bottom bar never shows it. */
+.g3-nav-toggle {
+    display: none;
+}
+
 /* An AdaptiveNav that only exists as a wide-shell rail. */
 .g3-nav-compact-hidden {
     display: none;
@@ -5031,6 +5044,93 @@ button.g3-chip:focus-visible {
     opacity: 1;
     visibility: visible;
     transform: translate(0, -50%);
+}
+
+/* Expanded: a labelled row per destination, flat rather than round. */
+.g3-nav-rail.g3-nav-expanded {
+    align-items: stretch;
+}
+
+.g3-nav-rail.g3-nav-expanded .g3-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: auto;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0 0.75rem;
+    border-radius: 0.75rem;
+    background: transparent;
+}
+
+.g3-nav-rail.g3-nav-expanded .g3-nav-item[aria-current="page"] {
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+}
+
+.g3-nav-rail.g3-nav-expanded .g3-nav-item-label {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font-size: 0.875rem;
+    text-align: start;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    transition: none;
+}
+
+/* The tooltip's hover rule would otherwise still lift an expanded label. */
+.g3-nav-rail.g3-nav-expanded .g3-nav-item:hover .g3-nav-item-label,
+.g3-nav-rail.g3-nav-expanded .g3-nav-item:focus-visible .g3-nav-item-label {
+    transform: none;
+}
+
+/* The toggle is a handle on the rail's outer edge, so it takes no row. */
+.g3-nav-rail .g3-nav-toggle {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    inset-inline-end: -0.875rem;
+    z-index: 31;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--g3-color-border);
+    border-radius: 50%;
+    background: var(--g3-color-card);
+    color: var(--g3-color-text-tertiary);
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity 120ms ease, color 120ms ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.g3-nav-rail:hover .g3-nav-toggle,
+.g3-nav-rail .g3-nav-toggle:hover,
+.g3-nav-rail .g3-nav-toggle:focus-visible {
+    opacity: 1;
+    color: var(--g3-color-text);
+}
+
+.g3-nav-rail .g3-nav-toggle:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 1px;
+}
+
+.g3-tab-layout:has(> .g3-nav-rail.g3-nav-expanded) {
+    --g3-nav-rail-width: 15rem;
 }
 
 /* -- Back button -- */
@@ -5598,9 +5698,9 @@ button.g3-chip:focus-visible {
 .g3-shelf-title {
     margin: 0;
     color: var(--g3-color-text-secondary);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
@@ -6007,6 +6107,97 @@ button.g3-chip:focus-visible {
         transform: translate(0, -50%);
     }
 
+    /* Expanding costs 11rem of the page, so a narrower shell keeps the icon
+       rail and offers no toggle. */
+    @container g3-app-shell (min-width: 64rem) {
+        /* Expanded: a labelled row per destination, flat rather than round. */
+        .g3-nav-adaptive.g3-nav-expanded {
+            align-items: stretch;
+        }
+
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: auto;
+            min-width: 0;
+            min-height: 2.75rem;
+            padding: 0 0.75rem;
+            border-radius: 0.75rem;
+            background: transparent;
+        }
+
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item[aria-current="page"] {
+            border-radius: 0.75rem;
+            background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+        }
+
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item-label {
+            position: static;
+            flex: 1 1 auto;
+            min-width: 0;
+            max-width: none;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: none;
+            box-shadow: none;
+            color: inherit;
+            font-size: 0.875rem;
+            text-align: start;
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+            pointer-events: auto;
+            transition: none;
+        }
+
+        /* The tooltip's hover rule would otherwise still lift an expanded label. */
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item:hover .g3-nav-item-label,
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item:focus-visible .g3-nav-item-label {
+            transform: none;
+        }
+
+        /* The toggle is a handle on the rail's outer edge, so it takes no row. */
+        .g3-nav-adaptive .g3-nav-toggle {
+            position: absolute;
+            top: 50%;
+            translate: 0 -50%;
+            inset-inline-end: -0.875rem;
+            z-index: 31;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.75rem;
+            height: 1.75rem;
+            padding: 0;
+            border: 1px solid var(--g3-color-border);
+            border-radius: 50%;
+            background: var(--g3-color-card);
+            color: var(--g3-color-text-tertiary);
+            cursor: pointer;
+            opacity: 0.55;
+            transition: opacity 120ms ease, color 120ms ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .g3-nav-adaptive:hover .g3-nav-toggle,
+        .g3-nav-adaptive .g3-nav-toggle:hover,
+        .g3-nav-adaptive .g3-nav-toggle:focus-visible {
+            opacity: 1;
+            color: var(--g3-color-text);
+        }
+
+        .g3-nav-adaptive .g3-nav-toggle:focus-visible {
+            outline: 2px solid var(--g3-color-accent);
+            outline-offset: 1px;
+        }
+
+        .g3-tab-layout:has(> .g3-nav-adaptive.g3-nav-expanded) {
+            --g3-nav-rail-width: 15rem;
+        }
+    }
+
     .g3-header {
         position: relative;
         top: auto;
@@ -6141,9 +6332,11 @@ button.g3-chip:focus-visible {
    desktop shells on the two-row treatment avoids truncating every title and
    gives iOS segmented controls a deliberate bottom inset. */
 @container g3-app-shell (min-width: 64rem) {
+    /* Equal side columns keep the toolbar centred in the header whatever the
+       start and end hold: a wide search box at the end must not push it over. */
     .g3-header-with-toolbar {
         display: grid;
-        grid-template-columns: auto minmax(8rem, 1fr) minmax(16rem, 30rem) minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) minmax(16rem, 30rem) minmax(0, 1fr);
         grid-template-rows: minmax(4rem, auto);
         align-items: center;
         column-gap: 0.75rem;
@@ -6155,23 +6348,26 @@ button.g3-chip:focus-visible {
         display: contents;
     }
 
-    .g3-header-with-toolbar .g3-header-start-slot {
+    .g3-header-with-toolbar .g3-header-lead {
         grid-column: 1;
         grid-row: 1;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 0;
     }
 
     .g3-header-with-toolbar .g3-header-title {
-        grid-column: 2;
-        grid-row: 1;
+        flex: 0 1 auto;
     }
 
     .g3-header-with-toolbar .g3-header-end-slot {
-        grid-column: 5;
+        grid-column: 3;
         grid-row: 1;
     }
 
     .g3-header-with-toolbar > .g3-header-toolbar {
-        grid-column: 3;
+        grid-column: 2;
         grid-row: 1;
         align-self: center;
         justify-content: center;

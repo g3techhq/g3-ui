@@ -265,6 +265,10 @@ pub struct Strings {
     pub navigation_drawer: String,
     /// Accessible name of the primary navigation bar or rail.
     pub primary_navigation: String,
+    /// Accessible name of the button that collapses an expanded nav rail.
+    pub collapse_navigation: String,
+    /// Accessible name of the button that expands a collapsed nav rail.
+    pub expand_navigation: String,
     /// Announced while something loads.
     pub loading: String,
     /// Shown by `Content` when a child fails to render.
@@ -347,6 +351,8 @@ impl Default for Strings {
             sheet: "Sheet".into(),
             navigation_drawer: "Menu".into(),
             primary_navigation: "Primary navigation".into(),
+            collapse_navigation: "Collapse navigation".into(),
+            expand_navigation: "Expand navigation".into(),
             loading: "Loading".into(),
             load_error: "Something went wrong. Please try again.".into(),
             pull_to_refresh: "Pull to refresh".into(),

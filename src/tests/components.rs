@@ -178,6 +178,38 @@ mod shell {
     }
 
     #[test]
+    fn nav_rail_starts_expanded_and_can_start_collapsed() {
+        fn expanded() -> Element {
+            rsx! {
+                NavRail {
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        fn collapsed() -> Element {
+            rsx! {
+                NavRail { default_expanded: false,
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        fn fixed() -> Element {
+            rsx! {
+                NavRail { collapsible: false,
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        let html = render(expanded);
+        assert!(html.contains("g3-nav-expanded"));
+        assert!(html.contains("Collapse navigation"));
+        let html = render(collapsed);
+        assert!(!html.contains("g3-nav-expanded"));
+        assert!(html.contains("Expand navigation"));
+        assert!(!render(fixed).contains("g3-nav-toggle"));
+    }
+
+    #[test]
     fn spinner_announces_its_label_once() {
         fn app() -> Element {
             rsx! {

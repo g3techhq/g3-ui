@@ -6,6 +6,36 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- `Shelf` titles use `Text`'s `Overline` size, weight and tracking, so a shelf
+  heading and an overline heading above a list read as one style.
+
+### Added
+
+- `NavRail` and `AdaptiveNav` rails start expanded: a labelled row per
+  destination instead of icons alone, with a button at the foot that collapses
+  them to icons (and back). `default_expanded` sets the starting state,
+  `expanded` takes a `Signal<bool>` for an app that remembers the choice, and
+  `collapsible: false` removes the button. `Strings` gains
+  `collapse_navigation` and `expand_navigation`. Rails used to be icons only, so
+  pass `default_expanded: false` to keep that look.
+- `--g3-toast-top` and `--g3-toast-bottom`: where a top or bottom toast sits. An
+  app with a tab bar or other chrome along an edge sets one so its toasts clear
+  it instead of covering it. Unset, a toast keeps its place: `1rem` in from the
+  edge, or the safe area when that is larger.
+
+### Fixed
+
+- A touch swipe on a `SwipeItem` no longer snaps back after its first frame. A
+  touch starts out captured by whatever the finger pressed, and the row taking
+  capture over fired a `lostpointercapture` that was read as a release. Only the
+  row losing its own capture ends a gesture now.
+- A `Header` toolbar stays centred on a wide shell. The single-row header used
+  `auto` columns for the start and end slots, so a wide end (a search box) pushed
+  the segmented control off-centre. The start slot and title now share one
+  column, mirrored by the end slot's, via a new `g3-header-lead` wrapper.
+
 ## [0.4.4] - 2026-09-28
 
 ### Fixed
