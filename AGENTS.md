@@ -127,7 +127,10 @@ itself to the rules the apps follow (g3-stack's `docs/dioxus/patterns.md`):
 - **A script must not break the click that ends a tap.** Pointer capture on
   press retargets the release and the click to the capturing element, so a
   button inside it never fires. Capture once the pointer has moved past the
-  tap slop (see `swipe.js`).
+  tap slop (see `swipe.js`). A touch is already captured by whatever the
+  finger pressed, so taking capture later fires `lostpointercapture` on that
+  element: end a gesture only on a loss by the element that took it. Mouse
+  input has no implicit capture, so only a touch test catches this.
 - Code that waits a frame must tolerate a hidden page, where
   `requestAnimationFrame` never fires.
 

@@ -75,14 +75,16 @@ pub fn Header(
     rsx! {
         header { class: merge_classes(header_cls, class.as_deref()),
             div { class: "g3-header-row",
-                div { class: "g3-header-slot g3-header-start-slot", {start} }
-                h1 { class: "g3-header-title",
-                    if let Some(content) = title_content {
-                        {content}
-                    } else if let Some(title) = title {
-                        span { class: "g3-header-title-text", "{title}" }
+                div { class: "g3-header-lead",
+                    div { class: "g3-header-slot g3-header-start-slot", {start} }
+                    h1 { class: "g3-header-title",
+                        if let Some(content) = title_content {
+                            {content}
+                        } else if let Some(title) = title {
+                            span { class: "g3-header-title-text", "{title}" }
+                        }
+                        {title_end}
                     }
-                    {title_end}
                 }
                 div { class: "g3-header-slot g3-header-end-slot", {end} }
             }

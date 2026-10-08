@@ -3,6 +3,7 @@ use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
+use dioxus_icons::lucide::{ChevronLeft, ChevronRight};
 
 #[cfg(feature = "transitions")]
 use crate::components::use_shell_size;
@@ -44,9 +45,20 @@ fn NavContainer(
     aria_label: Option<String>,
     mode: Option<ComponentMode>,
     class: Option<String>,
+    expanded: Option<Signal<bool>>,
+    default_expanded: Option<bool>,
+    collapsible: Option<bool>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    // Called unconditionally: a hook may not sit behind a match arm. A bar has
+    // no expanded state, so its signal goes unused.
+    let own = use_signal(|| default_expanded.unwrap_or(true));
+    let mut expanded = expanded.unwrap_or(own);
+    let has_rail = !matches!(kind, NavKind::Bar);
+    let is_expanded = has_rail && expanded();
+    let collapsible = has_rail && collapsible.unwrap_or(true);
+    let strings = use_strings();
     let aria_label = aria_label.unwrap_or_else(|| use_strings().primary_navigation);
     let kind_cls = match kind {
         NavKind::Bar => "",
@@ -80,15 +92,44 @@ fn NavContainer(
         "g3-nav",
         mode.pick("g3-nav-ios", "g3-nav-md"),
         kind_cls,
+        if is_expanded { "g3-nav-expanded" } else { "" },
         persistent_cls,
     ]);
+    let (toggle_label, toggle_icon) = if is_expanded {
+        (
+            strings.collapse_navigation,
+            rsx! { ChevronLeft { size: 16 } },
+        )
+    } else {
+        (
+            strings.expand_navigation,
+            rsx! { ChevronRight { size: 16 } },
+        )
+    };
     rsx! {
-        nav { class: merge_classes(cls, class.as_deref()), aria_label, {children} }
+        nav { class: merge_classes(cls, class.as_deref()), aria_label,
+            {children}
+            // Hidden by CSS wherever the nav is a bottom bar, so the server
+            // and the client render the same markup at every width.
+            if collapsible {
+                button {
+                    r#type: "button",
+                    class: "g3-nav-toggle",
+                    aria_label: toggle_label,
+                    aria_expanded: is_expanded.to_string(),
+                    onclick: move |_| expanded.set(!expanded()),
+                    {toggle_icon}
+                }
+            }
+        }
     }
 }
 
 /// Navigation that is a bottom bar on compact shells and a side rail on wide
 /// ones. Put it last inside a [`TabLayout`](crate::TabLayout).
+///
+/// The rail starts expanded, with a label beside each icon, and a button at its
+/// foot collapses it to icons alone.
 ///
 /// With the `transitions` feature, the rail is persistent route-transition
 /// chrome inside an [`AppWrapper`](crate::AppWrapper): it stays still while
@@ -104,6 +145,17 @@ pub fn AdaptiveNav(
     mode: Option<ComponentMode>,
     /// Extra classes for the `nav` element.
     class: Option<String>,
+    /// Whether the rail shows labels beside its icons. Pass a signal to own
+    /// the state, for example to remember it between visits; the toggle
+    /// writes it. Without one the nav keeps its own, starting from
+    /// `default_expanded`.
+    expanded: Option<Signal<bool>>,
+    /// Whether the rail starts expanded when it owns its state. Defaults to
+    /// `true`.
+    default_expanded: Option<bool>,
+    /// Show the button that expands and collapses the rail. Defaults to
+    /// `true`.
+    collapsible: Option<bool>,
     children: Element,
 ) -> Element {
     rsx! {
@@ -112,6 +164,9 @@ pub fn AdaptiveNav(
             aria_label,
             mode,
             class,
+            expanded,
+            default_expanded,
+            collapsible,
             {children}
         }
     }
@@ -146,10 +201,30 @@ pub fn NavRail(
     mode: Option<ComponentMode>,
     /// Extra classes for the `nav` element.
     class: Option<String>,
+    /// Whether the rail shows labels beside its icons. Pass a signal to own
+    /// the state, for example to remember it between visits; the toggle
+    /// writes it. Without one the nav keeps its own, starting from
+    /// `default_expanded`.
+    expanded: Option<Signal<bool>>,
+    /// Whether the rail starts expanded when it owns its state. Defaults to
+    /// `true`.
+    default_expanded: Option<bool>,
+    /// Show the button that expands and collapses the rail. Defaults to
+    /// `true`.
+    collapsible: Option<bool>,
     children: Element,
 ) -> Element {
     rsx! {
-        NavContainer { kind: NavKind::Rail, aria_label, mode, class, {children} }
+        NavContainer {
+            kind: NavKind::Rail,
+            aria_label,
+            mode,
+            class,
+            expanded,
+            default_expanded,
+            collapsible,
+            {children}
+        }
     }
 }
 
@@ -160,7 +235,7 @@ pub fn NavRail(
 /// `onclick` with `selected` to manage the current destination yourself.
 #[component]
 pub fn NavItem(
-    /// Visible label. In a rail it appears as a tooltip.
+    /// Visible label. In a collapsed rail it appears as a tooltip.
     label: String,
     /// Icon shown above the label.
     icon: Option<Element>,

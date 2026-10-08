@@ -6,6 +6,63 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-08
+
+### Added
+
+- `Look`, set on `Theme::look`: a page gradient (`background`), card shape
+  (`card_radius`, `card_border`, `card_shadow`, `card_sheen`,
+  `card_backdrop_filter`) and the fill of solid accent buttons (`accent_fill`),
+  written as `--g3-page-background`, `--g3-card-*` and `--g3-accent-fill`.
+  Unset fields keep the platform look. The shell, `TabLayout`, `Content` and
+  the route-transition layers all paint the page background, so a gradient
+  shows through while pages slide.
+- `Theme::accent_secondary` (`--g3-color-accent-secondary`), a second brand
+  color for gradients such as `accent_fill`. It defaults to the accent, and
+  `Theme::with_accent` moves it too while they are still the same.
+- `Theme::adaptive` keeps both looks when they differ (`Theme::look_dark`),
+  since a gradient cannot be a `light-dark()` value; `Theme::look_css` writes
+  the `prefers-color-scheme` rule.
+- A `ThemeProvider`, or an `AppWrapper` inside another, replaces the look of
+  its parent instead of inheriting the properties it leaves unset.
+- Playground themes **Glass** (light) and **Ember** (dark) show a `Look`.
+
+### Changed
+
+- A plain `List` inside a `Card` no longer repaints the card color on its rows:
+  they show the card's own surface. Nothing changes for an opaque card, but a
+  translucent or sheened one no longer shows a slab behind the list.
+- `Theme` has three new public fields (`accent_secondary`, `look`,
+  `look_dark`), and `Theme::tokens` has a seventeenth entry. A `Theme` built
+  with a full struct literal, without `..Theme::default_*()`, needs them.
+- `Shelf` titles use `Text`'s `Overline` size, weight and tracking, so a shelf
+  heading and an overline heading above a list read as one style.
+
+### Added
+
+- `NavRail` and `AdaptiveNav` rails start expanded: a labelled row per
+  destination instead of icons alone, with a button at the foot that collapses
+  them to icons (and back). `default_expanded` sets the starting state,
+  `expanded` takes a `Signal<bool>` for an app that remembers the choice, and
+  `collapsible: false` removes the button. `Strings` gains
+  `collapse_navigation` and `expand_navigation`. Rails used to be icons only, so
+  pass `default_expanded: false` to keep that look.
+- `--g3-toast-top` and `--g3-toast-bottom`: where a top or bottom toast sits. An
+  app with a tab bar or other chrome along an edge sets one so its toasts clear
+  it instead of covering it. Unset, a toast keeps its place: `1rem` in from the
+  edge, or the safe area when that is larger.
+
+### Fixed
+
+- A touch swipe on a `SwipeItem` no longer snaps back after its first frame. A
+  touch starts out captured by whatever the finger pressed, and the row taking
+  capture over fired a `lostpointercapture` that was read as a release. Only the
+  row losing its own capture ends a gesture now.
+- A `Header` toolbar stays centred on a wide shell. The single-row header used
+  `auto` columns for the start and end slots, so a wide end (a search box) pushed
+  the segmented control off-centre. The start slot and title now share one
+  column, mirrored by the end slot's, via a new `g3-header-lead` wrapper.
+
 ## [0.4.4] - 2026-09-28
 
 ### Fixed

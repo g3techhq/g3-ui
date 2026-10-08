@@ -6,8 +6,8 @@ use g3_route_transitions::{
 };
 use g3_ui::{
     AppWrapper, Button, ButtonFill, ButtonSize, ComponentMode, ComponentPlaygroundDemo, Header,
-    Item, List, ListLines, NavigationDrawer, SegmentButton, SegmentGroup, Select, SelectOption,
-    SideSheet, Theme as G3Theme, ThemeProvider, component_playground_demos,
+    Item, List, ListLines, Look, NavigationDrawer, SegmentButton, SegmentGroup, Select,
+    SelectOption, SideSheet, Theme as G3Theme, ThemeProvider, component_playground_demos,
 };
 use gloo_timers::future::TimeoutFuture;
 use manganis::{AssetOptions, asset};
@@ -68,12 +68,17 @@ enum Route {
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
+/// The primary-button fill of the Glass and Ember themes.
+const GRADIENT: &str =
+    "linear-gradient(135deg, var(--g3-color-accent), var(--g3-color-accent-secondary))";
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlaygroundTheme {
     Blue,
     Green,
     Night,
     Forest,
+    Glass,
+    Ember,
 }
 impl PlaygroundTheme {
     fn label(self) -> &'static str {
@@ -82,10 +87,19 @@ impl PlaygroundTheme {
             Self::Green => "Green",
             Self::Night => "Night",
             Self::Forest => "Forest",
+            Self::Glass => "Glass",
+            Self::Ember => "Ember",
         }
     }
-    fn all() -> [Self; 4] {
-        [Self::Blue, Self::Green, Self::Night, Self::Forest]
+    fn all() -> [Self; 6] {
+        [
+            Self::Blue,
+            Self::Green,
+            Self::Night,
+            Self::Forest,
+            Self::Glass,
+            Self::Ember,
+        ]
     }
     /// Real `g3_ui::Theme` for this brand - fed straight into `AppWrapper`'s
     /// `theme` prop, the same way any consumer of the library themes its app.
@@ -141,6 +155,70 @@ impl PlaygroundTheme {
                 text: "#e6f4e8".into(),
                 text_secondary: "#9eb5a4".into(),
                 shadow: "rgba(0, 0, 0, 0.62)".into(),
+                ..G3Theme::default_dark()
+            },
+            // The two `Look` themes: a page gradient, rounder edged cards and
+            // a gradient primary button, over translucent (Glass) or lit
+            // (Ember) surfaces.
+            Self::Glass => G3Theme {
+                accent: "#6d28d9".into(),
+                accent_secondary: "#c026d3".into(),
+                text: "#1b1740".into(),
+                text_secondary: "#4a4575".into(),
+                border: "rgba(124, 58, 237, 0.18)".into(),
+                bg: "#eef0ff".into(),
+                bg_secondary: "#e3e7ff".into(),
+                card: "rgba(255, 255, 255, 0.62)".into(),
+                surface: "#f7f8ff".into(),
+                control: "#e4e6fa".into(),
+                shadow: "rgba(79, 70, 229, 0.22)".into(),
+                look: Look {
+                    background: Some(
+                        "radial-gradient(60% 40% at 90% 0%, #f9a8d4aa, transparent 70%), \
+                         radial-gradient(70% 45% at 0% 30%, #a5b4fcbb, transparent 70%), \
+                         radial-gradient(70% 40% at 80% 100%, #fcd34d66, transparent 70%)"
+                            .into(),
+                    ),
+                    accent_fill: Some(GRADIENT.into()),
+                    card_radius: Some("1.125rem".into()),
+                    card_border: Some("1px solid var(--g3-color-border)".into()),
+                    card_shadow: Some("0 0.625rem 1.875rem -0.75rem var(--g3-color-shadow)".into()),
+                    card_backdrop_filter: Some("blur(18px) saturate(1.4)".into()),
+                    ..Look::default()
+                },
+                ..G3Theme::default_light()
+            },
+            Self::Ember => G3Theme {
+                accent: "#f472b6".into(),
+                accent_secondary: "#fb923c".into(),
+                on_accent: "#2a0a1c".into(),
+                text_secondary: "#e3cfe6".into(),
+                bg: "#12091a".into(),
+                bg_secondary: "#1a0f26".into(),
+                card: "#231535".into(),
+                surface: "#2a1a40".into(),
+                control: "rgba(244, 114, 182, 0.12)".into(),
+                border: "rgba(244, 114, 182, 0.2)".into(),
+                shadow: "rgba(236, 72, 153, 0.3)".into(),
+                look: Look {
+                    background: Some(
+                        "radial-gradient(60% 40% at 90% 0%, #f472b64d, transparent 70%), \
+                         radial-gradient(70% 45% at 0% 30%, #8b5cf659, transparent 70%), \
+                         radial-gradient(70% 40% at 80% 100%, #fb923c2e, transparent 70%)"
+                            .into(),
+                    ),
+                    accent_fill: Some(GRADIENT.into()),
+                    card_radius: Some("1.125rem".into()),
+                    card_border: Some("1px solid var(--g3-color-border)".into()),
+                    card_shadow: Some("0 0.625rem 1.875rem -0.75rem var(--g3-color-shadow)".into()),
+                    card_sheen: Some(
+                        "linear-gradient(160deg, \
+                         color-mix(in srgb, var(--g3-color-text) 7%, transparent), \
+                         color-mix(in srgb, var(--g3-color-text) 1.5%, transparent))"
+                            .into(),
+                    ),
+                    ..Look::default()
+                },
                 ..G3Theme::default_dark()
             },
         }

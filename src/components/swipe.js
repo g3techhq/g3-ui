@@ -201,6 +201,14 @@ const release = (event) => {
     }, DISMISS_EXIT_MS);
 };
 
+// Only the row losing its own capture ends a gesture. A touch starts out
+// captured by whatever the finger pressed, and the row taking capture over
+// from it fires a loss on that element, which bubbles here mid-swipe. Taken
+// for a release, it snapped every touch swipe back after its first frame.
+const onLostPointerCapture = (event) => {
+    if (event.target === active?.row) release(event);
+};
+
 const onPointerCancel = (event) => {
     const gesture = active;
     if (!gesture || event.pointerId !== gesture.pointerId) return;
@@ -220,7 +228,7 @@ const onClick = (event) => {
 document.addEventListener("pointerdown", onPointerDown);
 document.addEventListener("pointermove", onPointerMove);
 document.addEventListener("pointerup", release);
-document.addEventListener("lostpointercapture", release);
+document.addEventListener("lostpointercapture", onLostPointerCapture);
 document.addEventListener("pointercancel", onPointerCancel);
 // Capturing, so it runs before the renderer's own click listener.
 document.addEventListener("click", onClick, true);
@@ -246,7 +254,7 @@ window[key] = {
         document.removeEventListener("pointerdown", onPointerDown);
         document.removeEventListener("pointermove", onPointerMove);
         document.removeEventListener("pointerup", release);
-        document.removeEventListener("lostpointercapture", release);
+        document.removeEventListener("lostpointercapture", onLostPointerCapture);
         document.removeEventListener("pointercancel", onPointerCancel);
         document.removeEventListener("click", onClick, true);
         released();
