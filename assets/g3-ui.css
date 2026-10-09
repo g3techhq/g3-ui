@@ -4393,7 +4393,7 @@ button.g3-chip:focus-visible {
        not by a colored outline or the old left accent bar. This matches the
        card treatment used by items, cards and the accordion. */
     --g3-toast-accent-color: var(--g3-color-text-tertiary);
-    --g3-toast-surface: var(--g3-color-card);
+    --g3-toast-surface: var(--g3-color-surface);
     border: 1px solid var(--g3-color-border);
     background: var(--g3-toast-surface);
     color: var(--g3-color-text);
@@ -4463,22 +4463,22 @@ button.g3-chip:focus-visible {
    tint, so it reads on both light and dark themes without a colored outline. */
 .g3-toast-accent {
     --g3-toast-accent-color: var(--g3-color-accent);
-    --g3-toast-surface: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-card));
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-accent) 8%, var(--g3-color-surface));
 }
 
 .g3-toast-success {
     --g3-toast-accent-color: var(--g3-color-success);
-    --g3-toast-surface: color-mix(in srgb, var(--g3-color-success) 8%, var(--g3-color-card));
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-success) 8%, var(--g3-color-surface));
 }
 
 .g3-toast-warning {
     --g3-toast-accent-color: var(--g3-color-warning);
-    --g3-toast-surface: color-mix(in srgb, var(--g3-color-warning) 8%, var(--g3-color-card));
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-warning) 8%, var(--g3-color-surface));
 }
 
 .g3-toast-danger {
     --g3-toast-accent-color: var(--g3-color-danger);
-    --g3-toast-surface: color-mix(in srgb, var(--g3-color-danger) 8%, var(--g3-color-card));
+    --g3-toast-surface: color-mix(in srgb, var(--g3-color-danger) 8%, var(--g3-color-surface));
 }
 
 .g3-toast-message {
