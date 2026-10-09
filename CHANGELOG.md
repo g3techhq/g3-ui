@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-08
+
+### Fixed
+
+- A toast is opaque. It sat on `--g3-color-card`, so a theme with a translucent
+  card showed the page through it; it now uses `--g3-color-surface`, the token
+  sheets and menus float on.
+
 ## [0.5.0] - 2026-10-08
 
 ### Added
