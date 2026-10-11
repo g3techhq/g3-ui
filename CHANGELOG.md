@@ -6,6 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Reject staged local shared-library dependencies in the commit hook.
+
+- Publishing waits for the quality gate on the selected commit.
+- Check the declared Rust 1.88 minimum in CI and before publishing.
+
 ## [0.5.1] - 2026-10-08
 
 ### Fixed
