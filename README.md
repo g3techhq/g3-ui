@@ -32,7 +32,7 @@ Enable the optional route-transition integration when your app also uses `g3-rou
 ```toml
 [dependencies]
 g3-ui = { version = "0.6", features = ["transitions"] }
-g3-route-transitions = "0.4"
+g3-route-transitions = "0.5"
 ```
 
 The minimum supported Rust version is 1.88.
@@ -500,15 +500,15 @@ snapshot regions for you:
 | `Content` | segment | Slides for ordered peer routes such as segmented tabs |
 | `AdaptiveNav` or `NavRail` as a rail | persistent | Stays in place above a rising sheet (the phone tab bar stays part of the base) |
 
-Add `RouteTransitionPage` yourself, around each page's header and content, to get stack push and
+Add `RouteTransitionPageRegion` yourself, around each page's header and content, to get stack push and
 pop motion:
 
 ```rust,ignore
-use g3_route_transitions::RouteTransitionPage;
+use g3_route_transitions::RouteTransitionPageRegion;
 
 rsx! {
     TabLayout {
-        RouteTransitionPage {
+        RouteTransitionPageRegion {
             Header { title: "Rounds" }
             Content { /* page content */ }
         }
@@ -521,11 +521,11 @@ Layout rules:
 
 - **Sheet routes:** a route declared with `layer = sheet` must render
   `TabLayout { route_transition_base: false, .. }` (or no tab layout) and no
-  `RouteTransitionPage`. Otherwise its content is captured outside the rising
+  `RouteTransitionPageRegion`. Otherwise its content is captured outside the rising
   overlay. To keep the desktop rail beside the sheet, render the same tabs with
   `AdaptiveNav { compact: AdaptiveNavCompact::Hidden, .. }`. Phones hide them,
   so the sheet still covers the bottom tabs.
-- **Segmented screens:** leave `RouteTransitionPage` out of screens whose
+- **Segmented screens:** leave `RouteTransitionPageRegion` out of screens whose
   `Content` should slide by itself. Inside a page, the whole page moves instead.
 - **Nested wrappers:** `AppWrapper` is the overlay region by default. If a
   documentation shell or other non-navigating wrapper contains a second app

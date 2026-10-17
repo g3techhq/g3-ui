@@ -2,7 +2,7 @@
 //! transition. Built only from public g3-ui components.
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{CircleUserRound, Headphones, Library, Radio};
-use g3_route_transitions::{RouteTransitionPage, animated_navigate};
+use g3_route_transitions::{RouteTransitionPageRegion, animated_navigate};
 use g3_ui::{
     AdaptiveNav, AdaptiveNavCompact, AppWrapper, Badge, Button, ButtonExpand, ButtonFill,
     ButtonSize, Card, Color, Content, Header, Item, ItemDetail, List, ListLines, NavItem,
@@ -54,7 +54,7 @@ rsx! {
         // stays beside them.
         TabLayout {
             // Page region: slides for Forward/Backward.
-            RouteTransitionPage {
+            RouteTransitionPageRegion {
                 Header { title: "Listen" }
                 Content { Card { title: "Now playing", "Blue Static" } }
             }
@@ -160,7 +160,7 @@ fn TransitionScreen(screen: ShowcaseScreen) -> Element {
         ShowcaseScreen::Library(tab) => rsx! { LibraryScreen { tab } },
         _ => rsx! {
             TabLayout {
-                RouteTransitionPage { class: "transition-showcase-page".to_string(),
+                RouteTransitionPageRegion { class: "transition-showcase-page".to_string(),
                     Header {
                         title: screen_title(screen),
                         start: matches!(screen, ShowcaseScreen::Album | ShowcaseScreen::Episode)

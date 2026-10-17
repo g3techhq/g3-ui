@@ -10,7 +10,7 @@ use dioxus_icons::lucide::{ChevronLeft, ChevronRight};
 #[cfg(feature = "transitions")]
 use crate::components::use_shell_size;
 #[cfg(feature = "transitions")]
-use g3_route_transitions::ROUTE_TRANSITION_PERSISTENT_CLASS;
+use g3_route_transitions::ROUTE_TRANSITION_PERSISTENT_REGION_CLASS;
 
 /// What an [`AdaptiveNav`] does on a compact shell (narrower than `48rem`).
 /// On wide shells it is always a rail.
@@ -151,7 +151,7 @@ fn NavContainer(
             NavKind::Adaptive(_) => wide,
         };
         if is_rail {
-            ROUTE_TRANSITION_PERSISTENT_CLASS
+            ROUTE_TRANSITION_PERSISTENT_REGION_CLASS
         } else {
             ""
         }
