@@ -162,7 +162,7 @@ pub fn ReorderList(
         if gesture.kind == "reorder" && !disabled() {
             let (from, to) = (gesture.value(0) as usize, gesture.value(1) as usize);
             if from != to {
-                onreorder((from, to));
+                onreorder.call((from, to));
             }
         }
     });
@@ -248,7 +248,8 @@ pub fn ReorderHandle(
     let ReorderPosition(row_position) = use_context::<ReorderPosition>();
     let index = row_position();
     let mut announcement = context.announcement;
-    let label = label.unwrap_or_else(|| use_strings().reorder);
+    let strings = use_strings();
+    let label = label.unwrap_or_else(|| strings.read().reorder.clone());
     let disabled = (context.disabled)();
     let position = position.unwrap_or_default();
     let rows = context.rows;
@@ -312,12 +313,12 @@ fn ReorderPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             center: false,
             controls: rsx! {
-                crate::SegmentGroup { value: layout, aria_label: "Layout",
+                crate::SegmentGroup { value: layout, label: "Layout",
                     crate::SegmentButton { value: ReorderLayout::Rows, "Rows" }
                     crate::SegmentButton { value: ReorderLayout::Grid, "Grid" }
                 }
                 if layout() == ReorderLayout::Rows {
-                    crate::SegmentGroup { value: position, aria_label: "Handle edge",
+                    crate::SegmentGroup { value: position, label: "Handle edge",
                         crate::SegmentButton { value: ReorderHandlePosition::Start, "Start" }
                         crate::SegmentButton { value: ReorderHandlePosition::End, "End" }
                     }

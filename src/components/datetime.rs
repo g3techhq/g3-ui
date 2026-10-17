@@ -83,8 +83,9 @@ impl CalendarDate {
 
     /// Today in the device's local time zone.
     ///
-    /// On the web this reads the browser clock. Elsewhere it uses the system
-    /// clock in UTC, which can be a day off near midnight.
+    /// Reads the browser clock on the web and the system's local time zone
+    /// on native targets. For SSR, pass an explicit reference date to the
+    /// calendar when the server and client have different time zones.
     pub fn today() -> Self {
         #[cfg(target_arch = "wasm32")]
         {
@@ -97,10 +98,13 @@ impl CalendarDate {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let seconds = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |elapsed| elapsed.as_secs() as i64);
-            Self::from_days_since_epoch(seconds.div_euclid(86_400))
+            use chrono::Datelike;
+            let now = chrono::Local::now();
+            Self {
+                year: now.year(),
+                month: now.month() as u8,
+                day: now.day() as u8,
+            }
         }
     }
 
@@ -246,13 +250,11 @@ impl TimeOfDay {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let seconds = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |elapsed| elapsed.as_secs());
-            let minutes = seconds / 60;
+            use chrono::Timelike;
+            let now = chrono::Local::now();
             Self {
-                hour: (minutes / 60 % 24) as u8,
-                minute: (minutes % 60) as u8,
+                hour: now.hour() as u8,
+                minute: now.minute() as u8,
             }
         }
     }
@@ -272,6 +274,9 @@ impl FromStr for TimeOfDay {
         let (Some(hour), Some(minute)) = (parts.next(), parts.next()) else {
             return Err(ParseDateTimeError);
         };
+        if parts.next().is_some() {
+            return Err(ParseDateTimeError);
+        }
         let number = |part: &str| part.parse::<u8>().map_err(|_| ParseDateTimeError);
         Self::new(number(hour)?, number(minute)?).ok_or(ParseDateTimeError)
     }
@@ -338,6 +343,27 @@ mod tests {
         assert!("2026-9".parse::<CalendarDate>().is_err());
         assert!("24:00".parse::<TimeOfDay>().is_err());
         assert!("7:60".parse::<TimeOfDay>().is_err());
+        for text in ["09:07:garbage", "09:07:00", "09:07:", "09::07"] {
+            assert!(text.parse::<TimeOfDay>().is_err(), "{text}");
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn native_defaults_follow_the_local_clock() {
+        use chrono::{Datelike, Timelike};
+        let before = chrono::Local::now();
+        let today = CalendarDate::today();
+        let time = TimeOfDay::now();
+        let after = chrono::Local::now();
+        let day = |now: chrono::DateTime<chrono::Local>| {
+            CalendarDate::new(now.year(), now.month() as u8, now.day() as u8).unwrap()
+        };
+        let minute = |now: chrono::DateTime<chrono::Local>| {
+            TimeOfDay::new(now.hour() as u8, now.minute() as u8).unwrap()
+        };
+        assert!(today == day(before) || today == day(after));
+        assert!(time == minute(before) || time == minute(after));
     }
 
     #[test]

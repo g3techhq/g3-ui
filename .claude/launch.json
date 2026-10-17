@@ -4,7 +4,7 @@
     {
       "name": "playground",
       "runtimeExecutable": "dx",
-      "runtimeArgs": ["serve", "--port", "8080"],
+      "runtimeArgs": ["serve"],
       "cwd": "playground",
       "port": 8080
     },

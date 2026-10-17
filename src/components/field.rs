@@ -1,6 +1,6 @@
 //! Text inputs and the label/helper/error shell every field shares.
 use super::overlay::js_string;
-use crate::state::{use_controlled, use_element_id};
+use crate::state::{use_controlled, use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
@@ -152,19 +152,41 @@ fn restore_value(id: &str, value: &str) {
     ));
 }
 
+#[derive(Clone, Copy)]
+struct TextSettings {
+    max: Option<f64>,
+    maxlength: Option<usize>,
+    debounce_ms: Option<u64>,
+    disabled: bool,
+    readonly: bool,
+}
+
 /// Shared typing behaviour of [`Input`] and [`TextArea`].
 fn use_text_events(
     id: String,
     mut value: Signal<String>,
-    max: Option<f64>,
-    maxlength: Option<usize>,
-    debounce_ms: Option<u64>,
+    config: TextSettings,
     oninput: Option<EventHandler<String>>,
     onchange: Option<EventHandler<String>>,
-) -> (Callback<FormEvent>, Callback<FormEvent>) {
+) -> (Callback<FormEvent>, Callback<FormEvent>, Callback<()>) {
+    let TextSettings {
+        max,
+        maxlength,
+        debounce_ms,
+        disabled,
+        readonly,
+    } = config;
     let mut generation = use_signal(|| 0_u64);
+    let settings = use_synced_signal((value, debounce_ms, disabled, readonly));
+    use_effect(move || {
+        let _ = settings();
+        generation += 1;
+    });
     let input_id = id.clone();
     let handle_input = use_callback(move |event: FormEvent| {
+        if disabled || readonly {
+            return;
+        }
         let next = event.value();
         if !within_typing_limits(&next, max, maxlength) {
             restore_value(&input_id, &value.peek());
@@ -182,6 +204,8 @@ fn use_text_events(
             spawn(async move {
                 dioxus_sdk_time::sleep(Duration::from_millis(delay)).await;
                 if *generation.peek() == current
+                    && settings.peek().0 == value
+                    && *value.peek() == next
                     && let Some(onchange) = onchange
                 {
                     onchange.call(next);
@@ -190,13 +214,28 @@ fn use_text_events(
         }
     });
     let handle_change = use_callback(move |event: FormEvent| {
-        if debounce_ms.is_none()
+        if !disabled
+            && !readonly
+            && debounce_ms.is_none()
             && let Some(onchange) = onchange
         {
             onchange.call(event.value());
         }
     });
-    (handle_input, handle_change)
+    let clear = use_callback(move |()| {
+        if disabled || readonly {
+            return;
+        }
+        generation += 1;
+        value.set(String::new());
+        if let Some(oninput) = oninput {
+            oninput.call(String::new());
+        }
+        if let Some(onchange) = onchange {
+            onchange.call(String::new());
+        }
+    });
+    (handle_input, handle_change, clear)
 }
 
 /// A single-line text field with a label. Like Ionic's `ion-input`.
@@ -281,41 +320,40 @@ pub fn Input(
     attributes: Vec<Attribute>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("input", id);
-    let mut value = use_controlled(value, String::new);
-    let (handle_input, handle_change) = use_text_events(
+    let value = use_controlled(value, String::new);
+    let (handle_input, handle_change, clear) = use_text_events(
         id.clone(),
         value,
-        max,
-        maxlength,
-        debounce_ms,
+        TextSettings {
+            max,
+            maxlength,
+            debounce_ms,
+            disabled: disabled.unwrap_or(false),
+            readonly: readonly.unwrap_or(false),
+        },
         oninput,
         onchange,
     );
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
     let disabled = disabled.unwrap_or(false);
-    let clear_button =
-        (clearable.unwrap_or(false) && !disabled && !value.read().is_empty()).then(|| {
-            rsx! {
-                button {
-                    r#type: "button",
-                    class: "g3-field-clear",
-                    aria_label: strings.clear.clone(),
-                    onclick: move |_| {
-                        value.set(String::new());
-                        if let Some(oninput) = oninput {
-                            oninput.call(String::new());
-                        }
-                        if let Some(onchange) = onchange {
-                            onchange.call(String::new());
-                        }
-                    },
-                    X { size: 16 }
-                }
+    let clear_button = (clearable.unwrap_or(false)
+        && !disabled
+        && !readonly.unwrap_or(false)
+        && !value.read().is_empty())
+    .then(|| {
+        rsx! {
+            button {
+                r#type: "button",
+                class: "g3-field-clear",
+                aria_label: strings.clear.clone(),
+                onclick: move |_| clear.call(()),
+                X { size: 16 }
             }
-        });
+        }
+    });
     // A clear button and a caller-supplied trailing control are independent
     // affordances. Keeping both is especially important for Searchbar, whose
     // filter action belongs inside the field after the clear button.
@@ -415,12 +453,16 @@ pub fn TextArea(
     let mode = use_component_mode(mode);
     let id = use_element_id("textarea", id);
     let value = use_controlled(value, String::new);
-    let (handle_input, handle_change) = use_text_events(
+    let (handle_input, handle_change, _) = use_text_events(
         id.clone(),
         value,
-        None,
-        maxlength,
-        debounce_ms,
+        TextSettings {
+            max: None,
+            maxlength,
+            debounce_ms,
+            disabled: disabled.unwrap_or(false),
+            readonly: readonly.unwrap_or(false),
+        },
         oninput,
         onchange,
     );
@@ -508,4 +550,123 @@ crate::g3_playground! {
     components: ["Input", "TextArea"],
     demo: InputPlaygroundDemo,
     source: "src/components/field.rs",
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::rc::Rc;
+
+    #[derive(Clone, Copy)]
+    struct Controls {
+        value: Signal<String>,
+        input: Callback<FormEvent>,
+        clear: Callback<()>,
+        calls: Signal<Vec<String>>,
+    }
+
+    fn probe() -> Element {
+        let value = use_signal(String::new);
+        let mut calls = use_signal(Vec::new);
+        let (input, _, clear) = use_text_events(
+            "probe".into(),
+            value,
+            TextSettings {
+                max: None,
+                maxlength: None,
+                debounce_ms: Some(300),
+                disabled: false,
+                readonly: false,
+            },
+            None,
+            Some(EventHandler::new(move |text| calls.write().push(text))),
+        );
+        use_hook(|| {
+            dioxus::core::provide_root_context(Controls {
+                value,
+                input,
+                clear,
+                calls,
+            })
+        });
+        rsx! {}
+    }
+
+    fn pump(dom: &mut VirtualDom) {
+        for _ in 0..4 {
+            dom.process_events();
+            dom.render_immediate(&mut dioxus::core::NoOpMutations);
+        }
+    }
+
+    fn type_text(dom: &VirtualDom, text: &str) {
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            let controls = try_consume_context::<Controls>().unwrap();
+            controls.input.call(Event::new(
+                Rc::new(FormData::new(dioxus_html::SerializedFormData::new(
+                    text.into(),
+                    Vec::new(),
+                ))),
+                true,
+            ));
+        });
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn clearing_cancels_a_pending_search_notification() {
+        let mut dom = VirtualDom::new(probe);
+        dom.rebuild_in_place();
+        pump(&mut dom);
+        type_text(&dom, "old query");
+        pump(&mut dom);
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            try_consume_context::<Controls>().unwrap().clear.call(())
+        });
+        pump(&mut dom);
+        tokio::time::advance(Duration::from_millis(400)).await;
+        pump(&mut dom);
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            assert_eq!(
+                *try_consume_context::<Controls>().unwrap().calls.peek(),
+                vec![String::new()]
+            )
+        });
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn external_values_do_not_emit_a_stale_typed_value() {
+        let mut dom = VirtualDom::new(probe);
+        dom.rebuild_in_place();
+        pump(&mut dom);
+        type_text(&dom, "typed");
+        pump(&mut dom);
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            try_consume_context::<Controls>()
+                .unwrap()
+                .value
+                .set("external".into())
+        });
+        pump(&mut dom);
+        tokio::time::advance(Duration::from_millis(400)).await;
+        pump(&mut dom);
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            assert!(
+                try_consume_context::<Controls>()
+                    .unwrap()
+                    .calls
+                    .peek()
+                    .is_empty()
+            )
+        });
+        type_text(&dom, "new query");
+        pump(&mut dom);
+        tokio::time::advance(Duration::from_millis(400)).await;
+        pump(&mut dom);
+        dom.runtime().in_scope(ScopeId::ROOT, || {
+            assert_eq!(
+                *try_consume_context::<Controls>().unwrap().calls.peek(),
+                vec!["new query"]
+            )
+        });
+    }
 }

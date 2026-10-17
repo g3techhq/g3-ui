@@ -92,6 +92,54 @@ mod shell {
     }
 
     #[test]
+    fn strings_from_a_lookup_reach_components() {
+        fn app() -> Element {
+            let strings = Strings::from_lookup(|id| (id == "loading").then(|| "Chargement".into()));
+            rsx! {
+                ThemeProvider { strings, Spinner {} }
+            }
+        }
+        assert!(render(app).contains("Chargement"));
+    }
+
+    #[test]
+    fn a_lookup_is_asked_for_every_string_once_and_defaults_to_english() {
+        let mut ids = Vec::new();
+        let strings = Strings::from_lookup(|id| {
+            ids.push(id.to_string());
+            None
+        });
+        assert_eq!(strings, Strings::default());
+        let unique: BTreeSet<_> = ids.iter().collect();
+        assert_eq!(unique.len(), ids.len(), "an id was asked for twice");
+        // 43 texts, 12 + 12 month names, 7 + 7 weekday names, first_weekday.
+        assert_eq!(ids.len(), 82);
+        for id in ["cancel", "sheet_handle", "months_1", "months_short_12"] {
+            assert!(unique.contains(&id.to_string()), "{id} was not asked for");
+        }
+        for id in ["weekdays_7", "weekdays_narrow_1", "first_weekday"] {
+            assert!(unique.contains(&id.to_string()), "{id} was not asked for");
+        }
+
+        let all = Strings::from_lookup(|id| Some(format!("<{id}>")));
+        assert_eq!(all.date_month_year, "<date_month_year>");
+        assert_eq!(all.months[11], "<months_12>");
+        assert_eq!(all.weekdays_narrow[0], "<weekdays_narrow_1>");
+        assert_eq!(all.first_weekday, 0, "not a number keeps Sunday");
+    }
+
+    #[test]
+    fn a_looked_up_first_weekday_must_be_a_weekday() {
+        let first = |text: &'static str| {
+            Strings::from_lookup(|id| (id == "first_weekday").then(|| text.into())).first_weekday
+        };
+        assert_eq!(first(" 1 "), 1);
+        assert_eq!(first("6"), 6);
+        assert_eq!(first("7"), 0);
+        assert_eq!(first("Monday"), 0);
+    }
+
+    #[test]
     fn header_renders_slots_and_a_single_heading() {
         fn app() -> Element {
             rsx! {
@@ -207,6 +255,58 @@ mod shell {
         assert!(!html.contains("g3-nav-expanded"));
         assert!(html.contains("Expand navigation"));
         assert!(!render(fixed).contains("g3-nav-toggle"));
+    }
+
+    #[test]
+    fn a_hover_rail_is_icons_only_with_no_toggle() {
+        fn app() -> Element {
+            rsx! {
+                NavRail { behavior: NavRailBehavior::Hover, default_expanded: true,
+                    NavItem { label: "A" }
+                }
+                AdaptiveNav { behavior: NavRailBehavior::Hover,
+                    NavItem { label: "B" }
+                }
+            }
+        }
+        let html = render(app);
+        assert_eq!(html.matches("g3-nav-hover").count(), 2);
+        assert!(!html.contains("g3-nav-expanded"));
+        assert!(!html.contains("g3-nav-toggle"));
+    }
+
+    #[test]
+    fn a_toggled_rail_starts_from_the_remembered_state() {
+        use crate::components::nav::REMEMBERED_EXPANDED;
+        fn remembered() -> Element {
+            use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
+            rsx! {
+                NavRail {
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        fn forgetful() -> Element {
+            use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
+            rsx! {
+                NavRail { remember: false,
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        fn owned() -> Element {
+            use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
+            let expanded = use_signal(|| true);
+            rsx! {
+                NavRail { expanded,
+                    NavItem { label: "A" }
+                }
+            }
+        }
+        // A new route's rail opens as the last one was left.
+        assert!(!render(remembered).contains("g3-nav-expanded"));
+        assert!(render(forgetful).contains("g3-nav-expanded"));
+        assert!(render(owned).contains("g3-nav-expanded"));
     }
 
     #[test]

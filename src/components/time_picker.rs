@@ -23,18 +23,22 @@ pub(crate) fn format_time(strings: &Strings, time: TimeOfDay, cycle: HourCycle) 
     }
 }
 
+/// Wheels round down within the current hour; the draft and the selected
+/// label always carry the same minute, including immediate confirmation.
+fn wheel_time(time: TimeOfDay, step: u8) -> TimeOfDay {
+    let step = step.clamp(1, 30);
+    TimeOfDay::new(time.hour(), time.minute() / step * step).unwrap_or(time)
+}
+
 /// Hour, minute, and (on a 12-hour clock) AM/PM columns.
 #[component]
 fn TimeWheels(draft: Signal<TimeOfDay>, cycle: HourCycle, step: u8) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let time = draft();
     let (hour12, pm) = time.hour12();
     let step = step.clamp(1, 30);
     let minutes = (0..60).step_by(usize::from(step)).collect::<Vec<u8>>();
-    let minute_index = minutes
-        .iter()
-        .position(|minute| *minute >= time.minute())
-        .unwrap_or(0);
+    let minute_index = usize::from(time.minute() / step).min(minutes.len() - 1);
     let hours: Vec<String> = match cycle {
         HourCycle::H12 => (1..=12).map(|hour| hour.to_string()).collect(),
         HourCycle::H24 => (0..24).map(|hour| format!("{hour:02}")).collect(),
@@ -101,7 +105,7 @@ enum Part {
 /// fields when the user would rather type.
 #[component]
 fn TimeDialog(draft: Signal<TimeOfDay>, cycle: HourCycle, typing: Signal<bool>) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let mut part = use_signal(|| Part::Hour);
     let time = draft();
     let (hour12, pm) = time.hour12();
@@ -287,7 +291,8 @@ pub fn TimePicker(
     disabled: Option<bool>,
     /// 12-hour or 24-hour clock. Defaults to [`HourCycle::H12`].
     hour_cycle: Option<HourCycle>,
-    /// Minutes between the values a wheel offers. Defaults to 1.
+    /// Minutes between the values a wheel offers. Defaults to 1. An off-step
+    /// starting time rounds down within its hour when wheels open.
     minute_step: Option<u8>,
     /// How the picker opens. Defaults to [`PickerStyle::Auto`].
     style: Option<PickerStyle>,
@@ -303,21 +308,37 @@ pub fn TimePicker(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("time", id);
     let mut value = use_controlled(value, || None);
     let mut open = use_signal(|| false);
     let mut typing = use_signal(|| false);
     let cycle = hour_cycle.unwrap_or_default();
     let step = minute_step.unwrap_or(1).clamp(1, 30);
+    let style = style.unwrap_or_default().resolve(mode);
     let mut draft = use_signal(TimeOfDay::now);
+    let config = use_synced_signal((value, style, step));
     use_effect(move || {
         if open() {
-            draft.set(value.peek().unwrap_or_else(TimeOfDay::now));
+            let (value, style, step) = config();
+            let time = value.peek().unwrap_or_else(TimeOfDay::now);
+            draft.set(if style == PickerStyle::Dialog {
+                time
+            } else {
+                wheel_time(time, step)
+            });
             typing.set(false);
         }
     });
     let mut commit = move |time: TimeOfDay| {
+        if disabled.unwrap_or(false) {
+            return;
+        }
+        let time = if style == PickerStyle::Dialog {
+            time
+        } else {
+            wheel_time(time, step)
+        };
         value.set(Some(time));
         open.set(false);
         if let Some(onchange) = onchange {
@@ -325,7 +346,6 @@ pub fn TimePicker(
         }
     };
 
-    let style = style.unwrap_or_default().resolve(mode);
     let disabled = disabled.unwrap_or(false);
     let placeholder = placeholder.unwrap_or_else(|| strings.choose_time.clone());
     let text = value().map(|time| match format {
@@ -444,7 +464,7 @@ fn TimePickerPlaygroundDemo() -> Element {
                         crate::SelectOption::new(PickerStyle::Popover, "Wheels in a popover"),
                     ],
                 }
-                crate::SegmentGroup { value: cycle, aria_label: "Clock",
+                crate::SegmentGroup { value: cycle, label: "Clock",
                     crate::SegmentButton { value: HourCycle::H12, "12 hour" }
                     crate::SegmentButton { value: HourCycle::H24, "24 hour" }
                 }
@@ -479,4 +499,25 @@ crate::g3_playground! {
     components: ["TimePicker"],
     demo: TimePickerPlaygroundDemo,
     source: "src/components/time_picker.rs",
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn wheels_round_down_without_changing_the_hour() {
+        for (minute, step, expected) in [
+            (7, 5, 5),
+            (59, 5, 55),
+            (59, 7, 56),
+            (59, 30, 30),
+            (59, 0, 59),
+        ] {
+            assert_eq!(
+                wheel_time(TimeOfDay::new(14, minute).unwrap(), step),
+                TimeOfDay::new(14, expected).unwrap()
+            );
+        }
+    }
 }

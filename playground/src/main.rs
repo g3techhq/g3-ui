@@ -1,6 +1,7 @@
 //! g3-ui playground - component-owned demos rendered in responsive device contexts.
 use dioxus::prelude::*;
 use dioxus_code::{Code, CodeTheme, Language, SourceCode, Theme};
+use dioxus_icons::lucide::{Package, Search};
 use g3_route_transitions::{
     Platform, RouteTransitions, animated_navigate, set_platform, use_browser_history_transitions,
 };
@@ -12,7 +13,18 @@ use g3_ui::{
 use gloo_timers::future::TimeoutFuture;
 use manganis::{AssetOptions, asset};
 
+mod code_block;
+mod component_props;
+mod docs;
+mod landing;
+mod theme_generator;
+mod themes;
 mod transition_showcase;
+use code_block::CodeBlock;
+use docs::Guide;
+use landing::Landing;
+use theme_generator::ThemeGenerator;
+use themes::PlaygroundTheme;
 use transition_showcase::{
     TransitionAlbum, TransitionEpisode, TransitionLibrary, TransitionListen, TransitionProfile,
     TransitionQueue, TransitionRadio,
@@ -31,6 +43,14 @@ enum Route {
         #[transition(layer = stack_root)]
         #[route("/")]
         Landing {},
+
+        #[transition(layer = stack_root)]
+        #[route("/docs/:slug")]
+        Guide { slug: String },
+
+        #[transition(layer = stack_root)]
+        #[route("/theme-generator")]
+        ThemeGenerator {},
 
         #[transition(layer = stack_root)]
         #[route("/components/:slug")]
@@ -68,179 +88,30 @@ enum Route {
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
-/// The primary-button fill of the Glass and Ember themes.
-const GRADIENT: &str =
-    "linear-gradient(135deg, var(--g3-color-accent), var(--g3-color-accent-secondary))";
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PlaygroundTheme {
-    Blue,
-    Green,
-    Night,
-    Forest,
-    Glass,
-    Ember,
-}
-impl PlaygroundTheme {
-    fn label(self) -> &'static str {
-        match self {
-            Self::Blue => "Blue",
-            Self::Green => "Green",
-            Self::Night => "Night",
-            Self::Forest => "Forest",
-            Self::Glass => "Glass",
-            Self::Ember => "Ember",
-        }
-    }
-    fn all() -> [Self; 6] {
-        [
-            Self::Blue,
-            Self::Green,
-            Self::Night,
-            Self::Forest,
-            Self::Glass,
-            Self::Ember,
-        ]
-    }
-    /// Real `g3_ui::Theme` for this brand - fed straight into `AppWrapper`'s
-    /// `theme` prop, the same way any consumer of the library themes its app.
-    fn to_theme(self) -> G3Theme {
-        match self {
-            Self::Blue => G3Theme {
-                accent: "#2563eb".into(),
-                bg: "#eef5ff".into(),
-                bg_secondary: "#dbeafe".into(),
-                control: "#eaf2ff".into(),
-                border: "rgba(37, 99, 235, 0.2)".into(),
-                text_tertiary: "#496278".into(),
-                text: "#102033".into(),
-                text_secondary: "#53677f".into(),
-                shadow: "rgba(30, 64, 175, 0.16)".into(),
-                ..G3Theme::default_light()
-            },
-            Self::Green => G3Theme {
-                accent: "#1f7a4d".into(),
-                bg: "#edf7f0".into(),
-                bg_secondary: "#dceee2".into(),
-                control: "#e5f3ea".into(),
-                border: "rgba(31, 122, 77, 0.24)".into(),
-                text_tertiary: "#4d6657".into(),
-                text: "#12251a".into(),
-                text_secondary: "#52685c".into(),
-                shadow: "rgba(24, 74, 47, 0.16)".into(),
-                ..G3Theme::default_light()
-            },
-            Self::Night => G3Theme {
-                accent: "#7dd3fc".into(),
-                bg: "#07111f".into(),
-                bg_secondary: "#0e1b2e".into(),
-                card: "#111d2e".into(),
-                surface: "#101a2b".into(),
-                control: "#1b2a40".into(),
-                border: "rgba(148, 163, 184, 0.24)".into(),
-                text_tertiary: "#b8c7d8".into(),
-                text: "#e5edf6".into(),
-                text_secondary: "#9fb0c3".into(),
-                shadow: "rgba(0, 0, 0, 0.54)".into(),
-                ..G3Theme::default_dark()
-            },
-            Self::Forest => G3Theme {
-                accent: "#34d399".into(),
-                bg: "#050806".into(),
-                bg_secondary: "#0b130d".into(),
-                card: "#101811".into(),
-                surface: "#0e1610".into(),
-                control: "#18241b".into(),
-                border: "rgba(134, 239, 172, 0.2)".into(),
-                text_tertiary: "#b8d4bd".into(),
-                text: "#e6f4e8".into(),
-                text_secondary: "#9eb5a4".into(),
-                shadow: "rgba(0, 0, 0, 0.62)".into(),
-                ..G3Theme::default_dark()
-            },
-            // The two `Look` themes: a page gradient, rounder edged cards and
-            // a gradient primary button, over translucent (Glass) or lit
-            // (Ember) surfaces.
-            Self::Glass => G3Theme {
-                accent: "#6d28d9".into(),
-                accent_secondary: "#c026d3".into(),
-                text: "#1b1740".into(),
-                text_secondary: "#4a4575".into(),
-                border: "rgba(124, 58, 237, 0.18)".into(),
-                bg: "#eef0ff".into(),
-                bg_secondary: "#e3e7ff".into(),
-                card: "rgba(255, 255, 255, 0.62)".into(),
-                surface: "#f7f8ff".into(),
-                control: "#e4e6fa".into(),
-                shadow: "rgba(79, 70, 229, 0.22)".into(),
-                look: Look {
-                    background: Some(
-                        "radial-gradient(60% 40% at 90% 0%, #f9a8d4aa, transparent 70%), \
-                         radial-gradient(70% 45% at 0% 30%, #a5b4fcbb, transparent 70%), \
-                         radial-gradient(70% 40% at 80% 100%, #fcd34d66, transparent 70%)"
-                            .into(),
-                    ),
-                    accent_fill: Some(GRADIENT.into()),
-                    card_radius: Some("1.125rem".into()),
-                    card_border: Some("1px solid var(--g3-color-border)".into()),
-                    card_shadow: Some("0 0.625rem 1.875rem -0.75rem var(--g3-color-shadow)".into()),
-                    card_backdrop_filter: Some("blur(18px) saturate(1.4)".into()),
-                    ..Look::default()
-                },
-                ..G3Theme::default_light()
-            },
-            Self::Ember => G3Theme {
-                accent: "#f472b6".into(),
-                accent_secondary: "#fb923c".into(),
-                on_accent: "#2a0a1c".into(),
-                text_secondary: "#e3cfe6".into(),
-                bg: "#12091a".into(),
-                bg_secondary: "#1a0f26".into(),
-                card: "#231535".into(),
-                surface: "#2a1a40".into(),
-                control: "rgba(244, 114, 182, 0.12)".into(),
-                border: "rgba(244, 114, 182, 0.2)".into(),
-                shadow: "rgba(236, 72, 153, 0.3)".into(),
-                look: Look {
-                    background: Some(
-                        "radial-gradient(60% 40% at 90% 0%, #f472b64d, transparent 70%), \
-                         radial-gradient(70% 45% at 0% 30%, #8b5cf659, transparent 70%), \
-                         radial-gradient(70% 40% at 80% 100%, #fb923c2e, transparent 70%)"
-                            .into(),
-                    ),
-                    accent_fill: Some(GRADIENT.into()),
-                    card_radius: Some("1.125rem".into()),
-                    card_border: Some("1px solid var(--g3-color-border)".into()),
-                    card_shadow: Some("0 0.625rem 1.875rem -0.75rem var(--g3-color-shadow)".into()),
-                    card_sheen: Some(
-                        "linear-gradient(160deg, \
-                         color-mix(in srgb, var(--g3-color-text) 7%, transparent), \
-                         color-mix(in srgb, var(--g3-color-text) 1.5%, transparent))"
-                            .into(),
-                    ),
-                    ..Look::default()
-                },
-                ..G3Theme::default_dark()
-            },
-        }
-    }
-}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlaygroundViewport {
     Mobile,
+    Tablet,
+    Landscape,
     Desktop,
+    Resizable,
 }
 #[derive(Clone, Copy)]
 struct PlaygroundSettings {
     mode: Signal<ComponentMode>,
     viewport: Signal<PlaygroundViewport>,
     theme: Signal<PlaygroundTheme>,
+    custom_theme: Signal<G3Theme>,
 }
 
 impl PlaygroundViewport {
     fn as_str(self) -> &'static str {
         match self {
             Self::Mobile => "mobile",
+            Self::Tablet => "tablet",
+            Self::Landscape => "landscape",
             Self::Desktop => "desktop",
+            Self::Resizable => "resizable",
         }
     }
 }
@@ -311,16 +182,50 @@ fn Playground() -> Element {
     let demos = component_playground_demos();
     let mode = use_signal(|| ComponentMode::Md);
     let viewport = use_signal(|| PlaygroundViewport::Mobile);
+    let preview_width = use_signal(|| 800.0);
     // Open from the first paint on a wide shell, where the drawer is a
     // persistent `Menu` that reserves its own space beside the page. Closed on
     // a phone, where it is a dismissible `Overlay` summoned from the header.
     let mut selector_open = use_signal(|| !initial_compact_shell().unwrap_or(true));
     let source_value = use_signal(Vec::<String>::new);
     let theme = use_signal(|| PlaygroundTheme::Blue);
+    let custom_theme = use_signal(|| PlaygroundTheme::Blue.to_theme(&G3Theme::default_light()));
     let mut playing = use_signal(|| false);
+    let mut search_open = use_signal(|| false);
+    let search_value = use_signal(String::new);
+    let mut shortcut = use_signal(|| None::<document::Eval>);
+    use_effect(move || {
+        let eval = document::eval(
+            r#"
+            const onKey = event => {
+                if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+                    event.preventDefault();
+                    document.getElementById('playground-search-trigger')?.click();
+                }
+            };
+            document.addEventListener('keydown', onKey);
+            try { await dioxus.recv(); } finally { document.removeEventListener('keydown', onKey); }
+            return null;
+        "#,
+        );
+        shortcut.set(Some(eval));
+    });
+    use_drop(move || {
+        if let Some(eval) = *shortcut.peek() {
+            let _ = eval.send("dispose");
+        }
+    });
     let current_route: Route = use_route();
     let selected = selected_demo(&demos, &current_route);
     let showing_transitions = current_route.is_transition_showcase();
+    let showing_preview = current_route.has_preview_controls();
+    let guide = match &current_route {
+        Route::Guide { slug } => docs::page(slug),
+        _ => None,
+    };
+    let showing_guide = matches!(current_route, Route::Guide { .. });
+    let showing_generator = matches!(current_route, Route::ThemeGenerator {});
+    let showing_landing = matches!(current_route, Route::Landing {});
     let count = demos.len() + 1;
     let active_mode = mode();
     let active_viewport = viewport();
@@ -342,17 +247,34 @@ fn Playground() -> Element {
         }
     });
     g3_ui::set_mode(active_mode);
-    let page_title = if showing_transitions {
-        "RouteTransitions".to_string()
+    let page_title = if showing_landing {
+        "g3-ui".to_string()
+    } else if showing_generator {
+        "Theme generator".to_string()
+    } else if showing_guide {
+        guide
+            .map_or("Page not found", |page| page.title)
+            .to_string()
+    } else if showing_transitions {
+        "Route transitions".to_string()
+    } else if selected.descriptor.name == "DemoApp" {
+        "Demo app".to_string()
     } else {
         selected.descriptor.name.to_string()
     };
-    let page_description = if showing_transitions {
+    let page_description = if showing_generator {
+        "Edit theme colors and copy the Rust configuration."
+    } else if showing_guide {
+        guide.map_or("Find guides, hooks, and examples.", |page| page.summary)
+    } else if showing_transitions {
         transition_showcase::DESCRIPTION
     } else {
         selected.descriptor.description
     };
-    let source_panels = if showing_transitions {
+    let source_panels = if !showing_preview || showing_generator || showing_guide || showing_landing
+    {
+        vec![]
+    } else if showing_transitions {
         vec![(
             "Transition showcase routes".to_string(),
             transition_showcase::SOURCE.to_string(),
@@ -379,10 +301,11 @@ fn Playground() -> Element {
         mode,
         viewport,
         theme,
+        custom_theme,
     });
     let selector = rsx! {
         div { class: "playground-sidebar-header",
-            h2 { "g3_ui" }
+            h2 { "g3-ui" }
             div { class: "subtitle", "{count} demos" }
         }
         PlaygroundNav {
@@ -394,12 +317,12 @@ fn Playground() -> Element {
     };
     rsx! {
         AppWrapper {
-            theme: theme().to_theme(),
+            theme: theme().to_theme(&custom_theme()),
             mode: active_mode,
             class: "playground-root",
             layout: false,
             route_transition_overlay: false,
-            div { class: "playground-page",
+            div { class: if showing_guide || showing_generator || showing_landing { "playground-page playground-document-page" } else { "playground-page" },
                 Header {
                     title: page_title,
                     mode: active_mode,
@@ -408,7 +331,7 @@ fn Playground() -> Element {
                         Button {
                             fill: ButtonFill::Clear,
                             size: ButtonSize::Sm,
-                            aria_label: "Toggle component menu",
+                            aria_label: "Toggle navigation menu",
                             aria_expanded: selector_open(),
                             class: "playground-menu-button",
                             onclick: move |_| selector_open.toggle(),
@@ -420,14 +343,32 @@ fn Playground() -> Element {
                         }
                     },
                     end: rsx! {
+                        button {
+                            id: "playground-search-trigger",
+                            class: "playground-search-trigger",
+                            onclick: move |_| search_open.set(true),
+                            aria_label: "Search documentation",
+                            span { class: "playground-search-icon", aria_hidden: "true", Search { size: 20 } }
+                            span { class: "playground-search-label", "Search" }
+                            span { class: "playground-search-shortcut", "Ctrl K" }
+                        }
+                        a { class: "playground-header-link", href: "https://github.com/g3techhq/g3-ui", target: "_blank", rel: "noopener noreferrer", aria_label: "GitHub repository", title: "GitHub repository",
+                            span { aria_hidden: "true", svg { width: "20", height: "20", view_box: "0 0 16 16", fill: "currentColor",
+                                path { d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" }
+                            } }
+                        }
+                        a { class: "playground-header-link", href: "https://docs.rs/g3-ui/latest/g3_ui/", target: "_blank", rel: "noopener noreferrer", aria_label: "API reference", title: "API reference (docs.rs)",
+                            span { aria_hidden: "true", Package { size: 20 } }
+                        }
                         Select {
                             value: theme,
                             aria_label: "Theme",
+                            class: "playground-theme-picker",
                             width: g3_ui::SelectWidth::Fit,
                             options: theme_options,
                         }
                     },
-                    toolbar: rsx! {
+                    toolbar: showing_preview.then(|| rsx! {
                         div { class: "playground-header-toggles",
                             SegmentGroup { value: mode, aria_label: "Platform",
                                 SegmentButton { value: ComponentMode::Md, "MD" }
@@ -435,41 +376,70 @@ fn Playground() -> Element {
                             }
                             SegmentGroup { value: viewport, aria_label: "Viewport",
                                 SegmentButton { value: PlaygroundViewport::Mobile, "Mobile" }
+                                SegmentButton { value: PlaygroundViewport::Tablet, "Tablet" }
+                                SegmentButton { value: PlaygroundViewport::Landscape, aria_label: "Landscape phone", "Landscape" }
                                 SegmentButton { value: PlaygroundViewport::Desktop, "Desktop" }
+                                SegmentButton { value: PlaygroundViewport::Resizable, "Resize" }
                             }
                         }
-                    },
+                    }),
                 }
                 main { class: "playground-main",
+                    // Keys only take effect in a list, so this is a list of one.
+                    for page in std::iter::once(current_route.page_key()) {
+                        ScrollToTop { key: "{page}" }
+                    }
                     div { class: "playground-intro",
                         p { class: "playground-description", "{page_description}" }
                         if showing_transitions {
-                            Button {
-                                disabled: playing(),
-                                aria_label: "Play every route transition",
-                                onclick: play_all,
-                                if playing() { "Playing tour…" } else { "Play transition tour" }
+                            div { class: "playground-intro-actions",
+                                Button {
+                                    disabled: playing(),
+                                    aria_label: "Play every route transition",
+                                    onclick: play_all,
+                                    if playing() { "Playing tour…" } else { "Play transition tour" }
+                                }
+                                Button {
+                                    href: "https://crates.io/crates/g3-route-transitions",
+                                    new_tab: true,
+                                    fill: ButtonFill::Outline,
+                                    aria_label: "g3-route-transitions on crates.io",
+                                    start: rsx! { span { aria_hidden: "true", Package { size: 20 } } },
+                                    "crates.io"
+                                }
                             }
+                        }
+                    }
+                    if showing_preview && active_viewport == PlaygroundViewport::Resizable {
+                        g3_ui::Range {
+                            label: "Preview width (pixels)",
+                            value: preview_width,
+                            min: 320.0,
+                            max: 1440.0,
+                            step: 1.0,
+                            show_value: true,
+                            helper: "Drag the slider or use arrow keys to check intermediate widths.",
                         }
                     }
                     div {
                         class: "playground-stage",
+                        style: "--playground-preview-width: {preview_width()}px;",
                         "data-playground-viewport": active_viewport.as_str(),
                         Outlet::<Route> {}
                     }
-                    g3_ui::AccordionGroup { value: source_value, multiple: true, class: "source-panel",
+                    if matches!(current_route, Route::ComponentDemo { .. }) {
+                        component_props::PropsReference { components: selected.components.to_vec() }
+                    }
+                    if showing_preview && !showing_generator && !showing_guide && !showing_landing { g3_ui::AccordionGroup { value: source_value, multiple: true, class: "source-panel",
                         for (title, code) in source_panels {
                             g3_ui::AccordionItem {
                                 key: "{title}",
                                 value: title.clone(),
                                 label: title.clone(),
-                                Code {
-                                    src: SourceCode::new(Language::Rust, code),
-                                    theme: CodeTheme::system(Theme::GITHUB_LIGHT, Theme::GITHUB_DARK),
-                                }
+                                CodeBlock { src: code }
                             }
                         }
-                    }
+                    } }
                 }
             }
             // A phone has no room to keep the menu beside the page, so it
@@ -477,7 +447,7 @@ fn Playground() -> Element {
             if is_compact {
                 SideSheet {
                     open: selector_open,
-                    aria_label: "Components",
+                    aria_label: "Navigation",
                     padding: false,
                     class: "playground-selector-sheet",
                     {selector}
@@ -485,17 +455,53 @@ fn Playground() -> Element {
             } else {
                 NavigationDrawer {
                     open: selector_open,
-                    aria_label: "Components",
+                    aria_label: "Navigation",
                     padding: false,
                     class: "playground-selector-sheet",
                     {selector}
                 }
             }
+            DocsSearch { open: search_open, value: search_value, selector_open }
         }
     }
 }
 
+/// Scrolls the page back to the top when it mounts. Keyed by
+/// [`Route::page_key`] in a list of one, so it remounts - and scrolls - only when the reader
+/// moves to another page. `.playground-main` is the scroll container and lives
+/// in the layout, so without this a new page opens at the old one's offset.
+#[component]
+fn ScrollToTop() -> Element {
+    use_effect(|| {
+        document::eval(
+            "document.querySelector('.playground-main')?.scrollTo({ top: 0, left: 0, behavior: 'instant' });",
+        );
+    });
+    rsx! {}
+}
+
 impl Route {
+    /// Names the page a route belongs to. The transition showcase is one page
+    /// whose routes navigate inside the device, so they share a key.
+    fn page_key(&self) -> String {
+        match self {
+            Self::Landing {} => "landing".into(),
+            Self::Guide { slug } => format!("guide/{slug}"),
+            Self::ThemeGenerator {} => "theme-generator".into(),
+            Self::ComponentDemo { slug } => format!("component/{slug}"),
+            Self::NotFound { .. } => "not-found".into(),
+            _ => "transitions".into(),
+        }
+    }
+
+    fn has_preview_controls(&self) -> bool {
+        matches!(
+            self,
+            Self::Landing {} | Self::ComponentDemo { .. } | Self::ThemeGenerator {}
+        ) || matches!(self, Self::Guide { slug } if docs::page(slug).is_some())
+            || self.is_transition_showcase()
+    }
+
     fn is_transition_showcase(&self) -> bool {
         matches!(
             self,
@@ -542,20 +548,13 @@ fn selected_demo(demos: &[ComponentPlaygroundDemo], route: &Route) -> ComponentP
         .unwrap_or_else(|| demos[0])
 }
 
-fn active_playground_settings() -> (ComponentMode, PlaygroundTheme, PlaygroundViewport) {
+fn active_playground_settings() -> (ComponentMode, G3Theme, PlaygroundViewport) {
     let settings = use_context::<PlaygroundSettings>();
-    ((settings.mode)(), (settings.theme)(), (settings.viewport)())
-}
-
-#[component]
-fn Landing() -> Element {
-    let navigator = use_navigator();
-    use_effect(move || {
-        navigator.replace(Route::ComponentDemo {
-            slug: "demo-app".to_string(),
-        });
-    });
-    rsx! {}
+    (
+        (settings.mode)(),
+        (settings.theme)().to_theme(&(settings.custom_theme)()),
+        (settings.viewport)(),
+    )
 }
 
 #[component]
@@ -581,7 +580,7 @@ fn ComponentDemo(slug: String) -> Element {
     let (mode, theme, viewport) = active_playground_settings();
     rsx! {
         PlaygroundViewportDemo {
-            key: "{viewport.as_str()}-{mode.as_str()}-{theme.label()}-{demo.descriptor.name}",
+            key: "{demo.descriptor.name}",
             demo,
             mode,
             theme,
@@ -623,12 +622,15 @@ async fn play_transition_tour() {
 fn PlaygroundViewportDemo(
     demo: ComponentPlaygroundDemo,
     mode: ComponentMode,
-    theme: PlaygroundTheme,
+    theme: G3Theme,
     viewport: PlaygroundViewport,
 ) -> Element {
     let label = match viewport {
-        PlaygroundViewport::Desktop => "Compact desktop",
+        PlaygroundViewport::Desktop => "Desktop",
         PlaygroundViewport::Mobile => "Mobile",
+        PlaygroundViewport::Tablet => "Tablet",
+        PlaygroundViewport::Landscape => "Landscape phone",
+        PlaygroundViewport::Resizable => "Resizable",
     };
     rsx! {
         section {
@@ -637,7 +639,7 @@ fn PlaygroundViewportDemo(
             div {
                 class: "playground-viewport-demo",
                 "data-g3-mode": mode.as_str(),
-                ThemeProvider { mode, theme: theme.to_theme(),
+                ThemeProvider { mode, theme: theme.clone(),
                     RenderSelectedDemo { demo, mode, theme }
                 }
             }
@@ -661,6 +663,179 @@ fn source_panels(demo: &ComponentPlaygroundDemo) -> Vec<(String, String)> {
     }
     panels
 }
+
+#[derive(Clone, PartialEq)]
+struct SearchEntry {
+    title: String,
+    description: String,
+    section: &'static str,
+    route: Route,
+}
+
+fn search_entries(query: &str) -> Vec<SearchEntry> {
+    let query = query.trim().to_lowercase();
+    let mut entries: Vec<_> = docs::PAGES
+        .iter()
+        .filter(|page| {
+            format!(
+                "{} {} {} {}",
+                page.title, page.summary, page.section, page.keywords
+            )
+            .to_lowercase()
+            .contains(&query)
+        })
+        .map(|page| SearchEntry {
+            title: page.title.into(),
+            description: page.summary.into(),
+            section: page.section,
+            route: Route::Guide {
+                slug: page.slug.into(),
+            },
+        })
+        .collect();
+    if "why g3-ui overview home mobile first dioxus ionic android ios desktop".contains(&query) {
+        entries.insert(
+            0,
+            SearchEntry {
+                title: "g3-ui overview".into(),
+                description:
+                    "iOS and Material components, responsive layouts, themes, and overlays.".into(),
+                section: "Overview",
+                route: Route::Landing {},
+            },
+        );
+    }
+    entries.extend(
+        component_playground_demos()
+            .into_iter()
+            .filter(|demo| {
+                format!(
+                    "{} {} {} {} {}",
+                    demo.descriptor.name,
+                    if demo.descriptor.name == "DemoApp" {
+                        "Demo app"
+                    } else {
+                        demo.descriptor.name
+                    },
+                    demo.descriptor.description,
+                    demo.components.join(" "),
+                    if demo.descriptor.name == "DemoApp" {
+                        "Examples"
+                    } else {
+                        "Components"
+                    },
+                )
+                .to_lowercase()
+                .contains(&query)
+            })
+            .map(|demo| SearchEntry {
+                title: if demo.descriptor.name == "DemoApp" {
+                    "Demo app".into()
+                } else {
+                    demo.descriptor.name.into()
+                },
+                description: demo.descriptor.description.into(),
+                section: if demo.descriptor.name == "DemoApp" {
+                    "Examples"
+                } else {
+                    "Components"
+                },
+                route: Route::ComponentDemo {
+                    slug: demo_slug(demo.descriptor.name),
+                },
+            }),
+    );
+    if "route transitions routetransitions animation navigation examples".contains(&query) {
+        entries.push(SearchEntry {
+            title: "Route transitions".into(),
+            description: transition_showcase::DESCRIPTION.into(),
+            section: "Examples",
+            route: Route::TransitionListen {},
+        });
+    }
+    if "theme generator colors palette custom branding".contains(&query) {
+        entries.push(SearchEntry {
+            title: "Theme generator".into(),
+            description: "Edit theme colors and preview the result.".into(),
+            section: "Tools",
+            route: Route::ThemeGenerator {},
+        });
+    }
+    entries
+}
+
+#[component]
+fn DocsSearch(
+    mut open: Signal<bool>,
+    value: Signal<String>,
+    mut selector_open: Signal<bool>,
+) -> Element {
+    let query = value();
+    let results = search_entries(&query);
+    let no_matches = results.is_empty();
+    rsx! {
+        g3_ui::Modal { open, title: "Search documentation", size: g3_ui::ModalSize::Wide, class: "playground-search",
+            actions: rsx! {
+                span { class: "playground-search-hint", "Tab to a result · Enter to open · Esc to close" }
+                Button { fill: ButtonFill::Clear, onclick: move |_| open.set(false), "Close search" }
+            },
+            g3_ui::Searchbar { value, aria_label: "Search guides, hooks, and components", placeholder: "Search the library" }
+            p { class: "playground-search-count", role: "status", aria_live: "polite",
+                "{results.len()} "
+                if results.len() == 1 { "result. " } else { "results. " }
+            }
+            for (query, results) in std::iter::once((query, results)) {
+              div { key: "{query}", class: "playground-search-results",
+              ul {
+                for entry in results {
+                    li {
+                        key: "{entry.section}-{entry.title}",
+                      button {
+                        class: "playground-search-result",
+                        aria_label: format!("{} · {}", entry.section, entry.title),
+                        onclick: move |_| {
+                            let route = entry.route.clone();
+                            open.set(false);
+                            if initial_compact_shell().unwrap_or(false) { selector_open.set(false); }
+                            spawn(async move { animated_navigate(route).await; });
+                        },
+                        span { class: "playground-search-result-category", "{entry.section}" }
+                        span { class: "playground-search-result-title", "{entry.title}" }
+                        span { class: "playground-search-result-description", "{entry.description}" }
+                      }
+                    }
+                }
+              }
+              if no_matches {
+                  div { class: "playground-search-empty",
+                      h3 { "No matches" }
+                      p { "Search by component, hook, or topic." }
+                  }
+              }
+            }
+            }
+        }
+    }
+}
+
+#[component]
+fn DocNavButton(
+    slug: String,
+    title: String,
+    current_route: Route,
+    mut selector_open: Signal<bool>,
+    dismiss_on_select: bool,
+) -> Element {
+    let selected = matches!(&current_route, Route::Guide { slug: current } if current == &slug);
+    rsx! { Item { label: title, selected,
+        onclick: move |_| {
+            let slug = slug.clone();
+            if dismiss_on_select { selector_open.set(false); }
+            spawn(async move { animated_navigate(Route::Guide { slug }).await; });
+        },
+    } }
+}
+
 #[component]
 fn PlaygroundNav(
     demos: Vec<ComponentPlaygroundDemo>,
@@ -679,6 +854,21 @@ fn PlaygroundNav(
     component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
     rsx! {
         List { class: "playground-nav", lines: ListLines::None,
+            Item {
+                label: "Overview",
+                selected: matches!(current_route, Route::Landing {}),
+                onclick: move |_| async move {
+                    if dismiss_on_select { selector_open.set(false); }
+                    animated_navigate(Route::Landing {}).await;
+                },
+            }
+            for section in ["Guides", "Patterns", "Hooks"] {
+                g3_ui::ListHeader { "{section}" }
+                for page in docs::PAGES.iter().filter(|page| page.section == section) {
+                    DocNavButton { slug: page.slug.to_string(), title: page.title.to_string(), current_route: current_route.clone(), selector_open, dismiss_on_select }
+                }
+            }
+            g3_ui::ListHeader { "Examples" }
             if let Some(demo) = demo_app {
                 ComponentNavButton {
                     demo,
@@ -689,7 +879,7 @@ fn PlaygroundNav(
             }
             Item {
                 selected: current_route.is_transition_showcase(),
-                label: "RouteTransitions",
+                label: "Route transitions",
                 onclick: move |_| async move {
                     if dismiss_on_select {
                         selector_open.set(false);
@@ -697,6 +887,16 @@ fn PlaygroundNav(
                     animated_navigate(Route::TransitionListen {}).await;
                 },
             }
+            g3_ui::ListHeader { "Tools" }
+            Item {
+                label: "Theme generator",
+                selected: matches!(current_route, Route::ThemeGenerator {}),
+                onclick: move |_| async move {
+                    if dismiss_on_select { selector_open.set(false); }
+                    animated_navigate(Route::ThemeGenerator {}).await;
+                },
+            }
+            g3_ui::ListHeader { "Components" }
             for demo in component_demos {
                 ComponentNavButton {
                     demo,
@@ -712,7 +912,7 @@ fn PlaygroundNav(
 fn RenderSelectedDemo(
     demo: ComponentPlaygroundDemo,
     mode: ComponentMode,
-    theme: PlaygroundTheme,
+    theme: G3Theme,
 ) -> Element {
     let _ = (mode, theme);
     (demo.render)()
@@ -732,7 +932,7 @@ fn ComponentNavButton(
     rsx! {
         Item {
             selected: is_selected,
-            label: demo.descriptor.name.to_string(),
+            label: if demo.descriptor.name == "DemoApp" { "Demo app".to_string() } else { demo.descriptor.name.to_string() },
             onclick: move |_| {
                 let slug = slug.clone();
                 if dismiss_on_select {
@@ -749,9 +949,82 @@ fn ComponentNavButton(
 mod tests {
     use super::{PlaygroundViewport, demo_slug, source_panels};
     #[test]
+    fn preview_controls_only_appear_on_interactive_routes() {
+        use super::Route;
+        for page in super::docs::PAGES {
+            assert!(
+                Route::Guide {
+                    slug: page.slug.into()
+                }
+                .has_preview_controls()
+            );
+        }
+        assert!(
+            !Route::Guide {
+                slug: "missing-guide".into()
+            }
+            .has_preview_controls()
+        );
+        assert!(Route::Landing {}.has_preview_controls());
+        assert!(!Route::NotFound { segments: vec![] }.has_preview_controls());
+        assert!(Route::ThemeGenerator {}.has_preview_controls());
+        assert!(
+            Route::ComponentDemo {
+                slug: "button".into()
+            }
+            .has_preview_controls()
+        );
+        assert!(Route::TransitionListen {}.has_preview_controls());
+    }
+    #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
         assert_eq!(PlaygroundViewport::Mobile.as_str(), "mobile");
+        assert_eq!(PlaygroundViewport::Tablet.as_str(), "tablet");
+        assert_eq!(PlaygroundViewport::Landscape.as_str(), "landscape");
         assert_eq!(PlaygroundViewport::Desktop.as_str(), "desktop");
+        assert_eq!(PlaygroundViewport::Resizable.as_str(), "resizable");
+    }
+    #[test]
+    fn documentation_and_public_names_share_the_search_index() {
+        assert!(
+            super::search_entries("use_layout_size")
+                .iter()
+                .any(|entry| entry.title == "Layout hooks")
+        );
+        assert!(
+            super::search_entries("AdaptiveLayout")
+                .iter()
+                .any(|entry| entry.title == "Responsive")
+        );
+        assert!(super::search_entries("getting started").iter().any(|entry| matches!(&entry.route, super::Route::Guide { slug } if slug == "getting-started")));
+        assert!(
+            super::search_entries("  USE_TOAST ")
+                .iter()
+                .any(|entry| entry.title == "Overlay hooks")
+        );
+        assert!(super::search_entries("no-such-page-12345").is_empty());
+        assert!(
+            super::search_entries("overview")
+                .iter()
+                .any(|entry| matches!(entry.route, super::Route::Landing {}))
+        );
+        assert!(
+            super::search_entries("theme generator")
+                .iter()
+                .any(|entry| matches!(entry.route, super::Route::ThemeGenerator {}))
+        );
+    }
+    #[test]
+    fn documentation_slugs_and_source_links_are_valid_and_unique() {
+        let mut slugs = std::collections::HashSet::new();
+        for page in super::docs::PAGES {
+            assert!(slugs.insert(page.slug));
+            assert!(!page.summary.is_empty() && !page.keywords.is_empty());
+            assert_eq!(super::docs::page(page.slug).unwrap().title, page.title);
+        }
+        for demo in g3_ui::component_playground_demos() {
+            assert!(demo.source_path.starts_with("src/components/"));
+        }
     }
     #[test]
     fn every_demo_lists_its_demo_and_component_sources() {
@@ -776,6 +1049,23 @@ mod tests {
             }
         }
     }
+    #[test]
+    fn a_new_page_scrolls_to_the_top_but_the_transition_showcase_does_not() {
+        use super::Route;
+        let button = Route::ComponentDemo {
+            slug: "button".into(),
+        };
+        let sheet = Route::ComponentDemo {
+            slug: "sidesheet".into(),
+        };
+        assert_ne!(button.page_key(), sheet.page_key());
+        assert_ne!(Route::Landing {}.page_key(), button.page_key());
+        assert_eq!(
+            Route::TransitionListen {}.page_key(),
+            Route::TransitionAlbum {}.page_key()
+        );
+    }
+
     #[test]
     fn component_names_have_stable_shareable_slugs() {
         assert_eq!(demo_slug("DemoApp"), "demoapp");

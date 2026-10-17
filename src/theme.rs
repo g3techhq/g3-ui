@@ -11,7 +11,8 @@
 use crate::state::use_synced_signal;
 use cfg_if::cfg_if;
 use dioxus::prelude::*;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 /// Platform styling mode, like Ionic's `mode` attribute.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -333,6 +334,30 @@ impl Theme {
         self
     }
 
+    /// A whole theme generated from an accent and a page background, for
+    /// example a color the user picked. Text reads at 4.5:1 on every surface,
+    /// and an accent that would not is moved only as far as it must be. Use
+    /// [`ThemeSeeds::generate`] to add a second accent or to learn what was
+    /// moved; see [`palette`](crate::palette).
+    ///
+    /// ```
+    /// use g3_ui::{Theme, ThemeSeeds};
+    ///
+    /// let theme = Theme::from_seeds(&ThemeSeeds::new("#1d4ed8", "#ffffff"))?;
+    /// assert_eq!(theme.accent, "#1d4ed8");
+    /// # Ok::<(), g3_ui::palette::InvalidSeed>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// [`InvalidSeed`](crate::palette::InvalidSeed) when a seed is not a hex
+    /// or `rgb()` color.
+    pub fn from_seeds(
+        seeds: &crate::palette::ThemeSeeds,
+    ) -> Result<Self, crate::palette::InvalidSeed> {
+        seeds.generate().map(|generated| generated.theme)
+    }
+
     /// Every token as `(custom property, value)` pairs, in declaration order.
     pub fn tokens(&self) -> [(&'static str, &str); 17] {
         [
@@ -505,6 +530,16 @@ pub struct Strings {
     pub type_time: String,
     /// Accessible name of the button that switches a time picker to its dial.
     pub pick_time_on_dial: String,
+    /// Spoken text for a zero rating.
+    pub rating_unrated: String,
+    /// Spoken rating template with `{value}` and `{max}` placeholders.
+    pub rating_value: String,
+    /// Long date template: `{weekday}`, `{month}`, `{day}`, `{year}`.
+    pub date_long: String,
+    /// Short date template: `{month}`, `{day}`, `{year}`.
+    pub date_short: String,
+    /// Calendar heading template with `{month}` and `{year}`.
+    pub date_month_year: String,
 }
 
 impl Default for Strings {
@@ -584,7 +619,189 @@ impl Default for Strings {
             year: "Year".into(),
             type_time: "Type a time".into(),
             pick_time_on_dial: "Pick a time on the clock".into(),
+            rating_unrated: "Not rated".into(),
+            rating_value: "{value} of {max} stars".into(),
+            date_long: "{weekday}, {month} {day}, {year}".into(),
+            date_short: "{month} {day}, {year}".into(),
+            date_month_year: "{month} {year}".into(),
         }
+    }
+}
+
+impl Strings {
+    /// Strings from a translation lookup, English for every id it does not
+    /// know. Plug in any translation system: a map, a Fluent bundle, or a
+    /// server's catalog.
+    ///
+    /// `lookup` is called with one message id per piece of text, and returns
+    /// `None` to keep the English default:
+    ///
+    /// - Each text field's id is its name, such as `"cancel"` or
+    ///   `"sheet_handle"`.
+    /// - List entries are the field name and a position counting from 1:
+    ///   `"months_1"` is January, `"weekdays_1"` is Sunday, and the same goes
+    ///   for `months_short` and `weekdays_narrow`.
+    /// - `"first_weekday"` is a number, `0` for Sunday through `6`; anything
+    ///   else keeps Sunday.
+    /// - Templates keep their placeholders literally, so a translation of
+    ///   `"rating_value"` still contains `{value}` and `{max}`.
+    ///
+    /// ```
+    /// use g3_ui::Strings;
+    /// use std::collections::HashMap;
+    ///
+    /// let spanish = HashMap::from([
+    ///     ("cancel", "Cancelar"),
+    ///     ("months_1", "enero"),
+    ///     ("first_weekday", "1"),
+    ///     ("rating_value", "{value} de {max} estrellas"),
+    /// ]);
+    /// let strings = Strings::from_lookup(|id| spanish.get(id).map(|text| text.to_string()));
+    /// assert_eq!(strings.cancel, "Cancelar");
+    /// assert_eq!(strings.months[0], "enero");
+    /// assert_eq!(strings.first_weekday, 1);
+    /// assert_eq!(strings.confirm, "Confirm");
+    /// ```
+    ///
+    /// With [dioxus-i18n](https://crates.io/crates/dioxus-i18n), build the
+    /// strings in a memo, so they rebuild when the language changes, and pass
+    /// them to the app shell. Prefixing the ids keeps them apart from the
+    /// app's own messages. In Fluent, a literal brace is written `{"{"}`, so
+    /// `g3-rating_value = {"{"}value{"}"} de {"{"}max{"}"} estrellas`.
+    ///
+    /// ```ignore
+    /// let strings = use_memo(|| {
+    ///     Strings::from_lookup(|id| i18n().try_translate(&format!("g3-{id}")).ok())
+    /// });
+    /// rsx! { AppWrapper { strings: strings(), Router::<Route> {} } }
+    /// ```
+    pub fn from_lookup(mut lookup: impl FnMut(&str) -> Option<String>) -> Self {
+        let mut strings = Self::default();
+        // Exhaustive, so a new field is a compile error here until it has an
+        // id, and a field named here but not looked up is an unused variable.
+        let Self {
+            close,
+            sheet_handle,
+            sheet,
+            navigation_drawer,
+            primary_navigation,
+            collapse_navigation,
+            expand_navigation,
+            loading,
+            load_error,
+            pull_to_refresh,
+            release_to_refresh,
+            refreshing,
+            cancel,
+            confirm,
+            dismiss,
+            more_information,
+            select_placeholder,
+            clear,
+            back,
+            search,
+            show_actions,
+            reorder,
+            opens_in_new_tab,
+            months,
+            months_short,
+            weekdays,
+            weekdays_narrow,
+            first_weekday,
+            am,
+            pm,
+            day_period,
+            done,
+            previous_month,
+            next_month,
+            choose_date,
+            choose_time,
+            hour,
+            minute,
+            day,
+            month,
+            year,
+            type_time,
+            pick_time_on_dial,
+            rating_unrated,
+            rating_value,
+            date_long,
+            date_short,
+            date_month_year,
+        } = &mut strings;
+        macro_rules! look_up {
+            ($($field:ident),* $(,)?) => {
+                $(
+                    if let Some(text) = lookup(stringify!($field)) {
+                        *$field = text;
+                    }
+                )*
+            };
+        }
+        look_up!(
+            close,
+            sheet_handle,
+            sheet,
+            navigation_drawer,
+            primary_navigation,
+            collapse_navigation,
+            expand_navigation,
+            loading,
+            load_error,
+            pull_to_refresh,
+            release_to_refresh,
+            refreshing,
+            cancel,
+            confirm,
+            dismiss,
+            more_information,
+            select_placeholder,
+            clear,
+            back,
+            search,
+            show_actions,
+            reorder,
+            opens_in_new_tab,
+            am,
+            pm,
+            day_period,
+            done,
+            previous_month,
+            next_month,
+            choose_date,
+            choose_time,
+            hour,
+            minute,
+            day,
+            month,
+            year,
+            type_time,
+            pick_time_on_dial,
+            rating_unrated,
+            rating_value,
+            date_long,
+            date_short,
+            date_month_year,
+        );
+        for (name, list) in [
+            ("months", months),
+            ("months_short", months_short),
+            ("weekdays", weekdays),
+            ("weekdays_narrow", weekdays_narrow),
+        ] {
+            for (index, item) in list.iter_mut().enumerate() {
+                if let Some(text) = lookup(&format!("{name}_{}", index + 1)) {
+                    *item = text;
+                }
+            }
+        }
+        if let Some(weekday) = lookup("first_weekday")
+            .and_then(|text| text.trim().parse::<u8>().ok())
+            .filter(|weekday| *weekday < 7)
+        {
+            *first_weekday = weekday;
+        }
+        strings
     }
 }
 
@@ -609,39 +826,134 @@ pub(crate) fn use_provide_ambient(
     theme: Option<Theme>,
     strings: Option<Strings>,
 ) -> (ComponentMode, Theme) {
-    let parent = use_hook(try_consume_context::<Ambient>);
-    let mode = mode
-        .or_else(|| parent.map(|p| (p.mode)()))
-        .unwrap_or_else(get_mode);
-    let theme = theme
-        .or_else(|| parent.map(|p| (p.theme)()))
-        .unwrap_or_default();
-    let strings = strings
-        .or_else(|| parent.map(|p| (p.strings)()))
-        .unwrap_or_default();
-    let ambient = Ambient {
-        mode: use_synced_signal(mode),
-        theme: use_synced_signal(theme.clone()),
-        strings: use_synced_signal(strings),
-    };
-    use_hook(|| provide_context(ambient));
-    (mode, theme)
+    let parent_context = use_hook(try_consume_context::<Signal<Ambient>>);
+    let parent = parent_context.map(|context| context());
+    let mode = use_provider_state(mode, parent.map(|p| p.mode), get_mode);
+    let theme = use_provider_state(theme, parent.map(|p| p.theme), Theme::default);
+    let strings = use_provider_state(strings, parent.map(|p| p.strings), Strings::default);
+    crate::state::provide_live_context(Ambient {
+        mode,
+        theme,
+        strings,
+    });
+    (mode(), theme())
+}
+
+/// Explicit props seed isolated state. Only changed props replace hook edits;
+/// an omitted prop shares the parent's handle, or owns default state at the root.
+fn use_provider_state<T: Clone + PartialEq + 'static>(
+    value: Option<T>,
+    inherited: Option<Signal<T>>,
+    default: impl FnOnce() -> T,
+) -> Signal<T> {
+    let prop = use_synced_signal(value.clone());
+    let mut local = use_signal(|| value.clone().unwrap_or_else(default));
+    let previous = use_hook(|| Rc::new(RefCell::new(value.clone())));
+    use_effect(move || {
+        let next = prop();
+        if next == *previous.borrow() {
+            return;
+        }
+        *previous.borrow_mut() = next.clone();
+        if let Some(value) = next
+            && *local.peek() != value
+        {
+            local.set(value);
+        }
+    });
+    if value.is_some() {
+        local
+    } else {
+        inherited.unwrap_or(local)
+    }
 }
 
 fn ambient() -> Option<Ambient> {
-    try_consume_context::<Ambient>()
+    try_consume_context::<Signal<Ambient>>().map(|context| context())
 }
 
-/// The theme in effect here, or [`Theme::default`] outside any provider.
-/// Subscribes the calling component to theme changes.
-pub fn use_theme() -> Theme {
-    ambient().map(|a| (a.theme)()).unwrap_or_default()
+/// Read or change the nearest provider's theme.
+///
+/// Returns shared writable state: read with `theme()` or `theme.read()`, replace
+/// with `theme.set(...)`, or edit fields with `theme.write()`. Reading subscribes
+/// the component to changes. Writes update the provider's CSS and other readers.
+/// A provider with an explicit theme isolates its descendants; a provider with
+/// no theme override shares its parent's signal. Changed `theme` props replace
+/// the current value. Outside a provider, owns a local default theme.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// #[component]
+/// fn GreenAccentButton() -> Element {
+///     let mut theme = use_theme();
+///     rsx! {
+///         Button { onclick: move |_| theme.write().accent = "#16a34a".into(),
+///             "Use green accent"
+///         }
+///     }
+/// }
+/// ```
+pub fn use_theme() -> Signal<Theme> {
+    let provider = ambient();
+    // Allocate fallback state only outside a provider. Read the live context
+    // every render so adding/removing a subtree override changes the handle.
+    let fallback = use_hook(|| {
+        provider.map_or_else(|| Signal::new(Theme::default()), |provider| provider.theme)
+    });
+    provider.map_or(fallback, |provider| provider.theme)
 }
 
-/// The strings in effect here, or [`Strings::default`] outside any provider.
-/// Subscribes the calling component to changes.
-pub fn use_strings() -> Strings {
-    ambient().map(|a| (a.strings)()).unwrap_or_default()
+/// Read or change the nearest provider's platform mode.
+///
+/// Returns a shared writable signal, like [`use_theme`]. Use `mode()` to read,
+/// `mode.set(ComponentMode::Ios)` or `*mode.write() = ComponentMode::Ios` to
+/// change it. Components with an explicit mode prop keep their override.
+/// Outside a provider, owns local state initialized from [`get_mode`].
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// #[component]
+/// fn ModeSwitch() -> Element {
+///     let mut mode = use_mode();
+///     rsx! { Button { onclick: move |_| *mode.write() = ComponentMode::Ios, "iOS" } }
+/// }
+/// ```
+pub fn use_mode() -> Signal<ComponentMode> {
+    let provider = ambient();
+    let fallback =
+        use_hook(|| provider.map_or_else(|| Signal::new(get_mode()), |provider| provider.mode));
+    provider.map_or(fallback, |provider| provider.mode)
+}
+
+/// Read or change the nearest provider's component labels.
+///
+/// Returns a shared writable signal, like [`use_theme`]. Read with `strings()`
+/// or `strings.read()`, edit with `strings.write().cancel = "Cancelar".into()`,
+/// or replace with `strings.set(...)`. Outside a provider, owns local English
+/// defaults. Application copy is translated separately from component labels.
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// #[component]
+/// fn TranslateCancel() -> Element {
+///     let mut strings = use_strings();
+///     rsx! { Button { onclick: move |_| strings.write().cancel = "Cancelar".into(),
+///         "Spanish labels"
+///     } }
+/// }
+/// ```
+pub fn use_strings() -> Signal<Strings> {
+    let provider = ambient();
+    let fallback = use_hook(|| {
+        provider.map_or_else(
+            || Signal::new(Strings::default()),
+            |provider| provider.strings,
+        )
+    });
+    provider.map_or(fallback, |provider| provider.strings)
 }
 
 /// Resolve a component's mode: its own `mode` prop, then the nearest provider,
@@ -751,11 +1063,15 @@ pub(crate) fn classes<'a>(parts: impl IntoIterator<Item = &'a str>) -> String {
 /// ```
 #[component]
 pub fn ThemeProvider(
-    /// Platform look for this subtree.
+    /// Platform look for this subtree. Seeds isolated writable [`use_mode`]
+    /// state; omit to share the enclosing provider's mode.
     mode: Option<ComponentMode>,
-    /// Color tokens for this subtree.
+    /// Color tokens for this subtree. An explicit value seeds an isolated
+    /// writable theme; later prop changes replace it. Omit to share the
+    /// enclosing provider's writable theme.
     theme: Option<Theme>,
-    /// Component text for this subtree.
+    /// Component text for this subtree. Seeds isolated writable [`use_strings`]
+    /// state; omit to share the enclosing provider's labels.
     strings: Option<Strings>,
     children: Element,
 ) -> Element {

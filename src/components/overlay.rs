@@ -1,4 +1,5 @@
 //! Behaviour shared by overlays: page scroll locking and keyboard focus.
+use crate::state::use_synced_signal;
 use dioxus::prelude::*;
 use std::cell::Cell;
 use std::time::Duration;
@@ -29,33 +30,115 @@ pub(crate) fn js_string(text: &str) -> String {
 /// The wrapper remains open for `exit_delay` so its children can finish their
 /// exit animations before the browser hides it.
 pub(crate) fn use_top_layer(open: ReadSignal<bool>, id: String, exit_delay: Duration) {
+    use_top_layer_with_priority(open, id, exit_delay, 0);
+}
+
+pub(crate) fn use_top_layer_with_priority(
+    open: ReadSignal<bool>,
+    id: String,
+    exit_delay: Duration,
+    priority: u8,
+) {
+    let config = use_synced_signal((open, id, exit_delay, priority));
     use_effect(move || {
+        let (open, id, exit_delay, priority) = config();
         let is_open = open();
         let script = format!(
-            r#"
-const layer = document.getElementById({id});
-if (layer && typeof layer.showPopover === "function") {{
-    clearTimeout(layer.g3HideTimer);
-    if ({is_open}) {{
-        if (!layer.matches(":popover-open")) layer.showPopover();
-    }} else if (layer.matches(":popover-open")) {{
-        layer.g3HideTimer = setTimeout(() => {{
-            if (layer.isConnected && layer.matches(":popover-open")) layer.hidePopover();
-        }}, {delay});
-    }}
-}} else if (layer) {{
-    // Older embedded WebViews (notably the minimum supported iOS versions)
-    // do not have the Popover API. Removing the attribute restores the
-    // ordinary fixed-position fallback instead of leaving the wrapper hidden
-    // by the user-agent `[popover]` rule.
-    layer.removeAttribute("popover");
-}}
-"#,
+            "{}\nwindow[Symbol.for('g3-ui.layers')].present({id}, {is_open}, {delay}, {priority});",
+            include_str!("layers.js"),
             id = js_string(&id),
             is_open = is_open,
             delay = exit_delay.as_millis(),
         );
         let _ = document::eval(&script);
+    });
+    use_drop(move || {
+        let id = js_string(&config.peek().1);
+        document::eval(&format!(
+            "window[Symbol.for('g3-ui.layers')]?.remove({id});"
+        ));
+    });
+}
+
+#[derive(Clone, PartialEq)]
+struct OverlayEntry {
+    id: String,
+    dismiss: Callback<()>,
+}
+
+/// The app's currently open sheets, dialogs and popovers, in presentation order.
+/// Use [`use_overlay_controller`] to obtain it for Android Back handling.
+#[derive(Clone, Copy)]
+pub struct OverlayController {
+    entries: Signal<Vec<OverlayEntry>>,
+}
+
+impl OverlayController {
+    /// Number of open blocking or dismissible surfaces. Toasts and permanent
+    /// navigation drawers are excluded. Reading this subscribes the caller.
+    pub fn count(self) -> usize {
+        self.entries.read().len()
+    }
+
+    /// Handle Back by dismissing the most recently opened surface. Returns
+    /// whether an overlay consumed Back. A nondismissible modal consumes it
+    /// without closing, so Back cannot accidentally close the surface below.
+    pub fn dismiss_top(self) -> bool {
+        let dismiss = self.entries.peek().last().map(|entry| entry.dismiss);
+        if let Some(dismiss) = dismiss {
+            dismiss.call(());
+            true
+        } else {
+            false
+        }
+    }
+}
+
+/// Access the enclosing app's overlay stack. Call once in a component, then
+/// use `dismiss_top()` from a Back handler before navigating the app.
+pub fn use_overlay_controller() -> OverlayController {
+    use_hook(|| {
+        try_consume_context::<OverlayController>().unwrap_or_else(|| {
+            dioxus::core::provide_root_context(OverlayController {
+                entries: Signal::new_in_scope(Vec::new(), ScopeId::ROOT),
+            })
+        })
+    })
+}
+
+pub(crate) fn use_overlay_registration(open: ReadSignal<bool>, id: String, dismiss: Callback<()>) {
+    let mut controller = use_overlay_controller();
+    let config = use_synced_signal((open, id));
+    let held = use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(None::<String>)));
+    {
+        let held = held.clone();
+        use_effect(move || {
+            let (open, id) = config();
+            let want = open();
+            if held
+                .borrow()
+                .as_ref()
+                .is_some_and(|previous| !want || *previous != id)
+            {
+                let previous = held.borrow_mut().take();
+                controller
+                    .entries
+                    .write()
+                    .retain(|entry| Some(&entry.id) != previous.as_ref());
+            }
+            if want && held.borrow().is_none() {
+                controller.entries.write().push(OverlayEntry {
+                    id: id.clone(),
+                    dismiss,
+                });
+                *held.borrow_mut() = Some(id);
+            }
+        });
+    }
+    use_drop(move || {
+        if let Some(id) = held.borrow_mut().take() {
+            controller.entries.write().retain(|entry| entry.id != id);
+        }
     });
 }
 
@@ -78,12 +161,13 @@ thread_local! {
 
 /// Hold the page scroll lock while `locked` is true, and release it on unmount.
 pub(crate) fn use_lock_body_scroll(locked: ReadSignal<bool>) {
+    let locked = use_synced_signal(locked);
     let disabled = try_consume_context::<DisableBodyScrollLock>().is_some();
     let held = use_hook(|| std::rc::Rc::new(Cell::new(false)));
     {
         let held = held.clone();
         use_effect(move || {
-            let want = locked() && !disabled;
+            let want = locked()() && !disabled;
             if held.get() != want {
                 held.set(want);
                 adjust_lock(want);
@@ -133,77 +217,7 @@ fn set_page_locked(locked: bool) {
     ));
 }
 
-const FOCUS_SCRIPT: &str = r#"
-const el = document.getElementById(__ID__);
-if (el) {
-    const previous = document.activeElement;
-    const selector = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
-    const focusables = () => [...el.querySelectorAll(selector)]
-        .filter((node) => !node.hidden && !node.closest('[inert]') && node.getClientRects().length > 0);
-    const roving = __ROVING__;
-    const onKey = (event) => {
-        if (event.key === 'Escape') {
-            event.stopPropagation();
-            dioxus.send('escape');
-            return;
-        }
-        // Typing a letter moves to the next item starting with it.
-        if (roving && event.key.length === 1 && event.key.trim() !== "" && !event.ctrlKey && !event.metaKey && !event.altKey) {
-            const items = [...el.querySelectorAll(roving)].filter((node) => !node.disabled && node.getAttribute('aria-disabled') !== 'true');
-            const current = items.indexOf(document.activeElement);
-            const key = event.key.toLowerCase();
-            const ordered = items.slice(current + 1).concat(items.slice(0, current + 1));
-            const match = ordered.find((node) => node.textContent.trim().toLowerCase().startsWith(key));
-            if (match) {
-                event.preventDefault();
-                match.focus();
-            }
-            return;
-        }
-        if (roving && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
-            const items = [...el.querySelectorAll(roving)].filter((node) => !node.disabled && node.getAttribute('aria-disabled') !== 'true');
-            if (items.length === 0) return;
-            event.preventDefault();
-            const current = items.indexOf(document.activeElement);
-            let next = 0;
-            if (event.key === 'ArrowDown') next = current < 0 ? 0 : (current + 1) % items.length;
-            if (event.key === 'ArrowUp') next = current <= 0 ? items.length - 1 : current - 1;
-            if (event.key === 'End') next = items.length - 1;
-            items[next].focus();
-            return;
-        }
-        if (event.key !== 'Tab' || !__TRAP__) return;
-        const items = focusables();
-        if (items.length === 0) {
-            event.preventDefault();
-            el.focus();
-            return;
-        }
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (event.shiftKey && (document.activeElement === first || document.activeElement === el)) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-        }
-    };
-    el.addEventListener('keydown', onKey);
-    requestAnimationFrame(() => {
-        if (el.contains(document.activeElement)) return;
-        const items = focusables();
-        const selected = roving && el.querySelector(roving + '[aria-selected="true"], ' + roving + '[aria-checked="true"]');
-        const target = items.find((node) => node.hasAttribute('autofocus')) || selected || items[0] || el;
-        target.focus({ preventScroll: true });
-    });
-    await dioxus.recv();
-    el.removeEventListener('keydown', onKey);
-    if (previous && previous.isConnected && typeof previous.focus === 'function' && el.contains(document.activeElement)) {
-        previous.focus({ preventScroll: true });
-    }
-}
-"#;
+const FOCUS_SCRIPT: &str = include_str!("focus.js");
 
 /// Keyboard behaviour for an open dialog or sheet.
 ///
@@ -232,42 +246,25 @@ pub(crate) fn use_overlay_focus_with(
     roving: Option<&'static str>,
     on_escape: Callback<()>,
 ) {
-    let session = use_hook(|| std::rc::Rc::new(Cell::new(None::<document::Eval>)));
-    {
-        let session = session.clone();
-        use_effect(move || {
-            let is_open = open();
-            match (is_open, session.get()) {
-                (true, None) => {
-                    let script = FOCUS_SCRIPT
-                        .replace("__ID__", &js_string(&id))
-                        .replace("__TRAP__", if trap { "true" } else { "false" })
-                        .replace(
-                            "__ROVING__",
-                            &roving.map_or_else(|| "null".to_string(), js_string),
-                        );
-                    let eval = document::eval(&script);
-                    session.set(Some(eval));
-                    spawn(async move {
-                        let mut reader = eval;
-                        while let Ok(message) = reader.recv::<String>().await {
-                            if message == "escape" {
-                                on_escape.call(());
-                            }
-                        }
-                    });
-                }
-                (false, Some(eval)) => {
-                    session.set(None);
-                    let _ = eval.send("close");
-                }
-                _ => {}
-            }
-        });
-    }
-    use_drop(move || {
-        if let Some(eval) = session.take() {
-            let _ = eval.send("close");
+    let config = use_synced_signal((id.clone(), trap, open));
+    use_effect(move || {
+        let (id, trap, open) = config();
+        let _ = open();
+        document::eval(&format!(
+            "const el = document.getElementById({}); if (el) el.dataset.g3TrapFocus = {};",
+            js_string(&id),
+            js_string(if trap { "true" } else { "false" })
+        ));
+    });
+    let script = open().then(|| {
+        FOCUS_SCRIPT.replace("__ID__", &js_string(&id)).replace(
+            "__ROVING__",
+            &roving.map_or_else(|| "null".to_string(), js_string),
+        )
+    });
+    super::script::use_dom_script::<String>(script, move |message| {
+        if message == "escape" {
+            on_escape.call(());
         }
     });
 }

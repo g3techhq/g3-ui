@@ -5,7 +5,7 @@ use super::field::{FieldShell, described_by, is_invalid};
 use super::popover::{PopoverFrame, PopoverPlacement};
 use super::wheel::WheelColumn;
 use super::{BottomSheet, Button, ButtonFill, Modal};
-use crate::state::{use_controlled, use_element_id};
+use crate::state::{use_controlled, use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{Calendar as CalendarIcon, Clock};
@@ -99,9 +99,11 @@ fn DateWheels(
     draft: Signal<CalendarDate>,
     min: Option<CalendarDate>,
     max: Option<CalendarDate>,
+    is_date_disabled: Option<Callback<CalendarDate, bool>>,
+    reference_date: CalendarDate,
 ) -> Element {
-    let strings = use_strings();
-    let today = use_hook(CalendarDate::today);
+    let strings = use_strings()();
+    let today = reference_date;
     let date = draft();
     let first_year = min.map_or(today.year() - 100, CalendarDate::year);
     let last_year = max
@@ -134,6 +136,11 @@ fn DateWheels(
             }
             WheelColumn {
                 labels: days,
+                disabled_indices: (1..=days_in_month(date.year(), date.month())).filter_map(|day| {
+                    let candidate = CalendarDate::new(date.year(), date.month(), day)?;
+                    (min.is_some_and(|min| candidate < min) || max.is_some_and(|max| candidate > max)
+                        || is_date_disabled.is_some_and(|check| check.call(candidate))).then_some(usize::from(day - 1))
+                }).collect::<Vec<_>>(),
                 index: usize::from(date.day() - 1),
                 aria_label: strings.day.clone(),
                 onchange: move |index: usize| set(date.year(), date.month(), index as u8 + 1),
@@ -169,6 +176,9 @@ fn DateWheels(
 pub fn DatePicker(
     /// The chosen date. Kept internally when not given.
     value: Option<Signal<Option<CalendarDate>>>,
+    /// Date used for today's highlight and an empty picker's initial draft.
+    /// Defaults to the local date. Supply the same date on both sides of SSR.
+    reference_date: Option<CalendarDate>,
     /// Visible label, which also names the field.
     label: Option<String>,
     /// Accessible name when there is no visible label.
@@ -188,8 +198,7 @@ pub fn DatePicker(
     min: Option<CalendarDate>,
     /// The latest date that can be picked.
     max: Option<CalendarDate>,
-    /// Returns `true` for dates that cannot be picked. Applies to the
-    /// calendar styles.
+    /// Returns `true` for dates that cannot be confirmed, in every picker style.
     is_date_disabled: Option<Callback<CalendarDate, bool>>,
     /// How the picker opens. Defaults to [`PickerStyle::Auto`].
     style: Option<PickerStyle>,
@@ -205,22 +214,34 @@ pub fn DatePicker(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("date", id);
     let mut value = use_controlled(value, || None);
     let mut open = use_signal(|| false);
-    let today = use_hook(CalendarDate::today);
+    let local_today = use_hook(CalendarDate::today);
+    let today = reference_date.unwrap_or(local_today);
     // The date being chosen, committed on Done or OK.
     let mut draft = use_signal(|| today.clamp_to(min, max));
     let mut draft_choice = use_signal(|| None::<CalendarDate>);
+    let config = use_synced_signal((value, min, max, today, is_date_disabled));
     use_effect(move || {
         if open() {
+            let (value, min, max, today, is_date_disabled) = config();
             let start = value.peek().unwrap_or(today).clamp_to(min, max);
             draft.set(start);
-            draft_choice.set(Some(start));
+            draft_choice
+                .set((!is_date_disabled.is_some_and(|check| check.call(start))).then_some(start));
         }
     });
+    let valid = use_callback(move |date: CalendarDate| {
+        min.is_none_or(|min| date >= min)
+            && max.is_none_or(|max| date <= max)
+            && !is_date_disabled.is_some_and(|check| check.call(date))
+    });
     let mut commit = move |date: CalendarDate| {
+        if disabled.unwrap_or(false) || !valid.call(date) {
+            return;
+        }
         value.set(Some(date));
         open.set(false);
         if let Some(onchange) = onchange {
@@ -274,6 +295,7 @@ pub fn DatePicker(
                             mode,
                             class: "g3-picker-popover",
                             Calendar {
+                                reference_date: today,
                                 value: draft_choice,
                                 min,
                                 max,
@@ -296,7 +318,7 @@ pub fn DatePicker(
                             Button {
                                 fill: ButtonFill::Clear,
                                 mode,
-                                disabled: draft_choice().is_none(),
+                                disabled: draft_choice().is_none_or(|date| !valid.call(date)),
                                 onclick: move |_| {
                                     if let Some(date) = draft_choice() {
                                         commit(date);
@@ -309,7 +331,7 @@ pub fn DatePicker(
                             p { class: "g3-picker-headline", aria_live: "polite", "{headline}" }
                         }
                         if open() {
-                            Calendar { value: draft_choice, min, max, is_date_disabled, mode }
+                            Calendar { value: draft_choice, min, max, is_date_disabled, mode, reference_date: today }
                         }
                     }
                 },
@@ -324,11 +346,12 @@ pub fn DatePicker(
                             Button {
                                 fill: ButtonFill::Clear,
                                 mode,
+                                disabled: !valid.call(draft()),
                                 onclick: move |_| commit(draft()),
                                 "{strings.done}"
                             }
                         }
-                        DateWheels { draft, min, max }
+                        DateWheels { draft, min, max, is_date_disabled, reference_date: today }
                     }
                 },
             }

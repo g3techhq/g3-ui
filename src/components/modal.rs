@@ -1,5 +1,7 @@
 //! Centred dialogs.
-use super::overlay::{use_lock_body_scroll, use_overlay_focus};
+use super::overlay::{
+    use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
+};
 use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -77,9 +79,10 @@ pub fn Modal(
     let id = use_element_id("modal", None);
     let title_id = format!("{id}-title");
     let body_id = format!("{id}-body");
+    let layer_id = format!("{id}-layer");
     let dismissible = use_synced_signal(dismissible.unwrap_or(true));
     let dismiss = use_callback(move |()| {
-        if !dismissible() {
+        if !open() || !dismissible() {
             return;
         }
         let mut open = open;
@@ -90,9 +93,16 @@ pub fn Modal(
     });
     use_lock_body_scroll(open.into());
     use_overlay_focus(open.into(), id.clone(), true, dismiss);
+    use_overlay_registration(open.into(), id.clone(), dismiss);
+    use_top_layer(
+        open.into(),
+        layer_id.clone(),
+        std::time::Duration::from_millis(220),
+    );
     let mut ever_opened = use_signal(|| false);
+    let open_prop = use_synced_signal(open);
     use_effect(move || {
-        if open() {
+        if open_prop()() {
             ever_opened.set(true);
         }
     });
@@ -116,6 +126,7 @@ pub fn Modal(
         ModalRole::AlertDialog => "alertdialog",
     };
     rsx! {
+      div { id: layer_id, class: "g3-overlay-layer", popover: "manual",
         div {
             class: "g3-modal-overlay",
             "data-state": state,
@@ -141,5 +152,6 @@ pub fn Modal(
                 }
             }
         }
+      }
     }
 }

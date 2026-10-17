@@ -356,13 +356,13 @@ fn ListPlaygroundDemo() -> Element {
             // An edge-to-edge list is meant to touch the screen edges.
             padding: variant() != ListVariant::EdgeToEdge,
             controls: rsx! {
-                crate::SegmentGroup { value: variant, aria_label: "Variant",
+                crate::SegmentGroup { value: variant, label: "Variant",
                     crate::SegmentButton { value: ListVariant::EdgeToEdge, "Edge to edge" }
                     crate::SegmentButton { value: ListVariant::Raised, "Raised" }
                     crate::SegmentButton { value: ListVariant::Flat, "Flat" }
                     crate::SegmentButton { value: ListVariant::Filled, "Filled" }
                 }
-                crate::SegmentGroup { value: lines, aria_label: "Lines",
+                crate::SegmentGroup { value: lines, label: "Lines",
                     crate::SegmentButton { value: ListLines::Full, "Full lines" }
                     crate::SegmentButton { value: ListLines::Inset, "Inset lines" }
                     crate::SegmentButton { value: ListLines::None, "No lines" }

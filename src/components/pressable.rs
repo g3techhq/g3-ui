@@ -105,7 +105,7 @@ pub(crate) fn Pressable(
     #[props(extends = GlobalAttributes)] attributes: Vec<Attribute>,
     children: Element,
 ) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let new_tab_note = rsx! {
         span { class: "g3-sr-only", " {strings.opens_in_new_tab}" }
     };

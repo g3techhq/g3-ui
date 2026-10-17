@@ -80,7 +80,7 @@ fn EmptyStatePlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::SegmentGroup { value: kind, aria_label: "State",
+                crate::SegmentGroup { value: kind, label: "State",
                     crate::SegmentButton { value: 0_usize, "Empty" }
                     crate::SegmentButton { value: 1_usize, "No results" }
                     crate::SegmentButton { value: 2_usize, "Error" }

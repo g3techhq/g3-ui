@@ -53,7 +53,7 @@ pub fn ConfirmModal(
     /// Extra content between the message and the buttons.
     children: Element,
 ) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let confirm_label = confirm_label.unwrap_or(strings.confirm);
     let cancel_label = cancel_label.unwrap_or(strings.cancel);
     let cancel = move |_| {

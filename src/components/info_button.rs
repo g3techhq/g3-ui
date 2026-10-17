@@ -41,7 +41,8 @@ pub fn InfoButton(
 ) -> Element {
     let mode = use_component_mode(mode);
     let mut open = use_signal(|| false);
-    let aria_label = aria_label.unwrap_or_else(|| use_strings().more_information);
+    let strings = use_strings();
+    let aria_label = aria_label.unwrap_or_else(|| strings.read().more_information.clone());
     let has_sheet = sheet.is_some();
     let cls = classes([
         "g3-info-btn",

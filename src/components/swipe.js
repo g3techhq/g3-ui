@@ -32,13 +32,18 @@ const rests = new WeakMap();
 let active = null;
 let suppress = null;
 
+const direction = (row) => getComputedStyle(row).direction === "rtl" ? -1 : 1;
+
 const send = (row, kind, offset, edge, committed) => {
+    // Reports use logical displacement: positive exposes Start in either direction.
+    offset *= direction(row);
     dioxus.send([row.id, kind, [offset, edge ? offset / edge.width : 0, committed ? 1 : 0]]);
 };
 
 // The edge a drag of `raw` pixels moves toward, if it has actions.
 const edgeFor = (row, raw) => {
-    const side = raw > 0 ? "start" : raw < 0 ? "end" : null;
+    const logical = raw * direction(row);
+    const side = logical > 0 ? "start" : logical < 0 ? "end" : null;
     if (!side || row.dataset[side === "start" ? "hasStart" : "hasEnd"] !== "true") return null;
     const behavior = row.dataset[side === "start" ? "startBehavior" : "endBehavior"];
     let width = behavior === "activate" ? ACTIVATE_WIDTH : DISMISS_WIDTH;
@@ -83,8 +88,8 @@ const paint = (row, offset, dragging) => {
     // Rust hears only where a row comes to rest, so its `aria-hidden` still
     // says closed for the whole drag - and for all of an activate swipe, which
     // always rests shut. The edge being uncovered is shown from here instead.
-    if (offset > 0) row.dataset.exposed = "start";
-    else if (offset < 0) row.dataset.exposed = "end";
+    if (offset * direction(row) > 0) row.dataset.exposed = "start";
+    else if (offset * direction(row) < 0) row.dataset.exposed = "end";
     else delete row.dataset.exposed;
     if (edge && edge.behavior !== "reveal" && committedAt(edge, offset)) row.dataset.committed = "true";
     else delete row.dataset.committed;
@@ -244,11 +249,13 @@ window[key] = {
         const row = document.getElementById(id);
         if (!row || !idle(row)) return;
         if (to === "close") return rest(row, 0);
+        if (to === "left") to = direction(row) === 1 ? "end" : "start";
+        if (to === "right") to = direction(row) === 1 ? "start" : "end";
         // Whatever the edge's swipe does, this uncovers its buttons.
         if (row.dataset[to === "start" ? "hasStart" : "hasEnd"] !== "true") return;
         const actions = row.querySelector(`:scope > .g3-swipe-actions-${to}`);
         const width = Math.max(actions?.getBoundingClientRect().width || REVEAL_WIDTH, 1);
-        rest(row, to === "start" ? width : -width);
+        rest(row, (to === "start" ? width : -width) * direction(row));
     },
     dispose() {
         document.removeEventListener("pointerdown", onPointerDown);
@@ -260,5 +267,5 @@ window[key] = {
         released();
     },
 };
-// Native renderers close an eval's channel as soon as its script returns.
+// Keep the shared session alive until its explicit disposer runs.
 await done;

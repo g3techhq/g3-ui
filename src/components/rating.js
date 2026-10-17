@@ -18,8 +18,9 @@ const valueAt = (row, clientX) => {
     const first = stars[0].getBoundingClientRect();
     const size = first.width;
     // Measured, so the stars may shrink to fit and the gap may change.
-    const pitch = max > 1 ? stars[1].getBoundingClientRect().left - first.left : size;
-    const offset = clientX - first.left;
+    const pitch = max > 1 ? Math.abs(stars[1].getBoundingClientRect().left - first.left) : size;
+    const rtl = getComputedStyle(row).direction === 'rtl';
+    const offset = rtl ? first.right - clientX : clientX - first.left;
     const index = Math.min(Math.max(Math.floor(offset / pitch), 0), max - 1);
     const half = row.dataset.half === "true";
     const step = half && offset - index * pitch < size / 2 ? 0.5 : 1;
@@ -80,5 +81,5 @@ window[key] = {
         released();
     },
 };
-// Native renderers close an eval's channel as soon as its script returns.
+// Keep the shared session alive until its explicit disposer runs.
 await done;

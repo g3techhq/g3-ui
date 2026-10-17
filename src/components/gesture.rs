@@ -21,8 +21,8 @@ use std::rc::Rc;
 /// A gesture script: the `Symbol.for` name it registers under, and its source.
 ///
 /// The script sends `[id, kind, [numbers...]]` for each report, and must end
-/// by awaiting a promise that only its `dispose` resolves, because native
-/// renderers close an eval's channel as soon as its script returns. A script
+/// by awaiting a promise that only its `dispose` resolves, so its lifetime
+/// and teardown are explicit on every renderer. A script
 /// that takes commands from Rust exposes `command(id, what)` on
 /// `window[Symbol.for(name)]`.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -86,14 +86,24 @@ pub(crate) fn use_gesture(
             .unwrap_or_else(|| provide_root_context(GestureBridge::default()))
     });
     let handler = use_callback(handler);
-    use_hook({
-        let (bridge, id) = (bridge.clone(), id.clone());
-        move || bridge.handlers.borrow_mut().insert(id, handler)
+    let id = crate::state::use_synced_signal(id);
+    let registered = use_hook(|| Rc::new(RefCell::new(None::<String>)));
+    use_effect({
+        let (bridge, registered) = (bridge.clone(), registered.clone());
+        move || {
+            let id = id();
+            if let Some(previous) = registered.borrow_mut().replace(id.clone()) {
+                bridge.handlers.borrow_mut().remove(&previous);
+            }
+            bridge.handlers.borrow_mut().insert(id, handler);
+        }
     });
     use_drop({
-        let (bridge, id) = (bridge.clone(), id);
+        let bridge = bridge.clone();
         move || {
-            bridge.handlers.borrow_mut().remove(&id);
+            if let Some(id) = registered.borrow_mut().take() {
+                bridge.handlers.borrow_mut().remove(&id);
+            }
         }
     });
     use_callback(move |()| bridge.start(script))
@@ -118,7 +128,7 @@ pub(crate) fn assert_gesture_script(script: GestureScript) {
         "{} registers under its name",
         script.name
     );
-    // Native renderers close an eval's channel when its script returns.
+    // Shared scripts have an explicit lifetime ending in their disposer.
     assert!(
         source.trim_end().ends_with("await done;"),
         "{} stays alive",

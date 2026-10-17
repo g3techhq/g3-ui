@@ -3,6 +3,7 @@ use super::color::Color;
 use super::field::{FieldShell, described_by};
 use super::gesture::{GestureScript, use_gesture};
 use crate::state::{use_controlled, use_element_id};
+use crate::theme::{Strings, use_strings};
 use dioxus::prelude::*;
 
 /// A five-point star, on a 24 x 24 grid.
@@ -27,16 +28,19 @@ fn snap(value: f64, max: u8, half: bool) -> f64 {
 }
 
 /// How a value reads aloud: "3.5 of 5 stars", or "Not rated".
-fn spoken(value: f64, max: u8) -> String {
+fn spoken(strings: &Strings, value: f64, max: u8) -> String {
     if value <= 0.0 {
-        return "Not rated".to_string();
+        return strings.rating_unrated.clone();
     }
     let number = if value.fract() == 0.0 {
         format!("{value:.0}")
     } else {
         format!("{value:.1}")
     };
-    format!("{number} of {max} stars")
+    strings
+        .rating_value
+        .replace("{value}", &number)
+        .replace("{max}", &max.to_string())
 }
 
 /// A row of stars. Like a slider, it can be pressed, dragged across, or moved
@@ -93,6 +97,7 @@ pub fn Rating(
     /// Extra classes for the field wrapper.
     class: Option<String>,
 ) -> Element {
+    let strings = use_strings()();
     let id = use_element_id("rating", id);
     let max = max.unwrap_or(5).max(1);
     let half = half.unwrap_or(false);
@@ -152,11 +157,11 @@ pub fn Rating(
     // with aria-labelledby: that replaces aria-label outright, and the value
     // would be lost.
     let display_name = match (&label, &aria_label) {
-        (Some(name), _) | (None, Some(name)) => format!("{name}: {}", spoken(shown, max)),
-        (None, None) => spoken(shown, max),
+        (Some(name), _) | (None, Some(name)) => format!("{name}: {}", spoken(&strings, shown, max)),
+        (None, None) => spoken(&strings, shown, max),
     };
     let describedby = described_by(&id, &helper, &None);
-    let spoken_value = spoken(shown, max);
+    let spoken_value = spoken(&strings, shown, max);
     let px = size.to_string();
 
     let stars = rsx! {
@@ -261,7 +266,7 @@ fn RatingPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
                 crate::Checkbox { checked: half, label: "Half stars" }
-                crate::SegmentGroup { value: max, aria_label: "Stars",
+                crate::SegmentGroup { value: max, label: "Stars",
                     crate::SegmentButton { value: 5_u8, "5 stars" }
                     crate::SegmentButton { value: 10_u8, "10 stars" }
                 }
@@ -315,9 +320,10 @@ mod tests {
 
     #[test]
     fn values_read_aloud() {
-        assert_eq!(spoken(0.0, 5), "Not rated");
-        assert_eq!(spoken(4.0, 5), "4 of 5 stars");
-        assert_eq!(spoken(3.5, 10), "3.5 of 10 stars");
+        let strings = Strings::default();
+        assert_eq!(spoken(&strings, 0.0, 5), "Not rated");
+        assert_eq!(spoken(&strings, 4.0, 5), "4 of 5 stars");
+        assert_eq!(spoken(&strings, 3.5, 10), "3.5 of 10 stars");
     }
 
     #[test]

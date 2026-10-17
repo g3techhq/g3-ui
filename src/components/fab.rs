@@ -244,7 +244,7 @@ pub fn FabMenu(
 ) -> Element {
     let mut open = use_controlled(open, || false);
     let list_id = use_element_id("fab-list", None);
-    let close_label = use_strings().close;
+    let close_label = use_strings().read().close.clone();
     let is_open = open();
     rsx! {
         Fab { vertical, horizontal, class,
@@ -279,17 +279,17 @@ fn FabPlaygroundDemo() -> Element {
             app: false,
             center: false,
             controls: rsx! {
-                crate::SegmentGroup { value: vertical, aria_label: "Vertical",
+                crate::SegmentGroup { value: vertical, label: "Vertical",
                     crate::SegmentButton { value: FabVertical::Top, "Top" }
                     crate::SegmentButton { value: FabVertical::Center, "Center" }
                     crate::SegmentButton { value: FabVertical::Bottom, "Bottom" }
                 }
-                crate::SegmentGroup { value: horizontal, aria_label: "Horizontal",
+                crate::SegmentGroup { value: horizontal, label: "Horizontal",
                     crate::SegmentButton { value: FabHorizontal::Start, "Start" }
                     crate::SegmentButton { value: FabHorizontal::Center, "Center" }
                     crate::SegmentButton { value: FabHorizontal::End, "End" }
                 }
-                crate::SegmentGroup { value: side, aria_label: "List side",
+                crate::SegmentGroup { value: side, label: "List side",
                     crate::SegmentButton { value: FabListSide::Top, "Top" }
                     crate::SegmentButton { value: FabListSide::Bottom, "Bottom" }
                     crate::SegmentButton { value: FabListSide::Start, "Start" }

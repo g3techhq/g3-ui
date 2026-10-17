@@ -163,7 +163,7 @@ pub fn Select<T: Clone + PartialEq + 'static>(
     };
     let class = Some(crate::theme::merge_classes(width_cls, class.as_deref()));
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("select", id);
     let list_id = format!("{id}-list");
     let initial = default_value.or_else(|| options.first().map(|option| option.value.clone()));

@@ -1,6 +1,8 @@
 //! Tabs that switch between panels.
+use super::gesture::{GestureScript, use_gesture};
+use super::hscroll::use_horizontal_scroll;
 use super::keyboard::use_roving_selection;
-use crate::state::use_element_id;
+use crate::state::{provide_live_context, use_element_id};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -10,9 +12,7 @@ struct TabsContext<T: 'static> {
     onchange: Option<EventHandler<T>>,
     id: Signal<String>,
     mode: ComponentMode,
-    order: Signal<Vec<u64>>,
     previous: Signal<Option<u64>>,
-    direction: Signal<i8>,
     animating: Signal<bool>,
     animated: bool,
 }
@@ -24,6 +24,26 @@ impl<T> Clone for TabsContext<T> {
 }
 
 impl<T> Copy for TabsContext<T> {}
+
+impl<T> PartialEq for TabsContext<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+            && self.onchange == other.onchange
+            && self.id == other.id
+            && self.mode == other.mode
+            && self.previous == other.previous
+            && self.animating == other.animating
+            && self.animated == other.animated
+    }
+}
+
+#[derive(Clone, Copy)]
+struct TabsMode(Signal<ComponentMode>);
+
+const TABS_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.tabs",
+    source: include_str!("tabs.js"),
+};
 
 impl<T: Hash> TabsContext<T> {
     fn key(&self, value: &T) -> u64 {
@@ -99,9 +119,7 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     let mode = use_component_mode(mode);
     let id = use_element_id("tabs", None);
     let id_signal = use_signal(|| id.clone());
-    let order = use_signal(Vec::<u64>::new);
     let previous = use_signal(|| None::<u64>);
-    let direction = use_signal(|| 1_i8);
     let animating = use_signal(|| false);
     let animated = animated.unwrap_or(true);
     let context = TabsContext {
@@ -109,62 +127,23 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
         onchange,
         id: id_signal,
         mode,
-        order,
         previous,
-        direction,
         animating,
         animated,
     };
-    let mut provided = use_context_provider(|| Signal::new(context));
-    if provided.peek().onchange != onchange
-        || provided.peek().mode != mode
-        || provided.peek().animated != animated
-    {
-        provided.set(context);
-    }
+    provide_live_context(context);
+    let tab_mode = crate::state::use_synced_signal(mode);
+    use_context_provider(|| TabsMode(tab_mode));
+    let start_script = use_gesture(TABS_SCRIPT, id.clone(), |_| {});
     let swipe = swipe.unwrap_or(false);
-    let mut gesture_start = use_signal(|| None::<(f64, f64)>);
-    let swipe_capture_id = id.clone();
-    let swipe_release_id = id.clone();
     rsx! {
         div {
             id,
             class: merge_classes("g3-tabs", class.as_deref()),
             "data-animated": animated.to_string(),
-            "data-direction": if direction() < 0 { "backward" } else { "forward" },
+            "data-direction": "forward",
             "data-swipe": swipe.to_string(),
-            onpointerdown: move |event| {
-                if swipe && event.data.pointer_type() != "mouse" {
-                    let point = event.client_coordinates();
-                    gesture_start.set(Some((point.x, point.y)));
-                    document::eval(&format!(
-                        "try {{ document.getElementById({}).setPointerCapture({}); }} catch (error) {{}}",
-                        crate::components::overlay::js_string(&swipe_capture_id),
-                        event.data.pointer_id(),
-                    ));
-                }
-            },
-            onpointerup: move |event| {
-                let Some((start_x, start_y)) = gesture_start.take() else { return };
-                let point = event.client_coordinates();
-                let dx = point.x - start_x;
-                let dy = point.y - start_y;
-                if dx.abs() < 48.0 || dx.abs() <= dy.abs() {
-                    return;
-                }
-                event.prevent_default();
-                let direction = if dx < 0.0 { 1 } else { -1 };
-                document::eval(&format!(
-                    r#"const root = document.getElementById({});
-                        const tabs = [...(root?.querySelectorAll('[role="tab"]') || [])]
-                            .filter((tab) => !tab.disabled && tab.getAttribute('aria-disabled') !== 'true');
-                        const current = tabs.findIndex((tab) => tab.getAttribute('aria-selected') === 'true');
-                        tabs[current + {}]?.click();"#,
-                    crate::components::overlay::js_string(&swipe_release_id),
-                    direction,
-                ));
-            },
-            onpointercancel: move |_| { gesture_start.set(None); },
+            onmounted: move |_| start_script.call(()),
             {children}
         }
     }
@@ -183,9 +162,11 @@ pub fn TabList(
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let mode = use_component_mode(mode);
+    let group_mode = try_consume_context::<TabsMode>().map(|mode| mode.0());
+    let mode = use_component_mode(mode.or(group_mode));
     let id = use_element_id("tablist", None);
     use_roving_selection(id.clone(), "[role=tab]", false);
+    use_horizontal_scroll(id.clone(), scrollable.unwrap_or(false));
     let in_toolbar = try_consume_context::<super::HeaderToolbarContext>().is_some();
     rsx! {
         div {
@@ -218,15 +199,6 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
 ) -> Element {
     let context = use_context::<Signal<TabsContext<T>>>()();
     let (tab_id, panel_id) = context.ids(&value);
-    let key = context.key(&value);
-    let mut order = context.order;
-    use_hook(move || {
-        order.with_mut(|items| {
-            if !items.contains(&key) {
-                items.push(key);
-            }
-        });
-    });
     let mut selected_value = context.value;
     let selected = *selected_value.read() == value;
     rsx! {
@@ -247,14 +219,6 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
                     return;
                 }
                 let current_key = context.key(&selected_value.peek());
-                let target_key = context.key(&value);
-                let order = context.order.peek();
-                let current_index = order.iter().position(|item| *item == current_key);
-                let target_index = order.iter().position(|item| *item == target_key);
-                if let (Some(current), Some(target)) = (current_index, target_index) {
-                    let mut direction = context.direction;
-                    direction.set(if target < current { -1 } else { 1 });
-                }
                 if context.animated {
                     let mut previous = context.previous;
                     let mut animating = context.animating;
@@ -309,6 +273,7 @@ pub fn TabPanel<T: Clone + PartialEq + Hash + 'static>(
             "data-state": state,
             aria_labelledby: tab_id,
             aria_hidden: (!selected).then_some("true"),
+            inert: (!selected).then_some(true),
             tabindex: "0",
             hidden: !selected && !leaving,
             onanimationend: move |event| {
@@ -331,6 +296,7 @@ pub fn TabPanel<T: Clone + PartialEq + Hash + 'static>(
 #[component]
 fn TabsPlaygroundDemo() -> Element {
     let tab = use_signal(|| "scores");
+    let mut taps = use_signal(|| 0_u32);
     rsx! {
         crate::PlaygroundDemoFrame {
             crate::Stack {
@@ -345,6 +311,7 @@ fn TabsPlaygroundDemo() -> Element {
                     }
                     TabPanel { value: "scores",
                         crate::Card { title: "Scores", "Front nine: 38" }
+                        crate::Button { onclick: move |_| taps += 1, "Panel action: {taps}" }
                     }
                     TabPanel { value: "players",
                         crate::Card { title: "Players", "Four players in this group." }

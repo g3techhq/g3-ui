@@ -183,7 +183,7 @@ fn ButtonPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
                 crate::Input { label: "Label", value: label }
-                crate::SegmentGroup { value: fill, aria_label: "Fill",
+                crate::SegmentGroup { value: fill, label: "Fill",
                     crate::SegmentButton { value: ButtonFill::Solid, "Solid" }
                     crate::SegmentButton { value: ButtonFill::Outline, "Outline" }
                     crate::SegmentButton { value: ButtonFill::Clear, "Clear" }
@@ -199,7 +199,7 @@ fn ButtonPlaygroundDemo() -> Element {
                         crate::SelectOption::new(Color::Danger, "Danger"),
                     ],
                 }
-                crate::SegmentGroup { value: size, aria_label: "Size",
+                crate::SegmentGroup { value: size, label: "Size",
                     crate::SegmentButton { value: ButtonSize::Sm, "Sm" }
                     crate::SegmentButton { value: ButtonSize::Md, "Md" }
                     crate::SegmentButton { value: ButtonSize::Lg, "Lg" }
