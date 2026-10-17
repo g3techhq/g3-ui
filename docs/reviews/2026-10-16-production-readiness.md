@@ -256,3 +256,56 @@ InputOtp. None of these blocks a release.
 4. Bump to 0.6.0 and patch-check the four consumers.
 5. Do an Android device pass and a WKWebView pass per `docs/testing.md`.
 6. With the maintainer's go-ahead, publish through `publish-crate.yml`.
+
+## Status — October 17, 2026
+
+Worked through on branch `chore/0.6.0-readiness`; nothing pushed or
+published.
+
+| Item | Outcome |
+| --- | --- |
+| B1 dev-server double boot | A clean `dx serve` fixed it; the browser suite now asserts a single app tree (`654be08`). |
+| B1 test drift | Fixed (`654be08`). |
+| B1 / B2 off-screen sheets | The confined layer is clipped to the viewport; the Mobile preview fits under the header (`1a41b7b`, `654be08`). |
+| B3 version | 0.6.0, changelog reorganised with migrations (`6d0e1e1`). Consumer checks below. |
+| B4 device pass | Not done: no device or emulator here. |
+| Uncommitted tree | Committed as the baseline (`1a41b7b`). |
+| P3-2 dangling `aria-controls`, P3-4 required `Select` | Fixed, with an IDREF test (`9c1c7ea`). |
+| P3-3 SSR mode | Global mode is process-wide; docs say to pass `mode` when server-rendering (`c4daf33`). |
+| P3-5 duplicate stylesheet links | Only the root `AppWrapper` links head elements (`a63bde6`). |
+| P3-6 unescaped theme values | Documented as trusted input; `Theme::from_seeds` is the safe path (`c4daf33`). |
+| P3-7 touch targets | 44px hit areas (`a63bde6`). |
+| P3-8 rustdoc link | Fixed; `just doc` and a CI job fail on doc warnings (`c332e6d`). |
+| P3-9 rail storage | Kept `remember: true`; key documented (`c4daf33`). |
+| Event naming | `onreorder` became `on_reorder` with `ReorderEvent`; rule written into AGENTS.md (`f2b9d67`). |
+| Required value signals | Kept for `Tabs`/`SegmentGroup`; AGENTS.md now allows a required signal when `T` has no default. |
+| `Rating.size`, `heading_level` | `heading_level` became `HeadingLevel`. `Rating.size` stays pixels: media-mancer sizes stars freely. |
+| `ShellSize`, `Grid.wide_*` | `wide_*` removed for `medium_*`/`expanded_*`. `ShellSize` kept: it is the only whole-app width inside a `LayoutScope`; docs cross-link. |
+| Missing `mode` | Added where Ionic's look differs (Badge, Progress, Spinner, Range). Chip, Avatar, Stepper, Rating, NavItem and MenuItem look the same in both modes or follow their container. |
+| Missing `color` | Added to 10 controls plus Card and Header fills (`6dd96b2`). |
+| Form props | `error`, `required`, `name`, `id`, `aria_label`, `new_tab` gaps filled (`06cbe8d`). `Select` has no `name`: a generic `T` has no string form. |
+| `Menu` name | Kept (Material's name); docs point Ionic users to `NavigationDrawer`. |
+| `open_sheet_count`, `color_scheme` | Kept: the first counts something `OverlayController` does not; the second is set as CSS text by consumers and allows values like `only light`. |
+| `Theme::tokens` | Returns a `Vec` (`f2b9d67`). |
+| Playground head | `lang`, title, description (`c332e6d`). |
+
+### Consumer checks against 0.6.0
+
+Each app's `g3-ui` requirement was raised to `0.6.0` temporarily (the
+workspace `.cargo/config.toml` already patches it to this checkout), `cargo
+check` was run (web, the default feature), and `Cargo.toml` and `Cargo.lock`
+were restored byte-for-byte. `AWS_LC_SYS_PREBUILT_NASM=1` was needed for
+greenside and media-mancer: NASM is not on this machine's PATH.
+
+| App | Result |
+| --- | --- |
+| g3-stack | Compiles. |
+| greenside-partee | Compiles. |
+| tawny | 2 errors, both the documented `heading_level` migration (`account.rs:107`, `player.rs:2422`). |
+| media-mancer | 2 errors, both the documented `onreorder` migration (`bookmarks.rs:150`, `list_detail.rs:284`). |
+
+**Release ordering:** `g3-auth` requires `g3-ui = "0.5.0"` for its `apple`
+and `google` features. Until it is bumped to `0.6` and republished, an app on
+g3-ui 0.6 compiles two copies of g3-ui, and the sign-in buttons render
+outside the app's theme and mode context. g3-auth uses only `Button` and
+`Text`, which did not change, so it needs only the version bump.
