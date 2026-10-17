@@ -6,229 +6,186 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`, `Spinner`,
-  `SegmentGroup`, `FabButton` and `FabMenu` take a `color` role, as Ionic's
-  controls do. `Card` and `Header` take `color` to fill with it, and their
-  content (title, icons, buttons, a toolbar segment) switches to the matching
-  contrast. The stylesheet exposes the role as `--g3-tint`, `--g3-on-tint`
-  and `--g3-tint-ink`.
-- `Badge`, `Progress`, `Spinner` and `Range` follow the mode like Ionic: an
-  iOS badge is a pill and a Material one is slightly rounded; a Material
-  progress bar is square; the iOS spinner is Ionic's eight fading lines; the
-  iOS range has a 4px bar and a large knob, the Material one a 2px bar and a
-  small tinted knob. Each takes a `mode` prop.
-- Form controls report the same states: `Toggle`, `RadioGroup`, `Range`,
-  `Stepper` and `Rating` take `error`; `Toggle`, `Checkbox` and `RadioGroup`
-  take `required` (`aria-required`); `RadioGroup` takes an `id`. `Toggle`
-  and `Checkbox` take `name`: a checked one submits `name=on` with its form,
-  so a Dioxus `onsubmit` sees it in the form values.
-- `Tab`, `MenuItem` and pressable `Chip`s take `aria_label` for icon-only
-  content; `Searchbar` takes an `id`; `Card`, `MenuItem`, `NavItem` and
-  `FabButton` take `new_tab` like `Button` and `Item`.
-- **Breaking:** `ReorderList`'s `onreorder: (usize, usize)` is now
+## [0.6.0] - 2026-10-17
+
+### Breaking changes
+
+- `use_theme()` returns shared, writable `Signal<Theme>` state. Writes update
+  the provider's CSS and every reader; an explicit subtree theme stays
+  isolated, and a changed `theme` prop replaces the current state. Migration:
+  read with `theme.read().field` or `theme()`, and change it with
+  `theme.write().field = ...` or `theme.set(...)` in handlers.
+- `use_strings()` returns `Signal<Strings>`, and the new `use_mode()` returns
+  `Signal<ComponentMode>`; children change mode and labels directly. Provider
+  overrides isolate edits, omitted values share the parent's state, and
+  changed props replace it. Migration: read labels with
+  `strings.read().field` or `strings()`, and call the hooks unconditionally
+  before branching.
+- `ReorderList`'s `onreorder: (usize, usize)` is now
   `on_reorder: ReorderEvent`, following the rule that a component's own
   events are `on_*` and carry a named struct. `ReorderEvent::apply` makes the
   move in a `Vec`. Migration: `on_reorder: move |moved: ReorderEvent|
   items.with_mut(|items| moved.apply(items))`.
-- **Breaking:** `heading_level` on `Card`, `EmptyState`, `ListHeader`,
-  `AccordionItem` and `Shelf` takes a `HeadingLevel` (`H1`..`H6`) instead of a
-  `u8` that was silently clamped. Migration: `heading_level: 3` becomes
+- `heading_level` on `Card`, `EmptyState`, `ListHeader`, `AccordionItem` and
+  `Shelf` takes a `HeadingLevel` (`H1` to `H6`) instead of a `u8` that was
+  silently clamped. Migration: `heading_level: 3` becomes
   `heading_level: HeadingLevel::H3`.
-- **Breaking:** `Grid` drops `wide_columns` and `wide_gap`; use
-  `medium_columns` and the new `medium_gap` (from 48rem) and
-  `expanded_gap` (from 64rem). The `--g3-grid-columns-wide` property and
-  `data-wide-gap` attribute are gone.
-- **Breaking:** `Theme::tokens()` returns a `Vec`, so adding a token is not a
-  breaking change again.
-- `Menu`'s docs point Ionic users to `NavigationDrawer`, and `ShellSize`'s
-  docs explain when to use `use_layout_size` instead.
-- `set_mode` is process-wide instead of per thread, so a server that sets it
-  in `main` renders every request in that mode. Document passing `mode` to
-  `AppWrapper` in server-rendered apps, that `Theme` and `Look` values are
-  written as unescaped CSS (build user-chosen themes with
-  `Theme::from_seeds`), and the nav rail's local-storage key.
+- `Grid` drops `wide_columns` and `wide_gap`. Use `medium_columns` with the new
+  `medium_gap` (from 48rem), and `expanded_columns` with `expanded_gap` (from
+  64rem). The `--g3-grid-columns-wide` property and `data-wide-gap` attribute
+  are gone.
+- `Theme::tokens()` returns a `Vec`, so adding a token is not a breaking change
+  again.
+- `Strings` has new fields (`rating_unrated`, `rating_value`, `date_long`,
+  `date_short`, `date_month_year`). A full struct literal must add them;
+  prefer `..Strings::default()`.
+- In right-to-left documents, `SwipeState::offset` and `ratio` use logical
+  signs: positive uncovers the start actions and negative the end, as in
+  left-to-right.
+- Off-step wheel times commit the displayed rounded value. An app that needs
+  arbitrary minutes uses a one-minute step or the dialog style.
+
+### Added
+
+- `color` on `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`,
+  `Spinner`, `SegmentGroup`, `FabButton` and `FabMenu`, as Ionic's controls
+  have. `Card` and `Header` take `color` to fill with it, and their content
+  (title, icons, buttons, a toolbar segment) switches to the matching
+  contrast. The stylesheet exposes the role as `--g3-tint`, `--g3-on-tint`
+  and `--g3-tint-ink`.
+- `Badge`, `Progress`, `Spinner` and `Range` take `mode` and follow it like
+  Ionic: an iOS badge is a pill and a Material one slightly rounded; a
+  Material progress bar is square; the iOS spinner is Ionic's eight fading
+  lines; the iOS range has a 4px bar and a large knob, the Material one a 2px
+  bar and a small tinted knob.
+- Form controls report the same states: `Toggle`, `RadioGroup`, `Range`,
+  `Stepper` and `Rating` take `error`; `Toggle`, `Checkbox` and `RadioGroup`
+  take `required` (`aria-required`); `RadioGroup` takes an `id`. `Toggle` and
+  `Checkbox` take `name`: a checked one submits `name=on` with its form, so a
+  Dioxus `onsubmit` sees it in the form values.
+- `aria_label` on `Tab`, `MenuItem` and pressable `Chip`s, for icon-only
+  content; `id` on `Searchbar`; `new_tab` on `Card`, `MenuItem`, `NavItem` and
+  `FabButton`, as `Button` and `Item` have.
+- Responsive layout: `LayoutSize` (Compact, Medium from 48rem, Expanded from
+  64rem) and `use_layout_size`; `LayoutScope`, which measures the width left
+  after navigation; `AdaptiveLayout`, which mounts one variant per size; and
+  `PageLayout`, with persistent `start` and `end` slots. `Grid` takes
+  `medium_columns` and `expanded_columns`.
+- `ThemeSeeds` and `Theme::from_seeds` build a whole theme at runtime from an
+  accent, a page background and an optional second accent, such as colors a
+  user picks: the background picks light or dark and tints the neutrals, text
+  reads at 4.5:1 on every surface, and an accent that falls short is moved
+  only as far as it must be. `ThemeSeeds::generate` also returns an
+  `Adjustment` for each moved seed. The `g3_ui::palette` module exposes the
+  color math (`Rgba`, `contrast`, `TEXT_CONTRAST`).
+- `Strings::from_lookup` fills `Strings` from any translation system. It asks
+  for each text by a message id (the field name, or `months_1` and the like
+  for list entries) and keeps English for any it is not given.
+- `NavRailBehavior` and a `behavior` prop on `NavRail` and `AdaptiveNav`.
+  `Toggle` (the default) keeps the edge button that expands and collapses the
+  rail; `Hover` keeps the rail icons-only and expands it over the page while
+  hovered or focused from the keyboard, without moving the page.
+- A toggled rail remembers its state across routes and visits, in local
+  storage under `g3-ui.nav-expanded`. `remember: false` turns this off; a rail
+  given an `expanded` signal leaves it to the signal's owner.
+- `use_overlay_controller()` with `OverlayController::count` and
+  `dismiss_top`, for Android Back handling across every kind of overlay.
+- `reference_date` on `Calendar` and `DatePicker`, for date markup that the
+  server and the client render identically.
+- Localized rating speech and date formats in `Strings`.
+
+### Changed
+
+- Modals, alerts, popovers, sheets and toasts share one top-layer
+  presentation order, and toasts stay above blocking overlays. Escape and
+  focus return follow the active surface.
+- Overlays inside an `AppWrapper` that does not fill the window, such as a
+  device preview, take the app's box and rounded corners instead of covering
+  the whole page, clipped to the visible viewport (`visualViewport` where
+  present).
 - Only the outermost `AppWrapper` links the stylesheet and viewport tag. A
   nested wrapper (a demo frame, a themed island) no longer adds another copy
   of `g3-ui.css` to the cascade.
 - An unlabelled `Toggle`, `Checkbox` or `Radio` takes taps across a 44px
   square around its mark, and a `Range` input box is 44px tall, so both meet
   touch-target guidance without changing the layout.
-- `aria-controls` names only elements that exist: a `Select`, `Menu` or
-  `Popover` trigger points at its panel only while it is open, a tab only at
-  the selected panel, and the calendar title only at the open year grid.
-  The `Select` trigger is now a `combobox`, so `required` is announced as
+- The `Select` trigger is a `combobox`, so `required` is announced as
   `aria-required`.
-
-- Add `ThemeSeeds` and `Theme::from_seeds` to build a whole theme at runtime
-  from an accent, a page background and an optional second accent, such as a
-  color the user picks: the background picks light or dark and tints the
-  neutrals, text reads at 4.5:1 on every surface, and an accent that falls
-  short is moved only as far as it must be. `ThemeSeeds::generate` also
-  returns an `Adjustment` for each moved seed. The new `g3_ui::palette`
-  module exposes the color math (`Rgba`, `contrast`, `TEXT_CONTRAST`). The
-  playground's theme generator now uses it.
-- Add `Strings::from_lookup` to fill `Strings` from any translation system:
-  it asks for each text by a message id (the field name, or `months_1` and
-  the like for list entries) and keeps English for any it is not given.
-- Playground: the layout hooks guide's width ranges are a g3 `Table`, with
-  the widths pinned as row headers when it scrolls on a phone.
-- Playground: the theme generator asks for the page background before the
-  accent.
-- Playground themes: Night and Forest are lifted off near-black, with page,
-  cards, raised surfaces and fields stepping lighter in turn and the text
-  colors in order of emphasis. Blue and Green get cards and fields tinted to
-  match their page. Add Light and Dark (the library defaults), Sand, Ocean,
-  Graphite and Aurora. Every preset's text and accent read at 4.5:1 on its
-  surfaces, which a test checks.
-- Theme generator: load any preset into the editor from a row of swatches to
-  use or copy its values, or generate a whole theme from an accent, a page
-  background and an optional second accent. The background picks light or
-  dark and tints the neutrals; text is set to 4.5:1, and an accent that
-  falls short is moved only as far as it must be, with a note saying so.
-- Add `NavRailBehavior` and a `behavior` prop to `NavRail` and `AdaptiveNav`.
-  `Toggle` (the default) keeps the edge button that expands and collapses the
-  rail; `Hover` keeps the rail icons-only and expands it over the page while
-  hovered or focused from the keyboard, without moving the page. Its rows keep
-  one layout, so they slide out of and back into their icons as it widens.
+- `set_mode` is process-wide instead of per thread, so a server that sets it in
+  `main` renders every request in that mode.
+- Wide content padding scales with its container rather than the browser
+  window, so embedded previews and narrow app panes keep a usable width.
 - A scrollable `SegmentGroup` or `Tabs` strip slides its indicator between
   options again, in both modes, instead of highlighting the selected button.
-- A labelled `SegmentGroup` no longer adds its standalone top margin inside
-  the field, so its label sits as close to it as other controls' labels.
-- Playground: remove the shadow behind device previews. Demo controls sit in
-  a flat `Card` with one spacing rhythm, and every segment group has a
-  visible label. The props reference uses `Table`, scrolling sideways with
-  the prop names pinned on phones, and inline code is a neutral chip instead
-  of accent-colored text.
-- A toggled rail now remembers its state across routes and visits, in local
-  storage. Add `remember` (default `true`) to turn this off; a rail given an
-  `expanded` signal leaves it to the signal's owner.
-- Keep overlays inside an `AppWrapper` that does not fill the window, such as
-  a device preview: the top-layer scrim and sheet take the app's box and
-  rounded corners instead of covering the whole page.
-- The playground opens each new page scrolled to the top, and its docs and
-  launch configuration run plain `dx serve`.
-- Generate playground prop references from component signatures and rustdoc at
-  build time, including required props and enum variants. Show them between
-  the device preview and source, with stacked prop rows on narrow screens.
-- Show the Demo app in the overview's device viewer, with mode and size
-  controls. Phone previews sit beside the intro on wide pages; larger previews
-  use a full row and retain app state when resized.
-- Rewrite the playground overview around component capabilities for Dioxus
-  developers. Remove slogans, the preview subtitle, and promotional counters.
-- Use g3-ui buttons for playground page links, remove redundant preview copy,
-  and group Demo app and Route transitions under Examples in navigation and
-  search. Add a crates.io button to the route transitions example.
-- Add writable `use_mode()` and make `use_strings()` return `Signal<Strings>`.
-  Children can change mode and labels directly, without parent-owned signals.
-  Provider overrides isolate edits, omitted values share parent state, and
-  changed props replace it. Migration: read labels with `strings.read().field`
-  or `strings()`; call hooks unconditionally before branching.
-- Simplify guide language and remove redundant preview headings. Correct native
-  dependency setup: g3-ui has no default features to disable. Fix the layout
-  hook example's width reset when returning to all available space.
-- Make `use_theme()` return shared writable `Signal<Theme>` state. Writes update
-  provider CSS and readers; explicit subtree themes stay isolated. Migration:
-  use `theme.read().field` or `theme()` to read, and `theme.write().field = ...`
-  or `theme.set(...)` in handlers to change it. Changed theme props replace the
-  current state; unrelated renders preserve hook edits.
-- Add an overview landing page explaining g3-ui, with a working component
-  preview. Keep Getting started focused on installing and launching the app.
-- Give documentation search a wider desktop dialog, fixed input/footer, clear
-  result rows, and a single results area with a subtle scrollbar.
-- Replace the generic guide body with individually composed sections, setup
-  steps, and comparison tables. Explain theme value ownership and demonstrate
-  local layout width versus whole-app width with an interactive constraint.
-- Show copyable Cargo.toml setup snippets with TOML syntax highlighting.
-- Run compiled guide, pattern, and hook examples in interactive device viewers;
-  restore the preview controls where they now affect live examples.
-- Give the theme generator one shared page scroll for colors, preview, and
-  exported code, removing the separate sticky result scroller.
-- Document changing theme, mode, and localized strings through writable hooks
-  and reactive providers. Put guide/tool titles in the shared header
-  and remove the remaining guide footer links.
-- Replace playground header text links with GitHub and Cargo/package API icons,
-  keep them accessible on phones, and remove duplicate guide links and component
-  source/preview-size captions.
-- Expand the theme and mode hook guide with compiled examples of reactive
-  providers, custom colors, localized actions, mode overrides, and scoped themes.
-- Keep additional syntax token kinds readable when the playground and system
-  use different light/dark themes.
-- Show mode and size controls on interactive previews, distinguish landscape phone
-  previews from desktop workspaces, fix tablet/landscape frame proportions, and
-  restore compact, inset iOS header segments.
-- Keep segment keyboard focus rings inside the clipped group, avoiding a stray
-  colored edge. Introductory and hook guides omit irrelevant preview controls.
-- Add a searchable theme generator with all 17 color tokens, optional surface
-  styles, live component previews, shared custom themes, and Rust configuration export.
-- Show guide examples and component source in shared, framed code panels with
-  syntax colors that follow the selected playground theme.
-- Add Compact/Medium/Expanded layout sizes, available-width LayoutScope,
-  single-variant AdaptiveLayout, persistent PageLayout slots, and intermediate
-  Grid column settings. Existing ShellSize and wide column behavior remain compatible.
-- Keep nested grids from inheriting a parent grid's responsive column overrides.
-- Scale wide content padding with its container rather than the browser window,
-  so embedded previews and narrow app panes retain usable content width.
-- Add searchable getting-started, platform, layout, and hook guides to the
-  playground, GitHub source links, and tablet, landscape, and resizable previews.
-  Preview width and theme changes now preserve mounted demo state.
-
-- Reject staged local shared-library dependencies in the commit hook.
-
-- Publishing waits for the quality gate on the selected commit.
-- Check the declared Rust 1.88 minimum in CI and before publishing.
+- `AppWrapper` allows page zoom.
+- The docs cover server-rendered apps (pass `mode` to `AppWrapper`), `Theme`
+  and `Look` values being written as unescaped CSS (build user-chosen themes
+  with `Theme::from_seeds`), signal-driven forms, notification timing, browser
+  requirements, and Android runtime and performance validation. `Menu`'s docs
+  point Ionic users to `NavigationDrawer`, and `ShellSize`'s docs explain when
+  to use `use_layout_size` instead.
 
 ### Fixed
 
-- Present modals, alerts, popovers, sheets and toasts in a shared top-layer order;
-  toasts remain above blocking overlays. Nested Escape/focus return follows the
-  active surface, with hidden-page initialization and live sheet modality.
-- Preserve button taps inside swipeable tabs; track tab swipes in the WebView,
-  keep leaving panels inert, follow replacement selection signals, propagate
-  Tabs mode to TabList, and derive animation direction from current DOM order.
-- Cancel stale debounced input notifications after clearing or external changes;
-  readonly inputs no longer expose a clear action.
-- Use the local device date/time on native targets and reject trailing fields
-  when parsing `TimeOfDay`.
-- Enforce unavailable dates and bounds in all date picker styles and at commit;
-  calendar navigation can focus unavailable dates without selecting them. Wheel
-  time selections round down to `minute_step` consistently before confirmation.
-- Follow changed alert input defaults, picker bounds, toast durations, sheet
-  drag settings, refresh strings/thresholds and infinite-scroll thresholds.
-- Dispose DOM listeners, observers and timers on reconfiguration/unmount;
-  cancelled refresh gestures no longer trigger refresh. Scope script failures
-  to development diagnostics and remove image-state writes during rendering.
-- Keep horizontal tab-list Up/Down keys available for scrolling. Respect logical
-  RTL edges in swipe, rating and horizontal strip interactions, and allow page zoom.
-- Keep automatic tooltip descriptions current when their trigger is replaced,
-  and remove only library-owned descriptions during cleanup.
-- Closed overlay surfaces and backdrops no longer intercept the next click
-  while their top-layer wrapper remains for its exit animation.
-- Keep sheets, action sheets and toasts on screen in an `AppWrapper` that
-  starts below other content and runs past the window: the confined top layer
-  is clipped to the visible viewport (`visualViewport` where present) instead
-  of taking the app's whole box below the fold. The playground's Mobile
-  preview also fits the space under its header.
+- Taps on buttons inside swipeable `Tabs` reach the button: the tab swipe is
+  recognized in the web view and takes pointer capture only once the touch
+  moves sideways. Leaving panels are inert, a replaced selection signal is
+  followed, `Tabs` passes its mode to `TabList`, and the animation direction
+  comes from the current DOM order.
+- Clearing a debounced input, or changing it from outside, cancels the pending
+  notification of the old text. A readonly input has no clear action.
+- Native targets use the device's local date and time. `TimeOfDay` parsing
+  rejects trailing fields.
+- Every `DatePicker` style enforces unavailable dates and bounds at
+  confirmation. Calendar navigation can focus an unavailable date without
+  selecting it. Wheel times round down to `minute_step` before confirmation.
+- Changed alert input defaults, picker bounds, toast durations, sheet drag
+  settings, refresher strings and thresholds, and infinite-scroll thresholds
+  take effect.
+- DOM listeners, observers and timers are disposed on reconfiguration and
+  unmount. A cancelled pull gesture no longer refreshes. Script failures are
+  reported in development builds only, and images no longer write state
+  during rendering.
+- A sheet below its backdrop detent no longer traps focus or locks scrolling.
+- Horizontal tab lists leave Up and Down to scrolling. Swipe, rating and
+  horizontal strips respect logical right-to-left edges.
+- Automatic tooltip descriptions follow a replaced trigger, and cleanup removes
+  only the descriptions the library added.
+- Closing overlay surfaces and backdrops no longer intercept the next click
+  while their top-layer wrapper stays for the exit animation.
+- Sheets, action sheets and toasts stay on screen in an `AppWrapper` that
+  starts below other content and runs past the window.
+- `aria-controls` names only elements that exist: a `Select`, `Menu` or
+  `Popover` trigger points at its panel only while it is open, a tab only at
+  the selected panel, and the calendar title only at the open year grid.
+- Nested grids no longer inherit a parent grid's responsive column overrides.
+- A labelled `SegmentGroup` no longer adds its standalone top margin inside the
+  field.
 
-### Added
+### Playground
 
-- `use_overlay_controller()` / `OverlayController::{count,dismiss_top}` for
-  Android Back handling across overlay types.
-- `Calendar::reference_date` and `DatePicker::reference_date` for deterministic
-  server/client date rendering.
-- Localized rating speech and date-format templates in `Strings`.
-- Mounted-state regressions, production-script lifecycle tests in `just pre-push`,
-  and a browser regression recipe covering modes, sizes, themes and touch taps.
-- Document signal-driven forms, notification semantics, browser capabilities,
-  and Android runtime/performance validation.
+- An overview landing page, searchable getting-started, platform, layout and
+  hook guides with compiled examples in interactive device viewers, and
+  GitHub source links.
+- A theme generator for all 17 color tokens and surface styles, with presets,
+  generation from seeds, live previews, shared custom themes and Rust export.
+  New presets: Light, Dark, Sand, Ocean, Graphite and Aurora; every preset
+  reads at 4.5:1, which a test checks.
+- Prop references generated from component signatures and rustdoc at build
+  time. Demos show color pickers for the new `color` props.
+- Tablet, landscape and resizable previews that keep demo state; the Mobile
+  preview fits under the header. Pages open scrolled to the top.
+- The page sets its language, title and description.
 
-### Migration
+### Tooling
 
-- Full `Strings` struct literals must add `rating_unrated`, `rating_value`,
-  `date_long`, `date_short` and `date_month_year`; prefer `..Strings::default()`.
-- RTL `SwipeState::offset` and `ratio` use logical signs: positive uncovers
-  Start and negative End, matching LTR behavior. Physical transforms remain internal.
-- Off-step wheel times now commit the displayed rounded value; applications that
-  need arbitrary minutes should use a one-minute step or the dialog style.
+- Rendered-markup regression tests, production-script lifecycle tests in
+  `just pre-push`, and a Playwright browser suite covering modes, sizes,
+  themes and touch taps.
+- `just doc` and a CI job build the docs with warnings as errors.
+- CI checks the Rust 1.88 minimum, and publishing waits for the quality gate
+  on the selected commit.
+- The commit hook rejects staged local shared-library dependencies.
 
 ## [0.5.1] - 2026-10-08
 
