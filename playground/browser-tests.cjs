@@ -14,8 +14,21 @@ const poll = async (read, expected) => {
   }
   assert.equal(await read(), expected);
 };
+// The Mobile preview fits under the header, so a sheet in it is never cut off.
+const frameFits = async (page) => {
+  const frame = await page.locator('.g3-playground-preview').boundingBox();
+  const height = page.viewportSize().height;
+  assert.ok(frame.y >= 0 && frame.y + frame.height <= height, `the device frame (${Math.round(frame.y)}-${Math.round(frame.y + frame.height)}) must fit the ${height}px window`);
+};
+// A stale dx build once served its loader bootstrap twice, mounting two app
+// trees with duplicate ids. Every page must hold exactly one.
+const singleRoot = async (page) => {
+  await page.locator('#main > *').first().waitFor();
+  assert.equal(await page.locator('#main > *').count(), 1, '#main must hold exactly one app tree');
+};
 
 async function configure(page, mode, wide, dark) {
+  await singleRoot(page);
   const platform = page.getByRole('radio', { name: mode, exact: true });
   await platform.click();
   await poll(() => platform.getAttribute('aria-checked'), 'true');
@@ -23,7 +36,7 @@ async function configure(page, mode, wide, dark) {
   await viewport.click();
   await poll(() => viewport.getAttribute('aria-checked'), 'true');
   if (dark) {
-    await page.getByRole('button', { name: 'Theme', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Theme', exact: true }).click();
     await page.getByRole('option', { name: 'Ember', exact: true }).click();
   }
 }
@@ -38,6 +51,7 @@ async function main() {
       const errors = [];
       page.on('pageerror', error => errors.push(String(error)));
       await page.goto(`${origin}/components/responsive`);
+      await singleRoot(page);
       const draft = page.getByLabel('Draft survives resizing', { exact: true });
       await draft.fill('Keep this draft');
       for (const [preview, size, columns] of [['Mobile', 'compact', 1], ['Tablet', 'medium', 2], ['Landscape phone', 'medium', 2], ['Desktop', 'expanded', 3]]) {
@@ -64,7 +78,7 @@ async function main() {
       await search.getByRole('searchbox').fill('use_toast');
       await search.getByRole('button', { name: /Hooks · Overlay hooks/ }).click();
       await page.waitForURL('**/docs/hooks-overlays');
-      await page.getByRole('heading', { name: 'Overlay hooks', exact: true }).waitFor();
+      await page.getByRole('banner').getByRole('heading', { name: 'Overlay hooks', exact: true }).waitFor();
       assert.equal(await page.locator('.playground-header .g3-header-toolbar').count(), 1, 'live guides expose preview controls');
       await page.getByRole('button', { name: 'Show toast', exact: true }).click();
       await page.getByText('Saved', { exact: true }).waitFor();
@@ -97,6 +111,36 @@ async function main() {
       await nestedPage.close();
       assert.deepEqual(errors, []);
     } finally { await responsive.close(); }
+    // An app that starts below other content and runs past the window keeps
+    // its bottom sheet on screen: the confined layer is clipped to the viewport.
+    const offset = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
+    try {
+      const page = await offset.newPage();
+      const errors = [];
+      page.on('pageerror', error => errors.push(String(error)));
+      await page.goto(`${origin}/components/alert`);
+      await configure(page, 'MD', false, false);
+      await frameFits(page);
+      await page.addStyleTag({ content: '.g3-playground-preview.g3-playground-preview { width: 390px; height: 1400px; max-height: none; aspect-ratio: auto; }' });
+      await page.getByRole('button', { name: 'Stacked overlays', exact: true }).click();
+      const shell = await page.locator('.g3-playground-preview').boundingBox();
+      assert.ok(shell.y > 0 && shell.y + shell.height > 900, 'the shell must start below the top and end past the window');
+      const confirm = page.getByRole('button', { name: 'Confirm above sheet', exact: true });
+      await confirm.waitFor();
+      // The whole sheet rests on the window's bottom edge, not the shell's.
+      const sheet = page.locator('.g3-sheet-bottom[data-state="open"]');
+      await poll(async () => {
+        const box = await sheet.boundingBox();
+        return box.y >= 0 && Math.abs(box.y + box.height - 900) < 1;
+      }, true);
+      assert.equal(await confirm.evaluate(el => {
+        const r = el.getBoundingClientRect();
+        return el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+      }), true, 'the sheet button must be reachable on screen');
+      await page.screenshot({ path: path.join(output, 'offset-shell.png') });
+      assert.deepEqual(errors, []);
+      console.log('PASS offset shell: sheet stays inside the viewport');
+    } finally { await offset.close(); }
     for (const mode of ['MD', 'iOS']) for (const wide of [false, true]) for (const dark of [false, true]) {
       const label = `${mode}-${wide ? 'wide' : 'phone'}-${dark ? 'dark' : 'light'}`;
       const context = await browser.newContext({ viewport: wide ? { width: 1440, height: 900 } : { width: 390, height: 844 }, hasTouch: true, reducedMotion: 'reduce' });
@@ -106,6 +150,7 @@ async function main() {
       try {
         await page.goto(`${origin}/components/alert`);
         await configure(page, mode, wide, dark);
+        if (!wide) await frameFits(page);
         await page.getByRole('button', { name: 'Stacked overlays', exact: true }).click();
         await page.getByRole('button', { name: 'Confirm above sheet', exact: true }).click();
         const alert = page.getByRole('alertdialog', { name: 'Leave round?' });
