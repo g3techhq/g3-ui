@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- `aria-controls` names only elements that exist: a `Select`, `Menu` or
+  `Popover` trigger points at its panel only while it is open, a tab only at
+  the selected panel, and the calendar title only at the open year grid.
+  The `Select` trigger is now a `combobox`, so `required` is announced as
+  `aria-required`.
+
 - Add `ThemeSeeds` and `Theme::from_seeds` to build a whole theme at runtime
   from an accent, a page background and an optional second accent, such as a
   color the user picks: the background picks light or dark and tints the
@@ -150,6 +156,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and remove only library-owned descriptions during cleanup.
 - Closed overlay surfaces and backdrops no longer intercept the next click
   while their top-layer wrapper remains for its exit animation.
+- Keep sheets, action sheets and toasts on screen in an `AppWrapper` that
+  starts below other content and runs past the window: the confined top layer
+  is clipped to the visible viewport (`visualViewport` where present) instead
+  of taking the app's whole box below the fold. The playground's Mobile
+  preview also fits the space under its header.
 
 ### Added
 

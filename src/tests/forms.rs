@@ -432,3 +432,66 @@ fn a_radio_group_follows_a_new_value_signal() {
     }
     assert_eq!(checked(&dom), 2);
 }
+
+#[test]
+fn a_required_select_is_a_combobox_that_says_so() {
+    fn app() -> Element {
+        rsx! {
+            Select::<u8> {
+                label: "Tee time",
+                required: true,
+                default_value: 8,
+                options: vec![SelectOption::new(8, "8:00")],
+            }
+        }
+    }
+    let html = render(app);
+    let trigger = element_with_class(&html, "g3-select");
+    assert!(trigger.contains("role=\"combobox\""));
+    assert!(trigger.contains("aria-required=\"true\""));
+}
+
+#[test]
+fn aria_references_name_elements_in_the_markup() {
+    fn app() -> Element {
+        let tab = use_signal(|| 1_u8);
+        let open = use_signal(|| false);
+        rsx! {
+            Select::<u8> {
+                label: "Tee time",
+                helper: "Local time",
+                default_value: 8,
+                options: vec![SelectOption::new(8, "8:00")],
+            }
+            Tabs { value: tab,
+                TabList { aria_label: "Round",
+                    Tab { value: 1_u8, "Scores" }
+                    Tab { value: 2_u8, "Notes" }
+                }
+                TabPanel { value: 1_u8, "Score panel" }
+                TabPanel { value: 2_u8, "Note panel" }
+            }
+            Calendar { reference_date: CalendarDate::new(2026, 10, 16).unwrap() }
+            AccordionGroup::<u8> {
+                AccordionItem { value: 1, label: "Rules", "Play it as it lies." }
+            }
+            FabMenu { aria_label: "Create", icon: rsx! { "+" }, open,
+                FabButton { aria_label: "Round", "R" }
+            }
+        }
+    }
+    let html = render(app);
+    let present = ids(&html);
+    for attribute in ["aria-controls", "aria-labelledby", "aria-describedby"] {
+        let needle = format!(" {attribute}=\"");
+        for chunk in html.split(&needle).skip(1) {
+            let value = chunk.split('"').next().unwrap_or_default();
+            for id in value.split_whitespace() {
+                assert!(
+                    present.iter().any(|present| present == id),
+                    "{attribute} names missing element {id}"
+                );
+            }
+        }
+    }
+}

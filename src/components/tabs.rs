@@ -211,7 +211,8 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
             r#type: "button",
             role: "tab",
             aria_selected: selected.to_string(),
-            aria_controls: panel_id,
+            // Only the selected panel is sure to be mounted.
+            aria_controls: selected.then_some(panel_id),
             tabindex: if selected { "0" } else { "-1" },
             disabled,
             onclick: move |_| {

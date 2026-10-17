@@ -51,7 +51,9 @@ if (control) {
         control.dataset.g3Popup = "true";
     }
     control.setAttribute("aria-expanded", __OPEN__);
-    control.setAttribute("aria-controls", __PANEL__);
+    // Point at the panel only while it is open: a closed one may not exist.
+    if (__OPEN__ === "true") control.setAttribute("aria-controls", __PANEL__);
+    else if (control.getAttribute("aria-controls") === __PANEL__) control.removeAttribute("aria-controls");
 }
 "#;
 

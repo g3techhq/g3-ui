@@ -235,7 +235,7 @@ pub fn Calendar(
                     class: "g3-calendar-title",
                     aria_live: "polite",
                     aria_expanded: (view() == View::Years).to_string(),
-                    aria_controls: format!("{id}-years"),
+                    aria_controls: (view() == View::Years).then(|| format!("{id}-years")),
                     onclick: move |_| {
                         view.set(if view() == View::Days { View::Years } else { View::Days });
                     },
