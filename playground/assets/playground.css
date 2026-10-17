@@ -798,6 +798,15 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 }
 .playground-viewport-tablet { --playground-preview-aspect: 4 / 3; }
 .playground-viewport-landscape { --playground-preview-aspect: 844 / 390; }
+/* The phone is taller than the room under the header on a laptop (or a
+   phone), which left the bottom of the frame - and every bottom sheet in it -
+   below the fold. Narrow it so the whole frame fits the scroller's height,
+   less the stage padding and room for the page description above it,
+   keeping its proportions. */
+.playground-main { container: playground-main / size; }
+.playground-viewport-mobile .g3-playground-preview {
+  width: min(390px, 100%, (100cqh - 3rem) * 390 / 844);
+}
 .playground-stage { overflow-x: auto; }
 .playground-header-toggles { grid-template-columns: minmax(0, 1fr); }
 @container g3-app-shell (width < 64rem) {
