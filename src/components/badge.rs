@@ -1,6 +1,6 @@
 //! Status badges.
 use super::Color;
-use crate::theme::merge_classes;
+use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
 /// A small pill for a count or a status. Like Ionic's `ion-badge`.
@@ -19,13 +19,21 @@ pub fn Badge(
     /// What the badge means, when its text alone does not say, such as
     /// "3 unread" for a badge showing "3".
     aria_label: Option<String>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
     /// Extra classes for the badge.
     class: Option<String>,
     children: Element,
 ) -> Element {
+    let mode = use_component_mode(mode);
     let color = color.unwrap_or(Color::Neutral);
+    let cls = format!(
+        "g3-badge {} g3-badge-{}",
+        mode.pick("g3-badge-ios", "g3-badge-md"),
+        color.as_str()
+    );
     rsx! {
-        span { class: merge_classes(format!("g3-badge g3-badge-{}", color.as_str()), class.as_deref()),
+        span { class: merge_classes(cls, class.as_deref()),
             if let Some(label) = aria_label {
                 span { aria_hidden: "true", {children} }
                 span { class: "g3-sr-only", "{label}" }

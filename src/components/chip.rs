@@ -33,6 +33,8 @@ pub fn Chip(
     onclick: Option<EventHandler<MouseEvent>>,
     /// Accessible name, for a pressable chip whose content is only an icon.
     aria_label: Option<String>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Extra classes for the chip.
     class: Option<String>,
     children: Element,
@@ -50,6 +52,7 @@ pub fn Chip(
         Some(onclick) => rsx! {
             button {
                 class: merge_classes("g3-chip", class.as_deref()),
+                "data-color": color.map(crate::Color::as_str),
                 r#type: "button",
                 disabled,
                 aria_pressed: selected.map(|selected| selected.to_string()),
@@ -61,6 +64,7 @@ pub fn Chip(
         None => rsx! {
             span {
                 class: merge_classes("g3-chip g3-chip-static", class.as_deref()),
+                "data-color": color.map(crate::Color::as_str),
                 {body}
             }
         },
@@ -70,15 +74,20 @@ pub fn Chip(
 #[cfg(feature = "playground")]
 #[component]
 fn ChipPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let mut nearby = use_signal(|| true);
     let mut friends = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
+            controls: rsx! {
+                crate::components::color::ColorSelect { value: color }
+            },
             div { class: "playground-row",
-                Chip { selected: nearby(), onclick: move |_| nearby.toggle(), "Nearby" }
-                Chip { selected: friends(), onclick: move |_| friends.toggle(), "Friends" }
+                Chip { selected: nearby(), color: color(), onclick: move |_| nearby.toggle(), "Nearby" }
+                Chip { selected: friends(), color: color(), onclick: move |_| friends.toggle(), "Friends" }
                 Chip { disabled: true, onclick: |_| {}, "Weekend" }
                 Chip { "Static tag" }
+                Chip { color: color(), "Colored tag" }
             }
         }
     }

@@ -1,5 +1,5 @@
 //! Progress bars.
-use crate::theme::{classes, merge_classes};
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 
 /// A horizontal progress bar. Like Ionic's `ion-progress-bar`.
@@ -25,14 +25,20 @@ pub fn Progress(
     label: Option<String>,
     /// Text read out instead of the number, such as "7 of 18 holes".
     value_text: Option<String>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
     /// Extra classes for the bar.
     class: Option<String>,
 ) -> Element {
+    let mode = use_component_mode(mode);
     let max = max.unwrap_or(100.0).max(f64::EPSILON);
     let value = value.map(|value| value.clamp(0.0, max));
     let percent = value.map_or(0.0, |value| value / max * 100.0);
     let cls = classes([
         "g3-progress",
+        mode.pick("g3-progress-ios", "g3-progress-md"),
         if value.is_none() {
             "g3-progress-indeterminate"
         } else {
@@ -43,6 +49,7 @@ pub fn Progress(
         div {
             class: merge_classes(cls, class.as_deref()),
             role: "progressbar",
+            "data-color": color.map(crate::Color::as_str),
             aria_label: label,
             aria_valuemin: value.map(|_| "0"),
             aria_valuemax: value.map(|_| max.to_string()),
@@ -59,15 +66,17 @@ pub fn Progress(
 #[cfg(feature = "playground")]
 #[component]
 fn ProgressPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let value = use_signal(|| 45.0);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
                 crate::Range { label: "Value", value, show_value: true }
+                crate::components::color::ColorSelect { value: color }
             },
             div { class: "playground-stack",
-                Progress { value: value(), label: "Upload" }
-                Progress { label: "Loading" }
+                Progress { value: value(), label: "Upload", color: color() }
+                Progress { label: "Loading", color: color() }
             }
         }
     }

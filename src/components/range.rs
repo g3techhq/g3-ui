@@ -1,7 +1,7 @@
 //! Numeric controls: a slider and a stepper.
 use super::field::{FieldShell, described_by, is_invalid};
 use crate::state::{use_controlled, use_element_id};
-use crate::theme::merge_classes;
+use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{Minus, Plus};
 
@@ -47,14 +47,25 @@ pub fn Range(
     onchange: Option<EventHandler<f64>>,
     /// Element id. Generated when not given.
     id: Option<String>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
+    /// Platform look. Defaults to the ambient mode.
+    mode: Option<ComponentMode>,
     /// Extra classes for the field wrapper.
     class: Option<String>,
 ) -> Element {
     let min = min.unwrap_or(0.0);
     let max = max.unwrap_or(100.0).max(min);
+    let mode = use_component_mode(mode);
     let id = use_element_id("range", id);
     let mut value = use_controlled(value, || min);
     let current = value().clamp(min, max);
+    // How far along the track is filled, for the styled bar.
+    let fill = if max > min {
+        (current - min) / (max - min) * 100.0
+    } else {
+        0.0
+    };
     rsx! {
         FieldShell {
             id: id.clone(),
@@ -63,7 +74,10 @@ pub fn Range(
             helper: helper.clone(),
             error: error.clone(),
             class,
-            div { class: "g3-range",
+            div {
+                class: classes(["g3-range", mode.pick("g3-range-ios", "g3-range-md")]),
+                "data-color": color.map(crate::Color::as_str),
+                style: "--g3-range-fill: {fill}%;",
                 {start}
                 input {
                     id: id.clone(),
@@ -225,14 +239,19 @@ pub fn Stepper(
 #[cfg(feature = "playground")]
 #[component]
 fn RangePlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let volume = use_signal(|| 40.0);
     let players = use_signal(|| 4_i64);
     rsx! {
         crate::PlaygroundDemoFrame {
+            controls: rsx! {
+                crate::components::color::ColorSelect { value: color }
+            },
             div { class: "playground-stack",
                 Range {
                     label: "Volume",
                     value: volume,
+                    color: color(),
                     show_value: true,
                     step: 5.0,
                 }

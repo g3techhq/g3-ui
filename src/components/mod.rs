@@ -13,7 +13,7 @@ mod card;
 mod checkbox;
 mod chip;
 mod clock;
-mod color;
+pub(crate) mod color;
 mod confirm_modal;
 mod content;
 mod date_picker;

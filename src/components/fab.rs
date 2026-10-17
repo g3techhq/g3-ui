@@ -132,6 +132,8 @@ pub fn FabButton(
     new_tab: Option<bool>,
     /// Called when pressed.
     onclick: Option<EventHandler<MouseEvent>>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the button.
@@ -157,6 +159,9 @@ pub fn FabButton(
         },
     ]);
     let mut attributes = attributes;
+    if let Some(color) = color {
+        attributes.push(Attribute::new("data-color", color.as_str(), None, false));
+    }
     if let Some(label) = aria_label {
         attributes.push(Attribute::new("aria-label", label, None, false));
     }
@@ -237,6 +242,9 @@ pub fn FabMenu(
     vertical: Option<FabVertical>,
     /// Horizontal position. Defaults to [`FabHorizontal::End`].
     horizontal: Option<FabHorizontal>,
+    /// Color role of the main button. Defaults to
+    /// [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the container.
@@ -254,6 +262,7 @@ pub fn FabMenu(
                 aria_label: if is_open { close_label } else { aria_label },
                 aria_expanded: is_open.to_string(),
                 aria_controls: list_id.clone(),
+                color,
                 mode,
                 onclick: move |_| open.toggle(),
                 if is_open {

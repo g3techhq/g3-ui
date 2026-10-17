@@ -237,6 +237,76 @@ body.g3-overlay-scroll-locked {
     --g3-btn-color: var(--g3-color-danger);
 }
 
+/* -- Color roles --
+   A control's tint is the accent unless its `color` prop names another
+   role (`data-color`). `--g3-tint` fills, `--g3-on-tint` is drawn on a fill,
+   and `--g3-tint-ink` is the tint as text, darkened where the role is too
+   light to read. Each control sets its own default, so a tint never leaks
+   into a control nested inside a colored one. */
+:is(.g3-chip, .g3-toggle, .g3-checkbox, .g3-radio, .g3-range, .g3-progress,
+    .g3-spinner-wrapper, .g3-segment-ios, .g3-segment-md, .g3-fab, .g3-card,
+    .g3-header) {
+    --g3-tint: var(--g3-color-accent);
+    --g3-on-tint: var(--g3-color-on-accent);
+    --g3-tint-ink: var(--g3-tint);
+}
+
+[data-color="neutral"]:is(.g3-chip, .g3-toggle, .g3-checkbox, .g3-radio, .g3-range, .g3-progress,
+    .g3-spinner-wrapper, .g3-segment-ios, .g3-segment-md, .g3-fab, .g3-card,
+    .g3-header) {
+    --g3-tint: var(--g3-color-text);
+    --g3-on-tint: var(--g3-color-bg);
+}
+
+[data-color="success"]:is(.g3-chip, .g3-toggle, .g3-checkbox, .g3-radio, .g3-range, .g3-progress,
+    .g3-spinner-wrapper, .g3-segment-ios, .g3-segment-md, .g3-fab, .g3-card,
+    .g3-header) {
+    --g3-tint: var(--g3-color-success);
+}
+
+[data-color="warning"]:is(.g3-chip, .g3-toggle, .g3-checkbox, .g3-radio, .g3-range, .g3-progress,
+    .g3-spinner-wrapper, .g3-segment-ios, .g3-segment-md, .g3-fab, .g3-card,
+    .g3-header) {
+    --g3-tint: var(--g3-color-warning);
+    --g3-on-tint: var(--g3-color-on-warning);
+    --g3-tint-ink: var(--g3-color-warning-ink);
+}
+
+[data-color="danger"]:is(.g3-chip, .g3-toggle, .g3-checkbox, .g3-radio, .g3-range, .g3-progress,
+    .g3-spinner-wrapper, .g3-segment-ios, .g3-segment-md, .g3-fab, .g3-card,
+    .g3-header) {
+    --g3-tint: var(--g3-color-danger);
+}
+
+/* A colored card or header takes its tint as a fill. Its content sees the
+   contrast color as text and accent, so titles, icons and buttons inside
+   follow without rules of their own. The tokens are remapped on the
+   children, not the container, whose tint is defined from the accent. */
+:is(.g3-card, .g3-header)[data-color] > * {
+    --g3-color-text: var(--g3-on-tint);
+    --g3-color-text-secondary: color-mix(in srgb, var(--g3-on-tint) 80%, transparent);
+    --g3-color-text-tertiary: color-mix(in srgb, var(--g3-on-tint) 65%, transparent);
+    --g3-color-accent: var(--g3-on-tint);
+    --g3-color-on-accent: var(--g3-tint);
+    --g3-color-border: color-mix(in srgb, var(--g3-on-tint) 30%, transparent);
+    /* Surfaces inside (a selected segment, a field) lighten the fill rather
+       than punching a page-colored hole that the contrast text vanishes on. */
+    --g3-color-card: color-mix(in srgb, var(--g3-on-tint) 24%, var(--g3-tint));
+    --g3-color-surface: color-mix(in srgb, var(--g3-on-tint) 24%, var(--g3-tint));
+    --g3-color-control: color-mix(in srgb, var(--g3-on-tint) 14%, var(--g3-tint));
+}
+
+.g3-card[data-color] {
+    --g3-card-surface: var(--g3-tint);
+    color: var(--g3-on-tint);
+}
+
+.g3-header[data-color] {
+    background: var(--g3-tint);
+    color: var(--g3-on-tint);
+    border-bottom-color: transparent;
+}
+
 /* Fills */
 .g3-btn-solid {
     background: var(--g3-btn-fill);
@@ -557,7 +627,7 @@ body.g3-overlay-scroll-locked {
     bottom: 0;
     width: calc(100% / var(--g3-segment-count, 3));
     height: 2px;
-    background: var(--g3-color-accent);
+    background: var(--g3-tint);
     transform: translateX(calc(var(--g3-segment-active, 0) * 100%));
     transition: transform 320ms cubic-bezier(0.4, 0, 0.2, 1), width 320ms cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform, width;
@@ -591,7 +661,11 @@ body.g3-overlay-scroll-locked {
     text-overflow: ellipsis;
 }
 .g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
-    color: var(--g3-color-accent);
+    color: var(--g3-tint-ink);
+}
+
+.g3-segment-ios[data-color] > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
+    color: var(--g3-tint-ink);
 }
 .g3-segment-btn-md:disabled {
     opacity: 0.3;
@@ -808,7 +882,7 @@ body.g3-overlay-scroll-locked {
 /* Before the script has placed the indicator - a server render, or no
    script at all - the selected button marks itself. */
 .g3-segment-scrollable:not([data-indicator-placed]) > .g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
-    box-shadow: inset 0 -2px 0 var(--g3-color-accent);
+    box-shadow: inset 0 -2px 0 var(--g3-tint);
 }
 
 .g3-segment-scrollable:not([data-indicator-placed]) > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
@@ -1170,7 +1244,7 @@ textarea.g3-input {
     /* The track is thin; the input box is the touch target. */
     min-height: 44px;
     margin: 0;
-    accent-color: var(--g3-color-accent);
+    accent-color: var(--g3-tint);
     cursor: pointer;
 }
 
@@ -1180,6 +1254,73 @@ textarea.g3-input {
 button.g3-chip:focus-visible {
     outline: 2px solid var(--g3-color-accent);
     outline-offset: 2px;
+}
+
+/* The bar fills to `--g3-range-fill`, set from the value. Ionic: a 4px bar
+   and a large surface knob on iOS; a 2px bar and a small tinted knob in
+   Material. */
+.g3-range-input {
+    --g3-range-direction: to right;
+    appearance: none;
+    background: transparent;
+}
+
+.g3-range-ios .g3-range-input {
+    --g3-range-rest: color-mix(in srgb, var(--g3-color-text) 12%, transparent);
+    --g3-range-bar: 4px;
+    --g3-range-knob: 28px;
+    --g3-range-knob-fill: var(--g3-color-card);
+    --g3-range-knob-shadow: 0 3px 1px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.13), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.g3-range-input:dir(rtl) {
+    --g3-range-direction: to left;
+}
+
+.g3-range-md .g3-range-input {
+    --g3-range-rest: color-mix(in srgb, var(--g3-tint) 26%, transparent);
+    --g3-range-bar: 2px;
+    --g3-range-knob: 18px;
+    --g3-range-knob-fill: var(--g3-tint);
+    --g3-range-knob-shadow: none;
+}
+
+.g3-range-input::-webkit-slider-runnable-track {
+    height: var(--g3-range-bar);
+    border-radius: var(--g3-range-bar);
+    background: linear-gradient(var(--g3-range-direction), var(--g3-tint) var(--g3-range-fill, 0%), var(--g3-range-rest) var(--g3-range-fill, 0%));
+}
+
+.g3-range-input::-webkit-slider-thumb {
+    appearance: none;
+    width: var(--g3-range-knob);
+    height: var(--g3-range-knob);
+    margin-top: calc((var(--g3-range-bar) - var(--g3-range-knob)) / 2);
+    border: 0;
+    border-radius: 50%;
+    background: var(--g3-range-knob-fill);
+    box-shadow: var(--g3-range-knob-shadow);
+}
+
+.g3-range-input::-moz-range-track {
+    height: var(--g3-range-bar);
+    border-radius: var(--g3-range-bar);
+    background: var(--g3-range-rest);
+}
+
+.g3-range-input::-moz-range-progress {
+    height: var(--g3-range-bar);
+    border-radius: var(--g3-range-bar);
+    background: var(--g3-tint);
+}
+
+.g3-range-input::-moz-range-thumb {
+    width: var(--g3-range-knob);
+    height: var(--g3-range-knob);
+    border: 0;
+    border-radius: 50%;
+    background: var(--g3-range-knob-fill);
+    box-shadow: var(--g3-range-knob-shadow);
 }
 
 .g3-range-input:disabled {
@@ -1444,7 +1585,7 @@ button.g3-chip:focus-visible {
     height: 22px;
     border: 2px solid var(--g3-color-control-border);
     background: var(--g3-color-card);
-    color: var(--g3-color-on-accent);
+    color: var(--g3-on-tint);
     transition: border-color var(--g3-transition-normal) var(--g3-transition-md),
                 background var(--g3-transition-normal) var(--g3-transition-md);
 }
@@ -1473,8 +1614,8 @@ button.g3-chip:focus-visible {
 
 .g3-checkbox[aria-checked="true"] .g3-checkbox-box,
 .g3-checkbox[aria-checked="mixed"] .g3-checkbox-box {
-    border-color: var(--g3-color-accent);
-    background: var(--g3-color-accent);
+    border-color: var(--g3-tint);
+    background: var(--g3-tint);
 }
 
 .g3-checkbox[aria-checked="true"] .g3-checkbox-check {
@@ -1529,7 +1670,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-toggle[aria-checked="true"] .g3-switch-ios {
-    background: var(--g3-color-accent);
+    background: var(--g3-tint);
 }
 
 .g3-toggle[aria-checked="true"] .g3-switch-ios .g3-switch-thumb {
@@ -1551,11 +1692,11 @@ button.g3-chip:focus-visible {
 }
 
 .g3-toggle[aria-checked="true"] .g3-switch-md {
-    background: color-mix(in srgb, var(--g3-color-accent) 50%, transparent);
+    background: color-mix(in srgb, var(--g3-tint) 50%, transparent);
 }
 
 .g3-toggle[aria-checked="true"] .g3-switch-md .g3-switch-thumb {
-    background: var(--g3-color-accent);
+    background: var(--g3-tint);
     transform: translate3d(16px, -50%, 0);
 }
 
@@ -1643,7 +1784,7 @@ button.g3-chip:focus-visible {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--g3-color-accent);
+    background: var(--g3-tint);
     opacity: 0;
     transform: scale(0.4);
     transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
@@ -1651,7 +1792,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-radio:has(> .g3-radio-input:checked) .g3-radio-circle {
-    border-color: var(--g3-color-accent);
+    border-color: var(--g3-tint);
 }
 
 .g3-radio:has(> .g3-radio-input:checked) .g3-radio-dot {
@@ -1670,8 +1811,8 @@ button.g3-chip:focus-visible {
 .g3-control-ios .g3-radio-dot {
     width: 33%;
     height: 50%;
-    border-right: 2px solid var(--g3-color-accent);
-    border-bottom: 2px solid var(--g3-color-accent);
+    border-right: 2px solid var(--g3-tint);
+    border-bottom: 2px solid var(--g3-tint);
     border-radius: 0;
     background: transparent;
     transform: rotate(45deg) scale(0.8);
@@ -2421,29 +2562,66 @@ button.g3-chip:focus-visible {
     justify-content: center;
 }
 .g3-spinner {
+    box-sizing: border-box;
     width: 60px;
     height: 60px;
-    border: 4px solid var(--g3-color-bg-secondary);
-    border-top-color: var(--g3-color-accent);
-    border-radius: 50%;
-    animation: g3-spin 0.8s linear infinite;
 }
 
 .g3-spinner-md {
     width: 32px;
     height: 32px;
-    border-width: 3px;
 }
 
 .g3-spinner-sm {
     width: 20px;
     height: 20px;
+}
+
+.g3-spinner-ring {
+    border: 4px solid var(--g3-color-bg-secondary);
+    border-top-color: var(--g3-tint);
+    border-radius: 50%;
+    animation: g3-spin 0.8s linear infinite;
+}
+
+.g3-spinner-ring.g3-spinner-md {
+    border-width: 3px;
+}
+
+.g3-spinner-ring.g3-spinner-sm {
     border-width: 2px;
 }
 
+/* Ionic's iOS `lines` spinner: eight strokes fading in turn. */
+.g3-spinner-lines {
+    color: var(--g3-color-text-secondary);
+    overflow: visible;
+}
+
+.g3-spinner-wrapper[data-color] .g3-spinner-lines {
+    color: var(--g3-tint);
+}
+
+.g3-spinner-lines line {
+    stroke: currentColor;
+    stroke-width: 4px;
+    stroke-linecap: round;
+    transform-origin: 32px 32px;
+    animation: g3-spinner-fade 1s linear infinite;
+}
+
+@keyframes g3-spinner-fade {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .g3-spinner {
+    .g3-spinner-ring {
         animation-duration: 2.4s;
+    }
+
+    .g3-spinner-lines line {
+        animation-duration: 3s;
     }
 }
 
@@ -2524,8 +2702,8 @@ button.g3-chip:focus-visible {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--g3-color-accent);
-    color: var(--g3-color-on-accent);
+    background: var(--g3-tint);
+    color: var(--g3-on-tint);
     box-shadow: var(--g3-shadow-ios-card);
     display: flex;
     align-items: center;
@@ -2543,8 +2721,8 @@ button.g3-chip:focus-visible {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: var(--g3-color-accent);
-    color: var(--g3-color-on-accent);
+    background: var(--g3-tint);
+    color: var(--g3-on-tint);
     box-shadow: var(--g3-shadow-md-fab);
     display: flex;
     align-items: center;
@@ -3028,6 +3206,15 @@ button.g3-chip:focus-visible {
 
 /* With an `aria_label`, the visible content sits in its own span. It lays
    out like the badge, so an icon stays beside its count. */
+/* Ionic: a pill on iOS, slightly rounded in Material. */
+.g3-badge-ios {
+    border-radius: 10px;
+}
+
+.g3-badge-md {
+    border-radius: 4px;
+}
+
 .g3-badge > [aria-hidden="true"] {
     display: inline-flex;
     align-items: center;
@@ -3156,10 +3343,11 @@ button.g3-chip:focus-visible {
     transform: scale(0.98);
 }
 
-.g3-chip[aria-pressed="true"] {
-    background: color-mix(in srgb, var(--g3-color-accent) 12%, var(--g3-color-control));
-    color: var(--g3-color-accent);
-    border-color: color-mix(in srgb, var(--g3-color-accent) 38%, var(--g3-color-border));
+.g3-chip[aria-pressed="true"],
+.g3-chip-static[data-color] {
+    background: color-mix(in srgb, var(--g3-tint) 12%, var(--g3-color-control));
+    color: var(--g3-tint-ink);
+    border-color: color-mix(in srgb, var(--g3-tint) 38%, var(--g3-color-border));
 }
 
 .g3-chip:disabled {
@@ -3196,15 +3384,20 @@ button.g3-chip:focus-visible {
     height: 100%;
     overflow: hidden;
     border-radius: inherit;
-    background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-control));
+    background: color-mix(in srgb, var(--g3-tint) 14%, var(--g3-color-control));
 }
 
 .g3-progress-fill {
     width: var(--g3-progress-value, 0%);
     height: 100%;
     border-radius: inherit;
-    background: var(--g3-color-accent);
+    background: var(--g3-tint);
     transition: width var(--g3-transition-normal) var(--g3-transition-md);
+}
+
+/* Ionic: a rounded bar on iOS, a square one in Material. */
+.g3-progress-md {
+    border-radius: 0;
 }
 
 .g3-progress-indeterminate .g3-progress-fill {

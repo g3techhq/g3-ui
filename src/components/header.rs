@@ -57,6 +57,10 @@ pub fn Header(
     /// A second row, usually a [`SegmentGroup`](crate::SegmentGroup) or
     /// [`Searchbar`](crate::Searchbar).
     toolbar: Option<Element>,
+    /// Fill with a color role, like Ionic's `color` on a toolbar: the bar
+    /// takes the color and its content the matching contrast. Unset keeps the
+    /// theme surface.
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the `header` element.
@@ -73,7 +77,9 @@ pub fn Header(
         },
     ]);
     rsx! {
-        header { class: merge_classes(header_cls, class.as_deref()),
+        header {
+            class: merge_classes(header_cls, class.as_deref()),
+            "data-color": color.map(crate::Color::as_str),
             div { class: "g3-header-row",
                 div { class: "g3-header-lead",
                     div { class: "g3-header-slot g3-header-start-slot", {start} }
@@ -100,6 +106,8 @@ pub fn Header(
 #[cfg(feature = "playground")]
 #[component]
 fn HeaderPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
+    let filled = use_signal(|| false);
     let tab = use_signal(|| 0_usize);
     let title = use_signal(|| "Pending Game".to_string());
     let toolbar = use_signal(|| true);
@@ -111,12 +119,17 @@ fn HeaderPlaygroundDemo() -> Element {
             app: false,
             controls: rsx! {
                 crate::Input { label: "Title", value: title }
+                crate::Checkbox { checked: filled, label: "Color fill" }
+                if filled() {
+                    crate::components::color::ColorSelect { value: color }
+                }
                 crate::Checkbox { checked: show_start, label: "Back button" }
                 crate::Checkbox { checked: show_end, label: "End action" }
                 crate::Checkbox { checked: toolbar, label: "Toolbar" }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 Header {
+                    color: filled().then_some(color()),
                     title: title(),
                     start: show_start().then(|| rsx! {
                         crate::BackButton { onclick: |_| {} }

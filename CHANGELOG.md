@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`, `Spinner`,
+  `SegmentGroup`, `FabButton` and `FabMenu` take a `color` role, as Ionic's
+  controls do. `Card` and `Header` take `color` to fill with it, and their
+  content (title, icons, buttons, a toolbar segment) switches to the matching
+  contrast. The stylesheet exposes the role as `--g3-tint`, `--g3-on-tint`
+  and `--g3-tint-ink`.
+- `Badge`, `Progress`, `Spinner` and `Range` follow the mode like Ionic: an
+  iOS badge is a pill and a Material one is slightly rounded; a Material
+  progress bar is square; the iOS spinner is Ionic's eight fading lines; the
+  iOS range has a 4px bar and a large knob, the Material one a 2px bar and a
+  small tinted knob. Each takes a `mode` prop.
 - Form controls report the same states: `Toggle`, `RadioGroup`, `Range`,
   `Stepper` and `Rating` take `error`; `Toggle`, `Checkbox` and `RadioGroup`
   take `required` (`aria-required`); `RadioGroup` takes an `id`. `Toggle`

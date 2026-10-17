@@ -38,3 +38,29 @@ impl Color {
         }
     }
 }
+
+/// A color picker for playground demos.
+#[cfg(feature = "playground")]
+mod playground {
+    use super::Color;
+    use dioxus::prelude::*;
+
+    #[component]
+    pub(crate) fn ColorSelect(value: Signal<Color>) -> Element {
+        rsx! {
+            crate::Select {
+                label: "Color",
+                value,
+                options: vec![
+                    crate::SelectOption::new(Color::Accent, "Accent"),
+                    crate::SelectOption::new(Color::Neutral, "Neutral"),
+                    crate::SelectOption::new(Color::Success, "Success"),
+                    crate::SelectOption::new(Color::Warning, "Warning"),
+                    crate::SelectOption::new(Color::Danger, "Danger"),
+                ],
+            }
+        }
+    }
+}
+#[cfg(feature = "playground")]
+pub(crate) use playground::ColorSelect;

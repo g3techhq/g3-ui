@@ -57,6 +57,8 @@ pub fn Toggle(
     onchange: Option<EventHandler<bool>>,
     /// Element id. Generated when not given.
     id: Option<String>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the row.
@@ -83,6 +85,7 @@ pub fn Toggle(
             class: merge_classes(cls, class.as_deref()),
             r#type: "button",
             role: "switch",
+            "data-color": color.map(crate::Color::as_str),
             aria_checked: checked().to_string(),
             aria_label,
             aria_describedby: describedby,
@@ -112,12 +115,14 @@ pub fn Toggle(
 #[cfg(feature = "playground")]
 #[component]
 fn TogglePlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let checked = use_signal(|| true);
     let small = use_signal(|| false);
     let disabled = use_signal(|| false);
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
+                crate::components::color::ColorSelect { value: color }
                 crate::Checkbox { checked: small, label: "Small" }
                 crate::Checkbox { checked: disabled, label: "Disabled" }
             },
@@ -129,8 +134,9 @@ fn TogglePlaygroundDemo() -> Element {
                     label_placement: ControlLabelPlacement::Start,
                     size: if small() { ToggleSize::Sm } else { ToggleSize::Md },
                     disabled: disabled(),
+                    color: color(),
                 }
-                Toggle { checked, aria_label: "Notifications (compact)" }
+                Toggle { checked, aria_label: "Notifications (compact)", color: color() }
             }
         }
     }

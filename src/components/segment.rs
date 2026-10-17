@@ -66,6 +66,9 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
     /// overflow: by touch, mouse drag, or wheel. Otherwise buttons share the
     /// width equally and long labels are truncated.
     scrollable: Option<bool>,
+    /// Color role of the selected option. Defaults to
+    /// [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the group.
@@ -97,6 +100,7 @@ pub fn SegmentGroup<T: Clone + PartialEq + 'static>(
                 class.as_deref(),
             ),
             role: "radiogroup",
+            "data-color": color.map(crate::Color::as_str),
             aria_label: if label.is_none() { aria_label } else { None },
             aria_labelledby: label.as_ref().map(|_| format!("{id}-label")),
             {children}
@@ -172,6 +176,7 @@ pub fn SegmentButton<T: Clone + PartialEq + 'static>(
 #[cfg(feature = "playground")]
 #[component]
 fn SegmentPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let view = use_signal(|| 0_usize);
     let scrollable = use_signal(|| true);
     let labels = [
@@ -185,6 +190,7 @@ fn SegmentPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
+                crate::components::color::ColorSelect { value: color }
                 crate::Checkbox { checked: scrollable, label: "Scrollable" }
                 crate::Text { variant: crate::TextVariant::Caption, tone: crate::TextTone::Secondary,
                     if scrollable() {
@@ -195,7 +201,7 @@ fn SegmentPlaygroundDemo() -> Element {
                 }
             },
             crate::Stack {
-                SegmentGroup { value: view, aria_label: "Round view", scrollable: scrollable(),
+                SegmentGroup { value: view, aria_label: "Round view", scrollable: scrollable(), color: color(),
                     for (index, label) in labels.iter().enumerate() {
                         SegmentButton { key: "{index}", value: index, "{label}" }
                     }
