@@ -337,8 +337,9 @@ impl Theme {
     /// A whole theme generated from an accent and a page background, for
     /// example a color the user picked. Text reads at 4.5:1 on every surface,
     /// and an accent that would not is moved only as far as it must be. Use
-    /// [`ThemeSeeds::generate`] to add a second accent or to learn what was
-    /// moved; see [`palette`](crate::palette).
+    /// [`ThemeSeeds::generate`](crate::palette::ThemeSeeds::generate) to add a
+    /// second accent or to learn what was moved; see
+    /// [`palette`](crate::palette).
     ///
     /// ```
     /// use g3_ui::{Theme, ThemeSeeds};

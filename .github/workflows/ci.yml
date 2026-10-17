@@ -30,6 +30,20 @@ jobs:
           toolchain: 1.88.0
       - run: cargo check --lib --all-features
 
+  docs:
+    name: Rustdoc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+      - run: cargo doc --no-deps --features transitions
+        env:
+          RUSTDOCFLAGS: -D warnings
+
   quality:
     name: Quality gate
     uses: g3techhq/.github/.github/workflows/rust-quality.yml@da47dc747376edcf6ecc0cc986aec51f5084bf42 # v1.0.0

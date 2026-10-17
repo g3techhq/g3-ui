@@ -148,8 +148,8 @@ fn initial_compact_shell() -> Option<bool> {
     None
 }
 /// Tracks whether the playground page - not the simulated device inside it -
-/// is rendering at phone width. A persistent `Menu` rail has no room to reserve
-/// on a phone, so the component drawer switches to `Overlay` there.
+/// is rendering at phone width. A persistent `NavigationDrawer` has no room to
+/// reserve on a phone, so the component drawer becomes a `SideSheet` there.
 ///
 /// Seeded from [`initial_compact_shell`], then kept current by a media-query
 /// listener. `None` only where neither can answer, which leaves callers to fall
@@ -172,7 +172,17 @@ fn main() {
 #[component]
 fn App() -> Element {
     use_browser_history_transitions::<Route>();
+    // The default page template leaves `<html lang>` empty, so screen readers
+    // guess the language of every page.
+    use_effect(|| {
+        document::eval("document.documentElement.lang = 'en';");
+    });
     rsx! {
+        document::Title { "g3-ui playground" }
+        document::Meta {
+            name: "description",
+            content: "Live gallery and guides for g3-ui, Ionic-style iOS and Material components for Dioxus.",
+        }
         document::Link { rel: "icon", r#type: "image/svg+xml", href: FAVICON }
         Router::<Route> {}
     }
@@ -184,8 +194,9 @@ fn Playground() -> Element {
     let viewport = use_signal(|| PlaygroundViewport::Mobile);
     let preview_width = use_signal(|| 800.0);
     // Open from the first paint on a wide shell, where the drawer is a
-    // persistent `Menu` that reserves its own space beside the page. Closed on
-    // a phone, where it is a dismissible `Overlay` summoned from the header.
+    // persistent `NavigationDrawer` that reserves its own space beside the
+    // page. Closed on a phone, where it is a dismissible `SideSheet` summoned
+    // from the header.
     let mut selector_open = use_signal(|| !initial_compact_shell().unwrap_or(true));
     let source_value = use_signal(Vec::<String>::new);
     let theme = use_signal(|| PlaygroundTheme::Blue);
@@ -235,10 +246,11 @@ fn Playground() -> Element {
         ComponentMode::Ios => Platform::Ios,
         ComponentMode::Md => Platform::Material,
     });
-    // The wide-shell drawer is a persistent `Menu` that reserves its own space
-    // beside the page, so it is part of the layout rather than something to
-    // summon - it opens with the page. A phone has no room to reserve, so the
-    // same drawer is a dismissible `Overlay` there and stays shut. This only
+    // The wide-shell drawer is a persistent `NavigationDrawer` that reserves
+    // its own space beside the page, so it is part of the layout rather than
+    // something to summon - it opens with the page. A phone has no room to
+    // reserve, so the same content is a dismissible `SideSheet` there and
+    // stays shut. This only
     // runs on a real measurement, and only re-runs when the breakpoint is
     // crossed, so toggling the drawer by hand still sticks at either width.
     use_effect(move || {
