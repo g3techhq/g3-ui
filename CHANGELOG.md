@@ -88,6 +88,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A toggled rail remembers its state across routes and visits, in local
   storage under `g3-ui.nav-expanded`. `remember: false` turns this off; a rail
   given an `expanded` signal leaves it to the signal's owner.
+- Bottom toasts rise above the app's bottom bar by themselves: a `NavBar`, or
+  an `AdaptiveNav` on a compact shell. Each `AppWrapper` counts only its own
+  bars. `--g3-toast-bottom` and `--g3-toast-top` remain for chrome the
+  library does not draw, such as a mini player, and override the automatic
+  offset.
 - `use_overlay_controller()` with `OverlayController::count` and
   `dismiss_top`, for Android Back handling across every kind of overlay.
 - `reference_date` on `Calendar` and `DatePicker`, for date markup that the

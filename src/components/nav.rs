@@ -86,6 +86,12 @@ fn NavContainer(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    // A bar along the bottom lifts the app's bottom toasts above it.
+    super::app_wrapper::use_bottom_bar(match kind {
+        NavKind::Bar => Some(true),
+        NavKind::Adaptive(AdaptiveNavCompact::Bar) => Some(false),
+        _ => None,
+    });
     let has_rail = !matches!(kind, NavKind::Bar);
     let hover = behavior.unwrap_or_default() == NavRailBehavior::Hover;
     // Only the rail's own toggled state is remembered: a caller that passes

@@ -258,6 +258,18 @@ let delete = move |_: MouseEvent| async move {
 also a component (`Toast`, `Alert`, `ActionSheet`) that takes an `open` signal, for cases where the
 markup should own it.
 
+A bottom toast rises above the app's bottom bar on its own: a `NavBar`, or an `AdaptiveNav` while
+the shell is compact. For chrome the library does not draw, such as a mini player docked above the
+tab bar, set `--g3-toast-bottom` (or `--g3-toast-top` for top toasts) in the app's CSS. It takes
+any length and overrides the automatic offset; a container query or `:has()` can change it as the
+chrome comes and goes:
+
+```css
+.g3-app-shell:has(.mini-player) {
+    --g3-toast-bottom: calc(8rem + env(safe-area-inset-bottom));
+}
+```
+
 ## Modes and Themes
 
 Components have Ionic-style `Ios` and `Md` modes. A component takes the first mode it finds: its
