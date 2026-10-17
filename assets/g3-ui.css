@@ -1167,6 +1167,8 @@ textarea.g3-input {
 .g3-range-input {
     flex: 1 1 auto;
     min-width: 0;
+    /* The track is thin; the input box is the touch target. */
+    min-height: 44px;
     margin: 0;
     accent-color: var(--g3-color-accent);
     cursor: pointer;
@@ -1332,12 +1334,30 @@ button.g3-chip:focus-visible {
 
 /* A control with no label is just its mark. */
 .g3-control-bare {
+    position: relative;
     display: inline-grid;
     grid-template-areas: "control";
     grid-template-columns: auto;
     width: auto;
     min-height: 0;
     padding: 0.25rem;
+}
+
+/* The mark alone can be smaller than a fingertip (a Material switch is 22px
+   tall), so an invisible 44px square around it takes the tap without moving
+   the layout. */
+.g3-control-bare::after {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    translate: -50% -50%;
+}
+
+.g3-control-bare:dir(rtl)::after {
+    translate: 50% -50%;
 }
 
 .g3-control:focus-visible,

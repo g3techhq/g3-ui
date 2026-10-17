@@ -221,6 +221,13 @@ pub fn AppWrapper(
             OverlayHost { queues }
         }
     };
+    // Head elements come from the outermost wrapper only: a nested one, such
+    // as a demo frame, would link the whole stylesheet into the cascade again.
+    // `is_root_shell` is decided by context, so the server and the hydrating
+    // client render the same head.
+    if !is_root_shell {
+        return shell;
+    }
     #[cfg(feature = "transitions")]
     return rsx! {
         StylesheetLink {}
