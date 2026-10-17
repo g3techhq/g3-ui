@@ -294,6 +294,21 @@ pub(crate) fn SheetFrame(
             false,
         ),
     };
+    // A custom width has to reach the page too, which moves or narrows by
+    // it: the page is a sibling, so the width is set on the app shell that
+    // holds this surface.
+    let width_rule = match &kind {
+        FrameKind::Side {
+            width: Some(width), ..
+        }
+        | FrameKind::Drawer {
+            width: Some(width), ..
+        } => Some(
+            format!(".g3-app:has(> #{id}) {{ --g3-side-sheet-width: {width}; }}")
+                .replace("</", "<\\/"),
+        ),
+        _ => None,
+    };
     // The scrim only needs the behaviour: the side-sheet classes would give
     // it the sheet's slide instead of a fade.
     let behavior_cls = match &kind {
@@ -359,6 +374,9 @@ pub(crate) fn SheetFrame(
                 FrameKind::Bottom { detents, .. } if !detents.is_empty() => Some(format!("{detents:?}")),
                 _ => None,
             },
+            if let Some(css) = width_rule {
+                style { dangerous_inner_html: css }
+            }
             if handle && is_bottom {
                 button {
                     id: handle_id,

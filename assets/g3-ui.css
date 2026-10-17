@@ -2309,6 +2309,26 @@ button.g3-chip:focus-visible {
     --g3-sheet-offscreen: calc(-100% - 2rem);
 }
 
+/* A surface the page moves with waits exactly its own width away, so the
+   page's edge and the surface's edge travel together. The extra 2rem above
+   only hides an overlay's shadow; here it would open a gap while closing. */
+.g3-drawer-start,
+.g3-sheet-push.g3-sheet-start {
+    --g3-sheet-offscreen: -100%;
+}
+
+.g3-drawer-end,
+.g3-sheet-push.g3-sheet-end,
+.g3-drawer-start:dir(rtl),
+.g3-sheet-push.g3-sheet-start:dir(rtl) {
+    --g3-sheet-offscreen: 100%;
+}
+
+.g3-drawer-end:dir(rtl),
+.g3-sheet-push.g3-sheet-end:dir(rtl) {
+    --g3-sheet-offscreen: -100%;
+}
+
 .g3-sheet-side .g3-sheet-content,
 .g3-drawer .g3-sheet-content {
     flex: 1 1 auto;
@@ -2385,7 +2405,10 @@ button.g3-chip:focus-visible {
 }
 
 /* A drawer is persistent navigation. The page reflows into the remaining
-   width instead of being covered. */
+   width instead of being covered: only its margin on the drawer's side
+   changes, and its width stays `auto` so that margin narrows it. A page root
+   given an explicit width would keep that width and slide under the drawer
+   instead. */
 .g3-drawer {
     border-radius: 0;
 }
@@ -2402,16 +2425,10 @@ button.g3-chip:focus-visible {
 
 .g3-app:has(> .g3-drawer)
     > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
-    width: 100%;
+    width: auto;
     min-width: 0;
     margin-inline: 0;
-    transition: width var(--g3-sheet-duration) var(--g3-sheet-easing),
-                margin var(--g3-sheet-duration) var(--g3-sheet-easing);
-}
-
-.g3-app:has(> .g3-drawer[data-state="open"])
-    > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
-    width: calc(100% - var(--g3-side-sheet-width));
+    transition: margin var(--g3-sheet-duration) var(--g3-sheet-easing);
 }
 
 .g3-app:has(> .g3-drawer-start[data-state="open"])
@@ -2433,6 +2450,11 @@ button.g3-chip:focus-visible {
 
 .g3-sheet-ios.g3-sheet-bottom {
     border-radius: 16px 16px 0 0;
+}
+
+.g3-sheet-ios.g3-sheet-push {
+    /* The page beside it moves on the sheet curve; both must match. */
+    transition-timing-function: var(--g3-sheet-easing);
 }
 
 .g3-sheet-ios.g3-sheet-side {
@@ -3003,7 +3025,10 @@ button.g3-chip:focus-visible {
     justify-content: center;
     gap: 6px;
     min-width: 0;
-    max-width: min(220px, calc(100vw - 7rem));
+    /* Its own column, not the viewport: a header narrowed by a drawer or a
+       split view truncates the title instead of running it under the
+       buttons. */
+    max-width: min(220px, 100%);
     margin: 0;
 }
 .g3-header-title-text {
@@ -5080,11 +5105,23 @@ button.g3-chip:focus-visible {
     border-radius: 0.75rem;
     background: color-mix(in srgb, var(--g3-color-accent) 12%, transparent);
     opacity: 0;
-    transition: opacity 220ms ease-out;
+    scale: 0.94;
+    /* Released: the press layer settles back out slowly enough to be seen. */
+    transition: opacity 450ms cubic-bezier(0.4, 0, 0.2, 1),
+                scale 450ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Pressed: it comes in quickly, so the tap feels answered at once. */
 .g3-nav-item:active:not([aria-disabled="true"], :disabled)::before {
     opacity: 1;
+    scale: 1;
+    transition-duration: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-nav-item::before {
+        scale: none;
+    }
 }
 
 .g3-nav-item:focus-visible {
@@ -5252,6 +5289,8 @@ button.g3-chip:focus-visible {
 
 .g3-nav-rail .g3-nav-item:hover:not([aria-disabled="true"], :disabled)::before {
     opacity: 1;
+    scale: 1;
+    transition-duration: 150ms;
 }
 
 .g3-nav-rail .g3-nav-item[aria-current="page"] {
@@ -6423,6 +6462,8 @@ button.g3-chip:focus-visible {
 
     .g3-nav-adaptive .g3-nav-item:hover:not([aria-disabled="true"], :disabled)::before {
         opacity: 1;
+        scale: 1;
+        transition-duration: 150ms;
     }
 
     .g3-nav-adaptive .g3-nav-item[aria-current="page"] {

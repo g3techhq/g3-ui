@@ -60,6 +60,38 @@ pub(crate) fn use_top_layer_with_priority(
     });
 }
 
+/// Whether an overlay's content should be mounted: while it is open, and for
+/// `linger` after it closes, so the content fades out with its surface
+/// instead of vanishing from a dialog that is still on screen. Content that
+/// must start fresh on each open still remounts once the linger has passed.
+pub(crate) fn use_presence(open: Signal<bool>, linger: Duration) -> bool {
+    let mut lingering = use_signal(|| false);
+    // Bumped on every change, so a close that is reopened within the linger
+    // does not unmount the reopened content when its timer fires.
+    let generation = use_hook(|| std::rc::Rc::new(Cell::new(0_u64)));
+    let open_signal = use_synced_signal(open);
+    {
+        let generation = generation.clone();
+        use_effect(move || {
+            let is_open = open_signal()();
+            let current = generation.get() + 1;
+            generation.set(current);
+            if is_open {
+                lingering.set(true);
+            } else if *lingering.peek() {
+                let generation = generation.clone();
+                spawn(async move {
+                    dioxus_sdk_time::sleep(linger).await;
+                    if generation.get() == current {
+                        lingering.set(false);
+                    }
+                });
+            }
+        });
+    }
+    open() || lingering()
+}
+
 #[derive(Clone, PartialEq)]
 struct OverlayEntry {
     id: String,

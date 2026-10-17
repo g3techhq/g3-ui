@@ -705,7 +705,7 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
-    width: 100%;
+    /* No width: a drawer narrows the page through its margin. */
     min-height: 0;
     overflow: hidden;
     background: var(--g3-color-bg);
