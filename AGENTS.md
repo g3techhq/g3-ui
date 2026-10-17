@@ -81,10 +81,16 @@ If you could not do one of these, say which and why.
 - **Slots follow Ionic:** `start`, `end`, `title`, `toolbar`; body content is
   `children`.
 - **Names:** `open` for visibility, `value` for selection, `disabled`,
-  `aria_label`, `mode`, `class`. Colors use the shared `Color` enum.
+  `aria_label`, `mode`, `class`. Colors use the shared `Color` enum. A
+  handler named after a DOM event is lowercase (`onclick`, `onchange`,
+  `oninput`); a component's own event is `on_` + verb (`on_dismiss`,
+  `on_reorder`), and carries a named struct rather than a tuple.
 - **State ownership:** a component with a primary value takes an optional
   `Signal<T>` through `state::use_controlled`, so it keeps its own state when
-  none is passed. Overlays take a required `open: Signal<bool>`. Pair the
+  none is passed. When the value has no sensible default (the selected tab of
+  a generic `T`), the signal is required instead, or paired with a
+  `default_value` as `Select` does. Overlays take a required
+  `open: Signal<bool>`. Pair the
   signal with an optional `onchange` that receives the new value, not a DOM
   event. A control that follows something else offers `defer_selection`.
 - **Full WAI-ARIA** on interactive components: roles, states, keyboard

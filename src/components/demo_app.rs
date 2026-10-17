@@ -585,12 +585,7 @@ fn ProfileScreen() -> Element {
                 }
                 // Dragged, or moved with the arrow keys from the handle.
                 ReorderList {
-                    onreorder: move |(from, to): (usize, usize)| {
-                        favorites.with_mut(|courses| {
-                            let course = courses.remove(from);
-                            courses.insert(to, course);
-                        });
-                    },
+                    on_reorder: move |moved: ReorderEvent| favorites.with_mut(|courses| moved.apply(courses)),
                     List { variant: ListVariant::Raised,
                         ListHeader { "Favorite courses" }
                         for (index, course) in favorites().into_iter().enumerate() {

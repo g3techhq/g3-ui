@@ -1,6 +1,7 @@
 //! A titled row that scrolls sideways.
 use super::hscroll::use_horizontal_scroll;
 use super::layout::Space;
+use super::text::HeadingLevel;
 use crate::state::use_element_id;
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
@@ -47,8 +48,9 @@ pub fn Shelf(
     /// mouse or wheel always scrolls freely. Defaults to
     /// `true`.
     snap: Option<bool>,
-    /// Heading level of the title, 1 to 6. Defaults to 2.
-    heading_level: Option<u8>,
+    /// Heading level of the title. Defaults to
+    /// [`HeadingLevel::H2`](crate::HeadingLevel::H2).
+    heading_level: Option<HeadingLevel>,
     /// Extra classes for the shelf.
     class: Option<String>,
     children: Element,
@@ -67,7 +69,7 @@ pub fn Shelf(
                 div { class: "g3-shelf-header",
                     if let Some(title) = title {
                         super::text::Heading {
-                            level: heading_level.unwrap_or(2),
+                            level: heading_level.unwrap_or_default(),
                             class: "g3-shelf-title",
                             span { id: title_id, "{title}" }
                         }

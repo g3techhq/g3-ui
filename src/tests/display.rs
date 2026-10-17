@@ -320,23 +320,23 @@ fn content_limits_width_and_hosts_a_refresher() {
 }
 
 #[test]
-fn grids_carry_wide_settings() {
+fn grids_carry_medium_and_expanded_settings() {
     fn app() -> Element {
         rsx! {
-            Grid { columns: GridColumns::Count(1), wide_columns: GridColumns::Count(3), wide_gap: Space::Xl, "a" }
+            Grid { columns: GridColumns::Count(1), medium_columns: GridColumns::Count(3), expanded_gap: Space::Xl, "a" }
         }
     }
     let html = render(app);
     let grid = element_with_class(&html, "g3-grid");
-    assert!(grid.contains("--g3-grid-columns-wide: repeat(3, minmax(0, 1fr));"));
-    assert!(grid.contains("data-wide-gap=\"xl\""));
+    assert!(grid.contains("--g3-grid-columns-medium: repeat(3, minmax(0, 1fr));"));
+    assert!(grid.contains("data-expanded-gap=\"xl\""));
 }
 
 #[test]
 fn an_empty_state_announces_only_a_failure() {
     fn empty() -> Element {
         rsx! {
-            EmptyState { title: "No rounds yet", heading_level: 3, "Rounds you play show up here." }
+            EmptyState { title: "No rounds yet", heading_level: HeadingLevel::H3, "Rounds you play show up here." }
         }
     }
     let html = render(empty);
@@ -497,10 +497,10 @@ fn a_row_with_a_control_at_its_end_does_not_nest_buttons() {
 fn a_reorder_list_tells_its_script_how_its_items_are_laid_out() {
     fn app() -> Element {
         rsx! {
-            ReorderList { onreorder: |_| {},
+            ReorderList { on_reorder: |_| {},
                 List { ReorderItem { index: 0, Item { label: "Row" } } }
             }
-            ReorderList { onreorder: |_| {}, layout: ReorderLayout::Grid,
+            ReorderList { on_reorder: |_| {}, layout: ReorderLayout::Grid,
                 Grid { ReorderItem { index: 0, Card { title: "Cell" } } }
             }
         }
@@ -518,7 +518,7 @@ fn a_reorder_list_tells_its_script_how_its_items_are_laid_out() {
 fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
     fn app() -> Element {
         rsx! {
-            ReorderList { onreorder: |_| {},
+            ReorderList { on_reorder: |_| {},
                 List { aria_label: "Holes",
                     ReorderItem { index: 0,
                         Item { label: "Front nine", start: rsx! { ReorderHandle { label: "Move Front nine" } } }

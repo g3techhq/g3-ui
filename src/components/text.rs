@@ -105,27 +105,46 @@ pub fn Text(
     }
 }
 
-/// A heading at a caller-chosen level, clamped to `h1`..`h6`. Components with
-/// a title use it so an app can keep its heading outline in order.
+/// The level of a component's own heading, `h1` to `h6`. Pick the one that
+/// keeps the page's outline in order, so headings never skip a level.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
+pub enum HeadingLevel {
+    /// `h1`, the page title.
+    H1,
+    /// `h2`, a section. The default for component titles.
+    #[default]
+    H2,
+    /// `h3`.
+    H3,
+    /// `h4`.
+    H4,
+    /// `h5`.
+    H5,
+    /// `h6`.
+    H6,
+}
+
+/// A heading at a caller-chosen level. Components with a title use it so an
+/// app can keep its heading outline in order.
 #[component]
-pub(crate) fn Heading(level: u8, class: String, children: Element) -> Element {
-    match level.clamp(1, 6) {
-        1 => rsx! {
+pub(crate) fn Heading(level: HeadingLevel, class: String, children: Element) -> Element {
+    match level {
+        HeadingLevel::H1 => rsx! {
             h1 { class, {children} }
         },
-        2 => rsx! {
+        HeadingLevel::H2 => rsx! {
             h2 { class, {children} }
         },
-        3 => rsx! {
+        HeadingLevel::H3 => rsx! {
             h3 { class, {children} }
         },
-        4 => rsx! {
+        HeadingLevel::H4 => rsx! {
             h4 { class, {children} }
         },
-        5 => rsx! {
+        HeadingLevel::H5 => rsx! {
             h5 { class, {children} }
         },
-        _ => rsx! {
+        HeadingLevel::H6 => rsx! {
             h6 { class, {children} }
         },
     }

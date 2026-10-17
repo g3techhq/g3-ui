@@ -56,9 +56,37 @@ struct ReorderContext {
     /// places there are.
     rows: Signal<HashMap<usize, Rc<MountedData>>>,
     announcement: Signal<String>,
-    onreorder: EventHandler<(usize, usize)>,
+    on_reorder: EventHandler<ReorderEvent>,
     disabled: Signal<bool>,
     layout: Signal<ReorderLayout>,
+}
+
+/// A row moved by a [`ReorderList`]: its position before and after.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct ReorderEvent {
+    /// Where the row was.
+    pub from: usize,
+    /// Where it is now.
+    pub to: usize,
+}
+
+impl ReorderEvent {
+    /// Make the same move in `items`, the data the list shows. Positions out
+    /// of range leave it unchanged.
+    ///
+    /// ```
+    /// use g3_ui::ReorderEvent;
+    ///
+    /// let mut holes = vec![1, 2, 3];
+    /// ReorderEvent { from: 0, to: 2 }.apply(&mut holes);
+    /// assert_eq!(holes, [2, 3, 1]);
+    /// ```
+    pub fn apply<T>(self, items: &mut Vec<T>) {
+        if self.from < items.len() && self.to < items.len() {
+            let item = items.remove(self.from);
+            items.insert(self.to, item);
+        }
+    }
 }
 
 /// A list whose rows can be put in a new order. Like Ionic's
@@ -67,8 +95,9 @@ struct ReorderContext {
 /// Wrap each row in a [`ReorderItem`] with its position, and put a
 /// [`ReorderHandle`] in the row. Dragging the handle moves the row, and the
 /// others make room; the arrow keys move it one place while the handle has
-/// focus. Either way `onreorder` is called with the row's old and new
-/// positions, and the list is reordered by the caller, which owns the data:
+/// focus. Either way `on_reorder` is called with a [`ReorderEvent`] naming the
+/// row's old and new positions, and the list is reordered by the caller,
+/// which owns the data:
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -77,12 +106,7 @@ struct ReorderContext {
 /// let mut holes = use_signal(|| vec!["Front nine", "Back nine", "Par threes"]);
 /// rsx! {
 ///     ReorderList {
-///         onreorder: move |(from, to): (usize, usize)| {
-///             holes.with_mut(|holes| {
-///                 let hole = holes.remove(from);
-///                 holes.insert(to, hole);
-///             });
-///         },
+///         on_reorder: move |moved: ReorderEvent| holes.with_mut(|holes| moved.apply(holes)),
 ///         List { variant: ListVariant::Raised,
 ///             for (index, hole) in holes().into_iter().enumerate() {
 ///                 ReorderItem { key: "{hole}", index,
@@ -110,12 +134,7 @@ struct ReorderContext {
 /// rsx! {
 ///     ReorderList {
 ///         layout: ReorderLayout::Grid,
-///         onreorder: move |(from, to): (usize, usize)| {
-///             posters.with_mut(|posters| {
-///                 let poster = posters.remove(from);
-///                 posters.insert(to, poster);
-///             });
-///         },
+///         on_reorder: move |moved: ReorderEvent| posters.with_mut(|posters| moved.apply(posters)),
 ///         Grid { columns: GridColumns::Count(2),
 ///             for (index, title) in posters().into_iter().enumerate() {
 ///                 ReorderItem { key: "{title}", index,
@@ -131,8 +150,8 @@ struct ReorderContext {
 /// ```
 #[component]
 pub fn ReorderList(
-    /// Called with `(from, to)` when a row is moved.
-    onreorder: EventHandler<(usize, usize)>,
+    /// Called when a row is moved, with its old and new positions.
+    on_reorder: EventHandler<ReorderEvent>,
     /// How the items are laid out. Defaults to [`ReorderLayout::Rows`].
     layout: Option<ReorderLayout>,
     /// Turn reordering off, leaving the rows where they are.
@@ -150,7 +169,7 @@ pub fn ReorderList(
     let context = ReorderContext {
         rows,
         announcement,
-        onreorder,
+        on_reorder,
         disabled,
         layout,
     };
@@ -162,7 +181,7 @@ pub fn ReorderList(
         if gesture.kind == "reorder" && !disabled() {
             let (from, to) = (gesture.value(0) as usize, gesture.value(1) as usize);
             if from != to {
-                onreorder.call((from, to));
+                on_reorder.call(ReorderEvent { from, to });
             }
         }
     });
@@ -270,7 +289,7 @@ pub fn ReorderHandle(
             _ => return,
         };
         event.prevent_default();
-        (context.onreorder)((index, to));
+        context.on_reorder.call(ReorderEvent { from: index, to });
         // The handle keeps focus and its name; only the new place is news.
         announcement.set(format!("{} / {count}", to + 1));
     };
@@ -326,12 +345,7 @@ fn ReorderPlaygroundDemo() -> Element {
             },
             ReorderList {
                 layout: layout(),
-                onreorder: move |(from, to): (usize, usize)| {
-                    rows.with_mut(|rows| {
-                        let row = rows.remove(from);
-                        rows.insert(to, row);
-                    });
-                },
+                on_reorder: move |moved: ReorderEvent| rows.with_mut(|rows| moved.apply(rows)),
                 if layout() == ReorderLayout::Grid {
                     crate::Grid {
                         columns: crate::GridColumns::Count(3),

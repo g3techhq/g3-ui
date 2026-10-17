@@ -372,8 +372,8 @@ impl Theme {
     }
 
     /// Every token as `(custom property, value)` pairs, in declaration order.
-    pub fn tokens(&self) -> [(&'static str, &str); 17] {
-        [
+    pub fn tokens(&self) -> Vec<(&'static str, &str)> {
+        vec![
             ("--g3-color-accent", &self.accent),
             ("--g3-color-accent-secondary", &self.accent_secondary),
             ("--g3-color-on-accent", &self.on_accent),

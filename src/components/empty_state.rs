@@ -1,6 +1,7 @@
 //! A panel for a screen with nothing to show: no results, nothing saved yet,
 //! or a load that failed.
 use super::color::Color;
+use super::text::HeadingLevel;
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
 
@@ -39,9 +40,10 @@ pub fn EmptyState(
     /// Tone. Defaults to [`Color::Neutral`]; use [`Color::Danger`] for a
     /// failed load.
     color: Option<Color>,
-    /// Heading level of the title, 1 to 6. Defaults to 2; set it so the page's
+    /// Heading level of the title. Defaults to
+    /// [`HeadingLevel::H2`](crate::HeadingLevel::H2); set it so the page's
     /// headings do not skip a level.
-    heading_level: Option<u8>,
+    heading_level: Option<HeadingLevel>,
     /// Extra classes for the panel.
     class: Option<String>,
     /// The explanation under the title.
@@ -60,7 +62,7 @@ pub fn EmptyState(
                 div { class: "g3-empty-state-icon", aria_hidden: "true", {icon} }
             }
             super::text::Heading {
-                level: heading_level.unwrap_or(2),
+                level: heading_level.unwrap_or_default(),
                 class: "g3-empty-state-title",
                 "{title}"
             }

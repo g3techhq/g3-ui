@@ -1,4 +1,5 @@
 //! Expandable sections.
+use super::text::HeadingLevel;
 use crate::state::{
     provide_live_context, use_controlled, use_element_id, use_live_context, use_synced_signal,
 };
@@ -111,9 +112,10 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
     label: Option<String>,
     /// Secondary header text.
     description: Option<String>,
-    /// Heading level of the header, 1 to 6. Defaults to 2; set it so the
+    /// Heading level of the header. Defaults to
+    /// [`HeadingLevel::H2`](crate::HeadingLevel::H2); set it so the
     /// page's headings do not skip a level.
-    heading_level: Option<u8>,
+    heading_level: Option<HeadingLevel>,
     /// Custom header content, used instead of `label` and `description`.
     header: Option<Element>,
     /// Disable this item.
@@ -135,7 +137,7 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
             class: merge_classes("g3-accordion-item", class.as_deref()),
             "data-state": state,
             "data-disabled": disabled.then_some("true"),
-            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-accordion-heading",
+            super::text::Heading { level: heading_level.unwrap_or_default(), class: "g3-accordion-heading",
                 button {
                     id: button_id.clone(),
                     class: "g3-accordion-header",

@@ -248,7 +248,12 @@ struct MenuContext {
     open: Signal<bool>,
 }
 
-/// A menu of actions anchored to a trigger. Like a desktop dropdown menu.
+/// A menu of actions anchored to a trigger. Like a desktop dropdown menu, and
+/// Material's menu.
+///
+/// Not Ionic's `ion-menu`, which is a side drawer: for that, use
+/// [`NavigationDrawer`](crate::NavigationDrawer) or
+/// [`SideSheet`](crate::SideSheet).
 ///
 /// Arrow keys, Home, and End move between items; Escape closes the menu.
 /// Choosing an item closes it.
