@@ -44,6 +44,9 @@ script-test:
 browser-test:
     node playground/browser-tests.cjs
 
+doc:
+    $env:RUSTDOCFLAGS = '-D warnings'; cargo doc --no-deps --features transitions
+
 security:
     cargo deny check
 
@@ -54,7 +57,7 @@ quality: pre-push
 package-check:
     cargo package --allow-dirty
 
-ci: quality security package-check
+ci: quality doc security package-check
 
 package:
     cargo package

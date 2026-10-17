@@ -5,7 +5,7 @@ out_dir = "dist"
 
 
 [web.app]
-title = "g3_ui Playground"
+title = "g3-ui playground"
 
 [web.watcher]
 reload_html = true
