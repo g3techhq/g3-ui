@@ -185,11 +185,15 @@ pub fn Select<T: Clone + PartialEq + 'static>(
         button {
             id: id.clone(),
             r#type: "button",
+            // A combobox, unlike a plain button, can be marked required.
+            role: "combobox",
             class: classes(["g3-input", "g3-select", mode.pick("g3-input-ios", "g3-input-md")]),
             disabled,
             aria_haspopup: "listbox",
             aria_expanded: open().to_string(),
-            aria_controls: list_id.clone(),
+            // Only while the list is there to point at.
+            aria_controls: open().then(|| list_id.clone()),
+            aria_required: required.unwrap_or(false).then_some("true"),
             aria_label,
             aria_labelledby: labelledby,
             aria_describedby: describedby,
