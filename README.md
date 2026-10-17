@@ -91,8 +91,8 @@ measure the space remaining after navigation. `use_layout_size()` returns
 The existing binary `use_shell_size()` API keeps its 48rem behavior.
 
 `GridColumns::Fit(18.0)` chooses as many readable 18rem cards as fit, including
-intermediate column counts. Fixed-count layouts can use `medium_columns` and
-`expanded_columns` in addition to the compatible `wide_columns` prop.
+intermediate column counts. Fixed-count layouts set `medium_columns` and
+`expanded_columns`, with `medium_gap` and `expanded_gap`.
 
 `PageLayout { start, end, children }` rearranges persistent content into one,
 two, or three columns. `AdaptiveLayout { compact, medium, expanded }` mounts
@@ -392,7 +392,7 @@ so an app embedded in a narrow frame keeps its phone layout. At `48rem` and wide
 
 At `64rem` the `Header` toolbar moves inline with the title.
 
-`Grid` takes `wide_columns` and `wide_gap` for the same breakpoint, and
+`Grid` takes `medium_columns` and `medium_gap` for the same breakpoint, and
 `Content { width: ContentWidth::Readable }` keeps text at a comfortable width on a wide shell
 while its scrollbar stays at the page edge.
 

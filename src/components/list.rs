@@ -1,5 +1,6 @@
 //! Lists and list rows.
 use super::pressable::Destination;
+use super::text::HeadingLevel;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -130,9 +131,10 @@ pub fn List(
 /// A section heading inside a [`List`].
 #[component]
 pub fn ListHeader(
-    /// Heading level of the header, 1 to 6. Defaults to 2; set it so the page's
+    /// Heading level of the header. Defaults to
+    /// [`HeadingLevel::H2`](crate::HeadingLevel::H2); set it so the page's
     /// headings do not skip a level.
-    heading_level: Option<u8>,
+    heading_level: Option<HeadingLevel>,
     /// Extra classes for the header row.
     class: Option<String>,
     children: Element,
@@ -141,7 +143,7 @@ pub fn ListHeader(
         div {
             class: merge_classes("g3-list-header-row", class.as_deref()),
             role: "listitem",
-            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-list-header", {children} }
+            super::text::Heading { level: heading_level.unwrap_or_default(), class: "g3-list-header", {children} }
         }
     }
 }

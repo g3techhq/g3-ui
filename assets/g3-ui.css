@@ -5827,7 +5827,6 @@ button.g3-chip:focus-visible {
     --g3-gap: 0.75rem;
     /* A nested grid owns its sizing; absent overrides must not inherit the
        containing grid's column policy. Inline prop values still win. */
-    --g3-grid-columns-wide: initial;
     --g3-grid-columns-medium: initial;
     --g3-grid-columns-expanded: initial;
     display: grid;
@@ -5947,18 +5946,32 @@ button.g3-chip:focus-visible {
     width: 12rem;
 }
 
-/* Wide shells: a grid switches to its wide columns and gap. */
+/* Wider shells: a grid switches to its medium, then expanded, columns and
+   gap. Each falls back to the size below it. */
 @container g3-app-shell (min-width: 48rem) {
     .g3-grid {
-        grid-template-columns: var(--g3-grid-columns-wide, var(--g3-grid-columns));
+        grid-template-columns: var(--g3-grid-columns-medium, var(--g3-grid-columns));
     }
 
-    .g3-grid[data-wide-gap="none"] { --g3-gap: 0; }
-    .g3-grid[data-wide-gap="xs"] { --g3-gap: 0.25rem; }
-    .g3-grid[data-wide-gap="sm"] { --g3-gap: 0.5rem; }
-    .g3-grid[data-wide-gap="md"] { --g3-gap: 0.75rem; }
-    .g3-grid[data-wide-gap="lg"] { --g3-gap: 1rem; }
-    .g3-grid[data-wide-gap="xl"] { --g3-gap: 1.5rem; }
+    .g3-grid[data-medium-gap="none"] { --g3-gap: 0; }
+    .g3-grid[data-medium-gap="xs"] { --g3-gap: 0.25rem; }
+    .g3-grid[data-medium-gap="sm"] { --g3-gap: 0.5rem; }
+    .g3-grid[data-medium-gap="md"] { --g3-gap: 0.75rem; }
+    .g3-grid[data-medium-gap="lg"] { --g3-gap: 1rem; }
+    .g3-grid[data-medium-gap="xl"] { --g3-gap: 1.5rem; }
+}
+
+@container g3-app-shell (min-width: 64rem) {
+    .g3-grid {
+        grid-template-columns: var(--g3-grid-columns-expanded, var(--g3-grid-columns-medium, var(--g3-grid-columns)));
+    }
+
+    .g3-grid[data-expanded-gap="none"] { --g3-gap: 0; }
+    .g3-grid[data-expanded-gap="xs"] { --g3-gap: 0.25rem; }
+    .g3-grid[data-expanded-gap="sm"] { --g3-gap: 0.5rem; }
+    .g3-grid[data-expanded-gap="md"] { --g3-gap: 0.75rem; }
+    .g3-grid[data-expanded-gap="lg"] { --g3-gap: 1rem; }
+    .g3-grid[data-expanded-gap="xl"] { --g3-gap: 1.5rem; }
 }
 
 .g3-text {
@@ -7308,19 +7321,6 @@ td[aria-selected="true"] > .g3-calendar-day {
         .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) .g3-page-end {
             grid-column: 3;
             grid-row: 1;
-        }
-    }
-}
-
-@layer g3 {
-    @container g3-app-shell (min-width: 48rem) {
-        .g3-grid {
-            grid-template-columns: var(--g3-grid-columns-medium, var(--g3-grid-columns-wide, var(--g3-grid-columns)));
-        }
-    }
-    @container g3-app-shell (min-width: 64rem) {
-        .g3-grid {
-            grid-template-columns: var(--g3-grid-columns-expanded, var(--g3-grid-columns-medium, var(--g3-grid-columns-wide, var(--g3-grid-columns))));
         }
     }
 }

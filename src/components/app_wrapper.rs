@@ -15,6 +15,10 @@ use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitio
 /// components, picking how many items to ask the server for, deciding whether
 /// a control is worth showing at all. Layout alone is better left to CSS,
 /// which needs no measurement and cannot flicker.
+///
+/// This is always the whole app's width. For three stages, or for the width
+/// left inside a [`LayoutScope`](crate::LayoutScope), use
+/// [`use_layout_size`](crate::use_layout_size).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ShellSize {
     /// Narrower than `48rem`: a phone, or a window cut down to one.

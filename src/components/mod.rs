@@ -114,7 +114,9 @@ pub use radio::{Radio, RadioGroup};
 pub use range::{Range, Stepper};
 pub use rating::Rating;
 pub use refresher::Refresher;
-pub use reorder::{ReorderHandle, ReorderHandlePosition, ReorderItem, ReorderLayout, ReorderList};
+pub use reorder::{
+    ReorderEvent, ReorderHandle, ReorderHandlePosition, ReorderItem, ReorderLayout, ReorderList,
+};
 pub use responsive::{
     AdaptiveLayout, LayoutScope, LayoutSize, PageLayout, PageLayoutOrder, use_layout_size,
 };
@@ -130,7 +132,7 @@ pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
 pub use tab_layout::TabLayout;
 pub use table::{Table, TableVariant};
 pub use tabs::{Tab, TabList, TabPanel, Tabs};
-pub use text::{Text, TextTone, TextVariant};
+pub use text::{HeadingLevel, Text, TextTone, TextVariant};
 pub use time_picker::TimePicker;
 pub use toast::{Toast, ToastDuration, ToastPosition};
 pub use toggle::{Toggle, ToggleSize};

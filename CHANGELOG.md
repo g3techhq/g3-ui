@@ -6,6 +6,23 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- **Breaking:** `ReorderList`'s `onreorder: (usize, usize)` is now
+  `on_reorder: ReorderEvent`, following the rule that a component's own
+  events are `on_*` and carry a named struct. `ReorderEvent::apply` makes the
+  move in a `Vec`. Migration: `on_reorder: move |moved: ReorderEvent|
+  items.with_mut(|items| moved.apply(items))`.
+- **Breaking:** `heading_level` on `Card`, `EmptyState`, `ListHeader`,
+  `AccordionItem` and `Shelf` takes a `HeadingLevel` (`H1`..`H6`) instead of a
+  `u8` that was silently clamped. Migration: `heading_level: 3` becomes
+  `heading_level: HeadingLevel::H3`.
+- **Breaking:** `Grid` drops `wide_columns` and `wide_gap`; use
+  `medium_columns` and the new `medium_gap` (from 48rem) and
+  `expanded_gap` (from 64rem). The `--g3-grid-columns-wide` property and
+  `data-wide-gap` attribute are gone.
+- **Breaking:** `Theme::tokens()` returns a `Vec`, so adding a token is not a
+  breaking change again.
+- `Menu`'s docs point Ionic users to `NavigationDrawer`, and `ShellSize`'s
+  docs explain when to use `use_layout_size` instead.
 - `set_mode` is process-wide instead of per thread, so a server that sets it
   in `main` renders every request in that mode. Document passing `mode` to
   `AppWrapper` in server-rendered apps, that `Theme` and `Look` values are

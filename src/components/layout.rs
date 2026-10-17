@@ -158,12 +158,12 @@ impl GridColumns {
 
 /// Lays children out in a grid of equal columns.
 ///
-/// `columns` and `gap` apply on phone-width shells. `wide_columns` and
-/// `wide_gap` take over once the app shell is `48rem` or wider, the same
-/// breakpoint where navigation becomes a rail.
-/// `medium_columns` overrides columns from 48rem and `expanded_columns` from
-/// 64rem. A surrounding LayoutScope makes those widths local to the content
-/// remaining after navigation. Fit sizing naturally handles intermediate widths.
+/// `columns` and `gap` apply below `48rem`. `medium_columns` and
+/// `medium_gap` take over from `48rem`, where navigation becomes a rail, and
+/// `expanded_columns` and `expanded_gap` from `64rem`. Each falls back to the
+/// size below it. A surrounding [`LayoutScope`](crate::LayoutScope) measures
+/// these widths in the space left after navigation. [`GridColumns::Fit`]
+/// handles every width with no overrides.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -174,8 +174,9 @@ impl GridColumns {
 /// rsx! {
 ///     Grid {
 ///         columns: GridColumns::Count(1),
-///         wide_columns: GridColumns::Count(3),
-///         wide_gap: Space::Xl,
+///         medium_columns: GridColumns::Count(2),
+///         expanded_columns: GridColumns::Count(3),
+///         expanded_gap: Space::Xl,
 ///         for course in courses() { CourseCard { course } }
 ///     }
 /// }
@@ -185,18 +186,16 @@ impl GridColumns {
 pub fn Grid(
     /// Column sizing. Defaults to as many 12rem columns as fit.
     columns: Option<GridColumns>,
-    /// Column sizing on wide shells. Defaults to `columns`.
-    wide_columns: Option<GridColumns>,
-    /// Column sizing from 48rem. Defaults to `wide_columns`, then `columns`.
-    /// Use LayoutScope around the grid to measure space after navigation.
+    /// Column sizing from 48rem. Defaults to `columns`.
     medium_columns: Option<GridColumns>,
-    /// Column sizing from 64rem. Defaults to `medium_columns`, then the legacy
-    /// `wide_columns`, then `columns`. Fit sizing usually needs no overrides.
+    /// Column sizing from 64rem. Defaults to `medium_columns`, then `columns`.
     expanded_columns: Option<GridColumns>,
     /// Space between cells. Defaults to [`Space::Md`].
     gap: Option<Space>,
-    /// Space between cells on wide shells. Defaults to `gap`.
-    wide_gap: Option<Space>,
+    /// Space between cells from 48rem. Defaults to `gap`.
+    medium_gap: Option<Space>,
+    /// Space between cells from 64rem. Defaults to `medium_gap`, then `gap`.
+    expanded_gap: Option<Space>,
     /// Extra classes for the grid.
     class: Option<String>,
     children: Element,
@@ -205,9 +204,6 @@ pub fn Grid(
         "--g3-grid-columns: {};",
         columns.unwrap_or_default().template()
     );
-    if let Some(wide) = wide_columns {
-        style.push_str(&format!("--g3-grid-columns-wide: {};", wide.template()));
-    }
     if let Some(medium) = medium_columns {
         style.push_str(&format!("--g3-grid-columns-medium: {};", medium.template()));
     }
@@ -221,7 +217,8 @@ pub fn Grid(
         div {
             class: merge_classes("g3-grid", class.as_deref()),
             "data-gap": gap.unwrap_or_default().as_str(),
-            "data-wide-gap": wide_gap.map(Space::as_str),
+            "data-medium-gap": medium_gap.map(Space::as_str),
+            "data-expanded-gap": expanded_gap.map(Space::as_str),
             style,
             {children}
         }
@@ -273,9 +270,9 @@ fn LayoutPlaygroundDemo() -> Element {
                 Text { variant: TextVariant::Overline, tone: TextTone::Tertiary, "Courses" }
                 Grid {
                     columns: GridColumns::Count(columns() as u16),
-                    wide_columns: GridColumns::Count(wide_columns() as u16),
+                    medium_columns: GridColumns::Count(wide_columns() as u16),
                     gap: gap(),
-                    wide_gap: wide_gap(),
+                    medium_gap: wide_gap(),
                     for name in ["Pebble Creek", "Oak Hollow", "Cedar Ridge", "Lakeside", "Pine Valley", "Harbor Links"] {
                         Card { key: "{name}", variant: CardVariant::Filled, title: name, "18 holes" }
                     }

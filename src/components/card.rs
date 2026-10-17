@@ -1,5 +1,6 @@
 //! Content cards.
 use super::pressable::Destination;
+use super::text::HeadingLevel;
 use crate::components::pressable::{Pressable, Target};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -53,9 +54,10 @@ pub fn Card(
     title: Option<String>,
     /// Secondary line under the title.
     subtitle: Option<String>,
-    /// Heading level of the title, 1 to 6. Defaults to 2; set it so the page's
+    /// Heading level of the title. Defaults to
+    /// [`HeadingLevel::H2`](crate::HeadingLevel::H2); set it so the page's
     /// headings do not skip a level.
-    heading_level: Option<u8>,
+    heading_level: Option<HeadingLevel>,
     /// Content before the title, such as an [`Avatar`](crate::Avatar) for
     /// who the card is from.
     start: Option<Element>,
@@ -165,7 +167,7 @@ pub fn Card(
                     }
                     div { class: "g3-card-heading",
                         if let Some(title) = title_node {
-                            super::text::Heading { level: heading_level.unwrap_or(2), class: "g3-card-title", {title} }
+                            super::text::Heading { level: heading_level.unwrap_or_default(), class: "g3-card-title", {title} }
                         }
                         if let Some(subtitle) = subtitle {
                             span { class: "g3-card-subtitle", "{subtitle}" }
