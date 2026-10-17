@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Only the outermost `AppWrapper` links the stylesheet and viewport tag. A
+  nested wrapper (a demo frame, a themed island) no longer adds another copy
+  of `g3-ui.css` to the cascade.
+- An unlabelled `Toggle`, `Checkbox` or `Radio` takes taps across a 44px
+  square around its mark, and a `Range` input box is 44px tall, so both meet
+  touch-target guidance without changing the layout.
 - `aria-controls` names only elements that exist: a `Select`, `Menu` or
   `Popover` trigger points at its panel only while it is open, a tab only at
   the selected panel, and the calendar title only at the open year grid.
