@@ -90,6 +90,56 @@ root.style.setProperty("--g3-color-bg", __BG__);
 root.style.setProperty("color-scheme", __SCHEME__);
 "#;
 
+/// The bottom bars inside one app shell, counted so its bottom toasts can sit
+/// above them. `always` counts [`NavBar`](crate::NavBar)s; `compact` counts
+/// [`AdaptiveNav`](crate::AdaptiveNav)s, which are a bar only on a compact
+/// shell.
+#[derive(Clone, Copy)]
+pub(crate) struct BottomBars {
+    always: Signal<u32>,
+    compact: Signal<u32>,
+}
+
+impl BottomBars {
+    fn count(self, always: bool) -> Signal<u32> {
+        if always { self.always } else { self.compact }
+    }
+}
+
+/// Counts the calling nav in its app shell while it is a bottom bar:
+/// `Some(true)` at every width, `Some(false)` on compact shells, `None` never.
+pub(crate) fn use_bottom_bar(bar: Option<bool>) {
+    let bars = use_hook(try_consume_context::<BottomBars>);
+    let bar = crate::state::use_synced_signal(bar);
+    let held = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(None::<bool>)));
+    {
+        let held = held.clone();
+        use_effect(move || {
+            let next = bar();
+            let Some(bars) = bars else { return };
+            let previous = held.replace(next);
+            if previous == next {
+                return;
+            }
+            if let Some(always) = previous {
+                bars.count(always).with_mut(|n| *n = n.saturating_sub(1));
+            }
+            if let Some(always) = next {
+                bars.count(always).with_mut(|n| *n += 1);
+            }
+        });
+    }
+    use_drop(move || {
+        // The shell may be going away with this nav; its counts then no
+        // longer matter.
+        if let (Some(bars), Some(always)) = (bars, held.take())
+            && let Ok(mut n) = bars.count(always).try_write()
+        {
+            *n = n.saturating_sub(1);
+        }
+    });
+}
+
 /// Marks that an enclosing [`AppWrapper`] already owns the document element, so
 /// a nested wrapper - a demo frame inside a gallery, say - leaves it alone.
 #[derive(Clone, Copy)]
@@ -154,6 +204,18 @@ pub fn AppWrapper(
 ) -> Element {
     let (mode, theme) = use_provide_ambient(mode, theme, strings);
     let queues = use_provide_overlay_queues();
+    let bars = use_context_provider(|| BottomBars {
+        always: Signal::new(0),
+        compact: Signal::new(0),
+    });
+    // Read by the stylesheet, which lifts bottom toasts above the bar.
+    let bar_attr = if (bars.always)() > 0 {
+        Some("always")
+    } else if (bars.compact)() > 0 {
+        Some("compact")
+    } else {
+        None
+    };
     let shell_id = use_element_id("app", None);
     let mut shell_size = use_signal(ShellSize::default);
     use_context_provider(|| shell_size);
@@ -222,6 +284,7 @@ pub fn AppWrapper(
             class: merge_classes(shell_cls, class.as_deref()),
             style: theme.style_attr(!is_root_shell),
             "data-g3-mode": mode.as_str(),
+            "data-g3-bar": bar_attr,
             if let Some(css) = look_css {
                 style { dangerous_inner_html: css }
             }

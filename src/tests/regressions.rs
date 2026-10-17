@@ -311,3 +311,35 @@ fn rating_and_date_formats_follow_localized_templates() {
     assert!(html.contains("aria-label=\"3.5 / 5\""));
     assert!(html.contains("19 Sep 2026"));
 }
+
+#[test]
+fn a_bottom_bar_marks_its_own_app_shell_for_toasts() {
+    static SHOW_BAR: GlobalSignal<bool> = Signal::global(|| true);
+    fn app() -> Element {
+        rsx! {
+            AppWrapper { class: "outer",
+                if SHOW_BAR() {
+                    NavBar { NavItem { label: "Rounds", onclick: |_| {} } }
+                }
+                AppWrapper { class: "inner", mode: ComponentMode::Ios,
+                    AdaptiveNav { NavItem { label: "Book", onclick: |_| {} } }
+                }
+                AppWrapper { class: "bare" }
+            }
+        }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    pump(&mut dom);
+    let html = dioxus_ssr::render(&dom);
+    // A NavBar is a bar at every width; an AdaptiveNav only when compact.
+    // Each shell counts only the bars inside it, not those of nested apps.
+    assert!(element_with_class(&html, "outer").contains("data-g3-bar=\"always\""));
+    assert!(element_with_class(&html, "inner").contains("data-g3-bar=\"compact\""));
+    assert!(!element_with_class(&html, "bare").contains("data-g3-bar"));
+    dom.runtime()
+        .in_scope(ScopeId::ROOT, || *SHOW_BAR.write() = false);
+    pump(&mut dom);
+    let html = dioxus_ssr::render(&dom);
+    assert!(!element_with_class(&html, "outer").contains("data-g3-bar"));
+}

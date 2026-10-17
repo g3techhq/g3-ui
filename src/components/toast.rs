@@ -14,7 +14,10 @@ pub enum ToastPosition {
     Top,
     /// Centred, for messages that should interrupt.
     Middle,
-    /// Above the bottom edge. The least obstructive.
+    /// Above the bottom edge. The least obstructive. It also rises above the
+    /// app's bottom bar (a [`NavBar`](crate::NavBar), or an
+    /// [`AdaptiveNav`](crate::AdaptiveNav) on a compact shell); for chrome of
+    /// the app's own, set `--g3-toast-bottom`.
     #[default]
     Bottom,
 }
