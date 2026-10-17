@@ -119,6 +119,10 @@ pub fn AppWrapper(
     /// Platform look. Defaults to an enclosing provider's mode, then
     /// [`get_mode`](crate::get_mode). Seeds writable [`crate::use_mode`] state;
     /// later prop changes replace it. Omit to share the enclosing provider's mode.
+    ///
+    /// Set it in an app rendered on a server. Without it the server renders
+    /// Material while an iPhone's browser detects iOS, and the hydrated page
+    /// keeps the server's markup.
     mode: Option<ComponentMode>,
     /// Color tokens. Defaults to an enclosing provider's theme, then
     /// [`Theme::default_light`]. Seeds the writable [`crate::use_theme`] state;

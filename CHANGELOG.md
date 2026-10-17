@@ -6,6 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- `set_mode` is process-wide instead of per thread, so a server that sets it
+  in `main` renders every request in that mode. Document passing `mode` to
+  `AppWrapper` in server-rendered apps, that `Theme` and `Look` values are
+  written as unescaped CSS (build user-chosen themes with
+  `Theme::from_seeds`), and the nav rail's local-storage key.
 - Only the outermost `AppWrapper` links the stylesheet and viewport tag. A
   nested wrapper (a demo frame, a themed island) no longer adds another copy
   of `g3-ui.css` to the cascade.
