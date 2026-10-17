@@ -244,7 +244,8 @@ pub fn AdaptiveNav(
     behavior: Option<NavRailBehavior>,
     /// Remember the toggled state in local storage, so it carries across
     /// routes and visits. Defaults to `true`. Applies only to a rail that owns
-    /// its state; one given `expanded` leaves it to the signal's owner.
+    /// its state; one given `expanded` leaves it to the signal's owner. The
+    /// key is `g3-ui.nav-expanded`, shared by every rail on the origin.
     remember: Option<bool>,
     children: Element,
 ) -> Element {
@@ -316,7 +317,8 @@ pub fn NavRail(
     behavior: Option<NavRailBehavior>,
     /// Remember the toggled state in local storage, so it carries across
     /// routes and visits. Defaults to `true`. Applies only to a rail that owns
-    /// its state; one given `expanded` leaves it to the signal's owner.
+    /// its state; one given `expanded` leaves it to the signal's owner. The
+    /// key is `g3-ui.nav-expanded`, shared by every rail on the origin.
     remember: Option<bool>,
     children: Element,
 ) -> Element {

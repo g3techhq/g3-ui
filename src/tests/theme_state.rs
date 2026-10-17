@@ -325,3 +325,11 @@ fn mode_and_strings_have_writable_local_defaults_outside_a_provider() {
     pump(&mut dom);
     assert!(dioxus_ssr::render(&dom).contains("id=\"reader\">Ios: Cancelar</span>"));
 }
+
+#[test]
+fn the_global_mode_is_shared_by_every_thread() {
+    // A server sets it once in `main` and renders on worker threads.
+    crate::set_mode(ComponentMode::Ios);
+    let seen = std::thread::spawn(crate::get_mode).join().unwrap();
+    assert_eq!(seen, ComponentMode::Ios);
+}

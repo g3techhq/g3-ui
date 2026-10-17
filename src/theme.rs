@@ -11,8 +11,9 @@
 use crate::state::use_synced_signal;
 use cfg_if::cfg_if;
 use dioxus::prelude::*;
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 /// Platform styling mode, like Ionic's `mode` attribute.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -48,7 +49,9 @@ impl ComponentMode {
 /// Every field is optional, and `None` keeps the platform default (a flat page,
 /// 8px iOS or 4px Material corners, no border, the platform shadow). A set
 /// field becomes a `--g3-*` custom property that the components read, so an app
-/// can restyle every card without a CSS override.
+/// can restyle every card without a CSS override. Like [`Theme`]'s colors,
+/// the values are written as CSS unescaped; see
+/// [Trusted values](Theme#trusted-values).
 ///
 /// ```
 /// use g3_ui::{Look, Theme};
@@ -163,6 +166,15 @@ impl Look {
 /// let night = Theme { bg: "#0b1020".into(), ..Theme::default_dark() };
 /// # let _ = (brand, night);
 /// ```
+///
+/// # Trusted values
+///
+/// Fields are written into the page as CSS without escaping: into an inline
+/// `style`, and for an adaptive [`Look`] into a `<style>` rule. A value that
+/// came from an end user could add declarations of its own or, with a `}`,
+/// rules outside the app's element. Build user-chosen themes with
+/// [`Theme::from_seeds`], which accepts only colors, or validate the values
+/// first.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Theme {
     /// Brand color: primary buttons, selected controls, focus rings, links.
@@ -964,20 +976,32 @@ pub fn use_component_mode(mode: Option<ComponentMode>) -> ComponentMode {
         .unwrap_or_else(get_mode)
 }
 
-thread_local! {
-    static GLOBAL_MODE: Cell<Option<ComponentMode>> = const { Cell::new(None) };
-}
+/// The mode [`set_mode`] chose: 0 for none yet, else 1 + the mode. One for
+/// the whole process, so a server that sets it in `main` sees it on every
+/// worker thread.
+static GLOBAL_MODE: AtomicU8 = AtomicU8::new(0);
 
 /// Set the mode used by components with no `mode` prop and no provider.
+///
+/// In an app rendered on a server, pass `mode` to
+/// [`AppWrapper`](crate::AppWrapper) instead: the server cannot see the
+/// device, so a mode detected in the browser would differ from the one the
+/// server rendered, and hydration keeps the server's.
 pub fn set_mode(mode: ComponentMode) {
-    GLOBAL_MODE.with(|m| m.set(Some(mode)));
+    let code = match mode {
+        ComponentMode::Md => 1,
+        ComponentMode::Ios => 2,
+    };
+    GLOBAL_MODE.store(code, Ordering::Relaxed);
 }
 
 /// The global mode: whatever [`set_mode`] set, or else [`detect_platform_mode`].
 pub fn get_mode() -> ComponentMode {
-    GLOBAL_MODE
-        .with(|m| m.get())
-        .unwrap_or_else(detect_platform_mode)
+    match GLOBAL_MODE.load(Ordering::Relaxed) {
+        1 => ComponentMode::Md,
+        2 => ComponentMode::Ios,
+        _ => detect_platform_mode(),
+    }
 }
 
 /// Set the global mode to [`detect_platform_mode`].

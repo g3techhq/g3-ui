@@ -273,6 +273,10 @@ fn main() {
 }
 ```
 
+In an app rendered on a server (Dioxus fullstack), pass `mode` to `AppWrapper`, for example from
+a saved setting. The server cannot see the device, so a mode detected in the browser would not
+match the markup the server sent, and hydration keeps the server's.
+
 Colors are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The presets are
 `Theme::default_light()`, `Theme::default_dark()`, and `Theme::system()`, which follows the
 operating system through CSS `light-dark()`. Every field is public:
