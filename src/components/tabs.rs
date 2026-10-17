@@ -193,6 +193,8 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
     value: T,
     /// Disable the tab.
     disabled: Option<bool>,
+    /// Accessible name, for a tab that shows only an icon.
+    aria_label: Option<String>,
     /// Extra classes for the tab.
     class: Option<String>,
     children: Element,
@@ -211,6 +213,7 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
             r#type: "button",
             role: "tab",
             aria_selected: selected.to_string(),
+            aria_label,
             // Only the selected panel is sure to be mounted.
             aria_controls: selected.then_some(panel_id),
             tabindex: if selected { "0" } else { "-1" },

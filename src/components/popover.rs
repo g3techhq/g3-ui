@@ -327,8 +327,12 @@ pub fn MenuItem(
     to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
     /// Called when chosen.
     onclick: Option<EventHandler<MouseEvent>>,
+    /// Accessible name, for an item that shows only an icon.
+    aria_label: Option<String>,
     /// Extra classes for the item.
     class: Option<String>,
     children: Element,
@@ -342,7 +346,7 @@ pub fn MenuItem(
     rsx! {
         Pressable {
             class: merge_classes(classes(["g3-menu-item", color_cls]), class.as_deref()),
-            target: Target::from_props(href, to, false),
+            target: Target::from_props(href, to, new_tab.unwrap_or(false)),
             disabled: disabled.unwrap_or(false),
             onclick: move |event| {
                 if let Some(onclick) = onclick {
@@ -352,10 +356,16 @@ pub fn MenuItem(
                     open.set(false);
                 }
             },
-            attributes: vec![
-                Attribute::new("role", "menuitem", None, false),
-                Attribute::new("tabindex", "-1", None, false),
-            ],
+            attributes: {
+                let mut attributes = vec![
+                    Attribute::new("role", "menuitem", None, false),
+                    Attribute::new("tabindex", "-1", None, false),
+                ];
+                if let Some(label) = aria_label {
+                    attributes.push(Attribute::new("aria-label", label, None, false));
+                }
+                attributes
+            },
             if let Some(start) = start {
                 span { class: "g3-menu-item-start", aria_hidden: "true", {start} }
             }

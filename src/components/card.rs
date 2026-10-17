@@ -80,6 +80,8 @@ pub fn Card(
     to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
     /// Disable a tappable card.
     disabled: Option<bool>,
     /// Accessible name of a tappable card with no title.
@@ -92,7 +94,7 @@ pub fn Card(
 ) -> Element {
     let mode = use_component_mode(mode);
     let interactive = onclick.is_some() || to.is_some() || href.is_some();
-    let target = Target::from_props(href, to, false);
+    let target = Target::from_props(href, to, new_tab.unwrap_or(false));
     let selected = selected.unwrap_or(false);
     let disabled = disabled.unwrap_or(false);
     let title = title.filter(|title| !title.is_empty());

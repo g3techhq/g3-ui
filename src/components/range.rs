@@ -1,5 +1,5 @@
 //! Numeric controls: a slider and a stepper.
-use super::field::{FieldShell, described_by};
+use super::field::{FieldShell, described_by, is_invalid};
 use crate::state::{use_controlled, use_element_id};
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
@@ -31,6 +31,8 @@ pub fn Range(
     aria_label: Option<String>,
     /// Help text below.
     helper: Option<String>,
+    /// Error text below. Marks the control invalid when not empty.
+    error: Option<String>,
     /// Show the current value beside the slider.
     show_value: Option<bool>,
     /// Content before the slider, such as a "less" icon.
@@ -59,6 +61,7 @@ pub fn Range(
             label,
             required: false,
             helper: helper.clone(),
+            error: error.clone(),
             class,
             div { class: "g3-range",
                 {start}
@@ -72,7 +75,8 @@ pub fn Range(
                     value: current,
                     disabled,
                     aria_label,
-                    aria_describedby: described_by(&id, &helper, &None),
+                    aria_describedby: described_by(&id, &helper, &error),
+                    aria_invalid: is_invalid(&error).then_some("true"),
                     oninput: move |event| {
                         if let Ok(next) = event.value().parse::<f64>() {
                             value.set(next);
@@ -123,6 +127,8 @@ pub fn Stepper(
     aria_label: Option<String>,
     /// Help text below.
     helper: Option<String>,
+    /// Error text below. Marks the control invalid when not empty.
+    error: Option<String>,
     /// Disable the stepper.
     disabled: Option<bool>,
     /// Called with the new value.
@@ -159,6 +165,7 @@ pub fn Stepper(
             label: label.clone(),
             required: false,
             helper: helper.clone(),
+            error: error.clone(),
             class: merge_classes("g3-stepper-field", class.as_deref()),
             div {
                 id: id.clone(),
@@ -170,7 +177,8 @@ pub fn Stepper(
                 aria_valuemin: min.map(|min| min.to_string()),
                 aria_valuemax: max.map(|max| max.to_string()),
                 aria_disabled: disabled.then_some("true"),
-                aria_describedby: described_by(&id, &helper, &None),
+                aria_describedby: described_by(&id, &helper, &error),
+                aria_invalid: is_invalid(&error).then_some("true"),
                 onkeydown: move |event| {
                     let delta = match event.key() {
                         Key::ArrowUp | Key::ArrowRight if can_increase => step,

@@ -31,6 +31,8 @@ pub fn Chip(
     end: Option<Element>,
     /// Called when pressed.
     onclick: Option<EventHandler<MouseEvent>>,
+    /// Accessible name, for a pressable chip whose content is only an icon.
+    aria_label: Option<String>,
     /// Extra classes for the chip.
     class: Option<String>,
     children: Element,
@@ -51,6 +53,7 @@ pub fn Chip(
                 r#type: "button",
                 disabled,
                 aria_pressed: selected.map(|selected| selected.to_string()),
+                aria_label,
                 onclick: move |event| onclick.call(event),
                 {body}
             }

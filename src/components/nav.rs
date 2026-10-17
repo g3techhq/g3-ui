@@ -354,6 +354,8 @@ pub fn NavItem(
     to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
     /// Mark this as the current destination. Router links mark themselves.
     selected: Option<bool>,
     /// Short badge text on the icon, such as an unread count. Hidden when
@@ -369,7 +371,7 @@ pub fn NavItem(
     /// Extra classes for the item.
     class: Option<String>,
 ) -> Element {
-    let target = Target::from_props(href, to, false);
+    let target = Target::from_props(href, to, new_tab.unwrap_or(false));
     let group_cls = match group.unwrap_or_default() {
         NavItemGroup::Primary => "",
         NavItemGroup::Secondary => "g3-nav-item-secondary",

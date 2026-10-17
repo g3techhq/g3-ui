@@ -1,6 +1,6 @@
 //! On/off switches.
 use super::checkbox::{ControlLabelPlacement, ControlText, control_classes};
-use super::field::described_by;
+use super::field::{described_by, is_invalid};
 use crate::state::{use_controlled, use_element_id};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -39,6 +39,14 @@ pub fn Toggle(
     aria_label: Option<String>,
     /// Help text under the label.
     helper: Option<String>,
+    /// Error text under the label. Marks the switch invalid when not empty.
+    error: Option<String>,
+    /// Mark the control required.
+    required: Option<bool>,
+    /// Form field name. When set, a checked control submits `name=on` with
+    /// its form, as a native checkbox does, so a Dioxus `onsubmit` sees it
+    /// in the form values.
+    name: Option<String>,
     /// Disable the switch.
     disabled: Option<bool>,
     /// Size. Defaults to [`ToggleSize::Md`].
@@ -57,7 +65,7 @@ pub fn Toggle(
     let mode = use_component_mode(mode);
     let id = use_element_id("toggle", id);
     let mut checked = use_controlled(checked, || false);
-    let bare = label.is_none() && helper.is_none();
+    let bare = label.is_none() && helper.is_none() && error.is_none();
     let cls = control_classes("g3-toggle", mode, label_placement.unwrap_or_default(), bare);
     let switch_cls = classes([
         "g3-switch",
@@ -67,7 +75,8 @@ pub fn Toggle(
             ToggleSize::Md => "",
         },
     ]);
-    let describedby = described_by(&id, &helper, &None);
+    let describedby = described_by(&id, &helper, &error);
+    let invalid = is_invalid(&error);
     rsx! {
         button {
             id: id.clone(),
@@ -77,6 +86,8 @@ pub fn Toggle(
             aria_checked: checked().to_string(),
             aria_label,
             aria_describedby: describedby,
+            aria_invalid: invalid.then_some("true"),
+            aria_required: required.unwrap_or(false).then_some("true"),
             disabled,
             onclick: move |_| {
                 let next = !checked();
@@ -90,7 +101,10 @@ pub fn Toggle(
                     span { class: "g3-switch-thumb" }
                 }
             }
-            ControlText { id: id.clone(), label, helper }
+            ControlText { id: id.clone(), label, helper, error }
+        }
+        if let Some(name) = name.filter(|_| checked()) {
+            input { r#type: "hidden", name, value: "on" }
         }
     }
 }

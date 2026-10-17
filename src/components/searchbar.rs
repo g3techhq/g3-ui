@@ -40,6 +40,9 @@ pub fn Searchbar(
     onchange: Option<EventHandler<String>>,
     /// Called with the query when the user presses Enter.
     on_submit: Option<EventHandler<String>>,
+    /// Element id of the input, for an external `label`. Generated when not
+    /// given.
+    id: Option<String>,
     /// A control inside the field after the clear button, such as a filter
     /// button. It is separated from the text controls by a vertical rule.
     end: Option<Element>,
@@ -83,6 +86,7 @@ pub fn Searchbar(
                     span { class: "g3-searchbar-end", {end} }
                 }),
                 autocomplete: "off",
+                id,
             }
         }
     }
