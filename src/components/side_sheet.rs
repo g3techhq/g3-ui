@@ -88,6 +88,17 @@ fn SideSheetPlaygroundDemo() -> Element {
     let edge = use_signal(|| SheetEdge::Start);
     let behavior = use_signal(|| SideSheetBehavior::Overlay);
     let padding = use_signal(|| false);
+    // The menu button sits on the same side as the sheet it opens.
+    let toggle = rsx! {
+        crate::Button {
+            fill: crate::ButtonFill::Clear,
+            size: crate::ButtonSize::Sm,
+            aria_label: "Toggle menu",
+            onclick: move |_| open.toggle(),
+            Menu { size: 22 }
+        }
+    };
+    let at_start = edge() == SheetEdge::Start;
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
@@ -120,15 +131,8 @@ fn SideSheetPlaygroundDemo() -> Element {
                 div { class: "g3-sheet-demo-content-root",
                     crate::Header {
                         title: "Side sheets",
-                        start: rsx! {
-                            crate::Button {
-                                fill: crate::ButtonFill::Clear,
-                                size: crate::ButtonSize::Sm,
-                                aria_label: "Toggle menu",
-                                onclick: move |_| open.toggle(),
-                                Menu { size: 22 }
-                            }
-                        },
+                        start: at_start.then(|| toggle.clone()),
+                        end: (!at_start).then_some(toggle),
                     }
                     crate::Content { footer_space: false,
                         crate::Card { title: "Round settings", "Push and Reveal move this page." }

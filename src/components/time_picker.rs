@@ -317,6 +317,8 @@ pub fn TimePicker(
     let step = minute_step.unwrap_or(1).clamp(1, 30);
     let style = style.unwrap_or_default().resolve(mode);
     let mut draft = use_signal(TimeOfDay::now);
+    // The dialog fades out; its picker stays until it has.
+    let dialog_content = super::overlay::use_presence(open, std::time::Duration::from_millis(300));
     let config = use_synced_signal((value, style, step));
     use_effect(move || {
         if open() {
@@ -402,7 +404,7 @@ pub fn TimePicker(
                             Button { fill: ButtonFill::Clear, mode, onclick: move |_| open.set(false), "{strings.cancel}" }
                             Button { fill: ButtonFill::Clear, mode, onclick: move |_| commit(draft()), "{strings.confirm}" }
                         },
-                        if open() {
+                        if dialog_content {
                             TimeDialog { draft, cycle, typing }
                         }
                     }

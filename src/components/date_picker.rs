@@ -222,6 +222,8 @@ pub fn DatePicker(
     let today = reference_date.unwrap_or(local_today);
     // The date being chosen, committed on Done or OK.
     let mut draft = use_signal(|| today.clamp_to(min, max));
+    // The dialog fades out; its picker stays until it has.
+    let dialog_content = super::overlay::use_presence(open, std::time::Duration::from_millis(300));
     let mut draft_choice = use_signal(|| None::<CalendarDate>);
     let config = use_synced_signal((value, min, max, today, is_date_disabled));
     use_effect(move || {
@@ -330,7 +332,7 @@ pub fn DatePicker(
                         if let Some(headline) = headline {
                             p { class: "g3-picker-headline", aria_live: "polite", "{headline}" }
                         }
-                        if open() {
+                        if dialog_content {
                             Calendar { value: draft_choice, min, max, is_date_disabled, mode, reference_date: today }
                         }
                     }

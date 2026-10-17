@@ -118,6 +118,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A scrollable `SegmentGroup` or `Tabs` strip slides its indicator between
   options again, in both modes, instead of highlighting the selected button.
 - `AppWrapper` allows page zoom.
+- A pressed nav item's highlight comes in quickly and fades out over 450ms
+  after release, instead of vanishing.
 - The docs cover server-rendered apps (pass `mode` to `AppWrapper`), `Theme`
   and `Look` values being written as unescaped CSS (build user-chosen themes
   with `Theme::from_seeds`), signal-driven forms, notification timing, browser
@@ -161,6 +163,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Nested grids no longer inherit a parent grid's responsive column overrides.
 - A labelled `SegmentGroup` no longer adds its standalone top margin inside the
   field.
+- A `NavigationDrawer` at the end edge narrows the page instead of covering
+  it: the page keeps an `auto` width and only its margin moves. When a drawer
+  or a Push side sheet closes, its edge and the page's edge move together,
+  with no gap opening between them. A custom `width` on a drawer or side
+  sheet now moves the page by that width too.
+- A header's title truncates within its own column instead of running under
+  the buttons when the header is narrow, such as beside a drawer.
+- Closing a `DatePicker` or `TimePicker` dialog keeps the calendar or clock
+  in place while the dialog fades out, instead of emptying it first.
 
 ### Playground
 
@@ -175,6 +186,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   time. Demos show color pickers for the new `color` props.
 - Tablet, landscape and resizable previews that keep demo state; the Mobile
   preview fits under the header. Pages open scrolled to the top.
+- The drawer and side-sheet demos put the menu button on the sheet's side.
 - The page sets its language, title and description.
 
 ### Tooling
