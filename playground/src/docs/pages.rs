@@ -7,7 +7,7 @@ pub fn GettingStarted() -> Element {
         section {
             h2 { "1. Add the dependencies" }
             p { "Use Rust 1.88 or newer and Dioxus 0.7.9. Add these entries to your app's Cargo.toml:" }
-            CodeBlock { language: Language::Toml, src: "[dependencies]\ndioxus = { version = \"0.7.9\", features = [\"web\"] }\ng3-ui = \"0.5\"".to_string() }
+            CodeBlock { language: Language::Toml, src: "[dependencies]\ndioxus = { version = \"0.7.9\", features = [\"web\"] }\ng3-ui = \"0.6\"".to_string() }
         }
         section {
             h2 { "2. Add a screen" }
@@ -71,7 +71,7 @@ pub fn Platforms() -> Element {
             p { "Enable Dioxus's web feature, as shown in Getting started." }
             h3 { "Android, iOS, or desktop" }
             p { "Enable Dioxus's mobile feature for Android and iOS, or desktop for desktop web views. The g3-ui dependency stays the same." }
-            CodeBlock { language: Language::Toml, src: "[dependencies]\ng3-ui = \"0.5\"\ndioxus = { version = \"0.7.9\", features = [\"mobile\"] }".to_string() }
+            CodeBlock { language: Language::Toml, src: "[dependencies]\ng3-ui = \"0.6\"\ndioxus = { version = \"0.7.9\", features = [\"mobile\"] }".to_string() }
             p { "Build with the Dioxus CLI's Android, iOS, or desktop target. Add g3-ui's optional transitions feature when integrating g3-route-transitions." }
         }
         section {
