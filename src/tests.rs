@@ -11,7 +11,11 @@ mod components;
 mod display;
 mod forms;
 mod overlays;
+mod palette;
+mod regressions;
+mod responsive;
 mod stylesheet;
+mod theme_state;
 
 const STYLESHEET: &str = include_str!("../assets/g3-ui.css");
 

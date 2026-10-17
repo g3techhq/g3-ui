@@ -13,6 +13,23 @@ fn rule_body(selector: &str) -> &'static str {
     &STYLESHEET[start..end]
 }
 
+#[test]
+fn top_layer_pointer_input_is_limited_to_open_surfaces() {
+    let selector = ".g3-overlay-layer > :is(.g3-popover, .g3-popover-backdrop, .g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay)";
+    assert!(!STYLESHEET.contains(&format!("{selector} {{")));
+    assert!(
+        rule_body(&format!("{selector}:not([data-state=\"closed\"])"))
+            .contains("pointer-events: auto;")
+    );
+    for selector in [
+        ".g3-sheet-backdrop[data-state=\"closed\"]",
+        ".g3-modal-overlay[data-state=\"closed\"]",
+        ".g3-popover-backdrop[data-state=\"closed\"]",
+    ] {
+        assert!(rule_body(selector).contains("pointer-events: none;"));
+    }
+}
+
 /// The stylesheet without comments.
 fn code() -> String {
     STYLESHEET

@@ -1,6 +1,6 @@
 //! Floating panels anchored to a trigger: popovers and menus.
 use super::Color;
-use super::overlay::{js_string, use_overlay_focus_with, use_top_layer};
+use super::overlay::{js_string, use_overlay_focus_with, use_overlay_registration, use_top_layer};
 use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::state::use_element_id;
@@ -35,63 +35,7 @@ impl PopoverPlacement {
 /// Flips an open popover to the other side of its trigger when the requested
 /// placement would run past the edge of the app, as a menu at the end of a
 /// toolbar would. Sheets are left alone.
-const FIT_SCRIPT: &str = r#"
-const el = document.getElementById(__ID__);
-if (el) {
-    const layer = el.closest(".g3-overlay-layer");
-    if (layer && typeof layer.showPopover === "function" && !layer.matches(":popover-open")) {
-        layer.showPopover();
-    } else if (layer && typeof layer.showPopover !== "function") {
-        layer.removeAttribute("popover");
-    }
-    const base = el.dataset.basePlacement || el.getAttribute("data-placement");
-    el.dataset.basePlacement = base;
-    el.setAttribute("data-placement", base);
-    const anchor = el.closest(".g3-popover-anchor");
-    const app = el.closest(".g3-app");
-    const appBox = app ? app.getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
-    // Compact select sheets keep their bottom-sheet geometry. Every anchored
-    // panel uses viewport coordinates; the top-layer wrapper then guarantees
-    // that a scroll pane or transformed route cannot clip it.
-    const sheet = el.classList.contains("g3-popover-sheet");
-    const compactSheet = sheet && appBox.right - appBox.left < 768;
-    if (sheet) el.dataset.g3SheetLayout = compactSheet ? "sheet" : "popover";
-    el.toggleAttribute("data-g3-fixed-position", !compactSheet);
-    if (anchor && !compactSheet) {
-        const anchorBox = anchor.getBoundingClientRect();
-        el.style.setProperty("--g3-popover-anchor-width", `${anchorBox.width}px`);
-        void el.offsetWidth;
-        const bounds = {
-            left: Math.max(appBox.left, 0) + 8,
-            right: Math.min(appBox.right, innerWidth) - 8,
-            top: Math.max(appBox.top, 0) + 8,
-            bottom: Math.min(appBox.bottom, innerHeight) - 8,
-        };
-        const menuBox = el.getBoundingClientRect();
-        let [vertical, horizontal] = base.split("-");
-        const rtl = getComputedStyle(el).direction === "rtl";
-        const leftFor = (side) => (side === "start") !== rtl
-            ? anchorBox.left
-            : anchorBox.right - menuBox.width;
-        const topFor = (side) => side === "bottom"
-            ? anchorBox.bottom + 6
-            : anchorBox.top - menuBox.height - 6;
-        let left = leftFor(horizontal);
-        let top = topFor(vertical);
-        if (left < bounds.left || left + menuBox.width > bounds.right) {
-            horizontal = horizontal === "start" ? "end" : "start";
-            left = leftFor(horizontal);
-        }
-        if (top < bounds.top || top + menuBox.height > bounds.bottom) {
-            vertical = vertical === "bottom" ? "top" : "bottom";
-            top = topFor(vertical);
-        }
-        el.style.setProperty("--g3-popover-fixed-left", `${Math.max(bounds.left, Math.min(left, bounds.right - menuBox.width))}px`);
-        el.style.setProperty("--g3-popover-fixed-top", `${Math.max(bounds.top, Math.min(top, bounds.bottom - menuBox.height))}px`);
-        el.setAttribute("data-placement", `${vertical}-${horizontal}`);
-    }
-}
-"#;
+const FIT_SCRIPT: &str = include_str!("popover.js");
 
 /// Describes the panel on the control that opens it: what kind of popup it
 /// is, whether it is open, and which element it is. The trigger is the
@@ -131,6 +75,9 @@ pub(crate) fn PopoverFrame(
     let id = use_element_id("popover", id);
     let anchor_id = format!("{id}-anchor");
     let dismiss = use_callback(move |()| {
+        if !open() {
+            return;
+        }
         let mut open = open;
         open.set(false);
         if let Some(on_dismiss) = on_dismiss {
@@ -138,6 +85,7 @@ pub(crate) fn PopoverFrame(
         }
     });
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
+    use_overlay_registration(open.into(), id.clone(), dismiss);
     let layer_id = format!("{id}-layer");
     use_top_layer(
         open.into(),
@@ -146,15 +94,17 @@ pub(crate) fn PopoverFrame(
     );
     let mut ever_opened = use_signal(|| false);
     let starts_open = open();
+    let open_prop = crate::state::use_synced_signal(open);
+    let trigger_config = crate::state::use_synced_signal((id.clone(), role));
     let mut backdrop_present = use_signal(move || starts_open);
     {
-        let id = id.clone();
         use_effect(move || {
+            let open = open_prop();
+            let (id, role) = trigger_config();
             let is_open = open();
             if is_open {
                 ever_opened.set(true);
                 backdrop_present.set(true);
-                document::eval(&FIT_SCRIPT.replace("__ID__", &js_string(&id)));
             } else if backdrop_present() {
                 spawn(async move {
                     dioxus_sdk_time::sleep(std::time::Duration::from_millis(300)).await;
@@ -177,6 +127,12 @@ pub(crate) fn PopoverFrame(
         });
     }
     let is_open = open();
+    let fit = is_open.then(|| {
+        FIT_SCRIPT
+            .replace("__ID__", &js_string(&id))
+            .replace("__PLACEMENT__", &js_string(placement.as_str()))
+    });
+    super::script::use_dom_script::<()>(fit, |_| {});
     let state = if is_open { "open" } else { "closed" };
     let cls = classes([
         "g3-popover",
@@ -415,7 +371,7 @@ fn MenuPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::SegmentGroup { value: show_popover, aria_label: "Component",
+                crate::SegmentGroup { value: show_popover, label: "Component",
                     crate::SegmentButton { value: false, "Menu" }
                     crate::SegmentButton { value: true, "Popover" }
                 }

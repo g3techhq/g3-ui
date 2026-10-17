@@ -22,6 +22,8 @@ pub struct ComponentPlaygroundDemo {
     /// The source file holding the demo, displayed next to it so the example
     /// can be copied.
     pub source: &'static str,
+    /// Repository-relative file path, for links to the source repository.
+    pub source_path: &'static str,
     /// The demo function's name, to find it in `source`.
     pub demo_name: &'static str,
     /// The public components the demo shows, whose own source the playground
@@ -32,6 +34,7 @@ pub struct ComponentPlaygroundDemo {
 /// Every file that defines a public component.
 #[cfg(feature = "playground")]
 const COMPONENT_FILES: &[&str] = &[
+    include_str!("components/responsive.rs"),
     include_str!("components/accordion.rs"),
     include_str!("components/action_sheet.rs"),
     include_str!("components/alert.rs"),
@@ -168,7 +171,11 @@ pub fn PlaygroundDemoFrame(
     rsx! {
         div { class: "g3-playground-demo-stack",
             if let Some(controls) = controls {
-                div { class: "playground-controls-pane", {controls} }
+                crate::Card {
+                    variant: crate::CardVariant::Flat,
+                    class: "playground-controls-pane",
+                    {controls}
+                }
             }
             div { class: preview_cls,
                 if app.unwrap_or(true) {
@@ -226,6 +233,7 @@ macro_rules! g3_playground {
             descriptor: DESCRIPTOR,
             render: __g3_playground_render,
             source: include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", $source)),
+            source_path: $source,
             demo_name: stringify!($demo),
             components: &[$($component),*],
         };

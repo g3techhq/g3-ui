@@ -268,7 +268,7 @@ fn a_calendar_is_a_grid_of_days() {
         .expect("a selected day");
     assert!(selected.contains("tabindex=\"0\""));
     // Days before the minimum cannot be picked.
-    assert!(html.contains("aria-label=\"Tuesday, September 1, 2026\" disabled"));
+    assert!(html.contains("aria-label=\"Tuesday, September 1, 2026\" aria-disabled=\"true\""));
 }
 
 #[test]
@@ -364,6 +364,30 @@ fn a_labelled_segment_group_is_named_by_its_visible_label() {
     let html = render(toolbar);
     assert!(html.contains(r#"aria-label="Round""#));
     assert!(!html.contains("g3-field"), "no wrapper without a label");
+}
+
+#[test]
+fn toolbar_segments_keep_one_keyboard_stop_per_group_in_both_modes() {
+    fn app() -> Element {
+        let selected = use_signal(|| 1_u8);
+        rsx! {
+            for mode in [ComponentMode::Ios, ComponentMode::Md] {
+                Header { mode, title: "Preview", toolbar: rsx! {
+                    SegmentGroup { mode, value: selected, aria_label: "Platform",
+                        SegmentButton { value: 0_u8, "First" }
+                        SegmentButton { value: 1_u8, "Second" }
+                    }
+                } }
+            }
+        }
+    }
+    let html = render(app);
+    assert_eq!(html.matches(r#"role="radiogroup""#).count(), 2);
+    assert_eq!(html.matches(r#"role="radio""#).count(), 4);
+    assert_eq!(html.matches(r#"tabindex="0""#).count(), 2);
+    assert_eq!(html.matches(r#"tabindex="-1""#).count(), 2);
+    assert_eq!(html.matches(r#"aria-checked="true""#).count(), 2);
+    assert!(html.contains("g3-segment-ios") && html.contains("g3-segment-md"));
 }
 
 /// A group handed a different `value` signal follows it. RadioGroup used to

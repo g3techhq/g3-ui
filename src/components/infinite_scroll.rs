@@ -5,42 +5,7 @@ use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::merge_classes;
 use dioxus::prelude::*;
 
-const OBSERVER_SCRIPT: &str = r#"
-const sentinel = document.getElementById(__ID__);
-if (sentinel && !sentinel.g3Observer) {
-    const root = sentinel.closest(".g3-content-scroll");
-    const canLoad = () => sentinel.dataset.loading !== "true"
-        && sentinel.dataset.complete !== "true";
-    const rearm = () => {
-        if (!sentinel.isConnected || !canLoad()) return;
-        sentinel.dataset.g3Pending = "false";
-        sentinel.g3Observer.unobserve(sentinel);
-        sentinel.g3Observer.observe(sentinel);
-    };
-    sentinel.g3Observer = new IntersectionObserver((entries) => {
-        if (entries.some((entry) => entry.isIntersecting)
-            && canLoad()
-            && sentinel.dataset.g3Pending !== "true") {
-            sentinel.dataset.g3Pending = "true";
-            dioxus.send(true);
-        }
-    }, { root, rootMargin: "0px 0px __MARGIN__px 0px" });
-    sentinel.g3Observer.observe(sentinel);
-    sentinel.g3StateObserver = new MutationObserver(rearm);
-    sentinel.g3StateObserver.observe(sentinel, {
-        attributes: true,
-        attributeFilter: ["data-loading", "data-complete"],
-    });
-    // A synchronous page (or a very fast cached request) may never toggle
-    // `loading`. Re-arm when the surrounding list changes so a sentinel that
-    // remains visible can request enough pages to fill the viewport.
-    const list = sentinel.parentElement;
-    if (list) {
-        sentinel.g3ListObserver = new MutationObserver(rearm);
-        sentinel.g3ListObserver.observe(list, { childList: true, subtree: true });
-    }
-}
-"#;
+const OBSERVER_SCRIPT: &str = include_str!("infinite_scroll.js");
 
 /// Calls `on_load` when the user scrolls near its position. Put it after the
 /// last item of a list. Like Ionic's `ion-infinite-scroll`.
@@ -80,22 +45,14 @@ pub fn InfiniteScroll(
     let complete = complete.unwrap_or(false);
     let blocked = use_synced_signal(loading || complete);
     let margin = threshold.unwrap_or(200);
-    {
-        let id = id.clone();
-        use_effect(move || {
-            let script = OBSERVER_SCRIPT
-                .replace("__ID__", &js_string(&id))
-                .replace("__MARGIN__", &margin.to_string());
-            spawn(async move {
-                let mut eval = document::eval(&script);
-                while let Ok(true) = eval.recv::<bool>().await {
-                    if !*blocked.peek() {
-                        on_load.call(());
-                    }
-                }
-            });
-        });
-    }
+    let script = OBSERVER_SCRIPT
+        .replace("__ID__", &js_string(&id))
+        .replace("__MARGIN__", &margin.to_string());
+    super::script::use_dom_script(Some(script), move |load: bool| {
+        if load && !*blocked.peek() {
+            on_load.call(());
+        }
+    });
     rsx! {
         div {
             id,

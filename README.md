@@ -24,14 +24,14 @@ CSS-variable theming, and WAI-ARIA semantics. The Rust crate name is `g3_ui`.
 ```toml
 [dependencies]
 dioxus = { version = "0.7.9", features = ["router"] }
-g3-ui = "0.4"
+g3-ui = "0.5"
 ```
 
 Enable the optional route-transition integration when your app also uses `g3-route-transitions`:
 
 ```toml
 [dependencies]
-g3-ui = { version = "0.4", features = ["transitions"] }
+g3-ui = { version = "0.5", features = ["transitions"] }
 g3-route-transitions = "0.4"
 ```
 
@@ -75,13 +75,35 @@ Component names are unprefixed. If one collides with a local name, import it und
 | Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
 | Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar` |
 | Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider` |
-| Layout | `Stack`, `Grid` |
+| Layout | `Stack`, `Grid`, `LayoutScope`, `AdaptiveLayout`, `PageLayout` |
 | Disclosure | `AccordionGroup`, `AccordionItem` |
 | Overlays | `BottomSheet`, `SideSheet`, `Modal`, `Alert`, `ConfirmModal`, `ActionSheet`, `Toast` |
 | Feedback | `Progress`, `Skeleton`, `Spinner`, `Refresher`, `InfiniteScroll` |
 
 [docs.rs/g3-ui](https://docs.rs/g3-ui) has the full prop reference. The [playground](#playground)
 shows every component live.
+
+## Responsive layouts
+
+For responsive composition, use `LayoutScope` inside page content so layouts
+measure the space remaining after navigation. `use_layout_size()` returns
+`LayoutSize::Compact` below 48rem, `Medium` from 48rem, and `Expanded` from 64rem.
+The existing binary `use_shell_size()` API keeps its 48rem behavior.
+
+`GridColumns::Fit(18.0)` chooses as many readable 18rem cards as fit, including
+intermediate column counts. Fixed-count layouts can use `medium_columns` and
+`expanded_columns` in addition to the compatible `wide_columns` prop.
+
+`PageLayout { start, end, children }` rearranges persistent content into one,
+two, or three columns. `AdaptiveLayout { compact, medium, expanded }` mounts
+one variant; omitted slots fall back to the nearest smaller supplied variant.
+Keep shared signals, resources, and players above an adaptive switch, because
+switching variants unmounts the old branch. `LayoutScope` intentionally
+establishes a nearer `g3-app-shell` container for its children; keep navigation
+outside it.
+
+The playground includes `/docs/getting-started`, `/docs/responsive-layouts`,
+platform and hook guides, documentation search, and additional preview widths.
 
 ## Component State
 
@@ -112,6 +134,30 @@ rsx! {
 
 `Select`, `RadioGroup`, `SegmentGroup`, `Tabs`, and `AccordionGroup` are generic over the value
 type, so options can be your own enums instead of strings or indexes.
+
+## Forms and Events
+
+Forms are signal-driven. Read the controls' signals on submit and validate them in the app.
+`Input` and `TextArea` forward native attributes such as `name`, `required`, and `pattern`.
+Custom selections (`Select`, date/time pickers, checkbox/toggle and generic radio values) do
+not provide a complete native `FormData` or browser constraint-validation contract. Their
+`required` indicator does not enforce submission. For native serialization, supply hidden
+inputs from the same signals and validate before sending.
+
+| Control | Notification |
+| --- | --- |
+| `Input`, `TextArea` | `oninput` for typing; `onchange` on native commit, or after `debounce_ms` when set. Clearing notifies immediately and cancels a pending debounce. |
+| `Searchbar` | Uses the debounced text contract; clearing is immediate. |
+| `Range` | `oninput` while moving; `onchange` on native commit. |
+| Selection controls, tabs, calendar, stepper | `onchange` after a user selection, including keyboard selection. |
+| `DatePicker`, `TimePicker` | `onchange` on confirmation (or Clear); cancelling preserves the committed signal. |
+| `Modal`, sheets, popovers | `on_dismiss` for component-initiated dismissal, including `dismiss_top()`. Setting `open` yourself does not call it. |
+| `Toast` | `on_dismiss` for every close, including timer and owner-initiated closes. |
+
+Changing a controlled signal updates the UI without synthesizing a user notification. Plain
+configuration props follow rerenders; a changed toast duration restarts its timer, and changed
+picker values or bounds reset the open draft. Use `defer_selection` where offered when navigation
+must complete before the owning signal changes.
 
 ## Dates and Times
 
@@ -145,6 +191,14 @@ rsx! {
 
 A `Popover` picker becomes a bottom sheet on a phone. `Calendar` is also available on its
 own, for a month grid inside a page.
+
+Wheel time pickers round minutes down to the nearest `minute_step` within the hour, including
+immediate confirmation: 14:59 with a step of five displays and commits 14:55. Dialog typing keeps
+minute precision. Date bounds and `is_date_disabled` apply to every picker style and confirmation.
+
+`CalendarDate::today()` and `TimeOfDay::now()` use the device's local clock. For server rendering,
+pass the same explicit `reference_date` to `Calendar`/`DatePicker` on server and client; a server
+cannot infer the visitor's time zone.
 
 Both are usable without a pointer. The calendar's arrow keys move a day at a time, Home and
 End reach the ends of the week, and Page Up and Page Down change month or year. A wheel column
@@ -241,6 +295,16 @@ let paired = Theme::adaptive(light_brand, dark_brand);
 # }
 ```
 
+To build a theme at runtime, say from a color the user picks, give `ThemeSeeds` an accent and a
+page background. The rest of the colors are filled out to read at 4.5:1, and an accent that
+would not is moved only as far as it must be (`ThemeSeeds::generate` says what moved):
+
+```
+# use g3_ui::prelude::*;
+let theme = Theme::from_seeds(&ThemeSeeds::new("#e8590c", "#fff8f0"))?;
+# Ok::<(), g3_ui::palette::InvalidSeed>(())
+```
+
 Beyond color, `Theme::look` shapes the surfaces: a page gradient and how cards are cut, edged and
 lit. Every field is optional and unset ones keep the platform look:
 
@@ -268,11 +332,48 @@ applies the dark one under `prefers-color-scheme: dark`. A translucent `Theme::c
 `card_backdrop_filter: Some("blur(18px)".into())`.
 
 The theme is written as inline custom properties on the wrapper, so passing a different `Theme`
-re-themes the tree in place. `use_theme()` returns the theme in effect for code that needs the
-values.
+re-themes the tree in place. `use_theme()` returns the nearest provider's writable
+`Signal<Theme>`. Read with `theme()` or `theme.read()`; change it in an event handler with
+`theme.set(Theme::default_dark())` or `theme.write().accent = "#16a34a".into()`.
+The wrapper's CSS and all readers follow those writes. No app-owned theme signal or extra
+context is required. Explicit theme overrides own separate state; providers without a theme
+override share the parent's handle. A changed theme prop replaces the current state.
+
+Migration: code that previously used `use_theme().accent` should read through the signal,
+for example `use_theme().read().accent.clone()`, or use `use_theme()()` for a Theme snapshot.
 
 Built-in component text such as "Close" and "Cancel" comes from `Strings`. Pass translated
-strings to `AppWrapper { strings, .. }`.
+strings as an initial value in `AppWrapper { strings, .. }`, or change them from a child
+with `let mut strings = use_strings(); strings.write().cancel = "Cancelar".into();`.
+`use_strings()` returns `Signal<Strings>`; read labels with `strings.read().cancel` or
+`strings()` for a snapshot. `use_mode()` returns `Signal<ComponentMode>` and changes the
+provider's styling with `mode.set(ComponentMode::Ios)` or `*mode.write() = ComponentMode::Ios`.
+Both hooks share the same inheritance, override, and prop synchronization behavior as
+`use_theme()`. `use_component_mode(mode)` remains the resolver for a component's optional
+mode prop: an explicit override wins over ambient mode changes.
+
+Migration: replace reads such as `use_strings().cancel` with
+`use_strings().read().cancel.clone()`. Call the hook unconditionally, before branching.
+No parent signal props or extra context are needed to change theme, mode, or labels.
+
+Rating speech and date ordering also come from
+`Strings`: `rating_unrated`, `rating_value` (`{value}`, `{max}`), `date_long`, `date_short`,
+and `date_month_year` (`{weekday}`, `{month}`, `{day}`, `{year}` as appropriate).
+
+To plug in a translation system (a map, a Fluent bundle such as dioxus-i18n, or a server's
+catalog), build the strings with `Strings::from_lookup`. It asks for each piece of text by a
+message id, the field name (`"cancel"`, or `"months_1"` for January), and keeps English for
+every id the lookup returns `None` for:
+
+```
+# use g3_ui::prelude::*;
+let strings = Strings::from_lookup(|id| match id {
+    "cancel" => Some("Annuler".into()),
+    "confirm" => Some("Confirmer".into()),
+    _ => None,
+});
+# let _ = strings;
+```
 
 ## Responsive App Shell
 
@@ -354,18 +455,20 @@ A sheet normally opens over a scrim that closes it when tapped. `backdrop: Sheet
 leaves the page behind visible and interactive, for something like comments beside a video. The
 sheet is then no longer modal, and a bottom sheet closes only when dragged down.
 
-Android Back should still close a sheet with no scrim. Every open dismissible sheet renders a
-hidden `[data-g3-sheet-dismiss]` control, and `open_sheet_count()` reports how many are open.
-Claim Back while the count is above zero, then click the topmost sheet's control:
+Android Back should dismiss the most recently presented surface before navigating. Obtain
+`use_overlay_controller()` once in your app, and call `dismiss_top()` in your Back callback.
+It covers modals, alerts, action sheets, popovers and dismissible sheets, including sheets
+without a scrim. It returns `true` when Back was consumed. A nondismissible modal consumes Back
+without exposing the surface underneath. Toasts and permanent navigation drawers are excluded.
+`count()` is reactive. `open_sheet_count()` remains available for sheet-only indicators.
 
-```js
-const dismiss = [
-    ...document.querySelectorAll('.g3-sheet[data-state="open"] [data-g3-sheet-dismiss]'),
-].pop();
-if (dismiss) {
-    event.preventDefault();
-    dismiss.click();
-}
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+let overlays = use_overlay_controller();
+rsx! { Button { onclick: move |_| { overlays.dismiss_top(); }, "Dismiss top overlay" } }
+# }
 ```
 
 ## Route Transition Integration
@@ -487,6 +590,28 @@ just record-transitions
 
 Production images are published to the GitHub Container Registry. See
 [`deploy/README.md`](deploy/README.md) for Portainer and Docker Compose instructions.
+
+## Browser and WebView Requirements
+
+The supported capability baseline is modern evergreen browsers/WebViews with CSS container
+queries, `:has()`, `color-mix()`, `light-dark()` colors, `inert`, Pointer Events, ResizeObserver,
+and the Popover API. Use Chromium/Android System WebView 123+, Safari/WKWebView 17.5+, or Firefox
+125+ as the feature baseline; this is not a claim of runtime testing every version. Android OS
+version alone does not establish WebView compatibility. See the
+[light-dark compatibility reference](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark)
+and [Popover reference](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/showPopover).
+An older engine without Popover falls back to ordinary positioning, which can be clipped by
+transformed ancestors and cannot guarantee the same overlay stacking. Zoom remains enabled.
+
+Continuous gestures stay in JavaScript to avoid per-move Android bridge calls. `SwipeItem::on_swipe`
+is an opt-in exception; prefer completion callbacks. `InfiniteScroll` paginates but does not
+virtualize rows: bound or window large lists in the app. Profile release builds on target devices
+before changing rendering, blur, or shared theme storage based on performance assumptions.
+
+Run `just pre-push` for Rust, markup, script behavior/disposal, and spelling checks. With the
+playground already running, `npm ci --prefix playground` and `just browser-test` run the real-browser
+regressions (install Playwright browsers first with `npx --prefix playground playwright install chromium`).
+See [the runtime test guide](docs/testing.md) for the matrix and Android checks.
 
 ## License
 

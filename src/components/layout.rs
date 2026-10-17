@@ -161,6 +161,9 @@ impl GridColumns {
 /// `columns` and `gap` apply on phone-width shells. `wide_columns` and
 /// `wide_gap` take over once the app shell is `48rem` or wider, the same
 /// breakpoint where navigation becomes a rail.
+/// `medium_columns` overrides columns from 48rem and `expanded_columns` from
+/// 64rem. A surrounding LayoutScope makes those widths local to the content
+/// remaining after navigation. Fit sizing naturally handles intermediate widths.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -184,6 +187,12 @@ pub fn Grid(
     columns: Option<GridColumns>,
     /// Column sizing on wide shells. Defaults to `columns`.
     wide_columns: Option<GridColumns>,
+    /// Column sizing from 48rem. Defaults to `wide_columns`, then `columns`.
+    /// Use LayoutScope around the grid to measure space after navigation.
+    medium_columns: Option<GridColumns>,
+    /// Column sizing from 64rem. Defaults to `medium_columns`, then the legacy
+    /// `wide_columns`, then `columns`. Fit sizing usually needs no overrides.
+    expanded_columns: Option<GridColumns>,
     /// Space between cells. Defaults to [`Space::Md`].
     gap: Option<Space>,
     /// Space between cells on wide shells. Defaults to `gap`.
@@ -198,6 +207,15 @@ pub fn Grid(
     );
     if let Some(wide) = wide_columns {
         style.push_str(&format!("--g3-grid-columns-wide: {};", wide.template()));
+    }
+    if let Some(medium) = medium_columns {
+        style.push_str(&format!("--g3-grid-columns-medium: {};", medium.template()));
+    }
+    if let Some(expanded) = expanded_columns {
+        style.push_str(&format!(
+            "--g3-grid-columns-expanded: {};",
+            expanded.template()
+        ));
     }
     rsx! {
         div {
@@ -232,7 +250,7 @@ fn LayoutPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
             controls: rsx! {
-                crate::SegmentGroup { value: compact, aria_label: "Shell width",
+                crate::SegmentGroup { value: compact, label: "Shell width",
                     crate::SegmentButton { value: true, "Phone settings" }
                     crate::SegmentButton { value: false, "Wide settings" }
                 }

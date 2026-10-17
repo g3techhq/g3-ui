@@ -10,32 +10,41 @@ use dioxus_icons::lucide::{ChevronDown, ChevronLeft, ChevronRight};
 
 /// "Saturday, September 19, 2026", for accessible names.
 pub(crate) fn long_date(strings: &Strings, date: CalendarDate) -> String {
-    format!(
-        "{}, {} {}, {}",
-        name_at(&strings.weekdays, usize::from(date.weekday())),
-        name_at(&strings.months, usize::from(date.month() - 1)),
-        date.day(),
-        date.year()
-    )
+    strings
+        .date_long
+        .replace(
+            "{weekday}",
+            &name_at(&strings.weekdays, usize::from(date.weekday())),
+        )
+        .replace(
+            "{month}",
+            &name_at(&strings.months, usize::from(date.month() - 1)),
+        )
+        .replace("{day}", &date.day().to_string())
+        .replace("{year}", &date.year().to_string())
 }
 
 /// "Sep 19, 2026", for a field showing the chosen date.
 pub(crate) fn short_date(strings: &Strings, date: CalendarDate) -> String {
-    format!(
-        "{} {}, {}",
-        name_at(&strings.months_short, usize::from(date.month() - 1)),
-        date.day(),
-        date.year()
-    )
+    strings
+        .date_short
+        .replace(
+            "{month}",
+            &name_at(&strings.months_short, usize::from(date.month() - 1)),
+        )
+        .replace("{day}", &date.day().to_string())
+        .replace("{year}", &date.year().to_string())
 }
 
 /// "September 2026".
 pub(crate) fn month_year(strings: &Strings, date: CalendarDate) -> String {
-    format!(
-        "{} {}",
-        name_at(&strings.months, usize::from(date.month() - 1)),
-        date.year()
-    )
+    strings
+        .date_month_year
+        .replace(
+            "{month}",
+            &name_at(&strings.months, usize::from(date.month() - 1)),
+        )
+        .replace("{year}", &date.year().to_string())
 }
 
 /// A name from a localised list, tolerating a list that is too short.
@@ -101,6 +110,9 @@ if (year) year.focus({ preventScroll: true });
 pub fn Calendar(
     /// The chosen date. Kept internally when not given.
     value: Option<Signal<Option<CalendarDate>>>,
+    /// Date highlighted as today. Defaults to the device's local date. Pass
+    /// the same reference on the server and client when hydrating across time zones.
+    reference_date: Option<CalendarDate>,
     /// The earliest date that can be picked.
     min: Option<CalendarDate>,
     /// The latest date that can be picked.
@@ -118,10 +130,11 @@ pub fn Calendar(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("calendar", None);
     let mut value = use_controlled(value, || None);
-    let today = use_hook(CalendarDate::today);
+    let local_today = use_hook(CalendarDate::today);
+    let today = reference_date.unwrap_or(local_today);
     let start = use_hook(|| value.peek().unwrap_or(today).clamp_to(min, max));
     let mut focused = use_signal(|| start);
     let mut shown = use_signal(|| start.first_of_month());
@@ -129,8 +142,13 @@ pub fn Calendar(
     let mut focus_pending = use_signal(|| false);
 
     // Follow a value set from outside.
+    let value_prop = crate::state::use_synced_signal(value);
+    let bounds = crate::state::use_synced_signal((min, max));
     use_effect(move || {
-        if let Some(date) = value() {
+        let (min, max) = bounds();
+        let current = value_prop()();
+        let date = current.unwrap_or(*focused.peek()).clamp_to(min, max);
+        {
             if date.first_of_month() != *shown.peek() {
                 shown.set(date.first_of_month());
             }
@@ -338,7 +356,7 @@ pub fn Calendar(
                                                         tabindex: if date == focus_date { "0" } else { "-1" },
                                                         aria_label: long_date(&strings, date),
                                                         aria_current: (date == today).then_some("date"),
-                                                        disabled: off,
+                                                        aria_disabled: off.then_some("true"),
                                                         onclick: move |_| pick(date),
                                                         "{date.day()}"
                                                     }

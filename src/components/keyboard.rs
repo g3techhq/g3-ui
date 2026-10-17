@@ -1,15 +1,16 @@
 //! Arrow-key movement inside composite widgets.
 use super::overlay::js_string;
-use dioxus::prelude::*;
 
 const ROVING_SCRIPT: &str = r#"
 const root = document.getElementById(__ID__);
-if (root && root.dataset.g3Roving !== "true") {
-    root.dataset.g3Roving = "true";
+if (root) {
+    const listeners = new AbortController();
     const selector = __SELECTOR__;
     const keys = __VERTICAL__
-        ? { next: ["ArrowDown", "ArrowRight"], previous: ["ArrowUp", "ArrowLeft"] }
-        : { next: ["ArrowRight", "ArrowDown"], previous: ["ArrowLeft", "ArrowUp"] };
+        ? { next: ["ArrowDown"], previous: ["ArrowUp"] }
+        : root.getAttribute('role') === 'tablist'
+            ? { next: ["ArrowRight"], previous: ["ArrowLeft"] }
+            : { next: ["ArrowRight", "ArrowDown"], previous: ["ArrowLeft", "ArrowUp"] };
     root.addEventListener("keydown", (event) => {
         const items = [...root.querySelectorAll(selector)]
             .filter((node) => !node.disabled && node.getAttribute("aria-disabled") !== "true");
@@ -26,7 +27,18 @@ if (root && root.dataset.g3Roving !== "true") {
         const target = items[(next + items.length) % items.length];
         target.focus();
         target.click();
-    });
+    }, { signal: listeners.signal });
+    // Measure the current DOM order, including dynamically reordered tabs.
+    root.addEventListener('click', (event) => {
+        const tab = event.target instanceof Element && event.target.closest('[role="tab"]');
+        const tabs = [...root.querySelectorAll('[role="tab"]')];
+        const shell = root.closest('.g3-tabs');
+        if (shell && tab && tabs.includes(tab)) {
+            const current = tabs.findIndex((each) => each.getAttribute('aria-selected') === 'true');
+            shell.dataset.direction = tabs.indexOf(tab) < current ? 'backward' : 'forward';
+        }
+    }, { capture: true, signal: listeners.signal });
+    try { await dioxus.recv(); } finally { listeners.abort(); }
 }
 "#;
 
@@ -35,11 +47,9 @@ if (root && root.dataset.g3Roving !== "true") {
 /// land on, as radio groups and tab lists do. Pair with a roving `tabindex`
 /// so only the selected item is in the tab order.
 pub(crate) fn use_roving_selection(id: String, selector: &'static str, vertical: bool) {
-    use_effect(move || {
-        let script = ROVING_SCRIPT
-            .replace("__ID__", &js_string(&id))
-            .replace("__SELECTOR__", &js_string(selector))
-            .replace("__VERTICAL__", if vertical { "true" } else { "false" });
-        let _ = document::eval(&script);
-    });
+    let script = ROVING_SCRIPT
+        .replace("__ID__", &js_string(&id))
+        .replace("__SELECTOR__", &js_string(selector))
+        .replace("__VERTICAL__", if vertical { "true" } else { "false" });
+    super::script::use_dom_script::<()>(Some(script), |_| {});
 }

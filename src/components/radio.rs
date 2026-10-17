@@ -213,7 +213,7 @@ fn RadioPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
-                crate::SegmentGroup { value: placement, aria_label: "Label placement",
+                crate::SegmentGroup { value: placement, label: "Label placement",
                     crate::SegmentButton { value: ControlLabelPlacement::Start, "Start" }
                     crate::SegmentButton { value: ControlLabelPlacement::End, "End" }
                     crate::SegmentButton { value: ControlLabelPlacement::Stacked, "Stacked" }

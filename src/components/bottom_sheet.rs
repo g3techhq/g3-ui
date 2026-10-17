@@ -119,7 +119,7 @@ fn BottomSheetPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                crate::SegmentGroup { value: backdrop, aria_label: "Backdrop",
+                crate::SegmentGroup { value: backdrop, label: "Backdrop",
                     crate::SegmentButton { value: SheetBackdrop::Dismiss, "Backdrop" }
                     crate::SegmentButton { value: SheetBackdrop::None, "No backdrop" }
                 }

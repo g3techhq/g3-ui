@@ -1,5 +1,7 @@
 //! Brief, non-blocking messages.
 use super::Color;
+use super::overlay::use_top_layer_with_priority;
+use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::X;
@@ -88,7 +90,7 @@ pub fn Toast(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let color = color.unwrap_or(Color::Neutral);
     let position = position.unwrap_or_default();
     let lifetime = duration
@@ -103,11 +105,17 @@ pub fn Toast(
     let paused = hovered() || focused();
     let urgent = matches!(color, Color::Danger | Color::Warning);
     let is_open = open();
+    let layer_id = use_element_id("toast-layer", None);
+    use_top_layer_with_priority(open.into(), layer_id.clone(), Duration::from_millis(250), 1);
+    let lifetime_prop = use_synced_signal(lifetime);
+    let open_prop = use_synced_signal(open);
 
     // Auto-dismiss, restarted each time the toast opens. The generation keeps
     // a timer from an earlier opening from closing a later one.
     let mut generation = use_signal(|| 0_u64);
     use_effect(move || {
+        let lifetime = lifetime_prop();
+        let open = open_prop();
         let current = generation.with_mut(|g| {
             *g += 1;
             *g
@@ -138,6 +146,7 @@ pub fn Toast(
     // Report every close, including ones the owner makes.
     let mut was_open = use_signal(|| is_open);
     use_effect(move || {
+        let open = open_prop();
         let now = open();
         if *was_open.peek()
             && !now
@@ -164,6 +173,7 @@ pub fn Toast(
     ]);
     let duration_ms = lifetime.map_or(0, |lifetime| lifetime.as_millis());
     rsx! {
+      div { id: layer_id, class: "g3-overlay-layer", popover: "manual",
         div {
             class: merge_classes(cls, class.as_deref()),
             role: if urgent { "alert" } else { "status" },
@@ -202,6 +212,7 @@ pub fn Toast(
                 div { class: "g3-toast-timer", aria_hidden: "true" }
             }
         }
+      }
     }
 }
 
@@ -216,7 +227,7 @@ fn ToastPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                crate::SegmentGroup { value: position, aria_label: "Position",
+                crate::SegmentGroup { value: position, label: "Position",
                     crate::SegmentButton { value: ToastPosition::Top, "Top" }
                     crate::SegmentButton { value: ToastPosition::Middle, "Middle" }
                     crate::SegmentButton { value: ToastPosition::Bottom, "Bottom" }

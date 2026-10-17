@@ -126,12 +126,11 @@ pub fn Alert(
 ) -> Element {
     let has_input = input.is_some();
     let mut value = use_signal(String::new);
-    let initial = input.as_ref().map(|input| input.value.clone());
+    let initial = crate::state::use_synced_signal(input.as_ref().map(|input| input.value.clone()));
+    let open_prop = crate::state::use_synced_signal(open);
     use_effect(move || {
-        if open()
-            && let Some(initial) = initial.clone()
-        {
-            value.set(initial);
+        if open_prop()() {
+            value.set(initial().unwrap_or_default());
         }
     });
     let finish = move |button: Option<usize>| {
@@ -197,10 +196,13 @@ fn AlertPlaygroundDemo() -> Element {
     let mut last = use_signal(|| "Nothing yet".to_string());
     let alerts = crate::use_alert();
     let sheets = crate::use_action_sheet();
+    let mut sheet_open = use_signal(|| false);
+    let toaster = crate::use_toast();
     rsx! {
         crate::PlaygroundDemoFrame {
             crate::Stack {
                 crate::Button { onclick: move |_| open.set(true), "Declarative alert" }
+                crate::Button { onclick: move |_| sheet_open.set(true), "Stacked overlays" }
                 crate::Button {
                     fill: ButtonFill::Outline,
                     onclick: move |_| async move {
@@ -257,6 +259,10 @@ fn AlertPlaygroundDemo() -> Element {
                     Button { fill: ButtonFill::Clear, onclick: move |_| modal_open.set(false), "Close" }
                 },
                 p { "Started 42 minutes ago at Pebble Creek." }
+            }
+            crate::BottomSheet { open: sheet_open, title: "Overlay stack",
+                Button { onclick: move |_| open.set(true), "Confirm above sheet" }
+                Button { onclick: move |_| { toaster.success("Toast above sheet"); }, "Show toast" }
             }
         }
     }

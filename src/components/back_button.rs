@@ -44,7 +44,8 @@ pub fn BackButton(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let label = label.unwrap_or_else(|| use_strings().back);
+    let strings = use_strings();
+    let label = label.unwrap_or_else(|| strings.read().back.clone());
     let router = try_consume_context::<RouterContext>();
     let handle = move |event: MouseEvent| {
         if let Some(onclick) = onclick {

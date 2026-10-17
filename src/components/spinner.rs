@@ -30,7 +30,8 @@ pub fn Spinner(
     /// Extra classes for the wrapper.
     class: Option<String>,
 ) -> Element {
-    let label = label.unwrap_or_else(|| use_strings().loading);
+    let strings = use_strings();
+    let label = label.unwrap_or_else(|| strings.read().loading.clone());
     let size_cls = match size.unwrap_or_default() {
         SpinnerSize::Sm => "g3-spinner-sm",
         SpinnerSize::Md => "g3-spinner-md",
@@ -72,7 +73,7 @@ fn SpinnerPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
                 crate::Checkbox { checked: center, label: "Center" }
-                crate::SegmentGroup { value: size,
+                crate::SegmentGroup { value: size, label: "Size",
                     crate::SegmentButton { value: SpinnerSize::Sm, "Sm" }
                     crate::SegmentButton { value: SpinnerSize::Md, "Md" }
                     crate::SegmentButton { value: SpinnerSize::Lg, "Lg" }

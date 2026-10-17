@@ -86,7 +86,7 @@ pub fn Content(
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let padding = padding.unwrap_or(true);
     #[cfg(feature = "transitions")]
     let scroll_cls = merge_classes("g3-content-scroll", Some(ROUTE_TRANSITION_SEGMENT_CLASS));
@@ -165,7 +165,7 @@ fn ContentPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: padding, label: "Padding" }
                 crate::Checkbox { checked: show_fab, label: "FAB" }
                 crate::Checkbox { checked: pull, label: "Pull to refresh" }
-                crate::SegmentGroup { value: width, aria_label: "Width",
+                crate::SegmentGroup { value: width, label: "Width",
                     crate::SegmentButton { value: ContentWidth::Full, "Full" }
                     crate::SegmentButton { value: ContentWidth::Readable, "Readable" }
                     crate::SegmentButton { value: ContentWidth::Wide, "Wide" }

@@ -164,7 +164,7 @@ itself to the rules the apps follow (g3-stack's `docs/dioxus/patterns.md`):
 ## Verifying in the playground
 
 - Start the `playground` configuration in `.claude/launch.json`
-  (`dx serve --port 8080` in `playground/`), or reuse one already running.
+  (`dx serve` in `playground/`), or reuse one already running.
   If port 8080 belongs to another project, use the next free port.
 - Look at the component in both modes, light and dark, at a phone width and a
   wide one, and with the keyboard.

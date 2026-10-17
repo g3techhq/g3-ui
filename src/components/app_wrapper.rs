@@ -66,23 +66,7 @@ pub fn use_shell_size() -> ShellSize {
 ///
 /// `rem` is read from the document rather than assumed to be 16px, so this
 /// agrees with the container query even on a page that has resized its root.
-const SHELL_SIZE_SCRIPT: &str = r#"
-const shell = document.getElementById(__ID__);
-if (shell && !shell.g3SizeObserver) {
-    let last = null;
-    const report = () => {
-        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const wide = shell.getBoundingClientRect().width >= 48 * rem;
-        if (wide !== last) {
-            last = wide;
-            dioxus.send(wide);
-        }
-    };
-    shell.g3SizeObserver = new ResizeObserver(report);
-    shell.g3SizeObserver.observe(shell);
-    report();
-}
-"#;
+const SHELL_SIZE_SCRIPT: &str = super::responsive::SIZE_SCRIPT;
 
 /// Mirrors the active theme's page background and color scheme onto the
 /// document element.
@@ -133,13 +117,16 @@ struct RootShellClaimed;
 #[component]
 pub fn AppWrapper(
     /// Platform look. Defaults to an enclosing provider's mode, then
-    /// [`get_mode`](crate::get_mode).
+    /// [`get_mode`](crate::get_mode). Seeds writable [`crate::use_mode`] state;
+    /// later prop changes replace it. Omit to share the enclosing provider's mode.
     mode: Option<ComponentMode>,
     /// Color tokens. Defaults to an enclosing provider's theme, then
-    /// [`Theme::default_light`]. Changing it re-themes the app in place.
+    /// [`Theme::default_light`]. Seeds the writable [`crate::use_theme`] state;
+    /// later prop changes replace that state and re-theme the app in place.
     theme: Option<Theme>,
     /// Component text. Defaults to an enclosing provider's strings, then
-    /// English.
+    /// English. Seeds writable [`crate::use_strings`] state; later prop changes
+    /// replace it. Omit to share the enclosing provider's labels.
     strings: Option<Strings>,
     /// Apply the full-height app shell layout. Defaults to `true`. Set `false`
     /// for a page that scrolls normally and only needs the stylesheet, mode,
@@ -162,22 +149,22 @@ pub fn AppWrapper(
     let shell_id = use_element_id("app", None);
     let mut shell_size = use_signal(ShellSize::default);
     use_context_provider(|| shell_size);
-    {
-        let shell_id = shell_id.clone();
-        use_effect(move || {
-            let script = SHELL_SIZE_SCRIPT.replace("__ID__", &js_string(&shell_id));
-            spawn(async move {
-                let mut eval = document::eval(&script);
-                while let Ok(wide) = eval.recv::<bool>().await {
-                    shell_size.set(if wide {
-                        ShellSize::Wide
-                    } else {
-                        ShellSize::Compact
-                    });
-                }
-            });
-        });
-    }
+    let mut layout_size = use_signal(super::responsive::LayoutSize::default);
+    use_context_provider(|| layout_size);
+    super::script::use_dom_script(
+        Some(SHELL_SIZE_SCRIPT.replace("__ID__", &js_string(&shell_id))),
+        move |report: u8| {
+            let next = if report >= 1 {
+                ShellSize::Wide
+            } else {
+                ShellSize::Compact
+            };
+            if *shell_size.peek() != next {
+                shell_size.set(next);
+            }
+            layout_size.set(super::responsive::LayoutSize::from_report(report));
+        },
+    );
     // Checked before the marker is provided, so only the outermost wrapper
     // claims the document element.
     let is_root_shell = use_hook(|| try_consume_context::<RootShellClaimed>().is_none());
@@ -257,7 +244,7 @@ fn ViewportMeta() -> Element {
     rsx! {
         document::Meta {
             name: "viewport",
-            content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover",
+            content: "width=device-width, initial-scale=1.0, viewport-fit=cover",
         }
     }
 }

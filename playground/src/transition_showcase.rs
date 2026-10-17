@@ -114,15 +114,18 @@ pub fn TransitionEpisode() -> Element {
 fn TransitionShowcase(screen: ShowcaseScreen) -> Element {
     let (mode, theme, viewport) = active_playground_settings();
     let label = match viewport {
-        PlaygroundViewport::Desktop => "Compact desktop",
+        PlaygroundViewport::Desktop => "Desktop",
         PlaygroundViewport::Mobile => "Mobile",
+        PlaygroundViewport::Tablet => "Tablet",
+        PlaygroundViewport::Landscape => "Landscape phone",
+        PlaygroundViewport::Resizable => "Resizable",
     };
     rsx! {
         section {
             class: "playground-viewport-card playground-viewport-{viewport.as_str()} transition-showcase-card",
             aria_label: format!("{label} route transition preview"),
             div { class: "playground-viewport-demo",
-                ThemeProvider { mode, theme: theme.to_theme(),
+                ThemeProvider { mode, theme,
                     PlaygroundDemoFrame {
                         app: false,
                         center: false,

@@ -34,7 +34,7 @@ mod layout;
 mod list;
 mod media;
 mod modal;
-mod nav;
+pub(crate) mod nav;
 mod navigation_drawer;
 pub(crate) mod overlay;
 mod overlay_host;
@@ -46,6 +46,8 @@ mod range;
 mod rating;
 mod refresher;
 mod reorder;
+mod responsive;
+mod script;
 mod searchbar;
 mod segment;
 mod select;
@@ -96,8 +98,11 @@ pub use layout::{Grid, GridColumns, Space, Stack, StackAlign, StackJustify};
 pub use list::{Item, ItemDetail, List, ListHeader, ListLines, ListVariant};
 pub use media::{Img, ImgFit, Tooltip, TooltipPlacement};
 pub use modal::{Modal, ModalRole, ModalSize};
-pub use nav::{AdaptiveNav, AdaptiveNavCompact, NavBar, NavItem, NavItemGroup, NavRail};
+pub use nav::{
+    AdaptiveNav, AdaptiveNavCompact, NavBar, NavItem, NavItemGroup, NavRail, NavRailBehavior,
+};
 pub use navigation_drawer::NavigationDrawer;
+pub use overlay::{OverlayController, use_overlay_controller};
 pub use overlay_host::{
     ActionSheetOptions, ActionSheets, AlertOptions, Alerts, ToastId, ToastOptions, Toaster,
     use_action_sheet, use_alert, use_toast,
@@ -110,6 +115,9 @@ pub use range::{Range, Stepper};
 pub use rating::Rating;
 pub use refresher::Refresher;
 pub use reorder::{ReorderHandle, ReorderHandlePosition, ReorderItem, ReorderLayout, ReorderList};
+pub use responsive::{
+    AdaptiveLayout, LayoutScope, LayoutSize, PageLayout, PageLayoutOrder, use_layout_size,
+};
 pub use searchbar::Searchbar;
 pub use segment::{SegmentButton, SegmentGroup};
 pub use select::{Select, SelectOption, SelectWidth};
@@ -143,6 +151,7 @@ macro_rules! gallery {
 }
 
 gallery![
+    responsive,
     app_wrapper,
     content,
     header,

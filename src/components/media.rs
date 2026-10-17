@@ -43,12 +43,14 @@ pub fn Img(
     /// Extra classes for the wrapper.
     class: Option<String>,
 ) -> Element {
-    let mut state = use_signal(|| "loading");
-    let mut last_src = use_signal(|| src.clone());
-    if *last_src.peek() != src {
-        last_src.set(src.clone());
-        state.set("loading");
-    }
+    let mut result = use_signal(|| None::<(String, bool)>);
+    let state = match result.read().as_ref() {
+        Some((loaded_src, true)) if loaded_src == &src => "loaded",
+        Some((loaded_src, false)) if loaded_src == &src => "error",
+        _ => "loading",
+    };
+    let loaded_src = src.clone();
+    let failed_src = src.clone();
     let fit_cls = match fit.unwrap_or_default() {
         ImgFit::Cover => "",
         ImgFit::Contain => "g3-img-contain",
@@ -56,18 +58,19 @@ pub fn Img(
     rsx! {
         span {
             class: merge_classes(classes(["g3-img", fit_cls]), class.as_deref()),
-            "data-state": state(),
+            "data-state": state,
             style: aspect_ratio.map(|ratio| format!("aspect-ratio: {ratio};")),
-            if state() == "error" && fallback.is_some() {
+            if state == "error" && fallback.is_some() {
                 {fallback}
             } else {
                 img {
+                    key: "{src}",
                     src,
                     alt,
                     loading: if eager.unwrap_or(false) { "eager" } else { "lazy" },
                     decoding: "async",
-                    onload: move |_| state.set("loaded"),
-                    onerror: move |_| state.set("error"),
+                    onload: move |_| result.set(Some((loaded_src.clone(), true))),
+                    onerror: move |_| result.set(Some((failed_src.clone(), false))),
                 }
             }
         }
@@ -85,14 +88,7 @@ pub enum TooltipPlacement {
 }
 
 /// Points the trigger at its tooltip, unless the caller already did.
-const DESCRIBE_SCRIPT: &str = r#"
-const tip = document.getElementById(__ID__);
-const anchor = tip && tip.parentElement;
-const control = anchor && anchor.querySelector("a[href], button, input, select, textarea, [tabindex]");
-if (control && control !== tip && !control.hasAttribute("aria-describedby")) {
-    control.setAttribute("aria-describedby", tip.id);
-}
-"#;
+const DESCRIBE_SCRIPT: &str = include_str!("tooltip.js");
 
 /// A short label shown while the trigger is hovered or focused.
 ///
@@ -129,12 +125,10 @@ pub fn Tooltip(
     // Escape hides the tip until the pointer or focus leaves, as WCAG 1.4.13
     // asks of content that appears on hover or focus.
     let mut dismissed = use_signal(|| false);
-    {
-        let id = id.clone();
-        use_effect(move || {
-            document::eval(&DESCRIBE_SCRIPT.replace("__ID__", &js_string(&id)));
-        });
-    }
+    super::script::use_dom_script::<()>(
+        Some(DESCRIBE_SCRIPT.replace("__ID__", &js_string(&id))),
+        |_| {},
+    );
     let placement = match placement.unwrap_or_default() {
         TooltipPlacement::Top => "top",
         TooltipPlacement::Bottom => "bottom",

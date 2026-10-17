@@ -194,7 +194,7 @@ fn CardPlaygroundDemo() -> Element {
             center: false,
             controls: rsx! {
                 crate::Input { label: "Title", value: title }
-                crate::SegmentGroup { value: variant, aria_label: "Variant",
+                crate::SegmentGroup { value: variant, label: "Variant",
                     crate::SegmentButton { value: CardVariant::Raised, "Raised" }
                     crate::SegmentButton { value: CardVariant::Flat, "Flat" }
                     crate::SegmentButton { value: CardVariant::Filled, "Filled" }

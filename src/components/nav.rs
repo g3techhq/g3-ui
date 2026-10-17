@@ -1,6 +1,8 @@
 //! Persistent app navigation: bottom bars, side rails, and their items.
 use super::pressable::Destination;
+use crate::components::overlay::js_string;
 use crate::components::pressable::{Pressable, Target};
+use crate::state::use_synced_signal;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::{ChevronLeft, ChevronRight};
@@ -32,6 +34,37 @@ pub enum NavItemGroup {
     Secondary,
 }
 
+/// How a side rail shows its labels: a [`NavRail`], or an [`AdaptiveNav`] on
+/// a wide shell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum NavRailBehavior {
+    /// A button on the rail's edge expands and collapses it, and the page
+    /// makes room for the labels.
+    #[default]
+    Toggle,
+    /// The rail stays icons only and expands over the page while the pointer
+    /// is on it or the keyboard is inside it. The page does not move.
+    Hover,
+}
+
+/// Where a toggled rail's state is kept between routes and visits.
+const EXPANDED_STORAGE_KEY: &str = "g3-ui.nav-expanded";
+
+/// The last toggled rail state in this app. Each route renders its own rail,
+/// so a new rail starts from this rather than from local storage, which only
+/// answers asynchronously and would flash the default first. `None` until the
+/// user toggles a rail or storage has been read.
+pub(crate) static REMEMBERED_EXPANDED: GlobalSignal<Option<bool>> = Signal::global(|| None);
+
+const READ_EXPANDED_SCRIPT: &str = r#"
+let value = null;
+try {
+    const stored = localStorage.getItem(__KEY__);
+    if (stored === "true" || stored === "false") value = stored === "true";
+} catch {}
+dioxus.send(value);
+"#;
+
 #[derive(Clone, Copy, PartialEq)]
 enum NavKind {
     Bar,
@@ -48,18 +81,49 @@ fn NavContainer(
     expanded: Option<Signal<bool>>,
     default_expanded: Option<bool>,
     collapsible: Option<bool>,
+    behavior: Option<NavRailBehavior>,
+    remember: Option<bool>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    let has_rail = !matches!(kind, NavKind::Bar);
+    let hover = behavior.unwrap_or_default() == NavRailBehavior::Hover;
+    // Only the rail's own toggled state is remembered: a caller that passes
+    // `expanded` keeps it wherever it likes.
+    let remembers = has_rail && !hover && expanded.is_none() && remember.unwrap_or(true);
     // Called unconditionally: a hook may not sit behind a match arm. A bar has
     // no expanded state, so its signal goes unused.
-    let own = use_signal(|| default_expanded.unwrap_or(true));
+    let mut own = use_signal(|| {
+        let fallback = default_expanded.unwrap_or(true);
+        if remembers {
+            REMEMBERED_EXPANDED.peek().unwrap_or(fallback)
+        } else {
+            fallback
+        }
+    });
+    let remembers_signal = use_synced_signal(remembers);
+    // The first rail in a visit reads what an earlier visit stored. Later
+    // rails start from `REMEMBERED_EXPANDED`, which is already set.
+    use_effect(move || {
+        if !remembers_signal() || REMEMBERED_EXPANDED.peek().is_some() {
+            return;
+        }
+        spawn(async move {
+            let script = READ_EXPANDED_SCRIPT.replace("__KEY__", &js_string(EXPANDED_STORAGE_KEY));
+            let mut eval = document::eval(&script);
+            if let Ok(Some(stored)) = eval.recv::<Option<bool>>().await
+                && REMEMBERED_EXPANDED.peek().is_none()
+            {
+                *REMEMBERED_EXPANDED.write() = Some(stored);
+                own.set(stored);
+            }
+        });
+    });
     let mut expanded = expanded.unwrap_or(own);
-    let has_rail = !matches!(kind, NavKind::Bar);
-    let is_expanded = has_rail && expanded();
-    let collapsible = has_rail && collapsible.unwrap_or(true);
-    let strings = use_strings();
-    let aria_label = aria_label.unwrap_or_else(|| use_strings().primary_navigation);
+    let is_expanded = has_rail && !hover && expanded();
+    let collapsible = has_rail && !hover && collapsible.unwrap_or(true);
+    let strings = use_strings()();
+    let aria_label = aria_label.unwrap_or_else(|| strings.primary_navigation.clone());
     let kind_cls = match kind {
         NavKind::Bar => "",
         NavKind::Rail => "g3-nav-rail",
@@ -93,6 +157,11 @@ fn NavContainer(
         mode.pick("g3-nav-ios", "g3-nav-md"),
         kind_cls,
         if is_expanded { "g3-nav-expanded" } else { "" },
+        if has_rail && hover {
+            "g3-nav-hover"
+        } else {
+            ""
+        },
         persistent_cls,
     ]);
     let (toggle_label, toggle_icon) = if is_expanded {
@@ -117,7 +186,17 @@ fn NavContainer(
                     class: "g3-nav-toggle",
                     aria_label: toggle_label,
                     aria_expanded: is_expanded.to_string(),
-                    onclick: move |_| expanded.set(!expanded()),
+                    onclick: move |_| {
+                        let next = !expanded();
+                        expanded.set(next);
+                        if remembers_signal() {
+                            *REMEMBERED_EXPANDED.write() = Some(next);
+                            document::eval(&format!(
+                                "try {{ localStorage.setItem({}, \"{next}\"); }} catch {{}}",
+                                js_string(EXPANDED_STORAGE_KEY),
+                            ));
+                        }
+                    },
                     {toggle_icon}
                 }
             }
@@ -128,8 +207,10 @@ fn NavContainer(
 /// Navigation that is a bottom bar on compact shells and a side rail on wide
 /// ones. Put it last inside a [`TabLayout`](crate::TabLayout).
 ///
-/// The rail starts expanded, with a label beside each icon, and a button at its
-/// foot collapses it to icons alone.
+/// The rail starts expanded, with a label beside each icon, and a button on
+/// its edge collapses it to icons alone. The choice is remembered across
+/// routes and visits. Set `behavior` to [`NavRailBehavior::Hover`] for a rail
+/// that stays icons only and expands over the page on hover instead.
 ///
 /// With the `transitions` feature, the rail is persistent route-transition
 /// chrome inside an [`AppWrapper`](crate::AppWrapper): it stays still while
@@ -146,8 +227,8 @@ pub fn AdaptiveNav(
     /// Extra classes for the `nav` element.
     class: Option<String>,
     /// Whether the rail shows labels beside its icons. Pass a signal to own
-    /// the state, for example to remember it between visits; the toggle
-    /// writes it. Without one the nav keeps its own, starting from
+    /// the state; the toggle writes it. Without one the nav keeps its own,
+    /// starting from the remembered state (see `remember`), or else from
     /// `default_expanded`.
     expanded: Option<Signal<bool>>,
     /// Whether the rail starts expanded when it owns its state. Defaults to
@@ -156,6 +237,15 @@ pub fn AdaptiveNav(
     /// Show the button that expands and collapses the rail. Defaults to
     /// `true`.
     collapsible: Option<bool>,
+    /// How the rail shows its labels. Defaults to
+    /// [`NavRailBehavior::Toggle`]. With [`NavRailBehavior::Hover`],
+    /// `expanded`, `default_expanded`, `collapsible` and `remember` do not
+    /// apply.
+    behavior: Option<NavRailBehavior>,
+    /// Remember the toggled state in local storage, so it carries across
+    /// routes and visits. Defaults to `true`. Applies only to a rail that owns
+    /// its state; one given `expanded` leaves it to the signal's owner.
+    remember: Option<bool>,
     children: Element,
 ) -> Element {
     rsx! {
@@ -167,6 +257,8 @@ pub fn AdaptiveNav(
             expanded,
             default_expanded,
             collapsible,
+            behavior,
+            remember,
             {children}
         }
     }
@@ -192,6 +284,11 @@ pub fn NavBar(
 
 /// A side navigation rail at every shell width. Put it inside a
 /// [`TabLayout`](crate::TabLayout).
+///
+/// By default a button on its edge expands and collapses the labels, and the
+/// choice is remembered across routes and visits. With
+/// [`NavRailBehavior::Hover`] it stays icons only and expands over the page
+/// while hovered.
 #[component]
 pub fn NavRail(
     /// Accessible name. Defaults to
@@ -202,8 +299,8 @@ pub fn NavRail(
     /// Extra classes for the `nav` element.
     class: Option<String>,
     /// Whether the rail shows labels beside its icons. Pass a signal to own
-    /// the state, for example to remember it between visits; the toggle
-    /// writes it. Without one the nav keeps its own, starting from
+    /// the state; the toggle writes it. Without one the nav keeps its own,
+    /// starting from the remembered state (see `remember`), or else from
     /// `default_expanded`.
     expanded: Option<Signal<bool>>,
     /// Whether the rail starts expanded when it owns its state. Defaults to
@@ -212,6 +309,15 @@ pub fn NavRail(
     /// Show the button that expands and collapses the rail. Defaults to
     /// `true`.
     collapsible: Option<bool>,
+    /// How the rail shows its labels. Defaults to
+    /// [`NavRailBehavior::Toggle`]. With [`NavRailBehavior::Hover`],
+    /// `expanded`, `default_expanded`, `collapsible` and `remember` do not
+    /// apply.
+    behavior: Option<NavRailBehavior>,
+    /// Remember the toggled state in local storage, so it carries across
+    /// routes and visits. Defaults to `true`. Applies only to a rail that owns
+    /// its state; one given `expanded` leaves it to the signal's owner.
+    remember: Option<bool>,
     children: Element,
 ) -> Element {
     rsx! {
@@ -223,6 +329,8 @@ pub fn NavRail(
             expanded,
             default_expanded,
             collapsible,
+            behavior,
+            remember,
             {children}
         }
     }
@@ -297,6 +405,7 @@ fn NavPlaygroundDemo() -> Element {
     let mode = crate::use_component_mode(None);
     let mut active = use_signal(|| 0_usize);
     let layout = use_signal(|| 0_usize);
+    let behavior = use_signal(|| NavRailBehavior::Toggle);
     let items = rsx! {
         NavItem {
             label: "Games",
@@ -329,12 +438,15 @@ fn NavPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                div {
-                    span { "Layout" }
-                    crate::SegmentGroup { value: layout,
-                        crate::SegmentButton { value: 0_usize, "Adaptive" }
-                        crate::SegmentButton { value: 1_usize, "Bar" }
-                        crate::SegmentButton { value: 2_usize, "Rail" }
+                crate::SegmentGroup { value: layout, label: "Layout",
+                    crate::SegmentButton { value: 0_usize, "Adaptive" }
+                    crate::SegmentButton { value: 1_usize, "Bar" }
+                    crate::SegmentButton { value: 2_usize, "Rail" }
+                }
+                if layout() != 1 {
+                    crate::SegmentGroup { value: behavior, label: "Rail behavior",
+                        crate::SegmentButton { value: NavRailBehavior::Toggle, "Toggle" }
+                        crate::SegmentButton { value: NavRailBehavior::Hover, "Hover" }
                     }
                 }
             },
@@ -349,10 +461,10 @@ fn NavPlaygroundDemo() -> Element {
                             NavBar { {items} }
                         },
                         2 => rsx! {
-                            NavRail { {items} }
+                            NavRail { behavior: behavior(), {items} }
                         },
                         _ => rsx! {
-                            AdaptiveNav { {items} }
+                            AdaptiveNav { behavior: behavior(), {items} }
                         },
                     }
                 }

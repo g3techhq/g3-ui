@@ -1,7 +1,9 @@
 //! What bottom sheets, side sheets, and navigation drawers share: the
 //! entrance, the backdrop, scroll locking, focus handling, and the app-wide
 //! count of open sheets.
-use super::overlay::{use_lock_body_scroll, use_overlay_focus, use_top_layer};
+use super::overlay::{
+    use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
+};
 use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
@@ -15,13 +17,9 @@ static OPEN_SHEETS: GlobalSignal<usize> = Signal::global(|| 0);
 /// How many dismissible sheets are open in the app.
 ///
 /// Reactive: a component that reads it re-renders as sheets open and close.
-/// Meant for app-level dismissal such as the Android Back button, which must
-/// know a sheet is up even when the page that opened it keeps its `open`
-/// signal private. Navigation drawers are not counted.
-///
-/// To close the topmost sheet, click its `[data-g3-sheet-dismiss]` control;
-/// every open dismissible sheet renders one, whatever its backdrop. See the
-/// crate docs for an example.
+/// Navigation drawers are not counted. For Android Back, prefer
+/// [`crate::use_overlay_controller`], which also covers dialogs and popovers
+/// and dismisses the most recently presented surface without DOM selectors.
 pub fn open_sheet_count() -> usize {
     OPEN_SHEETS()
 }
@@ -98,102 +96,7 @@ const BACKDROP_EXIT_DELAY: std::time::Duration = std::time::Duration::from_milli
 
 /// Pointer and keyboard behaviour of a bottom sheet's handle. Messages back to
 /// Rust: `-1` dismiss, `-2` cycle detents, `n >= 0` settle on detent `n`.
-const DRAG_SCRIPT: &str = r#"
-const dialog = document.getElementById(__DIALOG__);
-const handle = document.getElementById(__HANDLE__);
-if (dialog && handle && handle.dataset.g3Bound !== "true") {
-    handle.dataset.g3Bound = "true";
-    // Read on each gesture, so a sheet whose detents change keeps up.
-    const readDetents = () => JSON.parse(dialog.dataset.detents || "[]");
-    let detents = readDetents();
-    const DISMISS = __DISMISS__;
-    let dragging = false;
-    let dragged = false;
-    let startY = 0;
-    let deltaY = 0;
-    let startHeight = 0;
-    let fraction = 1;
-
-    handle.addEventListener("pointerdown", (event) => {
-        dragging = true;
-        dragged = false;
-        detents = readDetents();
-        startY = event.clientY;
-        deltaY = 0;
-        startHeight = dialog.getBoundingClientRect().height;
-        fraction = parseFloat(dialog.style.getPropertyValue("--g3-sheet-detent")) || 1;
-        dialog.dataset.dragging = "true";
-        try { handle.setPointerCapture(event.pointerId); } catch (error) {}
-        event.preventDefault();
-    });
-
-    handle.addEventListener("pointermove", (event) => {
-        if (!dragging) return;
-        deltaY = event.clientY - startY;
-        if (Math.abs(deltaY) > 4) dragged = true;
-        if (detents.length > 0) {
-            dialog.style.height = Math.max(0, startHeight - deltaY) + "px";
-        } else {
-            dialog.style.setProperty("--g3-sheet-drag-y", Math.max(0, deltaY) + "px");
-        }
-        event.preventDefault();
-    });
-
-    const end = () => {
-        if (!dragging) return;
-        dragging = false;
-        if (!dragged) {
-            delete dialog.dataset.dragging;
-            dialog.style.removeProperty("height");
-            dialog.style.setProperty("--g3-sheet-drag-y", "0px");
-            return;
-        }
-        if (detents.length === 0) {
-            delete dialog.dataset.dragging;
-            dialog.style.setProperty("--g3-sheet-drag-y", "0px");
-            if (deltaY > DISMISS) dioxus.send(-1);
-            return;
-        }
-        const ceiling = startHeight / fraction;
-        const height = startHeight - deltaY;
-        const lowest = detents[0] * ceiling;
-        if (height < lowest - DISMISS) {
-            delete dialog.dataset.dragging;
-            dialog.style.removeProperty("height");
-            dioxus.send(-1);
-            return;
-        }
-        let nearest = 0;
-        detents.forEach((detent, index) => {
-            if (Math.abs(detent * ceiling - height) < Math.abs(detents[nearest] * ceiling - height)) {
-                nearest = index;
-            }
-        });
-        // Select the CSS-sized destination while retaining the temporary pixel
-        // height from the drag. Re-enable transitions, flush that starting
-        // geometry, and only then release the pixel height so the sheet settles
-        // smoothly while its visible and hit-test edges stay together.
-        dialog.style.setProperty("--g3-sheet-detent", detents[nearest]);
-        dialog.style.setProperty("--g3-sheet-drag-y", "0px");
-        delete dialog.dataset.dragging;
-        dialog.getBoundingClientRect();
-        dialog.style.removeProperty("height");
-        dioxus.send(nearest);
-    };
-    handle.addEventListener("pointerup", end);
-    handle.addEventListener("pointercancel", end);
-
-    // Keyboard and plain taps: cycle detents, or close a sheet without any.
-    handle.addEventListener("click", (event) => {
-        if (dragged) {
-            dragged = false;
-            event.preventDefault();
-            return;
-        }
-        dioxus.send(readDetents().length > 0 ? -2 : -1);
-    });
-}
-"#;
+const DRAG_SCRIPT: &str = include_str!("sheet.js");
 
 #[component]
 pub(crate) fn SheetFrame(
@@ -209,13 +112,23 @@ pub(crate) fn SheetFrame(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let id = use_element_id("sheet", None);
     let title_id = format!("{id}-title");
     let handle_id = format!("{id}-handle");
     let layer_id = format!("{id}-layer");
     let is_drawer = matches!(kind, FrameKind::Drawer { .. });
     let is_bottom = matches!(kind, FrameKind::Bottom { .. });
+    let layered = use_synced_signal(
+        is_bottom
+            || matches!(
+                kind,
+                FrameKind::Side {
+                    behavior: SideSheetBehavior::Overlay,
+                    ..
+                }
+            ),
+    );
     let has_backdrop = !is_drawer && backdrop == SheetBackdrop::Dismiss;
     // A sheet resting below its backdrop detent leaves the page usable.
     let below_backdrop = match &kind {
@@ -229,11 +142,13 @@ pub(crate) fn SheetFrame(
     };
     let modal = has_backdrop && !below_backdrop;
     let has_backdrop_signal = use_synced_signal(modal);
+    let open_prop = use_synced_signal(open);
     let is_open = open();
     // Keep the initially rendered backdrop in the markup even below its
     // activation detent; it is inert there and retires after the fade window.
     let mut backdrop_present = use_signal(|| is_open);
     use_effect(move || {
+        let open = open_prop();
         if open() && has_backdrop_signal() {
             backdrop_present.set(true);
         } else if backdrop_present() {
@@ -247,6 +162,9 @@ pub(crate) fn SheetFrame(
     });
 
     let dismiss = use_callback(move |()| {
+        if !open() {
+            return;
+        }
         let mut open = open;
         open.set(false);
         if let Some(on_dismiss) = on_dismiss {
@@ -263,6 +181,7 @@ pub(crate) fn SheetFrame(
     // animates its height again.
     let mut entered = use_signal(|| false);
     use_effect(move || {
+        let open = open_prop();
         if open() {
             ever_opened.set(true);
         } else {
@@ -271,20 +190,21 @@ pub(crate) fn SheetFrame(
         }
     });
 
-    let locked = use_memo(move || open() && has_backdrop_signal());
+    let locked = use_memo(move || open_prop()() && has_backdrop_signal());
     use_lock_body_scroll(locked.into());
-    if is_bottom {
-        use_top_layer(
-            open.into(),
-            layer_id.clone(),
-            std::time::Duration::from_millis(500),
-        );
-    }
+    let layer_open = use_memo(move || open_prop()() && layered());
+    use_top_layer(
+        layer_open.into(),
+        layer_id.clone(),
+        std::time::Duration::from_millis(500),
+    );
 
     if !is_drawer {
-        use_overlay_focus(open.into(), id.clone(), has_backdrop, dismiss);
+        use_overlay_focus(open.into(), id.clone(), modal, dismiss);
         use_open_count(open);
     }
+    let registered = use_memo(move || open_prop()() && !is_drawer);
+    use_overlay_registration(registered.into(), id.clone(), dismiss);
 
     let (draggable, detent_signal, count) = match &kind {
         FrameKind::Bottom {
@@ -296,36 +216,24 @@ pub(crate) fn SheetFrame(
         _ => (false, None, 0),
     };
     let detent_count = use_synced_signal(count);
-    {
-        let id = id.clone();
-        let handle_id = handle_id.clone();
-        use_effect(move || {
-            if !draggable || !open() {
-                return;
-            }
-            let script = DRAG_SCRIPT
-                .replace("__DIALOG__", &format!("{id:?}"))
-                .replace("__HANDLE__", &format!("{handle_id:?}"))
-                .replace("__DISMISS__", &DISMISS_DISTANCE.to_string());
-            spawn(async move {
-                let mut eval = document::eval(&script);
-                while let Ok(message) = eval.recv::<i64>().await {
-                    match (message, detent_signal) {
-                        (-1, _) => dismiss.call(()),
-                        (-2, Some(mut detent)) => {
-                            let count = detent_count.peek().max(1);
-                            let next = (*detent.peek() + 1) % count;
-                            detent.set(next);
-                        }
-                        (index, Some(mut detent)) if index >= 0 => {
-                            detent.set(index as usize);
-                        }
-                        _ => {}
-                    }
-                }
-            });
-        });
-    }
+    let script = (draggable && is_open).then(|| {
+        DRAG_SCRIPT
+            .replace("__DIALOG__", &super::overlay::js_string(&id))
+            .replace("__HANDLE__", &super::overlay::js_string(&handle_id))
+            .replace("__DISMISS__", &DISMISS_DISTANCE.to_string())
+    });
+    super::script::use_dom_script(script, move |message: i64| match (message, detent_signal) {
+        (-1, _) => dismiss.call(()),
+        (-2, Some(mut detent)) => {
+            let count = detent_count.peek().max(1);
+            let next = (*detent.peek() + 1) % count;
+            detent.set(next);
+        }
+        (index, Some(mut detent)) if index >= 0 => {
+            detent.set(index as usize);
+        }
+        _ => {}
+    });
 
     if !is_open && !ever_opened() {
         return rsx! {};
@@ -486,7 +394,7 @@ pub(crate) fn SheetFrame(
         }
     };
     rsx! {
-        if is_bottom {
+        if layered() {
             div {
                 id: layer_id,
                 class: "g3-overlay-layer",
@@ -517,11 +425,12 @@ fn width_style(width: &Option<String>) -> String {
 /// Keep [`OPEN_SHEETS`] in step with this sheet, including when it unmounts
 /// while open because its page navigated away.
 fn use_open_count(open: Signal<bool>) {
+    let open = use_synced_signal(open);
     let counted = use_hook(|| Rc::new(Cell::new(false)));
     {
         let counted = counted.clone();
         use_effect(move || {
-            let is_open = open();
+            let is_open = open()();
             if counted.get() != is_open {
                 counted.set(is_open);
                 let mut count = OPEN_SHEETS.write();

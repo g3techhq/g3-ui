@@ -224,5 +224,5 @@ window[key] = {
         released();
     },
 };
-// Native renderers close an eval's channel as soon as its script returns.
+// Keep the shared session alive until its explicit disposer runs.
 await done;

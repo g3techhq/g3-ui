@@ -99,7 +99,7 @@ fn NavigationDrawerPlaygroundDemo() -> Element {
             app: false,
             controls: rsx! {
                 crate::Checkbox { checked: open, label: "Open" }
-                crate::SegmentGroup { value: edge, aria_label: "Side",
+                crate::SegmentGroup { value: edge, label: "Side",
                     crate::SegmentButton { value: SheetEdge::Start, "Start (left)" }
                     crate::SegmentButton { value: SheetEdge::End, "End (right)" }
                 }

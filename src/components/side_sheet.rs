@@ -92,11 +92,11 @@ fn SideSheetPlaygroundDemo() -> Element {
         crate::PlaygroundDemoFrame {
             app: false,
             controls: rsx! {
-                crate::SegmentGroup { value: edge, aria_label: "Edge",
+                crate::SegmentGroup { value: edge, label: "Edge",
                     crate::SegmentButton { value: SheetEdge::Start, "Start" }
                     crate::SegmentButton { value: SheetEdge::End, "End" }
                 }
-                crate::SegmentGroup { value: behavior, aria_label: "Behavior",
+                crate::SegmentGroup { value: behavior, label: "Behavior",
                     crate::SegmentButton { value: SideSheetBehavior::Overlay, "Overlay" }
                     crate::SegmentButton { value: SideSheetBehavior::Push, "Push" }
                     crate::SegmentButton { value: SideSheetBehavior::Reveal, "Reveal" }

@@ -369,7 +369,7 @@ impl Alerts {
 pub fn use_alert() -> Alerts {
     Alerts {
         queues: use_queues(),
-        strings: crate::state::use_synced_signal(use_strings()),
+        strings: use_strings(),
     }
 }
 
@@ -509,7 +509,7 @@ fn QueuedSheet(
     queue: Signal<Vec<Entry<ActionSheetOptions, Option<usize>>>>,
 ) -> Element {
     let open = use_signal(|| true);
-    let cancel_label = use_strings().cancel;
+    let cancel_label = use_strings().read().cancel.clone();
     rsx! {
         ActionSheet {
             open,

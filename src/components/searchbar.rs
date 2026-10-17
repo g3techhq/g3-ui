@@ -49,7 +49,7 @@ pub fn Searchbar(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let value = use_controlled(value, String::new);
     let placeholder = placeholder.unwrap_or(strings.search);
     let aria_label = aria_label.unwrap_or_else(|| placeholder.clone());

@@ -536,7 +536,9 @@ body.g3-overlay-scroll-locked {
 .g3-segment-btn-ios:focus-visible,
 .g3-segment-btn-md:focus-visible {
     outline: 2px solid var(--g3-color-accent);
-    outline-offset: 2px;
+    /* The group clips painting for its sliding indicator. Keep the keyboard
+       focus ring inside the button so it is not reduced to an edge sliver. */
+    outline-offset: -2px;
 }
 
 /* Material segment - tabs with a sliding bottom indicator */
@@ -610,6 +612,11 @@ body.g3-overlay-scroll-locked {
 .g3-segment-toolbar {
     margin-inline: auto;
 }
+/* A labelled group: the field spaces the label, as for the other controls. */
+.g3-field > .g3-segment-standalone {
+    margin-top: 0;
+}
+
 .g3-header-toolbar .g3-segment-standalone {
     margin-top: 0;
     margin-inline: auto;
@@ -751,8 +758,22 @@ body.g3-overlay-scroll-locked {
     scrollbar-width: none;
 }
 
-.g3-segment-scrollable::before,
-.g3-segment-scrollable::after {
+/* Buttons keep their natural widths, so `hscroll.js` measures the selected
+   one and the indicator slides to it. The indicator is inside the scrolling
+   strip and scrolls with the buttons. */
+.g3-segment-scrollable.g3-segment-ios::before {
+    left: 0;
+    width: var(--g3-segment-indicator-width, 0px);
+    transform: translateX(var(--g3-segment-indicator-left, 0px));
+}
+
+.g3-segment-scrollable.g3-segment-md::after {
+    width: var(--g3-segment-indicator-width, 0px);
+    transform: translateX(var(--g3-segment-indicator-left, 0px));
+}
+
+.g3-segment-scrollable:not([data-indicator-placed])::before,
+.g3-segment-scrollable:not([data-indicator-placed])::after {
     display: none;
 }
 
@@ -784,11 +805,13 @@ body.g3-overlay-scroll-locked {
     width: auto;
 }
 
-.g3-segment-scrollable > .g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
+/* Before the script has placed the indicator - a server render, or no
+   script at all - the selected button marks itself. */
+.g3-segment-scrollable:not([data-indicator-placed]) > .g3-segment-btn-md:is([aria-checked="true"], [aria-selected="true"]) {
     box-shadow: inset 0 -2px 0 var(--g3-color-accent);
 }
 
-.g3-segment-scrollable > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
+.g3-segment-scrollable:not([data-indicator-placed]) > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
     background: var(--g3-color-card);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.16);
 }
@@ -4078,12 +4101,12 @@ button.g3-chip:focus-visible {
 }
 
 .g3-swipe-actions-start {
-    left: 0;
+    inset-inline-start: 0;
     justify-content: flex-start;
 }
 
 .g3-swipe-actions-end {
-    right: 0;
+    inset-inline-end: 0;
     justify-content: flex-end;
 }
 
@@ -5159,6 +5182,77 @@ button.g3-chip:focus-visible {
     --g3-nav-rail-width: 15rem;
 }
 
+/* Hover: always laid out as labelled rows, so opening and closing is the
+   rail's width alone and the rows slide out of and back into their icons.
+   Closed, each row is clipped to an icon centred where a round button would
+   sit. A short delay keeps a pointer that only crosses the rail from opening
+   it. */
+.g3-nav-rail.g3-nav-hover {
+    align-items: stretch;
+    width: var(--g3-nav-rail-width);
+    overflow-x: clip;
+    transition: width 160ms var(--g3-transition-md),
+                box-shadow 160ms var(--g3-transition-md);
+}
+
+.g3-nav-rail.g3-nav-hover:is(:hover, :has(:focus-visible)) {
+    width: 15rem;
+    box-shadow: 12px 0 32px color-mix(in srgb, var(--g3-color-shadow) 48%, transparent);
+    transition-delay: 80ms;
+}
+
+.g3-nav-rail.g3-nav-hover .g3-nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    width: auto;
+    min-width: 0;
+    min-height: 2.75rem;
+    /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
+    padding: 0 0.875rem;
+    border-radius: 0.75rem;
+    background: transparent;
+}
+
+.g3-nav-rail.g3-nav-hover .g3-nav-item[aria-current="page"] {
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+}
+
+.g3-nav-rail.g3-nav-hover .g3-nav-item-icon {
+    flex: 0 0 auto;
+}
+
+/* Overrides the collapsed rail's tooltip, including its hover rule. */
+.g3-nav-rail.g3-nav-hover .g3-nav-item .g3-nav-item-label {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: inherit;
+    font-size: 0.875rem;
+    text-align: start;
+    text-overflow: clip;
+    white-space: nowrap;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .g3-nav-rail.g3-nav-hover {
+        transition: none;
+    }
+}
+
 /* -- Back button -- */
 
 .g3-back-button {
@@ -5237,11 +5331,25 @@ button.g3-chip:focus-visible {
     display: block;
 }
 
+/* An app that does not fill the window (a device preview, an embedded app)
+   keeps its overlays: the layer takes the app's box and corners, and contains
+   the fixed scrims and sheets inside it. `layers.js` measures the box. */
+.g3-overlay-layer[popover][data-g3-confined] {
+    inset: auto;
+    top: var(--g3-layer-top, 0px);
+    left: var(--g3-layer-left, 0px);
+    width: var(--g3-layer-width, 100%);
+    height: var(--g3-layer-height, 100%);
+    border-radius: var(--g3-layer-radius, 0px);
+    overflow: hidden;
+    contain: layout paint;
+}
+
 .g3-overlay-layer:not([popover]) {
     display: contents;
 }
 
-.g3-overlay-layer > :is(.g3-popover, .g3-popover-backdrop, .g3-sheet, .g3-sheet-backdrop) {
+.g3-overlay-layer > :is(.g3-popover, .g3-popover-backdrop, .g3-sheet, .g3-sheet-backdrop, .g3-modal-overlay):not([data-state="closed"]) {
     pointer-events: auto;
 }
 
@@ -5572,6 +5680,13 @@ button.g3-chip:focus-visible {
     min-width: max(var(--g3-popover-anchor-width, 0px), 12rem);
 }
 
+/* A confined layer contains its fixed children, so the measured viewport
+   position is taken relative to the layer. */
+.g3-overlay-layer[data-g3-confined] .g3-popover[data-g3-fixed-position][data-placement] {
+    top: calc(var(--g3-popover-fixed-top, 0px) - var(--g3-layer-top, 0px));
+    left: calc(var(--g3-popover-fixed-left, 0px) - var(--g3-layer-left, 0px));
+}
+
 /* -- Action sheet -- */
 
 .g3-action-sheet .g3-sheet-content {
@@ -5690,6 +5805,11 @@ button.g3-chip:focus-visible {
 
 .g3-grid {
     --g3-gap: 0.75rem;
+    /* A nested grid owns its sizing; absent overrides must not inherit the
+       containing grid's column policy. Inline prop values still win. */
+    --g3-grid-columns-wide: initial;
+    --g3-grid-columns-medium: initial;
+    --g3-grid-columns-expanded: initial;
     display: grid;
     grid-template-columns: var(--g3-grid-columns);
     gap: var(--g3-gap);
@@ -6224,6 +6344,77 @@ button.g3-chip:focus-visible {
         }
     }
 
+    /* Hover: always laid out as labelled rows, so opening and closing is the
+       rail's width alone and the rows slide out of and back into their icons.
+       Closed, each row is clipped to an icon centred where a round button would
+       sit. A short delay keeps a pointer that only crosses the rail from opening
+       it. */
+    .g3-nav-adaptive.g3-nav-hover {
+        align-items: stretch;
+        width: var(--g3-nav-rail-width);
+        overflow-x: clip;
+        transition: width 160ms var(--g3-transition-md),
+                    box-shadow 160ms var(--g3-transition-md);
+    }
+
+    .g3-nav-adaptive.g3-nav-hover:is(:hover, :has(:focus-visible)) {
+        width: 15rem;
+        box-shadow: 12px 0 32px color-mix(in srgb, var(--g3-color-shadow) 48%, transparent);
+        transition-delay: 80ms;
+    }
+
+    .g3-nav-adaptive.g3-nav-hover .g3-nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        width: auto;
+        min-width: 0;
+        min-height: 2.75rem;
+        /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
+        padding: 0 0.875rem;
+        border-radius: 0.75rem;
+        background: transparent;
+    }
+
+    .g3-nav-adaptive.g3-nav-hover .g3-nav-item[aria-current="page"] {
+        border-radius: 0.75rem;
+        background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+    }
+
+    .g3-nav-adaptive.g3-nav-hover .g3-nav-item-icon {
+        flex: 0 0 auto;
+    }
+
+    /* Overrides the collapsed rail's tooltip, including its hover rule. */
+    .g3-nav-adaptive.g3-nav-hover .g3-nav-item .g3-nav-item-label {
+        position: static;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+        padding: 0;
+        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        box-shadow: none;
+        color: inherit;
+        font-size: 0.875rem;
+        text-align: start;
+        text-overflow: clip;
+        white-space: nowrap;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .g3-nav-adaptive.g3-nav-hover {
+            transition: none;
+        }
+    }
+
     .g3-header {
         position: relative;
         top: auto;
@@ -6302,7 +6493,7 @@ button.g3-chip:focus-visible {
     }
 
     .g3-content-scroll {
-        --g3-content-padding: clamp(1.5rem, 3vw, 2.5rem);
+        --g3-content-padding: clamp(1.5rem, 3cqi, 2.5rem);
     }
 
     .g3-content-scroll[data-padding="false"] {
@@ -6554,11 +6745,11 @@ button.g3-chip:focus-visible {
     transition: background var(--g3-transition-fast) var(--g3-transition-md);
 }
 
-.g3-calendar-day:hover:not(:disabled) {
+.g3-calendar-day:hover:not(:disabled):not([aria-disabled="true"]) {
     background: color-mix(in srgb, var(--g3-color-text) 8%, transparent);
 }
 
-.g3-calendar-day:disabled {
+.g3-calendar-day:is(:disabled, [aria-disabled="true"]) {
     opacity: 0.3;
     cursor: default;
 }
@@ -6646,6 +6837,10 @@ td[aria-selected="true"] > .g3-calendar-day {
 
 .g3-wheel-column-wide {
     flex: 1.6 1 0;
+}
+
+.g3-wheel-item[data-disabled="true"] {
+    opacity: 0.35;
 }
 
 .g3-wheel-column:focus-visible .g3-wheel-scroll {
@@ -7035,5 +7230,77 @@ td[aria-selected="true"] > .g3-calendar-day {
     .g3-tab-layout:has(> .g3-nav-adaptive) > .route-transition-page {
         grid-column: 2;
         grid-row: 1 / -1;
+    }
+}
+
+@layer g3 {
+    .g3-layout-scope {
+        container: g3-app-shell / inline-size;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .g3-adaptive-layout { min-width: 0; }
+
+    .g3-page-layout {
+        display: grid;
+        gap: 1rem;
+        align-items: start;
+        width: 100%;
+        max-width: 96rem;
+        margin-inline: auto;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .g3-page-main, .g3-page-start, .g3-page-end { min-width: 0; }
+    .g3-page-asides { display: contents; }
+    .g3-page-start:empty, .g3-page-end:empty { display: none; }
+
+    @container g3-app-shell (min-width: 48rem) {
+        .g3-page-asides {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 0;
+            grid-column: 1;
+            grid-row: 1;
+        }
+        .g3-page-asides:not(:has(.g3-page-start:not(:empty), .g3-page-end:not(:empty))) { display: none; }
+        .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)),
+        .g3-page-layout:has(> .g3-page-asides > .g3-page-end:not(:empty)) {
+            grid-template-columns: minmax(12rem, 25%) minmax(0, 1fr);
+        }
+        .g3-page-main { grid-column: -2; grid-row: 1; }
+        .g3-page-start { grid-column: 1; grid-row: 1; }
+        .g3-page-end { grid-column: 1; grid-row: 2; }
+        .g3-page-layout:not(:has(> .g3-page-asides > .g3-page-start:not(:empty))) .g3-page-end { grid-row: 1; }
+    }
+
+    @container g3-app-shell (min-width: 64rem) {
+        .g3-page-asides { display: contents; }
+        .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) {
+            grid-template-columns: minmax(12rem, 20%) minmax(0, 1fr) minmax(12rem, 20%);
+        }
+        .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) > .g3-page-main {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) .g3-page-end {
+            grid-column: 3;
+            grid-row: 1;
+        }
+    }
+}
+
+@layer g3 {
+    @container g3-app-shell (min-width: 48rem) {
+        .g3-grid {
+            grid-template-columns: var(--g3-grid-columns-medium, var(--g3-grid-columns-wide, var(--g3-grid-columns)));
+        }
+    }
+    @container g3-app-shell (min-width: 64rem) {
+        .g3-grid {
+            grid-template-columns: var(--g3-grid-columns-expanded, var(--g3-grid-columns-medium, var(--g3-grid-columns-wide, var(--g3-grid-columns))));
+        }
     }
 }

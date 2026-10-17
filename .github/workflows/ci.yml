@@ -33,3 +33,25 @@ jobs:
   quality:
     name: Quality gate
     uses: g3techhq/.github/.github/workflows/rust-quality.yml@da47dc747376edcf6ecc0cc986aec51f5084bf42 # v1.0.0
+
+  browser:
+    name: Browser regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: docker build --tag g3-ui-browser .
+      - run: docker run --detach --name g3-ui-browser --publish 8080:8080 g3-ui-browser
+      - run: npm ci --prefix playground
+      - run: npx --prefix playground playwright install --with-deps chromium
+      - run: node playground/browser-tests.cjs
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: browser-regressions
+          path: playground/target/browser-tests/
+          if-no-files-found: ignore
+      - if: always()
+        run: docker logs g3-ui-browser

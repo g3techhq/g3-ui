@@ -9,122 +9,7 @@ const ELASTIC_FACTOR: f64 = 0.42;
 /// The gesture runs in the page: it needs non-passive touch listeners to stop
 /// the page scrolling while the user pulls. It reports a completed pull with
 /// `true`.
-const DRAG_SCRIPT: &str = r#"
-const root = document.getElementById(__ROOT__);
-const label = document.getElementById(__LABEL__);
-if (root && root.dataset.g3Bound !== "true") {
-    root.dataset.g3Bound = "true";
-    const THRESHOLD = __THRESHOLD__;
-    const ELASTIC = __ELASTIC__;
-    const TEXT = { pull: __PULL__, release: __RELEASE__, refreshing: __REFRESHING__ };
-    let dragging = false;
-    let engaged = false;
-    let startX = 0;
-    let startY = 0;
-    let pull = 0;
-    const scrollParent = () => {
-        let el = root.parentElement;
-        while (el) {
-            const overflow = getComputedStyle(el).overflowY;
-            if ((overflow === "auto" || overflow === "scroll") && el.scrollHeight > el.clientHeight) {
-                return el;
-            }
-            el = el.parentElement;
-        }
-        return null;
-    };
-    const available = () => root.dataset.refreshing !== "true" && root.dataset.disabled !== "true";
-    const atTop = () => {
-        const parent = scrollParent();
-        return !parent || parent.scrollTop <= 0;
-    };
-    const setPull = (distance) => {
-        pull = distance;
-        root.style.setProperty("--g3-refresher-pull", distance + "px");
-        root.style.setProperty("--g3-refresher-progress", Math.min(distance / THRESHOLD, 1.4));
-        root.setAttribute("data-state", distance > 0 ? "pulling" : "idle");
-        if (label) label.textContent = distance >= THRESHOLD ? TEXT.release : TEXT.pull;
-    };
-    // The script edits the label outside Dioxus, so it restores it itself once
-    // the app's `refreshing` flag clears; a fast refresh may never re-render it.
-    const settle = () => {
-        if (root.dataset.refreshing === "true") {
-            if (label) label.textContent = TEXT.refreshing;
-            setTimeout(settle, 100);
-            return;
-        }
-        root.setAttribute("data-state", "idle");
-        root.style.setProperty("--g3-refresher-progress", "0");
-        if (label) label.textContent = TEXT.pull;
-    };
-    const down = (x, y) => {
-        if (!available() || !atTop()) return;
-        dragging = true;
-        engaged = false;
-        startX = x;
-        startY = y;
-    };
-    const move = (x, y, event) => {
-        if (!dragging) return;
-        const dy = y - startY;
-        // A sideways drag belongs to whatever scrolls sideways under the
-        // finger, such as a chip strip.
-        if (!engaged && Math.abs(x - startX) > Math.abs(dy)) {
-            dragging = false;
-            return;
-        }
-        if (dy <= 0) {
-            if (engaged) {
-                engaged = false;
-                setPull(0);
-            }
-            return;
-        }
-        if (!engaged) {
-            if (!atTop()) return;
-            engaged = true;
-        }
-        if (event && event.cancelable) event.preventDefault();
-        setPull(Math.min(dy > THRESHOLD ? THRESHOLD + (dy - THRESHOLD) * ELASTIC : dy, THRESHOLD * 2.5));
-    };
-    const up = () => {
-        if (!dragging) return;
-        dragging = false;
-        if (!engaged) return;
-        engaged = false;
-        if (pull >= THRESHOLD) {
-            root.style.setProperty("--g3-refresher-pull", "0px");
-            root.style.setProperty("--g3-refresher-progress", "1");
-            root.setAttribute("data-state", "refreshing");
-            if (label) label.textContent = TEXT.refreshing;
-            dioxus.send(true);
-            setTimeout(settle, 100);
-        } else {
-            setPull(0);
-        }
-    };
-    // A pull starts on the refresher but may end anywhere: moves and releases
-    // are heard on the window, so dragging past the refresher (or out of the
-    // window) still lets go instead of leaving the indicator stuck.
-    const listeners = new AbortController();
-    const alive = () => {
-        if (root.isConnected) return true;
-        listeners.abort();
-        return false;
-    };
-    const opts = { signal: listeners.signal };
-    root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" && e.button === 0) down(e.clientX, e.clientY); }, opts);
-    window.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && alive()) move(e.clientX, e.clientY, null); }, opts);
-    window.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse" && alive()) up(); }, opts);
-    window.addEventListener("pointercancel", () => { if (alive()) up(); }, opts);
-    window.addEventListener("blur", () => { if (alive()) up(); }, opts);
-    document.addEventListener("mouseleave", () => { if (alive()) up(); }, opts);
-    root.addEventListener("touchstart", (e) => down(e.touches[0].clientX, e.touches[0].clientY), { passive: true, signal: listeners.signal });
-    root.addEventListener("touchmove", (e) => move(e.touches[0].clientX, e.touches[0].clientY, e), { passive: false, signal: listeners.signal });
-    root.addEventListener("touchend", up, opts);
-    root.addEventListener("touchcancel", up, opts);
-}
-"#;
+const DRAG_SCRIPT: &str = include_str!("refresher.js");
 
 /// Pull-to-refresh around scrollable content. Like Ionic's `ion-refresher`.
 ///
@@ -177,31 +62,27 @@ pub fn Refresher(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
-    let strings = use_strings();
+    let strings = use_strings()();
     let root_id = use_element_id("refresher", None);
     let label_id = format!("{root_id}-label");
-    let threshold = threshold.unwrap_or(48.0).max(1.0);
-    {
-        let root_id = root_id.clone();
-        let label_id = label_id.clone();
-        let strings = strings.clone();
-        use_effect(move || {
-            let script = DRAG_SCRIPT
-                .replace("__ROOT__", &js_string(&root_id))
-                .replace("__LABEL__", &js_string(&label_id))
-                .replace("__THRESHOLD__", &threshold.to_string())
-                .replace("__ELASTIC__", &ELASTIC_FACTOR.to_string())
-                .replace("__PULL__", &js_string(&strings.pull_to_refresh))
-                .replace("__RELEASE__", &js_string(&strings.release_to_refresh))
-                .replace("__REFRESHING__", &js_string(&strings.refreshing));
-            spawn(async move {
-                let mut eval = document::eval(&script);
-                while let Ok(true) = eval.recv::<bool>().await {
-                    on_refresh.call(());
-                }
-            });
-        });
-    }
+    let threshold = threshold
+        .filter(|value| value.is_finite())
+        .unwrap_or(48.0)
+        .max(1.0);
+    let script = DRAG_SCRIPT
+        .replace("__ROOT__", &js_string(&root_id))
+        .replace("__LABEL__", &js_string(&label_id))
+        .replace("__THRESHOLD__", &threshold.to_string())
+        .replace("__ELASTIC__", &ELASTIC_FACTOR.to_string())
+        .replace("__PULL__", &js_string(&strings.pull_to_refresh))
+        .replace("__RELEASE__", &js_string(&strings.release_to_refresh))
+        .replace("__REFRESHING__", &js_string(&strings.refreshing));
+    let blocked = crate::state::use_synced_signal(refreshing || disabled.unwrap_or(false));
+    super::script::use_dom_script(Some(script), move |refresh: bool| {
+        if refresh && !*blocked.peek() {
+            on_refresh.call(());
+        }
+    });
     let cls = classes(["g3-refresher", mode.pick("", "g3-refresher-md")]);
     rsx! {
         div {

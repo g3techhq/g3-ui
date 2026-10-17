@@ -33,14 +33,21 @@ test:
     cargo nextest run
     cargo nextest run --features transitions
     cargo test --doc --features transitions
+    cargo test --manifest-path playground/Cargo.toml
 
 spell:
     typos
 
+script-test:
+    node --test playground/script-tests.cjs
+
+browser-test:
+    node playground/browser-tests.cjs
+
 security:
     cargo deny check
 
-pre-push: format-check check lint-strict test spell
+pre-push: format-check check lint-strict test script-test spell
 
 quality: pre-push
 

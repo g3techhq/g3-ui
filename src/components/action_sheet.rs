@@ -82,7 +82,8 @@ pub fn ActionSheet(
     /// Extra classes for the sheet.
     class: Option<String>,
 ) -> Element {
-    let cancel_label = cancel_label.unwrap_or_else(|| use_strings().cancel);
+    let strings = use_strings();
+    let cancel_label = cancel_label.unwrap_or_else(|| strings.read().cancel.clone());
     let finish = move |choice: Option<usize>| {
         let mut open = open;
         open.set(false);

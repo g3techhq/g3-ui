@@ -44,7 +44,7 @@ impl SwipeBehavior {
 pub struct SwipeState {
     /// Which edge is being uncovered.
     pub side: SwipeSide,
-    /// Horizontal displacement of the row, in pixels.
+    /// Logical displacement in pixels: positive uncovers Start, negative End.
     pub offset: f64,
     /// `offset` as a fraction of the threshold distance; `1.0` is fully open.
     pub ratio: f64,
@@ -186,7 +186,8 @@ pub fn SwipeItem(
     /// Let a mouse drag swipe too. Defaults to `true`; turn it off to keep
     /// the gesture for touch while desktop users use the actions button.
     mouse_swipe: Option<bool>,
-    /// Called as the row moves.
+    /// Called as the row moves. On Android this crosses the WebView bridge
+    /// for every move; prefer `on_activate` or `on_dismiss` for normal actions.
     on_swipe: Option<EventHandler<SwipeState>>,
     /// Called when a [`SwipeBehavior::Activate`] swipe is released past its
     /// threshold. [`SwipeState::side`] says which edge.
@@ -200,7 +201,7 @@ pub fn SwipeItem(
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let strings = use_strings();
+    let strings = use_strings()();
     let row_id = use_element_id("swipe", None);
     let in_list = use_hook(|| try_consume_context::<InList>().is_some());
     use_context_provider(|| InSwipeRow);
@@ -274,8 +275,8 @@ pub fn SwipeItem(
                     return;
                 }
                 match event.key() {
-                    Key::ArrowLeft => command.call("end"),
-                    Key::ArrowRight => command.call("start"),
+                    Key::ArrowLeft => command.call("left"),
+                    Key::ArrowRight => command.call("right"),
                     Key::Escape if open => {
                         event.stop_propagation();
                         command.call("close");
