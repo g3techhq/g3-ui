@@ -128,6 +128,8 @@ pub fn FabButton(
     to: Destination,
     /// Plain link destination, used when `to` is not set.
     href: Option<String>,
+    /// Open the link in a new tab.
+    new_tab: Option<bool>,
     /// Called when pressed.
     onclick: Option<EventHandler<MouseEvent>>,
     /// Platform look. Defaults to the ambient mode.
@@ -161,7 +163,7 @@ pub fn FabButton(
     rsx! {
         Pressable {
             class: merge_classes(cls, class.as_deref()),
-            target: Target::from_props(href, to, false),
+            target: Target::from_props(href, to, new_tab.unwrap_or(false)),
             disabled: disabled.unwrap_or(false),
             onclick,
             attributes,

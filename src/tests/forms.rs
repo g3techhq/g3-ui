@@ -495,3 +495,62 @@ fn aria_references_name_elements_in_the_markup() {
         }
     }
 }
+
+#[test]
+fn form_controls_report_errors_and_requirements() {
+    fn app() -> Element {
+        let on = use_signal(|| true);
+        rsx! {
+            Toggle { label: "Alerts", checked: on, error: "Pick one", required: true, name: "alerts" }
+            Checkbox { label: "Terms", checked: on, required: true, name: "terms" }
+            Checkbox { label: "Off", name: "off" }
+            RadioGroup::<u8> { id: "tee", label: "Tee", error: "Choose a tee", required: true,
+                Radio { value: 1, label: "Blue" }
+            }
+            Range { label: "Volume", error: "Too loud" }
+            Stepper { label: "Players", error: "At most four" }
+            Rating { label: "Course", error: "Rate it" }
+        }
+    }
+    let html = render(app);
+    let toggle = element_with_class(&html, "g3-toggle");
+    assert!(toggle.contains("aria-invalid=\"true\""));
+    assert!(toggle.contains("aria-required=\"true\""));
+    assert!(html.contains(">Pick one</span>"));
+    // Checked controls submit their name; an unchecked one submits nothing.
+    assert!(html.contains("type=\"hidden\" name=\"alerts\" value=\"on\""));
+    assert!(html.contains("type=\"hidden\" name=\"terms\" value=\"on\""));
+    assert!(!html.contains("name=\"off\""));
+    let group = element_with_id(&html, "tee");
+    assert!(group.contains("aria-describedby=\"tee-error\""));
+    assert!(group.contains("aria-required=\"true\""));
+    for text in ["Choose a tee", "Too loud", "At most four", "Rate it"] {
+        assert!(html.contains(&format!(">{text}</p>")), "{text} is shown");
+    }
+    assert_eq!(html.matches("aria-invalid=\"true\"").count(), 5);
+}
+
+#[test]
+fn icon_only_controls_can_be_named_and_links_can_open_new_tabs() {
+    fn app() -> Element {
+        let tab = use_signal(|| 1_u8);
+        rsx! {
+            Tabs { value: tab,
+                TabList { aria_label: "Views",
+                    Tab { value: 1_u8, aria_label: "Grid view", "▦" }
+                }
+                TabPanel { value: 1_u8, "Grid" }
+            }
+            Chip { aria_label: "Remove filter", onclick: |_| {}, "×" }
+            Searchbar { id: "course-search" }
+            Card { title: "Rules", href: "https://www.usga.org", new_tab: true }
+            NavItem { label: "Docs", href: "https://docs.rs", new_tab: true }
+            FabButton { aria_label: "Help", href: "https://example.com", new_tab: true, "?" }
+        }
+    }
+    let html = render(app);
+    assert!(html.contains("aria-label=\"Grid view\""));
+    assert!(html.contains("aria-label=\"Remove filter\""));
+    assert!(html.contains("id=\"course-search\""));
+    assert_eq!(html.matches("target=\"_blank\"").count(), 3);
+}

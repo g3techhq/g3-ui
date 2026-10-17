@@ -1,6 +1,6 @@
 //! A row of stars for giving or showing a rating.
 use super::color::Color;
-use super::field::{FieldShell, described_by};
+use super::field::{FieldShell, described_by, is_invalid};
 use super::gesture::{GestureScript, use_gesture};
 use crate::state::{use_controlled, use_element_id};
 use crate::theme::{Strings, use_strings};
@@ -81,6 +81,8 @@ pub fn Rating(
     aria_label: Option<String>,
     /// Help text below.
     helper: Option<String>,
+    /// Error text below. Marks the control invalid when not empty.
+    error: Option<String>,
     /// Width of one star, in pixels. Defaults to `24`. The stars shrink
     /// below it when the row would not otherwise fit, as ten stars on a
     /// phone may not.
@@ -160,7 +162,8 @@ pub fn Rating(
         (Some(name), _) | (None, Some(name)) => format!("{name}: {}", spoken(&strings, shown, max)),
         (None, None) => spoken(&strings, shown, max),
     };
-    let describedby = described_by(&id, &helper, &None);
+    let describedby = described_by(&id, &helper, &error);
+    let invalid = is_invalid(&error);
     let spoken_value = spoken(&strings, shown, max);
     let px = size.to_string();
 
@@ -200,7 +203,7 @@ pub fn Rating(
             label,
             required: false,
             helper,
-            error: None,
+            error,
             class,
             if readonly {
                 // A display is a picture of a number, not a control.
@@ -232,6 +235,7 @@ pub fn Rating(
                     aria_valuenow: "{shown}",
                     aria_valuetext: spoken_value,
                     aria_disabled: disabled.then_some("true"),
+                    aria_invalid: invalid.then_some("true"),
                     onkeydown: move |event: KeyboardEvent| {
                         if !interactive {
                             return;

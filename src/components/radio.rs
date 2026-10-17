@@ -1,6 +1,6 @@
 //! Radio groups.
 use super::checkbox::{ControlLabelPlacement, ControlText, control_classes};
-use super::field::described_by;
+use super::field::{described_by, is_invalid};
 use crate::state::{provide_live_context, use_controlled, use_element_id, use_live_context};
 use crate::theme::{ComponentMode, merge_classes, use_component_mode};
 use dioxus::prelude::*;
@@ -64,6 +64,10 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
     aria_label: Option<String>,
     /// Help text under the group.
     helper: Option<String>,
+    /// Error text under the group. Marks it invalid when not empty.
+    error: Option<String>,
+    /// Mark the group required.
+    required: Option<bool>,
     /// The inputs' shared `name`. Generated when not given.
     name: Option<String>,
     /// Disable every radio.
@@ -75,11 +79,13 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
     label_placement: Option<ControlLabelPlacement>,
     /// Called with the new selection.
     onchange: Option<EventHandler<Option<T>>>,
+    /// Element id of the group. Generated when not given.
+    id: Option<String>,
     /// Extra classes for the group.
     class: Option<String>,
     children: Element,
 ) -> Element {
-    let id = use_element_id("radio-group", None);
+    let id = use_element_id("radio-group", id);
     let value = use_controlled(value, || None);
     let name = use_element_id("radio", name);
     let name = crate::state::use_synced_signal(name);
@@ -97,7 +103,8 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
     let label_id = format!("{id}-label");
     let group_name = if label.is_none() { aria_label } else { None };
     let labelledby = label.is_some().then(|| label_id.clone());
-    let group_describedby = described_by(&id, &helper, &None);
+    let group_describedby = described_by(&id, &helper, &error);
+    let invalid = is_invalid(&error);
     rsx! {
         div {
             id: id.clone(),
@@ -107,12 +114,17 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
             aria_labelledby: labelledby,
             aria_describedby: group_describedby,
             aria_disabled: disabled().then_some("true"),
+            aria_invalid: invalid.then_some("true"),
+            aria_required: required.unwrap_or(false).then_some("true"),
             if let Some(label) = label {
                 div { id: label_id, class: "g3-radio-group-label", "{label}" }
             }
             {children}
             if let Some(helper) = helper {
                 p { id: format!("{id}-helper"), class: "g3-field-helper", "{helper}" }
+            }
+            if let Some(error) = error.filter(|text| !text.is_empty()) {
+                p { id: format!("{id}-error"), class: "g3-field-error", aria_live: "polite", "{error}" }
             }
         }
     }

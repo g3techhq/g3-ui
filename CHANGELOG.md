@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Form controls report the same states: `Toggle`, `RadioGroup`, `Range`,
+  `Stepper` and `Rating` take `error`; `Toggle`, `Checkbox` and `RadioGroup`
+  take `required` (`aria-required`); `RadioGroup` takes an `id`. `Toggle`
+  and `Checkbox` take `name`: a checked one submits `name=on` with its form,
+  so a Dioxus `onsubmit` sees it in the form values.
+- `Tab`, `MenuItem` and pressable `Chip`s take `aria_label` for icon-only
+  content; `Searchbar` takes an `id`; `Card`, `MenuItem`, `NavItem` and
+  `FabButton` take `new_tab` like `Button` and `Item`.
 - **Breaking:** `ReorderList`'s `onreorder: (usize, usize)` is now
   `on_reorder: ReorderEvent`, following the rule that a component's own
   events are `on_*` and carry a named struct. `ReorderEvent::apply` makes the

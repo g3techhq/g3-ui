@@ -77,6 +77,12 @@ pub fn Checkbox(
     helper: Option<String>,
     /// Error text under the label. Marks the checkbox invalid when not empty.
     error: Option<String>,
+    /// Mark the control required.
+    required: Option<bool>,
+    /// Form field name. When set, a checked control submits `name=on` with
+    /// its form, as a native checkbox does, so a Dioxus `onsubmit` sees it
+    /// in the form values.
+    name: Option<String>,
     /// Disable the checkbox.
     disabled: Option<bool>,
     /// Label position. Defaults to [`ControlLabelPlacement::Start`].
@@ -119,6 +125,7 @@ pub fn Checkbox(
             aria_label,
             aria_describedby: describedby,
             aria_invalid: invalid.then_some("true"),
+            aria_required: required.unwrap_or(false).then_some("true"),
             disabled,
             onclick: move |_| {
                 let next = !checked();
@@ -133,6 +140,9 @@ pub fn Checkbox(
                 }
             }
             ControlText { id: id.clone(), label, helper, error }
+        }
+        if let Some(name) = name.filter(|_| checked()) {
+            input { r#type: "hidden", name, value: "on" }
         }
     }
 }
