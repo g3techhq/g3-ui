@@ -91,6 +91,8 @@ pub fn Checkbox(
     onchange: Option<EventHandler<bool>>,
     /// Element id. Generated when not given.
     id: Option<String>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the row.
@@ -121,6 +123,7 @@ pub fn Checkbox(
             class: merge_classes(cls, class.as_deref()),
             r#type: "button",
             role: "checkbox",
+            "data-color": color.map(crate::Color::as_str),
             aria_checked,
             aria_label,
             aria_describedby: describedby,
@@ -171,6 +174,7 @@ pub(crate) fn ControlText(
 #[cfg(feature = "playground")]
 #[component]
 fn CheckboxPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let checked = use_signal(|| true);
     let disabled = use_signal(|| false);
     let indeterminate = use_signal(|| false);
@@ -189,6 +193,7 @@ fn CheckboxPlaygroundDemo() -> Element {
                         crate::SelectOption::new(ControlLabelPlacement::Stacked, "Stacked"),
                     ],
                 }
+                crate::components::color::ColorSelect { value: color }
                 Checkbox { checked: indeterminate, label: "Indeterminate" }
                 Checkbox { checked: disabled, label: "Disabled" }
                 Checkbox { checked: invalid, label: "Invalid" }
@@ -202,8 +207,9 @@ fn CheckboxPlaygroundDemo() -> Element {
                     indeterminate: indeterminate(),
                     disabled: disabled(),
                     label_placement: placement(),
+                    color: color(),
                 }
-                Checkbox { aria_label: "Select row" }
+                Checkbox { aria_label: "Select row", color: color() }
             }
         }
     }

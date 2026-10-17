@@ -545,3 +545,73 @@ fn a_reorder_handle_is_a_named_button_with_a_live_region_beside_the_list() {
     assert_eq!(html.matches("g3-reorder-item").count(), 2);
     assert!(html.contains("data-position=\"end\""));
 }
+
+#[test]
+fn controls_take_a_color_role() {
+    fn app() -> Element {
+        let on = use_signal(|| true);
+        let pick = use_signal(|| 1_u8);
+        rsx! {
+            Chip { color: Color::Success, "Paid" }
+            Toggle { aria_label: "On", checked: on, color: Color::Danger }
+            Checkbox { aria_label: "Done", checked: on, color: Color::Success }
+            RadioGroup::<u8> { aria_label: "Tee",
+                Radio { value: 1_u8, label: "Blue", color: Color::Warning }
+            }
+            Range { aria_label: "Volume", color: Color::Neutral }
+            Progress { value: 40.0, color: Color::Warning }
+            Spinner { color: Color::Danger }
+            SegmentGroup { value: pick, color: Color::Success,
+                SegmentButton { value: 1_u8, "One" }
+            }
+            FabButton { aria_label: "Add", color: Color::Danger, "+" }
+            Card { title: "Alert", color: Color::Danger }
+            Header { title: "Inbox", color: Color::Accent }
+        }
+    }
+    let html = render(app);
+    for (class, color) in [
+        ("g3-chip", "success"),
+        ("g3-toggle", "danger"),
+        ("g3-checkbox", "success"),
+        ("g3-radio", "warning"),
+        ("g3-range", "neutral"),
+        ("g3-progress", "warning"),
+        ("g3-spinner-wrapper", "danger"),
+        ("g3-fab", "danger"),
+        ("g3-card", "danger"),
+        ("g3-header", "accent"),
+    ] {
+        assert!(
+            element_with_class(&html, class).contains(&format!("data-color=\"{color}\"")),
+            "{class} carries its color"
+        );
+    }
+    assert!(html.contains("role=\"radiogroup\" data-color=\"success\""));
+}
+
+#[test]
+fn badges_progress_spinners_and_ranges_follow_the_mode() {
+    fn app() -> Element {
+        rsx! {
+            Badge { mode: ComponentMode::Md, "3" }
+            Badge { mode: ComponentMode::Ios, "4" }
+            Progress { value: 25.0, mode: ComponentMode::Md }
+            Spinner { mode: ComponentMode::Ios }
+            Spinner { mode: ComponentMode::Md }
+            Range { aria_label: "Volume", mode: ComponentMode::Ios, min: 0.0, max: 200.0,
+                value: use_signal(|| 50.0) }
+        }
+    }
+    let html = render(app);
+    assert!(html.contains("g3-badge g3-badge-md"));
+    assert!(html.contains("g3-badge g3-badge-ios"));
+    assert!(element_with_class(&html, "g3-progress").contains("g3-progress-md"));
+    // iOS draws Ionic's eight fading lines; Material keeps the ring.
+    assert!(element_with_class(&html, "g3-spinner-lines").contains("viewBox=\"0 0 64 64\""));
+    assert_eq!(html.matches("<line").count(), 8);
+    assert!(html.contains("g3-spinner-ring"));
+    let range = element_with_class(&html, "g3-range");
+    assert!(range.contains("g3-range-ios"));
+    assert!(range.contains("--g3-range-fill: 25%"));
+}

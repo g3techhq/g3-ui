@@ -145,6 +145,8 @@ pub fn Radio<T: Clone + PartialEq + 'static>(
     disabled: Option<bool>,
     /// Label position. Defaults to the group's.
     label_placement: Option<ControlLabelPlacement>,
+    /// Color role. Defaults to [`Color::Accent`](crate::Color::Accent).
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the row.
@@ -182,6 +184,7 @@ pub fn Radio<T: Clone + PartialEq + 'static>(
     rsx! {
         label {
             class: merge_classes(cls, class.as_deref()),
+            "data-color": color.map(crate::Color::as_str),
             // A native radio cannot be unchecked by clicking it, so clearing
             // an allow-empty selection happens on the press, before the click.
             onclick: move |event| {
@@ -218,6 +221,7 @@ pub fn Radio<T: Clone + PartialEq + 'static>(
 #[cfg(feature = "playground")]
 #[component]
 fn RadioPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
     let format = use_signal(|| Some("stroke"));
     let allow_empty = use_signal(|| false);
     let disabled = use_signal(|| false);
@@ -230,6 +234,7 @@ fn RadioPlaygroundDemo() -> Element {
                     crate::SegmentButton { value: ControlLabelPlacement::End, "End" }
                     crate::SegmentButton { value: ControlLabelPlacement::Stacked, "Stacked" }
                 }
+                crate::components::color::ColorSelect { value: color }
                 crate::Checkbox { checked: allow_empty, label: "Allow empty" }
                 crate::Checkbox { checked: disabled, label: "Disabled" }
             },
@@ -240,9 +245,9 @@ fn RadioPlaygroundDemo() -> Element {
                 allow_empty: allow_empty(),
                 disabled: disabled(),
                 label_placement: placement(),
-                Radio { value: "stroke", label: "Stroke play" }
-                Radio { value: "match", label: "Match play", helper: "Hole by hole." }
-                Radio { value: "scramble", label: "Scramble" }
+                Radio { value: "stroke", label: "Stroke play", color: color() }
+                Radio { value: "match", label: "Match play", helper: "Hole by hole.", color: color() }
+                Radio { value: "scramble", label: "Scramble", color: color() }
             }
         }
     }

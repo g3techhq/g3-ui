@@ -86,6 +86,10 @@ pub fn Card(
     disabled: Option<bool>,
     /// Accessible name of a tappable card with no title.
     aria_label: Option<String>,
+    /// Fill with a color role, like Ionic's `color`: the card takes the
+    /// color and its content the matching contrast. Unset keeps the theme
+    /// surface.
+    color: Option<crate::Color>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the card.
@@ -148,6 +152,7 @@ pub fn Card(
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
+            "data-color": color.map(crate::Color::as_str),
             "data-padding": padding.unwrap_or(true).to_string(),
             aria_disabled: (interactive && disabled).then_some("true"),
             if untitled_action {
@@ -188,6 +193,8 @@ pub fn Card(
 #[cfg(feature = "playground")]
 #[component]
 fn CardPlaygroundDemo() -> Element {
+    let color = use_signal(|| crate::Color::Accent);
+    let filled = use_signal(|| false);
     let title = use_signal(|| "Saturday four-ball".to_string());
     let variant = use_signal(|| CardVariant::Raised);
     let mut selected = use_signal(|| false);
@@ -205,8 +212,13 @@ fn CardPlaygroundDemo() -> Element {
                 }
                 crate::Checkbox { checked: interactive, label: "Selectable" }
                 crate::Checkbox { checked: leading, label: "Leading avatar" }
+                crate::Checkbox { checked: filled, label: "Color fill" }
+                if filled() {
+                    crate::components::color::ColorSelect { value: color }
+                }
             },
             Card {
+                color: filled().then_some(color()),
                 title: title(),
                 subtitle: "Tee time 8:10",
                 variant: variant(),
