@@ -44,6 +44,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   left-to-right.
 - Off-step wheel times commit the displayed rounded value. An app that needs
   arbitrary minutes uses a one-minute step or the dialog style.
+- The `transitions` feature requires g3-route-transitions 0.5, whose region
+  classes end in `-region` (`.route-transition-page-region`,
+  `-segment-region`, `-persistent-region`). Migration: require
+  `g3-route-transitions = "0.5"` and follow its "Migrating from 0.4" table;
+  `RouteTransitionPage` is now `RouteTransitionPageRegion`.
 
 ### Added
 

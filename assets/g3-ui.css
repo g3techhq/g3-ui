@@ -1998,13 +1998,13 @@ button.g3-chip:focus-visible {
 /* Declarative overlays are allowed anywhere in component composition. Keep
    their fixed surface from being clipped when the trigger lives inside a
    scrolling content region, card, sticky table cell, or transitioning page. */
-.route-transition-page:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop),
-.route-transition-segment:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
+.route-transition-page-region:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop),
+.route-transition-segment-region:has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
     z-index: var(--g3-z-sheet-backdrop);
 }
 
-.route-transition-page:has(.g3-modal-overlay[data-state="open"]),
-.route-transition-segment:has(.g3-modal-overlay[data-state="open"]) {
+.route-transition-page-region:has(.g3-modal-overlay[data-state="open"]),
+.route-transition-segment-region:has(.g3-modal-overlay[data-state="open"]) {
     z-index: var(--g3-z-modal);
 }
 
@@ -7505,22 +7505,22 @@ td[aria-selected="true"] > .g3-calendar-day {
     }
 }
 
-/* A page region (`RouteTransitionPage`) wrapping a tab layout's header and
+/* A page region (`RouteTransitionPageRegion`) wrapping a tab layout's header and
    content takes their place: it fills the space beside the navigation rather
    than the viewport height its own stylesheet gives a standalone page. */
-.g3-tab-layout > .route-transition-page {
+.g3-tab-layout > .route-transition-page-region {
     flex: 1 1 auto;
     height: auto;
     min-height: 0;
 }
 
-.g3-tab-layout:has(> .g3-nav-rail) > .route-transition-page {
+.g3-tab-layout:has(> .g3-nav-rail) > .route-transition-page-region {
     grid-column: 2;
     grid-row: 1 / -1;
 }
 
 @container g3-app-shell (min-width: 48rem) {
-    .g3-tab-layout:has(> .g3-nav-adaptive) > .route-transition-page {
+    .g3-tab-layout:has(> .g3-nav-adaptive) > .route-transition-page-region {
         grid-column: 2;
         grid-row: 1 / -1;
     }

@@ -3,7 +3,7 @@ use crate::components::{Refresher, Spinner};
 use crate::theme::{merge_classes, use_strings};
 use dioxus::prelude::*;
 #[cfg(feature = "transitions")]
-use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_CLASS;
+use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_REGION_CLASS;
 
 /// How wide [`Content`] lets its children grow.
 ///
@@ -89,7 +89,10 @@ pub fn Content(
     let strings = use_strings()();
     let padding = padding.unwrap_or(true);
     #[cfg(feature = "transitions")]
-    let scroll_cls = merge_classes("g3-content-scroll", Some(ROUTE_TRANSITION_SEGMENT_CLASS));
+    let scroll_cls = merge_classes(
+        "g3-content-scroll",
+        Some(ROUTE_TRANSITION_SEGMENT_REGION_CLASS),
+    );
     #[cfg(not(feature = "transitions"))]
     let scroll_cls = "g3-content-scroll";
     let load_error = strings.load_error;
