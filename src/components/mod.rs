@@ -91,8 +91,8 @@ pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabS
 #[cfg(test)]
 pub(crate) use field::within_typing_limits as field_limits;
 pub use field::{Input, InputType, TextArea};
+pub use header::Header;
 pub(crate) use header::HeaderToolbarContext;
-pub use header::{Header, ToolbarPlacement};
 pub use infinite_scroll::InfiniteScroll;
 pub use info_button::InfoButton;
 pub use layout::{Grid, GridColumns, Space, Stack, StackAlign, StackJustify};

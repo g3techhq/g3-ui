@@ -56,10 +56,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `SideSheet`, like Ionic's `ion-page`: it stacks a `Header` over a `Content`
   that scrolls in the rest of the height. The drawer and side sheet docs use
   it for the page element they narrow or move.
-- `toolbar_placement` on `Header`. `ToolbarPlacement::Auto`, the default,
-  moves the toolbar into the title row on a header `64rem` wide, as before;
-  `ToolbarPlacement::Below` keeps it in its own row at every width, for a
-  toolbar too wide for the middle of one row.
 - `wrap` on `Table`, for cells of prose such as descriptions: they wrap and
   sit at the start and top of the cell instead of one centred line.
 - `color` on `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`,
@@ -167,8 +163,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A `SegmentButton` label too long for its button ends in an ellipsis. The
   label now sits in its own `g3-segment-btn-label` box; on the flex button
   `text-overflow` did nothing, and the text was clipped at both ends.
-- A `Grid` or `Stack` in a header toolbar spans the toolbar, as a single
-  segment group does, instead of shrinking to its content in the middle.
 - A `Header` with no title renders no `h1`. Its title column was an empty
   heading, which a screen reader announced as a blank page title; the column
   stays, as a plain element, so the slots keep their places.
@@ -219,8 +213,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Playground
 
 - The playground is built from the library it shows: its shell is
-  `AppWrapper`'s layout with a `Page` and `Content`, the header passes
-  `ToolbarPlacement::Below`, and its menu, links, search, drawer heading,
+  `AppWrapper`'s layout with a `Page` and `Content`, its header lays itself
+  out, with the viewport picker beside the theme, and its menu, links,
+  search, drawer heading,
   demo controls, theme editor, landing cards and props tables are g3-ui
   components. About half of its stylesheet, which restyled or rebuilt them,
   is gone.

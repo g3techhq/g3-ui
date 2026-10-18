@@ -15,27 +15,13 @@ fn ToolbarContextProvider(children: Element) -> Element {
     }
 }
 
-/// Where a [`Header`]'s toolbar goes on a wide header.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
-pub enum ToolbarPlacement {
-    /// In its own row, moving into the title row once the header is `64rem`
-    /// wide. Suits a toolbar of a few segments or a search field.
-    #[default]
-    Auto,
-    /// Always in its own row below the title, as in Ionic. For a toolbar too
-    /// wide for the middle of a single row, such as several segment groups.
-    Below,
-}
-
 /// The top bar of a page: a title between `start` and `end` slots, with an
 /// optional toolbar row below. Like Ionic's `ion-header` with an
 /// `ion-toolbar`.
 ///
 /// Where the header itself is `64rem` or wider, the toolbar moves into the
-/// title row, centred between the slots and at most `30rem` wide. It measures
-/// its own width, not the shell's, so a navigation rail beside it or a narrow
-/// sheet keeps the two rows. A toolbar too wide for that middle column takes
-/// [`ToolbarPlacement::Below`] to keep its own row at every width.
+/// title row. It measures its own width, not the shell's, so a navigation rail
+/// beside it or a narrow sheet keeps the two rows.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -75,9 +61,6 @@ pub fn Header(
     /// A second row, usually a [`SegmentGroup`](crate::SegmentGroup) or
     /// [`Searchbar`](crate::Searchbar).
     toolbar: Option<Element>,
-    /// Where the toolbar goes on a wide header. Defaults to
-    /// [`ToolbarPlacement::Auto`], which moves it into the title row.
-    toolbar_placement: Option<ToolbarPlacement>,
     /// Fill with a color role, like Ionic's `color` on a toolbar: the bar
     /// takes the color and its content the matching contrast. Unset keeps the
     /// theme surface.
@@ -103,7 +86,6 @@ pub fn Header(
         header {
             class: merge_classes(header_cls, class.as_deref()),
             "data-color": color.map(crate::Color::as_str),
-            "data-toolbar-placement": (toolbar_placement == Some(ToolbarPlacement::Below)).then_some("below"),
             // Lays the row and toolbar out as one row on a wide header. The
             // header is the size container, so the grid sits one level in.
             div { class: "g3-header-bar",
@@ -143,7 +125,6 @@ fn HeaderPlaygroundDemo() -> Element {
     let tab = use_signal(|| 0_usize);
     let title = use_signal(|| "Pending Game".to_string());
     let toolbar = use_signal(|| true);
-    let toolbar_below = use_signal(|| false);
     let show_start = use_signal(|| true);
     let show_end = use_signal(|| true);
     let mode = crate::use_component_mode(None);
@@ -159,9 +140,6 @@ fn HeaderPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: show_start, label: "Back button" }
                 crate::Checkbox { checked: show_end, label: "End action" }
                 crate::Checkbox { checked: toolbar, label: "Toolbar" }
-                if toolbar() {
-                    crate::Checkbox { checked: toolbar_below, label: "Toolbar below at every width" }
-                }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 Header {
@@ -173,7 +151,6 @@ fn HeaderPlaygroundDemo() -> Element {
                     end: show_end().then(|| rsx! {
                         crate::Button { fill: crate::ButtonFill::Clear, "Create" }
                     }),
-                    toolbar_placement: if toolbar_below() { ToolbarPlacement::Below } else { ToolbarPlacement::Auto },
                     toolbar: toolbar().then(|| rsx! {
                         crate::SegmentGroup { value: tab,
                             crate::SegmentButton { value: 0_usize, "Players" }

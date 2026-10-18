@@ -3040,12 +3040,6 @@ button.g3-chip:focus-visible {
     container: g3-header / inline-size;
 }
 
-/* A toolbar placed below keeps its own row at every width: with no
-   `g3-header` container to measure, the single-row query never matches. */
-.g3-header-with-toolbar[data-toolbar-placement="below"] {
-    container: none;
-}
-
 /* Start slot and title, grouped only so a wide header can give them one column. */
 .g3-header-lead {
     display: contents;
@@ -3112,12 +3106,6 @@ button.g3-chip:focus-visible {
     width: 100%;
     padding: 0 0.5rem 0.5rem;
     box-sizing: border-box;
-}
-/* A Grid or Stack holding several controls spans the toolbar, as a single
-   segment group does, rather than shrinking to its content in the middle. */
-.g3-header-toolbar > :where(.g3-grid, .g3-stack) {
-    flex: 1 1 auto;
-    min-width: 0;
 }
 .g3-header-ios .g3-header-toolbar {
     min-height: 36px;
@@ -6911,11 +6899,14 @@ button.g3-chip:focus-visible {
    treatment, which also gives iOS segmented controls a deliberate bottom inset.
    `:where()` keeps each selector's weight what it was before the bar existed. */
 @container g3-header (min-width: 64rem) {
-    /* Equal side columns keep the toolbar centred in the header whatever the
-       start and end hold: a wide search box at the end must not push it over. */
+    /* Equal side columns keep the toolbar centred while the end slot fits its
+       half. One that does not (search, links, pickers) keeps its natural
+       width and the title's side gives way, rather than the controls being
+       crushed to their minimum; the title side does not grow the same way,
+       so a long title truncates. The header is 64rem here, so there is room. */
     .g3-header-with-toolbar > .g3-header-bar {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(16rem, 30rem) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(16rem, 30rem) minmax(max-content, 1fr);
         grid-template-rows: minmax(4rem, auto);
         align-items: center;
         column-gap: 0.75rem;
