@@ -6920,12 +6920,14 @@ button.g3-chip:focus-visible {
 @container g3-header (min-width: 64rem) {
     /* Equal side columns keep the toolbar centred while the end slot fits its
        half. One that does not (search, links, pickers) keeps its natural
-       width and the title's side gives way, rather than the controls being
-       crushed to their minimum; the title side does not grow the same way,
-       so a long title truncates. The header is 64rem here, so there is room. */
+       width rather than being crushed to its minimum. The title's side keeps
+       12rem, enough to read a title by, so when room is short the toolbar
+       narrows first, down to 16rem; past that a long title truncates. Without
+       that floor, a header just over 64rem gave the toolbar its full 30rem and
+       left the title two letters. */
     .g3-header-with-toolbar > .g3-header-bar {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(16rem, 30rem) minmax(max-content, 1fr);
+        grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 30rem) minmax(max-content, 1fr);
         grid-template-rows: minmax(4rem, auto);
         align-items: center;
         column-gap: 0.75rem;
