@@ -340,3 +340,20 @@ fn a_header_goes_single_row_by_its_own_width() {
 fn a_material_searchbar_has_its_own_tone() {
     assert!(rule_body(".g3-searchbar-md .g3-input").contains("background: color-mix("));
 }
+
+#[test]
+fn page_layout_asides_are_wide_enough_for_a_list_row() {
+    // 12rem clipped even short names in an aside's rows.
+    assert!(STYLESHEET.contains("grid-template-columns: minmax(18rem, 25%) minmax(0, 1fr);"));
+    assert!(
+        STYLESHEET.contains(
+            "grid-template-columns: minmax(18rem, 20%) minmax(0, 1fr) minmax(18rem, 20%);"
+        )
+    );
+    assert!(!STYLESHEET.contains("minmax(12rem"));
+    // Two 18rem asides beside the main column only once it keeps ~42rem.
+    let split = STYLESHEET
+        .find("@container g3-app-shell (min-width: 80rem) {\n        .g3-page-asides { display: contents; }")
+        .expect("asides split at 80rem");
+    assert!(split > STYLESHEET.find(".g3-page-layout {").expect("page layout"));
+}
