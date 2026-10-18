@@ -151,6 +151,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The Material `Searchbar` sits one tonal step above its surface. It had
   the surface's own color with only a shadow for an edge, so in a header on
   a dark theme the field could not be told apart from the bar.
+- A `Header` with no title renders no `h1`. Its title column was an empty
+  heading, which a screen reader announced as a blank page title; the column
+  stays, as a plain element, so the slots keep their places.
 - Taps on buttons inside swipeable `Tabs` reach the button: the tab swipe is
   recognized in the web view and takes pointer capture only once the touch
   moves sideways. Leaving panels are inert, a replaced selection signal is

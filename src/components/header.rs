@@ -46,7 +46,9 @@ fn ToolbarContextProvider(children: Element) -> Element {
 /// ```
 #[component]
 pub fn Header(
-    /// The page title, rendered as the page's `h1`.
+    /// The page title, rendered as the page's `h1`. With no title, title
+    /// content or title end, the title column stays for layout but is not a
+    /// heading: an empty `h1` would announce a blank page title.
     title: Option<String>,
     /// Custom title content, used instead of `title`.
     title_content: Option<Element>,
@@ -69,6 +71,8 @@ pub fn Header(
     class: Option<String>,
 ) -> Element {
     let mode = use_component_mode(mode);
+    let title = title.filter(|title| !title.trim().is_empty());
+    let has_title = title.is_some() || title_content.is_some() || title_end.is_some();
     let header_cls = classes([
         "g3-header",
         mode.pick("g3-header-ios", "g3-header-md"),
@@ -88,13 +92,17 @@ pub fn Header(
                 div { class: "g3-header-row",
                     div { class: "g3-header-lead",
                         div { class: "g3-header-slot g3-header-start-slot", {start} }
-                        h1 { class: "g3-header-title",
-                            if let Some(content) = title_content {
-                                {content}
-                            } else if let Some(title) = title {
-                                span { class: "g3-header-title-text", "{title}" }
+                        if has_title {
+                            h1 { class: "g3-header-title",
+                                if let Some(content) = title_content {
+                                    {content}
+                                } else if let Some(title) = title {
+                                    span { class: "g3-header-title-text", "{title}" }
+                                }
+                                {title_end}
                             }
-                            {title_end}
+                        } else {
+                            div { class: "g3-header-title" }
                         }
                     }
                     div { class: "g3-header-slot g3-header-end-slot", {end} }

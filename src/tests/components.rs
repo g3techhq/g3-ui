@@ -174,6 +174,24 @@ mod shell {
     }
 
     #[test]
+    fn a_header_without_a_title_has_no_empty_heading() {
+        fn app() -> Element {
+            rsx! {
+                Header { start: rsx! { span { "Brand" } } }
+                Header { title: "  " }
+            }
+        }
+        let html = render(app);
+        assert!(!html.contains("<h1"));
+        // The column stays, so the slots keep their places.
+        assert_eq!(
+            html.matches("<div class=\"g3-header-title\"></div>")
+                .count(),
+            2
+        );
+    }
+
+    #[test]
     fn content_pads_by_default_and_reports_it() {
         fn app() -> Element {
             rsx! {
