@@ -118,10 +118,12 @@ pub enum PageLayoutOrder {
     StartEndMain,
 }
 
-/// A page that stacks, gains an aside at 48rem of available width, then a
-/// second aside at 64rem. Sidebars share at most 40% of expanded space, leaving
-/// the main column usable. Empty slots reserve no tracks. All slots stay
-/// mounted when the width changes. Measures its own space after navigation.
+/// A page that stacks, gains an aside column at 48rem of available width,
+/// then splits the asides to either side at 80rem. Each aside is at least
+/// 18rem, enough for a list row's avatar, name and action; the split waits
+/// until the main column still has about 42rem. Empty slots reserve no
+/// tracks. All slots stay mounted when the width changes. Measures its own
+/// space after navigation.
 #[component]
 pub fn PageLayout(
     /// Main page content.

@@ -74,7 +74,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Responsive layout: `LayoutSize` (Compact, Medium from 48rem, Expanded from
   64rem) and `use_layout_size`; `LayoutScope`, which measures the width left
   after navigation; `AdaptiveLayout`, which mounts one variant per size; and
-  `PageLayout`, with persistent `start` and `end` slots. `Grid` takes
+  `PageLayout`, with persistent `start` and `end` slots: one aside column
+  from 48rem of page width, asides on either side from 80rem, each at least
+  18rem wide. `Grid` takes
   `medium_columns` and `expanded_columns`.
 - `ThemeSeeds` and `Theme::from_seeds` build a whole theme at runtime from an
   accent, a page background and an optional second accent, such as colors a

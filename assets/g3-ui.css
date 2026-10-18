@@ -7580,7 +7580,9 @@ td[aria-selected="true"] > .g3-calendar-day {
         .g3-page-asides:not(:has(.g3-page-start:not(:empty), .g3-page-end:not(:empty))) { display: none; }
         .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)),
         .g3-page-layout:has(> .g3-page-asides > .g3-page-end:not(:empty)) {
-            grid-template-columns: minmax(12rem, 25%) minmax(0, 1fr);
+            /* 18rem holds a list row's avatar, name and action without
+               clipping the name; 12rem clipped even short ones. */
+            grid-template-columns: minmax(18rem, 25%) minmax(0, 1fr);
         }
         .g3-page-main { grid-column: -2; grid-row: 1; }
         .g3-page-start { grid-column: 1; grid-row: 1; }
@@ -7588,10 +7590,13 @@ td[aria-selected="true"] > .g3-calendar-day {
         .g3-page-layout:not(:has(> .g3-page-asides > .g3-page-start:not(:empty))) .g3-page-end { grid-row: 1; }
     }
 
-    @container g3-app-shell (min-width: 64rem) {
+    /* The second aside column waits until two 18rem asides still leave the
+       main column about 42rem; from 64rem it would be narrower than the
+       two-column layout gives it. */
+    @container g3-app-shell (min-width: 80rem) {
         .g3-page-asides { display: contents; }
         .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) {
-            grid-template-columns: minmax(12rem, 20%) minmax(0, 1fr) minmax(12rem, 20%);
+            grid-template-columns: minmax(18rem, 20%) minmax(0, 1fr) minmax(18rem, 20%);
         }
         .g3-page-layout:has(> .g3-page-asides > .g3-page-start:not(:empty)):has(> .g3-page-asides > .g3-page-end:not(:empty)) > .g3-page-main {
             grid-column: 2;
