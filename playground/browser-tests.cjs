@@ -27,14 +27,17 @@ const singleRoot = async (page) => {
   assert.equal(await page.locator('#main > *').count(), 1, '#main must hold exactly one app tree');
 };
 
+async function pickViewport(page, name) {
+  await page.getByRole('combobox', { name: 'Viewport', exact: true }).click();
+  await page.getByRole('option', { name, exact: true }).click();
+}
+
 async function configure(page, mode, wide, dark) {
   await singleRoot(page);
   const platform = page.getByRole('radio', { name: mode, exact: true });
   await platform.click();
   await poll(() => platform.getAttribute('aria-checked'), 'true');
-  const viewport = page.getByRole('radio', { name: wide ? 'Desktop' : 'Mobile', exact: true });
-  await viewport.click();
-  await poll(() => viewport.getAttribute('aria-checked'), 'true');
+  await pickViewport(page, wide ? 'Desktop' : 'Mobile');
   if (dark) {
     await page.getByRole('combobox', { name: 'Theme', exact: true }).click();
     await page.getByRole('option', { name: 'Ember', exact: true }).click();
@@ -52,19 +55,28 @@ async function main() {
       page.on('pageerror', error => errors.push(String(error)));
       await page.goto(`${origin}/components/responsive`);
       await singleRoot(page);
+      // The playground's own header stays two rows when wide: g3-ui's
+      // single-row layout once put the title under the preview controls.
+      const headerTitle = await page.locator('.playground-header .g3-header-title').boundingBox();
+      const headerToolbar = await page.locator('.playground-header .g3-header-toolbar').boundingBox();
+      assert.ok(headerTitle.y + headerTitle.height <= headerToolbar.y + 1, 'the playground title sits above its preview controls');
       const draft = page.getByLabel('Draft survives resizing', { exact: true });
       await draft.fill('Keep this draft');
       for (const [preview, size, columns] of [['Mobile', 'compact', 1], ['Tablet', 'medium', 2], ['Landscape phone', 'medium', 2], ['Desktop', 'expanded', 3]]) {
-        await page.getByRole('radio', { name: preview, exact: true }).click();
+        await pickViewport(page, preview);
         await poll(() => page.locator('.g3-adaptive-layout').getAttribute('data-size'), size);
         assert.equal(await draft.inputValue(), 'Keep this draft', 'preview width must not reset page state');
-        assert.equal(await page.locator('.g3-page-layout').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), columns);
+        // The third column needs an 80rem shell, which the Desktop preset
+        // reaches only in a window wide enough to give it that.
+        const shellWidth = await page.locator('.g3-playground-preview').evaluate(el => el.getBoundingClientRect().width);
+        const expected = columns === 3 && shellWidth < 1280 ? 2 : columns;
+        assert.equal(await page.locator('.g3-page-layout').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length), expected);
         const frame = await page.locator('.g3-playground-preview').boundingBox();
         const ratio = preview === 'Tablet' ? 4 / 3 : preview === 'Landscape phone' ? 844 / 390 : preview === 'Desktop' ? 10 / 7 : 390 / 844;
         assert.ok(Math.abs(frame.width / frame.height - ratio) < 0.01, 'device presets must keep their distinct proportions');
         await page.screenshot({ path: path.join(output, `responsive-${preview}.png`) });
       }
-      await page.getByRole('radio', { name: 'Resize', exact: true }).click();
+      await pickViewport(page, 'Resize');
       const slider = page.getByRole('slider', { name: 'Preview width (pixels)', exact: true });
       await slider.focus();
       await page.keyboard.press('Home');
@@ -76,7 +88,7 @@ async function main() {
       const search = page.getByRole('dialog', { name: 'Search documentation', exact: true });
       await search.waitFor();
       await search.getByRole('searchbox').fill('use_toast');
-      await search.getByRole('button', { name: /Hooks · Overlay hooks/ }).click();
+      await search.getByRole('button', { name: /Overlay hooks/ }).first().click();
       await page.waitForURL('**/docs/hooks-overlays');
       await page.getByRole('banner').getByRole('heading', { name: 'Overlay hooks', exact: true }).waitFor();
       assert.equal(await page.locator('.playground-header .g3-header-toolbar').count(), 1, 'live guides expose preview controls');
@@ -101,7 +113,7 @@ async function main() {
       assert.ok((await page.locator('.theme-generator-export pre').textContent()).includes('accent: "#7c3aed".into()'));
       await page.getByRole('button', { name: 'Use throughout playground', exact: true }).click();
       await page.getByRole('button', { name: 'Card', exact: true }).click();
-      await poll(() => page.locator('.playground-root').evaluate(el => getComputedStyle(el).getPropertyValue('--g3-color-accent').trim()), '#7c3aed');
+      await poll(() => page.locator('.g3-app-shell').first().evaluate(el => getComputedStyle(el).getPropertyValue('--g3-color-accent').trim()), '#7c3aed');
       // Nested grids must keep their own policy inside expanded containers.
       const nestedPage = await responsive.newPage();
       await nestedPage.setContent('<div class="g3-app" style="width:1280px"><div class="g3-grid" style="--g3-grid-columns:repeat(1,minmax(0,1fr));--g3-grid-columns-wide:repeat(2,minmax(0,1fr));--g3-grid-columns-medium:repeat(3,minmax(0,1fr));--g3-grid-columns-expanded:repeat(4,minmax(0,1fr))"><div id="nested-grid" class="g3-grid" style="--g3-grid-columns:repeat(1,minmax(0,1fr))"><div>One readable cell</div></div></div></div>');

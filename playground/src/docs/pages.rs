@@ -99,13 +99,13 @@ pub fn LayoutHooks() -> Element {
         section {
             h2 { "Content width and app width" }
             p { "Both hooks report width. Resizing a desktop window can give it the same layout size as a phone." }
-            div { class: "playground-doc-comparison",
-                section {
+            g3_ui::Grid { columns: g3_ui::GridColumns::Fit(18.0), class: "playground-doc-comparison",
+                g3_ui::Card {
                     h3 { code { "use_layout_size()" } }
                     p { "Measures the nearest LayoutScope, or AppWrapper when no local scope exists." }
                     p { strong { "Returns: " } "Compact, Medium, or Expanded." }
                 }
-                section {
+                g3_ui::Card {
                     h3 { code { "use_shell_size()" } }
                     p { "Measures the enclosing AppWrapper. A smaller LayoutScope does not change its result." }
                     p { strong { "Returns: " } "Compact or Wide." }
