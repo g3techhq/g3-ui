@@ -737,6 +737,15 @@ body.g3-overlay-scroll-locked {
     width: 100%;
     border-bottom: 0;
 }
+/* Equal columns, as for the iOS pill, so the strip's natural width is its
+   widest label times the count. A one-row header sizes its toolbar to that;
+   with equal flex shares the natural width was the sum of the labels, and
+   the longer ones ended in an ellipsis. */
+:is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md:not(.g3-segment-scrollable) {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+}
 
 /* The sliding indicator reads its position and width from the buttons
    themselves, so the group needs no bookkeeping. */
