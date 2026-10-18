@@ -337,6 +337,32 @@ fn Playground() -> Element {
             dismiss_on_select: is_compact,
         }
     };
+    // The preview size and theme pickers, a small gap apart. In the header's
+    // end slot where there is room, in its toolbar row on a phone.
+    let pickers = rsx! {
+        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
+            if showing_preview {
+                Select {
+                    value: viewport,
+                    aria_label: "Viewport",
+                    width: g3_ui::SelectWidth::Fit,
+                    options: vec![
+                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
+                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
+                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
+                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
+                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
+                    ],
+                }
+            }
+            Select {
+                value: theme,
+                aria_label: "Theme",
+                width: g3_ui::SelectWidth::Fit,
+                options: theme_options,
+            }
+        }
+    };
     rsx! {
         AppWrapper {
             theme: theme().to_theme(&custom_theme()),
@@ -357,58 +383,52 @@ fn Playground() -> Element {
                         }
                     },
                     end: rsx! {
-                        // The labelled button and its shortcut where there is
-                        // room, the icon alone on a phone.
-                        if is_compact {
-                            Button {
-                                id: "playground-search-trigger",
-                                fill: ButtonFill::Clear,
-                                aria_label: "Search documentation",
-                                onclick: move |_| search_open.set(true),
-                                Search { size: 20 }
+                        // The pickers, then search at the far end. On a phone
+                        // the pickers move down into the toolbar row.
+                        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Md, align: g3_ui::StackAlign::Center,
+                            if !is_compact {
+                                {pickers.clone()}
                             }
-                        } else {
-                            Button {
-                                id: "playground-search-trigger",
-                                fill: ButtonFill::Outline,
-                                size: ButtonSize::Sm,
-                                aria_label: "Search documentation",
-                                start: rsx! { Search { size: 16 } },
-                                end: rsx! {
-                                    g3_ui::Text { variant: g3_ui::TextVariant::Caption, tone: g3_ui::TextTone::Secondary, "Ctrl K" }
-                                },
-                                onclick: move |_| search_open.set(true),
-                                "Search"
-                            }
-                        }
-                        // A small gap between the two pickers.
-                        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
-                            if showing_preview {
-                                Select {
-                                    value: viewport,
-                                    aria_label: "Viewport",
-                                    width: g3_ui::SelectWidth::Fit,
-                                    options: vec![
-                                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
-                                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
-                                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
-                                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
-                                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
-                                    ],
+                            if is_compact {
+                                Button {
+                                    id: "playground-search-trigger",
+                                    fill: ButtonFill::Clear,
+                                    aria_label: "Search documentation",
+                                    onclick: move |_| search_open.set(true),
+                                    Search { size: 20 }
                                 }
-                            }
-                            Select {
-                                value: theme,
-                                aria_label: "Theme",
-                                width: g3_ui::SelectWidth::Fit,
-                                options: theme_options,
+                            } else {
+                                Button {
+                                    id: "playground-search-trigger",
+                                    fill: ButtonFill::Outline,
+                                    size: ButtonSize::Sm,
+                                    aria_label: "Search documentation",
+                                    start: rsx! { Search { size: 16 } },
+                                    end: rsx! {
+                                        g3_ui::Text { variant: g3_ui::TextVariant::Caption, tone: g3_ui::TextTone::Secondary, "Ctrl K" }
+                                    },
+                                    onclick: move |_| search_open.set(true),
+                                    "Search"
+                                }
                             }
                         }
                     },
-                    toolbar: showing_preview.then(|| rsx! {
-                        SegmentGroup { value: mode, aria_label: "Platform",
-                            SegmentButton { value: ComponentMode::Md, "MD" }
-                            SegmentButton { value: ComponentMode::Ios, "iOS" }
+                    toolbar: (showing_preview || is_compact).then(|| {
+                        let platform = rsx! {
+                            SegmentGroup { value: mode, aria_label: "Platform",
+                                SegmentButton { value: ComponentMode::Md, "MD" }
+                                SegmentButton { value: ComponentMode::Ios, "iOS" }
+                            }
+                        };
+                        // On a phone the pickers get a toolbar row of their
+                        // own, over the platform segment.
+                        match (is_compact, showing_preview) {
+                            (true, true) => rsx! {
+                                g3_ui::Toolbar { {pickers.clone()} }
+                                g3_ui::Toolbar { {platform} }
+                            },
+                            (true, false) => pickers.clone(),
+                            (false, _) => platform,
                         }
                     }),
                 }
