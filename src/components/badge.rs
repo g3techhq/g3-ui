@@ -49,7 +49,7 @@ pub fn Badge(
 fn BadgePlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
-            div { class: "playground-row",
+            crate::Stack { horizontal: true, wrap: true, align: crate::StackAlign::Center,
                 Badge { "Draft" }
                 Badge { color: Color::Accent, "Live" }
                 Badge { color: Color::Success, "Won" }

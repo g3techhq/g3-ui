@@ -38,6 +38,7 @@ pub(crate) mod nav;
 mod navigation_drawer;
 pub(crate) mod overlay;
 mod overlay_host;
+mod page;
 mod popover;
 pub(crate) mod pressable;
 mod progress;
@@ -90,8 +91,8 @@ pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabS
 #[cfg(test)]
 pub(crate) use field::within_typing_limits as field_limits;
 pub use field::{Input, InputType, TextArea};
-pub use header::Header;
 pub(crate) use header::HeaderToolbarContext;
+pub use header::{Header, ToolbarPlacement};
 pub use infinite_scroll::InfiniteScroll;
 pub use info_button::InfoButton;
 pub use layout::{Grid, GridColumns, Space, Stack, StackAlign, StackJustify};
@@ -107,6 +108,7 @@ pub use overlay_host::{
     ActionSheetOptions, ActionSheets, AlertOptions, Alerts, ToastId, ToastOptions, Toaster,
     use_action_sheet, use_alert, use_toast,
 };
+pub use page::Page;
 pub use popover::{Menu, MenuItem, Popover, PopoverPlacement};
 pub use pressable::{ButtonType, Destination};
 pub use progress::Progress;
@@ -156,6 +158,7 @@ gallery![
     responsive,
     app_wrapper,
     content,
+    page,
     header,
     nav,
     navigation_drawer,

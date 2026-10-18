@@ -140,6 +140,9 @@ fn segments_are_radio_groups_with_a_roving_tab_stop() {
         html.contains("aria-checked=\"true\" tabindex=\"0\"")
             || html.matches("aria-checked=\"true\"").count() == 1
     );
+    // Each label sits in its own box, which is what lets a long one end in
+    // an ellipsis inside the flex button.
+    assert!(html.contains("<span class=\"g3-segment-btn-label\">A</span>"));
 }
 
 #[test]
@@ -428,7 +431,7 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
 
     fn unnamed_caption() -> Element {
         rsx! {
-            Table { aria_label: "Results", fill: true,
+            Table { aria_label: "Results", fill: true, wrap: true,
                 tbody { tr { td { "1" } } }
             }
         }
@@ -438,6 +441,8 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
     assert_eq!(html.matches("aria-label=\"Results\"").count(), 2);
     assert!(html.contains("data-fill=\"true\""));
     assert!(!html.contains("data-sticky-first"));
+    // Prose cells are marked on the table, where the cell rules read it.
+    assert!(element_with_class(&html, "g3-table").contains("data-wrap=\"true\""));
 }
 
 #[test]

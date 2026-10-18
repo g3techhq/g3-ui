@@ -527,7 +527,7 @@ fn InputPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: invalid, label: "Invalid" }
                 crate::Checkbox { checked: clearable, label: "Clearable" }
             },
-            div { class: "playground-stack",
+            crate::Stack {
                 Input {
                     label: label(),
                     value,

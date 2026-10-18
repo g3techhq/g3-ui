@@ -168,7 +168,10 @@ pub fn SegmentButton<T: Clone + PartialEq + 'static>(
                     group_value.set(value.clone());
                 }
             },
-            {children}
+            // Its own box, so a label too long for the button ends in an
+            // ellipsis: the button is a flex box, where `text-overflow` does
+            // nothing and the text was clipped at both ends instead.
+            span { class: "g3-segment-btn-label", {children} }
         }
     }
 }

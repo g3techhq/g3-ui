@@ -247,7 +247,7 @@ fn RangePlaygroundDemo() -> Element {
             controls: rsx! {
                 crate::components::color::ColorSelect { value: color }
             },
-            div { class: "playground-stack",
+            crate::Stack {
                 Range {
                     label: "Volume",
                     value: volume,

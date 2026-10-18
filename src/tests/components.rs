@@ -174,6 +174,31 @@ mod shell {
     }
 
     #[test]
+    fn a_toolbar_placed_below_is_marked_for_its_own_row() {
+        fn app() -> Element {
+            rsx! {
+                Header { title: "Auto", toolbar: rsx! { span { "Tools" } } }
+                Header {
+                    title: "Below",
+                    toolbar_placement: ToolbarPlacement::Below,
+                    toolbar: rsx! { span { "Tools" } },
+                }
+            }
+        }
+        let html = render(app);
+        assert_eq!(html.matches("data-toolbar-placement=\"below\"").count(), 1);
+        let below = html.find("data-toolbar-placement").unwrap();
+        assert!(
+            html.find(">Below<").unwrap() > below,
+            "only the second header is marked"
+        );
+        assert!(
+            include_str!("../../assets/g3-ui.css")
+                .contains(".g3-header-with-toolbar[data-toolbar-placement=\"below\"]")
+        );
+    }
+
+    #[test]
     fn a_header_without_a_title_has_no_empty_heading() {
         fn app() -> Element {
             rsx! {
@@ -189,6 +214,26 @@ mod shell {
                 .count(),
             2
         );
+    }
+
+    #[test]
+    fn a_page_holds_its_header_and_content() {
+        fn app() -> Element {
+            rsx! {
+                Page { class: "rounds",
+                    Header { title: "Rounds" }
+                    Content { "Rows" }
+                }
+            }
+        }
+        let html = render(app);
+        let page = element_with_class(&html, "g3-page");
+        assert!(page.contains("rounds"));
+        let (header, content) = (
+            html.find("g3-header").unwrap(),
+            html.find("g3-content").unwrap(),
+        );
+        assert!(html.find("g3-page").unwrap() < header && header < content);
     }
 
     #[test]

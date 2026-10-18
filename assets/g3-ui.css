@@ -664,6 +664,19 @@ body.g3-overlay-scroll-locked {
     color: var(--g3-tint-ink);
 }
 
+/* The label is a block of its own so a long one ends in an ellipsis; on the
+   flex button itself `text-overflow` has no effect. */
+.g3-segment-btn-label {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.g3-segment-btn-label > svg {
+    vertical-align: middle;
+}
+
 .g3-segment-ios[data-color] > .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
     color: var(--g3-tint-ink);
 }
@@ -3004,7 +3017,11 @@ button.g3-chip:focus-visible {
 
 .g3-header-row {
     display: grid;
-    grid-template-columns: minmax(44px, 1fr) auto minmax(44px, 1fr);
+    /* Each side is at least as wide as what it holds. Equal shares alone let a
+       wide end slot (search, links, a picker) overflow its half and cover the
+       title; this way the title stays centred while both sides fit, and moves
+       over and truncates once they do not. */
+    grid-template-columns: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
     align-items: center;
     min-height: 56px;
     width: 100%;
@@ -3021,6 +3038,12 @@ button.g3-chip:focus-visible {
    on the width it has, not the shell's, which also counts a navigation rail. */
 .g3-header-with-toolbar {
     container: g3-header / inline-size;
+}
+
+/* A toolbar placed below keeps its own row at every width: with no
+   `g3-header` container to measure, the single-row query never matches. */
+.g3-header-with-toolbar[data-toolbar-placement="below"] {
+    container: none;
 }
 
 /* Start slot and title, grouped only so a wide header can give them one column. */
@@ -3069,7 +3092,8 @@ button.g3-chip:focus-visible {
 .g3-header-slot {
     display: flex;
     align-items: center;
-    min-width: 0;
+    /* A touch target's width even when empty, so the title stays centred. */
+    min-width: 44px;
     min-height: 44px;
 }
 .g3-header-start-slot {
@@ -3088,6 +3112,12 @@ button.g3-chip:focus-visible {
     width: 100%;
     padding: 0 0.5rem 0.5rem;
     box-sizing: border-box;
+}
+/* A Grid or Stack holding several controls spans the toolbar, as a single
+   segment group does, rather than shrinking to its content in the middle. */
+.g3-header-toolbar > :where(.g3-grid, .g3-stack) {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 .g3-header-ios .g3-header-toolbar {
     min-height: 36px;
@@ -3151,6 +3181,18 @@ button.g3-chip:focus-visible {
 .g3-no-select textarea {
     -webkit-user-select: text;
     user-select: text;
+}
+
+/* The page beside a drawer: the header over the content, which takes the
+   rest of the height to scroll in. */
+.g3-page {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--g3-page-background, var(--g3-color-bg));
 }
 
 .g3-content {
@@ -3770,6 +3812,14 @@ button.g3-chip:focus-visible {
     background: var(--g3-table-surface);
     text-align: center;
     white-space: nowrap;
+}
+
+/* Prose cells wrap and read from the start and top, like a paragraph. */
+.g3-table[data-wrap="true"] :is(th, td) {
+    text-align: start;
+    vertical-align: top;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .g3-table tr[data-compact="true"] > :is(th, td) {

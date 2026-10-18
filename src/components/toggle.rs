@@ -126,7 +126,7 @@ fn TogglePlaygroundDemo() -> Element {
                 crate::Checkbox { checked: small, label: "Small" }
                 crate::Checkbox { checked: disabled, label: "Disabled" }
             },
-            div { class: "playground-stack",
+            crate::Stack {
                 Toggle {
                     checked,
                     label: "Notifications",
