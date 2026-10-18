@@ -323,3 +323,20 @@ fn a_dragged_reorder_item_follows_the_pointer_without_a_transition() {
             .contains("transition: none;")
     );
 }
+
+#[test]
+fn a_header_goes_single_row_by_its_own_width() {
+    // Measuring the shell let a rail beside the header leave it too narrow
+    // for one row; the header is its own container now.
+    assert!(rule_body(".g3-header-with-toolbar").contains("container: g3-header / inline-size;"));
+    assert!(rule_body(".g3-header-bar").contains("display: contents;"));
+    assert!(STYLESHEET.contains("@container g3-header (min-width: 64rem)"));
+    assert!(
+        !STYLESHEET.contains("@container g3-app-shell (min-width: 64rem) {\n    /* Equal side")
+    );
+}
+
+#[test]
+fn a_material_searchbar_has_its_own_tone() {
+    assert!(rule_body(".g3-searchbar-md .g3-input").contains("background: color-mix("));
+}

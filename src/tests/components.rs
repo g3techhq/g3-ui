@@ -162,6 +162,15 @@ mod shell {
         assert!(element_with_class(&html, "g3-header").contains("g3-header-with-toolbar"));
         assert!(html.contains("g3-header-toolbar"));
         assert!(element_with_class(&html, "g3-back-button").contains("aria-label=\"Back\""));
+        // The single-row layout is a grid on the bar, inside the header that
+        // it measures: the row comes first in the bar, then the toolbar.
+        let bar = html
+            .find("class=\"g3-header-bar\"")
+            .expect("missing header bar");
+        let row = html.find("g3-header-row").expect("missing header row");
+        let toolbar = html.find("g3-header-toolbar").expect("missing toolbar");
+        assert!(html.find("g3-header-with-toolbar").unwrap() < bar);
+        assert!(bar < row && row < toolbar);
     }
 
     #[test]

@@ -1429,8 +1429,12 @@ button.g3-chip:focus-visible {
     background: color-mix(in srgb, var(--g3-color-text) 8%, transparent);
 }
 
+/* Material 3 sets a search bar one tonal step above the surface it sits on.
+   The elevation shadow alone left it the header's own color, invisible on a
+   dark theme where a shadow does not show. */
 .g3-searchbar-md .g3-input {
     border-radius: 999px;
+    background: color-mix(in srgb, var(--g3-color-text) 7%, var(--g3-color-card));
     box-shadow: var(--g3-shadow-md-elevation-1);
     border-color: transparent;
 }
@@ -3007,6 +3011,18 @@ button.g3-chip:focus-visible {
     padding: 0 0.5rem;
     box-sizing: border-box;
 }
+/* Holds the row and the toolbar so a wide header can lay them out as one row
+   (see the `g3-header` container query). Transparent otherwise. */
+.g3-header-bar {
+    display: contents;
+}
+
+/* A header with a toolbar measures itself: whether it goes single-row depends
+   on the width it has, not the shell's, which also counts a navigation rail. */
+.g3-header-with-toolbar {
+    container: g3-header / inline-size;
+}
+
 /* Start slot and title, grouped only so a wide header can give them one column. */
 .g3-header-lead {
     display: contents;
@@ -6837,14 +6853,17 @@ button.g3-chip:focus-visible {
     }
 }
 
-/* A header only becomes a single-row desktop toolbar once the shell itself is
-   wide enough for a readable title, controls, and end actions. Keeping compact
-   desktop shells on the two-row treatment avoids truncating every title and
-   gives iOS segmented controls a deliberate bottom inset. */
-@container g3-app-shell (min-width: 64rem) {
+/* A header only becomes a single-row desktop toolbar once it is itself wide
+   enough for a readable title, controls, and end actions. Measuring the header
+   rather than the shell matters beside a navigation rail: a 64rem shell with an
+   expanded rail leaves the header far less, and a single row there truncated
+   the title and squeezed the end slot. Narrower headers keep the two-row
+   treatment, which also gives iOS segmented controls a deliberate bottom inset.
+   `:where()` keeps each selector's weight what it was before the bar existed. */
+@container g3-header (min-width: 64rem) {
     /* Equal side columns keep the toolbar centred in the header whatever the
        start and end hold: a wide search box at the end must not push it over. */
-    .g3-header-with-toolbar {
+    .g3-header-with-toolbar > .g3-header-bar {
         display: grid;
         grid-template-columns: minmax(0, 1fr) minmax(16rem, 30rem) minmax(0, 1fr);
         grid-template-rows: minmax(4rem, auto);
@@ -6854,7 +6873,7 @@ button.g3-chip:focus-visible {
         padding: 0 1rem;
     }
 
-    .g3-header-with-toolbar > .g3-header-row {
+    .g3-header-with-toolbar > :where(.g3-header-bar) > .g3-header-row {
         display: contents;
     }
 
@@ -6876,7 +6895,7 @@ button.g3-chip:focus-visible {
         grid-row: 1;
     }
 
-    .g3-header-with-toolbar > .g3-header-toolbar {
+    .g3-header-with-toolbar > :where(.g3-header-bar) > .g3-header-toolbar {
         grid-column: 2;
         grid-row: 1;
         align-self: center;
@@ -6888,7 +6907,7 @@ button.g3-chip:focus-visible {
     /* Inline in a single row, a Material tab strip still has to reach the
        header's bottom edge for its indicator to land there, so it fills the row
        rather than sitting centred in it. */
-    .g3-header-md.g3-header-with-toolbar > .g3-header-toolbar {
+    .g3-header-md.g3-header-with-toolbar > :where(.g3-header-bar) > .g3-header-toolbar {
         align-self: stretch;
         align-items: stretch;
         padding: 0;

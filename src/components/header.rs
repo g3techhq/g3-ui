@@ -19,7 +19,9 @@ fn ToolbarContextProvider(children: Element) -> Element {
 /// optional toolbar row below. Like Ionic's `ion-header` with an
 /// `ion-toolbar`.
 ///
-/// On shells `64rem` and wider, the toolbar moves into the title row.
+/// Where the header itself is `64rem` or wider, the toolbar moves into the
+/// title row. It measures its own width, not the shell's, so a navigation rail
+/// beside it or a narrow sheet keeps the two rows.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -80,23 +82,27 @@ pub fn Header(
         header {
             class: merge_classes(header_cls, class.as_deref()),
             "data-color": color.map(crate::Color::as_str),
-            div { class: "g3-header-row",
-                div { class: "g3-header-lead",
-                    div { class: "g3-header-slot g3-header-start-slot", {start} }
-                    h1 { class: "g3-header-title",
-                        if let Some(content) = title_content {
-                            {content}
-                        } else if let Some(title) = title {
-                            span { class: "g3-header-title-text", "{title}" }
+            // Lays the row and toolbar out as one row on a wide header. The
+            // header is the size container, so the grid sits one level in.
+            div { class: "g3-header-bar",
+                div { class: "g3-header-row",
+                    div { class: "g3-header-lead",
+                        div { class: "g3-header-slot g3-header-start-slot", {start} }
+                        h1 { class: "g3-header-title",
+                            if let Some(content) = title_content {
+                                {content}
+                            } else if let Some(title) = title {
+                                span { class: "g3-header-title-text", "{title}" }
+                            }
+                            {title_end}
                         }
-                        {title_end}
                     }
+                    div { class: "g3-header-slot g3-header-end-slot", {end} }
                 }
-                div { class: "g3-header-slot g3-header-end-slot", {end} }
-            }
-            if let Some(toolbar) = toolbar {
-                div { class: "g3-header-toolbar",
-                    ToolbarContextProvider { {toolbar} }
+                if let Some(toolbar) = toolbar {
+                    div { class: "g3-header-toolbar",
+                        ToolbarContextProvider { {toolbar} }
+                    }
                 }
             }
         }
