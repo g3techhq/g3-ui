@@ -746,6 +746,14 @@ body.g3-overlay-scroll-locked {
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
 }
+/* On a phone the strip shares a narrow width, so its buttons pad as a
+   standalone group's do. Five options ("Movies", "Books") at 16px a side
+   left about 46px of a 390px row for each label and cut the longer ones. */
+@container g3-app-shell (max-width: 47.999rem) {
+    :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md .g3-segment-btn-md {
+        padding-inline: 8px;
+    }
+}
 
 /* The sliding indicator reads its position and width from the buttons
    themselves, so the group needs no bookkeeping. */

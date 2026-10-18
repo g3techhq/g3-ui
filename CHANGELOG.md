@@ -171,7 +171,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   title beside a two-option segment group is no longer cut while the
   toolbar holds empty space. A Material toolbar `SegmentGroup` lays its
   buttons out as equal grid columns, as the iOS one does, so its natural
-  width fits its longest label in every button.
+  width fits its longest label in every button. On a compact shell its
+  buttons pad 8px a side, as a standalone group's do, so five six-letter
+  labels fit a 390px-wide toolbar.
 - A header's start and end columns are at least as wide as what they hold.
   A wide end slot (search, links, a picker) on a phone overflowed its half
   of the row and covered the title; the title now moves over and truncates.

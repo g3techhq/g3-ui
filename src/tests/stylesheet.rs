@@ -352,6 +352,13 @@ fn a_one_row_header_sizes_its_toolbar_to_equal_segments() {
 }
 
 #[test]
+fn a_material_toolbar_strip_pads_tighter_on_a_phone() {
+    // At 16px a side, five options in a 390px row cut "Movies" and "Books".
+    let compact = "@container g3-app-shell (max-width: 47.999rem) {\n    :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md .g3-segment-btn-md {\n        padding-inline: 8px;";
+    assert!(STYLESHEET.contains(compact));
+}
+
+#[test]
 fn a_material_searchbar_has_its_own_tone() {
     assert!(rule_body(".g3-searchbar-md .g3-input").contains("background: color-mix("));
 }
