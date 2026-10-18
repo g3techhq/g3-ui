@@ -55,11 +55,13 @@ async function main() {
       page.on('pageerror', error => errors.push(String(error)));
       await page.goto(`${origin}/components/responsive`);
       await singleRoot(page);
-      // The playground's own header stays two rows when wide: g3-ui's
-      // single-row layout once put the title under the preview controls.
+      // Whether the header is one row or two, the title never sits under the
+      // toolbar: a wide toolbar once pushed it below the preview controls.
       const headerTitle = await page.locator('.playground-header .g3-header-title').boundingBox();
       const headerToolbar = await page.locator('.playground-header .g3-header-toolbar').boundingBox();
-      assert.ok(headerTitle.y + headerTitle.height <= headerToolbar.y + 1, 'the playground title sits above its preview controls');
+      const besideToolbar = headerTitle.x + headerTitle.width <= headerToolbar.x + 1;
+      const aboveToolbar = headerTitle.y + headerTitle.height <= headerToolbar.y + 1;
+      assert.ok(besideToolbar || aboveToolbar, 'the playground title stays clear of its toolbar');
       const draft = page.getByLabel('Draft survives resizing', { exact: true });
       await draft.fill('Keep this draft');
       for (const [preview, size, columns] of [['Mobile', 'compact', 1], ['Tablet', 'medium', 2], ['Landscape phone', 'medium', 2], ['Desktop', 'expanded', 3]]) {
