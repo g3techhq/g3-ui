@@ -15,13 +15,55 @@ fn ToolbarContextProvider(children: Element) -> Element {
     }
 }
 
-/// The top bar of a page: a title between `start` and `end` slots, with an
-/// optional toolbar row below. Like Ionic's `ion-header` with an
-/// `ion-toolbar`.
+/// One row of a [`Header`]'s toolbar. Like Ionic's `ion-toolbar`.
 ///
-/// Where the header itself is `64rem` or wider, the toolbar moves into the
-/// title row. It measures its own width, not the shell's, so a navigation rail
-/// beside it or a narrow sheet keeps the two rows.
+/// A header's `toolbar` is one row by default; pass several `Toolbar`s to
+/// stack rows, such as a searchbar over a segment group:
+///
+/// ```
+/// # use dioxus::prelude::*;
+/// # use g3_ui::prelude::*;
+/// # fn demo() -> Element {
+/// # let query = use_signal(String::new);
+/// # let tab = use_signal(|| 0_u8);
+/// rsx! {
+///     Header {
+///         title: "Players",
+///         toolbar: rsx! {
+///             Toolbar { Searchbar { value: query, aria_label: "Search players" } }
+///             Toolbar {
+///                 SegmentGroup { value: tab, aria_label: "Show",
+///                     SegmentButton { value: 0_u8, "All" }
+///                     SegmentButton { value: 1_u8, "Friends" }
+///                 }
+///             }
+///         },
+///     }
+/// }
+/// # }
+/// ```
+#[component]
+pub fn Toolbar(
+    /// Extra classes for the row.
+    class: Option<String>,
+    /// The row's content, laid out as a toolbar row is.
+    children: Element,
+) -> Element {
+    rsx! {
+        div {
+            class: merge_classes("g3-header-toolbar g3-header-toolbar-row", class.as_deref()),
+            {children}
+        }
+    }
+}
+
+/// The top bar of a page: a title between `start` and `end` slots, with an
+/// optional toolbar below. Like Ionic's `ion-header` with an `ion-toolbar`.
+///
+/// Where the header itself is `64rem` or wider, a one-row toolbar moves into
+/// the title row. It measures its own width, not the shell's, so a navigation
+/// rail beside it or a narrow sheet keeps the two rows. A toolbar of several
+/// [`Toolbar`] rows stays below the title at every width.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -58,8 +100,9 @@ pub fn Header(
     start: Option<Element>,
     /// Trailing slot for page actions.
     end: Option<Element>,
-    /// A second row, usually a [`SegmentGroup`](crate::SegmentGroup) or
-    /// [`Searchbar`](crate::Searchbar).
+    /// A row below the title, usually a [`SegmentGroup`](crate::SegmentGroup)
+    /// or [`Searchbar`](crate::Searchbar). Several [`Toolbar`] elements make
+    /// several rows.
     toolbar: Option<Element>,
     /// Fill with a color role, like Ionic's `color` on a toolbar: the bar
     /// takes the color and its content the matching contrast. Unset keeps the
@@ -125,6 +168,8 @@ fn HeaderPlaygroundDemo() -> Element {
     let tab = use_signal(|| 0_usize);
     let title = use_signal(|| "Pending Game".to_string());
     let toolbar = use_signal(|| true);
+    let two_rows = use_signal(|| false);
+    let query = use_signal(String::new);
     let show_start = use_signal(|| true);
     let show_end = use_signal(|| true);
     let mode = crate::use_component_mode(None);
@@ -140,6 +185,9 @@ fn HeaderPlaygroundDemo() -> Element {
                 crate::Checkbox { checked: show_start, label: "Back button" }
                 crate::Checkbox { checked: show_end, label: "End action" }
                 crate::Checkbox { checked: toolbar, label: "Toolbar" }
+                if toolbar() {
+                    crate::Checkbox { checked: two_rows, label: "Two toolbar rows" }
+                }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 Header {
@@ -151,10 +199,20 @@ fn HeaderPlaygroundDemo() -> Element {
                     end: show_end().then(|| rsx! {
                         crate::Button { fill: crate::ButtonFill::Clear, "Create" }
                     }),
-                    toolbar: toolbar().then(|| rsx! {
-                        crate::SegmentGroup { value: tab,
-                            crate::SegmentButton { value: 0_usize, "Players" }
-                            crate::SegmentButton { value: 1_usize, "Bets" }
+                    toolbar: toolbar().then(|| {
+                        let segment = rsx! {
+                            crate::SegmentGroup { value: tab,
+                                crate::SegmentButton { value: 0_usize, "Players" }
+                                crate::SegmentButton { value: 1_usize, "Bets" }
+                            }
+                        };
+                        if two_rows() {
+                            rsx! {
+                                Toolbar { crate::Searchbar { value: query, aria_label: "Search players" } }
+                                Toolbar { {segment} }
+                            }
+                        } else {
+                            segment
                         }
                     }),
                 }

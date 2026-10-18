@@ -708,8 +708,15 @@ body.g3-overlay-scroll-locked {
     margin-top: 0;
     margin-inline: auto;
 }
+/* A toolbar pill is as wide as its segments, which share it equally. Equal
+   columns sized to the widest label: equal flex shares of a fit-content
+   width came out a pixel short of the longer label, which then ended in an
+   ellipsis ("i..." for "iOS"). The indicator is absolutely positioned. */
 .g3-segment-toolbar.g3-segment-ios,
 .g3-header-toolbar .g3-segment-standalone.g3-segment-ios {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
     width: fit-content;
     max-width: calc(100% - 0.5rem);
 }
@@ -3110,6 +3117,18 @@ button.g3-chip:focus-visible {
 .g3-header-ios .g3-header-toolbar {
     min-height: 36px;
     padding: 0 4px 4px;
+}
+
+/* Several `Toolbar` rows: each row is itself a `g3-header-toolbar`, laid out
+   as a single toolbar is, and the wrapper steps aside so they stack. */
+.g3-header-toolbar:has(> .g3-header-toolbar-row) {
+    display: contents;
+}
+
+/* Rows stay below the title at every width: the single-row layout has one
+   cell for one toolbar. Without the container, its query never matches. */
+.g3-header-with-toolbar:has(.g3-header-toolbar-row) {
+    container: none;
 }
 .g3-header-md .g3-header-toolbar {
     min-height: 48px;
