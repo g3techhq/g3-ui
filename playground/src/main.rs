@@ -317,20 +317,24 @@ fn Playground() -> Element {
     });
     let selector = rsx! {
         List { lines: ListLines::None,
-            Item { label: "g3-ui", description: "{count} demos" }
+            Item { label: "g3-ui", description: "{count} demos",
+                end: rsx! {
+                    Button { fill: ButtonFill::Clear, href: "https://github.com/g3techhq/g3-ui", new_tab: true, aria_label: "GitHub repository",
+                        span { aria_hidden: "true", svg { width: "20", height: "20", view_box: "0 0 16 16", fill: "currentColor",
+                            path { d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" }
+                        } }
+                    }
+                    Button { fill: ButtonFill::Clear, href: "https://docs.rs/g3-ui/latest/g3_ui/", new_tab: true, aria_label: "API reference",
+                        Package { size: 20 }
+                    }
+                },
+            }
         }
         PlaygroundNav {
             demos: demos.clone(),
             current_route: current_route.clone(),
             selector_open,
             dismiss_on_select: is_compact,
-        }
-        if is_compact {
-            List { lines: ListLines::None,
-                g3_ui::ListHeader { "Links" }
-                Item { label: "GitHub repository", href: "https://github.com/g3techhq/g3-ui", new_tab: true }
-                Item { label: "API reference", href: "https://docs.rs/g3-ui/latest/g3_ui/", new_tab: true }
-            }
         }
     };
     rsx! {
@@ -377,37 +381,28 @@ fn Playground() -> Element {
                                 "Search"
                             }
                         }
-                        // A phone has no room for the links beside search and
-                        // the two pickers; they sit at the end of the drawer.
-                        if !is_compact {
-                        Button { fill: ButtonFill::Clear, href: "https://github.com/g3techhq/g3-ui", new_tab: true, aria_label: "GitHub repository",
-                            span { aria_hidden: "true", svg { width: "20", height: "20", view_box: "0 0 16 16", fill: "currentColor",
-                                path { d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" }
-                            } }
-                        }
-                        Button { fill: ButtonFill::Clear, href: "https://docs.rs/g3-ui/latest/g3_ui/", new_tab: true, aria_label: "API reference",
-                            Package { size: 20 }
-                        }
-                        }
-                        if showing_preview {
-                            Select {
-                                value: viewport,
-                                aria_label: "Viewport",
-                                width: g3_ui::SelectWidth::Fit,
-                                options: vec![
-                                    SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
-                                    SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
-                                    SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
-                                    SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
-                                    SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
-                                ],
+                        // A small gap between the two pickers.
+                        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
+                            if showing_preview {
+                                Select {
+                                    value: viewport,
+                                    aria_label: "Viewport",
+                                    width: g3_ui::SelectWidth::Fit,
+                                    options: vec![
+                                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
+                                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
+                                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
+                                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
+                                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
+                                    ],
+                                }
                             }
-                        }
-                        Select {
-                            value: theme,
-                            aria_label: "Theme",
-                            width: g3_ui::SelectWidth::Fit,
-                            options: theme_options,
+                            Select {
+                                value: theme,
+                                aria_label: "Theme",
+                                width: g3_ui::SelectWidth::Fit,
+                                options: theme_options,
+                            }
                         }
                     },
                     toolbar: showing_preview.then(|| rsx! {
