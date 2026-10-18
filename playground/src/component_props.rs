@@ -54,6 +54,7 @@ pub fn PropsReference(components: Vec<&'static str>) -> Element {
                             key: "{name}",
                             caption: format!("{}{}", component.name, component.generics),
                             fill: true,
+                            wrap: true,
                             sticky_first_column: true,
                             class: "component-props-table",
                             thead { tr {

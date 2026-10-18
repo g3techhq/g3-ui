@@ -12,7 +12,7 @@ pub fn Landing() -> Element {
                     h2 { "iOS and Material components" }
                     p { class: "landing-lead", "Form controls, navigation, overlays, and responsive layouts for Dioxus." }
                     p { "Use the same components in browsers and Android, iOS, and desktop web views." }
-                    div { class: "landing-actions",
+                    g3_ui::Stack { horizontal: true, wrap: true, class: "landing-actions",
                         Button { size: ButtonSize::Lg, to: Route::Guide { slug: "getting-started".into() }, "Get started" }
                         Button { fill: ButtonFill::Outline, size: ButtonSize::Lg, to: Route::ComponentDemo { slug: "button".into() }, "Components" }
                     }
@@ -20,24 +20,22 @@ pub fn Landing() -> Element {
                 LandingPreview {}
             }
             section { class: "landing-benefits", aria_label: "Features",
-                section {
-                    h3 { "Platform modes" }
-                    p { "Switch between iOS and Material styling for the app, a subtree, or an individual component. Controls support touch input and keyboard navigation." }
-                }
-                section {
-                    h3 { "Responsive layouts" }
-                    p { "Fit grid columns to the available width, stack side panels, or mount different controls for compact, medium, and expanded layouts." }
-                    Button { fill: ButtonFill::Outline, to: Route::Guide { slug: "responsive-layouts".into() }, "Responsive layouts" }
-                }
-                section {
-                    h3 { "Themes" }
-                    p { "Set color and surface tokens, switch light and dark themes at runtime, and override the theme for a subtree. Edit theme, mode, and component labels through writable hooks." }
-                    Button { fill: ButtonFill::Outline, to: Route::ThemeGenerator {}, "Theme generator" }
-                }
-                section {
-                    h3 { "Overlay hooks" }
-                    p { "Show toasts, await alert confirmations or action sheet choices, and dismiss the top overlay before navigating back." }
-                    Button { fill: ButtonFill::Outline, to: Route::Guide { slug: "hooks-overlays".into() }, "Overlay hooks" }
+                g3_ui::Grid { columns: g3_ui::GridColumns::Fit(25.0),
+                    g3_ui::Card { title: "Platform modes", heading_level: g3_ui::HeadingLevel::H3,
+                        p { "Switch between iOS and Material styling for the app, a subtree, or an individual component. Controls support touch input and keyboard navigation." }
+                    }
+                    g3_ui::Card { title: "Responsive layouts", heading_level: g3_ui::HeadingLevel::H3,
+                        p { "Fit grid columns to the available width, stack side panels, or mount different controls for compact, medium, and expanded layouts." }
+                        Button { fill: ButtonFill::Outline, to: Route::Guide { slug: "responsive-layouts".into() }, "Responsive layouts" }
+                    }
+                    g3_ui::Card { title: "Themes", heading_level: g3_ui::HeadingLevel::H3,
+                        p { "Set color and surface tokens, switch light and dark themes at runtime, and override the theme for a subtree. Edit theme, mode, and component labels through writable hooks." }
+                        Button { fill: ButtonFill::Outline, to: Route::ThemeGenerator {}, "Theme generator" }
+                    }
+                    g3_ui::Card { title: "Overlay hooks", heading_level: g3_ui::HeadingLevel::H3,
+                        p { "Show toasts, await alert confirmations or action sheet choices, and dismiss the top overlay before navigating back." }
+                        Button { fill: ButtonFill::Outline, to: Route::Guide { slug: "hooks-overlays".into() }, "Overlay hooks" }
+                    }
                 }
             }
             section { class: "landing-next",

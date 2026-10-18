@@ -140,23 +140,46 @@ fn update_color(settings: PlaygroundSettings, field: ColorField, value: String) 
     (field.set)(&mut custom.write(), value);
 }
 
+/// The native color picker, as an `Input`'s end slot: g3-ui has no color
+/// field of its own.
+#[component]
+fn ColorSwatch(value: String, label: String, onpick: EventHandler<String>) -> Element {
+    rsx! {
+        input { class: "theme-color-swatch", r#type: "color", value: picker_color(&value),
+            aria_label: label,
+            oninput: move |event| onpick.call(event.value()),
+        }
+    }
+}
+
+/// Text for a field that edits part of the custom theme: `read` picks that
+/// part out, and the field follows it when it changes elsewhere, such as a
+/// preset being loaded. The effect reads the theme signal itself, so it
+/// reruns on every change to it.
+fn use_followed_text(read: impl Fn() -> String + 'static) -> Signal<String> {
+    let mut text = use_signal(&read);
+    use_effect(move || {
+        let value = read();
+        if *text.peek() != value {
+            text.set(value);
+        }
+    });
+    text
+}
+
 #[component]
 fn ColorEditor(field: ColorField) -> Element {
     let settings = use_context::<PlaygroundSettings>();
     let value = (field.get)(&(settings.custom_theme)()).to_string();
+    let text = use_followed_text(move || (field.get)(&(settings.custom_theme)()).to_string());
     rsx! {
-        div { class: "theme-color-field",
-            label {
-                span { "{field.label}" }
-                input { r#type: "text", value: value.clone(), spellcheck: "false",
-                    aria_label: format!("{} CSS color", field.label),
-                    oninput: move |event| update_color(settings, field, event.value()),
+        g3_ui::Input { label: field.label, value: text, aria_label: format!("{} CSS color", field.label),
+            oninput: move |value| update_color(settings, field, value),
+            end: rsx! {
+                ColorSwatch { value, label: format!("Pick {} color", field.label),
+                    onpick: move |value| update_color(settings, field, value),
                 }
-            }
-            input { r#type: "color", value: picker_color(&value),
-                aria_label: format!("Pick {} color", field.label),
-                oninput: move |event| update_color(settings, field, event.value()),
-            }
+            },
         }
     }
 }
@@ -164,19 +187,17 @@ fn ColorEditor(field: ColorField) -> Element {
 #[component]
 fn LookEditor(field: LookField) -> Element {
     let settings = use_context::<PlaygroundSettings>();
-    let value = (field.get)(&(settings.custom_theme)().look)
-        .clone()
-        .unwrap_or_default();
+    let text = use_followed_text(move || {
+        (field.get)(&(settings.custom_theme)().look)
+            .clone()
+            .unwrap_or_default()
+    });
     rsx! {
-        label { class: "theme-look-field",
-            span { "{field.label}" }
-            input { r#type: "text", value, placeholder: "Platform default", spellcheck: "false",
-                oninput: move |event| {
-                    let value = event.value();
-                    let mut custom = settings.custom_theme;
-                    (field.set)(&mut custom.write().look, (!value.trim().is_empty()).then_some(value));
-                },
-            }
+        g3_ui::Input { label: field.label, value: text, placeholder: "Platform default",
+            oninput: move |value: String| {
+                let mut custom = settings.custom_theme;
+                (field.set)(&mut custom.write().look, (!value.trim().is_empty()).then_some(value));
+            },
         }
     }
 }
@@ -247,18 +268,12 @@ fn PresetSwatch(preset: PlaygroundTheme, loaded: bool) -> Element {
 fn SeedField(label: &'static str, value: Signal<String>) -> Element {
     let mut value = value;
     rsx! {
-        div { class: "theme-color-field",
-            label {
-                span { "{label}" }
-                input { r#type: "text", value: value(), spellcheck: "false",
-                    aria_label: format!("{label} seed, CSS color"),
-                    oninput: move |event| value.set(event.value()),
+        g3_ui::Input { label, value, aria_label: format!("{label} seed, CSS color"),
+            end: rsx! {
+                ColorSwatch { value: value(), label: format!("Pick {label} seed color"),
+                    onpick: move |picked| value.set(picked),
                 }
-            }
-            input { r#type: "color", value: picker_color(&value()),
-                aria_label: format!("Pick {label} seed color"),
-                oninput: move |event| value.set(event.value()),
-            }
+            },
         }
     }
 }
@@ -271,7 +286,7 @@ fn SeedGenerator() -> Element {
     let accent = use_signal(|| picker_color(&(settings.custom_theme).peek().accent));
     let background = use_signal(|| picker_color(&(settings.custom_theme).peek().bg));
     let secondary = use_signal(|| picker_color(&(settings.custom_theme).peek().accent_secondary));
-    let mut use_secondary = use_signal(|| false);
+    let use_secondary = use_signal(|| false);
     let mut status = use_signal(String::new);
     rsx! {
         section { class: "theme-generator-section", aria_labelledby: "theme-seeds-heading",
@@ -279,12 +294,7 @@ fn SeedGenerator() -> Element {
             p { "Pick a page background, then an accent. The background's lightness chooses light or dark, its hue tints the surfaces, and every text color is set to read at 4.5:1. Generating replaces the colors below and keeps the surface styles." }
             SeedField { label: "Page background", value: background }
             SeedField { label: "Accent", value: accent }
-            label { class: "theme-seed-toggle",
-                input { r#type: "checkbox", checked: use_secondary(),
-                    onchange: move |event| use_secondary.set(event.checked()),
-                }
-                span { "Second accent for gradients" }
-            }
+            g3_ui::Checkbox { checked: use_secondary, label: "Second accent for gradients" }
             if use_secondary() {
                 SeedField { label: "Second accent", value: secondary }
             }
@@ -328,6 +338,7 @@ pub fn ThemeGenerator() -> Element {
         let _ = (settings.custom_theme)();
         copy_status.set(String::new());
     });
+    let color_scheme = use_followed_text(move || (settings.custom_theme)().color_scheme);
     let source = rust_source(&custom);
     let copy_source = source.clone();
     rsx! {
@@ -344,7 +355,7 @@ pub fn ThemeGenerator() -> Element {
                 }
             }
             div { class: "theme-generator-layout",
-                div { class: "theme-generator-editor",
+                g3_ui::Card { class: "theme-generator-editor",
                     PresetPicker {}
                     SeedGenerator {}
                     h2 { "Colors" }
@@ -352,20 +363,20 @@ pub fn ThemeGenerator() -> Element {
                     for field in COLORS {
                         ColorEditor { key: "{field.key}", field: *field }
                     }
-                    label { class: "theme-look-field",
-                        span { "Color scheme" }
-                        select { value: custom.color_scheme.clone(),
-                            onchange: move |event| settings.custom_theme.write().color_scheme = event.value(),
-                            option { value: "light", "Light" }
-                            option { value: "dark", "Dark" }
-                            option { value: "light dark", "Follow system" }
-                        }
+                    g3_ui::Select { label: "Color scheme", value: color_scheme,
+                        options: vec![
+                            SelectOption::new("light".to_string(), "Light"),
+                            SelectOption::new("dark".to_string(), "Dark"),
+                            SelectOption::new("light dark".to_string(), "Follow system"),
+                        ],
+                        onchange: move |scheme: String| settings.custom_theme.write().color_scheme = scheme,
                     }
-                    details {
-                        summary { "Surface styles (optional)" }
-                        p { "Enter CSS values. Clear a field to restore the platform default." }
-                        for field in LOOKS {
-                            LookEditor { key: "{field.key}", field: *field }
+                    g3_ui::AccordionGroup::<&'static str> {
+                        g3_ui::AccordionItem { value: "surface", label: "Surface styles (optional)",
+                            p { "Enter CSS values. Clear a field to restore the platform default." }
+                            for field in LOOKS {
+                                LookEditor { key: "{field.key}", field: *field }
+                            }
                         }
                     }
                 }
