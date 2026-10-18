@@ -74,7 +74,7 @@ fn ProgressPlaygroundDemo() -> Element {
                 crate::Range { label: "Value", value, show_value: true }
                 crate::components::color::ColorSelect { value: color }
             },
-            div { class: "playground-stack",
+            crate::Stack {
                 Progress { value: value(), label: "Upload", color: color() }
                 Progress { label: "Loading", color: color() }
             }

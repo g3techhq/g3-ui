@@ -64,6 +64,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/modal.rs"),
     include_str!("components/nav.rs"),
     include_str!("components/navigation_drawer.rs"),
+    include_str!("components/page.rs"),
     include_str!("components/overlay_host.rs"),
     include_str!("components/popover.rs"),
     include_str!("components/progress.rs"),
@@ -174,7 +175,7 @@ pub fn PlaygroundDemoFrame(
                 crate::Card {
                     variant: crate::CardVariant::Flat,
                     class: "playground-controls-pane",
-                    {controls}
+                    crate::Stack { gap: crate::Space::Md, {controls} }
                 }
             }
             div { class: preview_cls,

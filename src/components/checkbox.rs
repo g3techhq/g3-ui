@@ -198,7 +198,7 @@ fn CheckboxPlaygroundDemo() -> Element {
                 Checkbox { checked: disabled, label: "Disabled" }
                 Checkbox { checked: invalid, label: "Invalid" }
             },
-            div { class: "playground-stack",
+            crate::Stack {
                 Checkbox {
                     checked,
                     label: "Use handicaps",

@@ -70,6 +70,10 @@ pub fn Table(
     fill: Option<bool>,
     /// Surface treatment. Defaults to [`TableVariant::Flat`].
     variant: Option<TableVariant>,
+    /// Cells hold prose, such as a reference of descriptions: they wrap and
+    /// sit at the start and top of the cell, instead of staying on one
+    /// centred line as figures do. Defaults to `false`.
+    wrap: Option<bool>,
     /// Extra classes for the scrolling frame.
     class: Option<String>,
     /// The rows: `thead`, `tbody` and `tr` elements.
@@ -110,6 +114,7 @@ pub fn Table(
                     id,
                     class: "g3-table",
                     "data-sticky-first": sticky_first_column.unwrap_or(false).then_some("true"),
+                    "data-wrap": wrap.unwrap_or(false).then_some("true"),
                     aria_labelledby: caption.as_ref().map(|_| caption_id),
                     aria_label: table_label,
                     {children}

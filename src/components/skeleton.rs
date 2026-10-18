@@ -48,10 +48,10 @@ pub fn Skeleton(
 fn SkeletonPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
-            div { class: "playground-stack",
-                div { class: "playground-row",
+            crate::Stack {
+                crate::Stack { horizontal: true, wrap: true, align: crate::StackAlign::Center,
                     Skeleton { shape: SkeletonShape::Avatar }
-                    div { class: "playground-stack",
+                    crate::Stack {
                         Skeleton { width: "70%" }
                         Skeleton { width: "40%" }
                     }

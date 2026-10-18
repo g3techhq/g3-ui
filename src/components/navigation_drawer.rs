@@ -10,7 +10,7 @@ use dioxus::prelude::*;
 /// scrolling, and is not counted by [`open_sheet_count`](crate::open_sheet_count).
 /// A menu button in the page usually toggles `open`.
 ///
-/// Render it and one root page element as direct children of
+/// Render it and one [`Page`](crate::Page) as direct children of
 /// [`AppWrapper`](crate::AppWrapper).
 ///
 /// The rows of a drawer are its navigation, and they read best pressing from
@@ -26,14 +26,16 @@ use dioxus::prelude::*;
 /// #     Rounds {},
 /// # }
 /// # #[component] fn Rounds() -> Element { rsx! {} }
-/// # #[component] fn Page() -> Element { rsx! {} }
 /// # let drawer_open = use_signal(|| false);
 /// rsx! {
 ///     AppWrapper {
 ///         NavigationDrawer { open: drawer_open, padding: false,
 ///             List { Item { label: "Rounds", to: Route::Rounds {} } }
 ///         }
-///         Page {}
+///         Page {
+///             Header { title: "Rounds" }
+///             Content { "The page narrows beside the drawer." }
+///         }
 ///     }
 /// }
 /// # }
@@ -113,7 +115,7 @@ fn NavigationDrawerPlaygroundDemo() -> Element {
                         crate::Item { label: "Settings", onclick: |_| {} }
                     }
                 }
-                div { class: "g3-sheet-demo-content-root",
+                crate::Page {
                     crate::Header {
                         title: "Rounds",
                         start: at_start.then(|| toggle.clone()),

@@ -82,7 +82,7 @@ fn ChipPlaygroundDemo() -> Element {
             controls: rsx! {
                 crate::components::color::ColorSelect { value: color }
             },
-            div { class: "playground-row",
+            crate::Stack { horizontal: true, wrap: true, align: crate::StackAlign::Center,
                 Chip { selected: nearby(), color: color(), onclick: move |_| nearby.toggle(), "Nearby" }
                 Chip { selected: friends(), color: color(), onclick: move |_| friends.toggle(), "Friends" }
                 Chip { disabled: true, onclick: |_| {}, "Weekend" }

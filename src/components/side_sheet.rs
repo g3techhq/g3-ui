@@ -7,8 +7,8 @@ use dioxus::prelude::*;
 /// temporary navigation. Like Ionic's `ion-menu`.
 ///
 /// For [`SideSheetBehavior::Push`] and [`SideSheetBehavior::Reveal`], render
-/// the sheet and one root page element as direct children of
-/// [`AppWrapper`](crate::AppWrapper); that page element is what moves.
+/// the sheet and one [`Page`](crate::Page) as direct children of
+/// [`AppWrapper`](crate::AppWrapper); that page is what moves.
 ///
 /// For navigation that stays open beside the page, use
 /// [`NavigationDrawer`](crate::NavigationDrawer).
@@ -128,7 +128,7 @@ fn SideSheetPlaygroundDemo() -> Element {
                         crate::Item { label: "Round settings" }
                     }
                 }
-                div { class: "g3-sheet-demo-content-root",
+                crate::Page {
                     crate::Header {
                         title: "Side sheets",
                         start: at_start.then(|| toggle.clone()),

@@ -112,7 +112,7 @@ mod tests {
 fn AvatarPlaygroundDemo() -> Element {
     rsx! {
         crate::PlaygroundDemoFrame {
-            div { class: "playground-row",
+            crate::Stack { horizontal: true, wrap: true, align: crate::StackAlign::Center,
                 Avatar { name: "Alex Morgan", size: AvatarSize::Sm }
                 Avatar { name: "Grace Park" }
                 Avatar { name: "Sam Ortiz", size: AvatarSize::Lg }

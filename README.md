@@ -70,7 +70,7 @@ Component names are unprefixed. If one collides with a local name, import it und
 
 | Category | Components |
 | --- | --- |
-| App shell | `AppWrapper`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
+| App shell | `AppWrapper`, `Page`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
 | Navigation | `AdaptiveNav`, `NavBar`, `NavRail`, `NavItem`, `NavigationDrawer`, `Tabs`, `TabList`, `Tab`, `TabPanel`, `SegmentGroup`, `SegmentButton` |
 | Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
 | Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar` |
@@ -465,7 +465,7 @@ Both edges are logical, so `SheetEdge::Start` is on the right in a right-to-left
 
 `NavigationDrawer` is persistent navigation beside the page, like Ionic's split pane. It is not a
 dialog: the page narrows to make room, and nothing is dimmed or trapped. For `Push`, `Reveal`, and
-`NavigationDrawer`, render the sheet and one page element as direct children of `AppWrapper`.
+`NavigationDrawer`, render the sheet and one `Page` as direct children of `AppWrapper`.
 
 A sheet normally opens over a scrim that closes it when tapped. `backdrop: SheetBackdrop::None`
 leaves the page behind visible and interactive, for something like comments beside a video. The

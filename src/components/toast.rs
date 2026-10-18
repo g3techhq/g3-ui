@@ -249,7 +249,7 @@ fn ToastPlaygroundDemo() -> Element {
             },
             crate::AppWrapper { class: "g3-playground-device-app",
                 crate::Content {
-                    div { class: "playground-stack",
+                    crate::Stack {
                         crate::Button { onclick: move |_| open.set(true), "Show toast" }
                         crate::Button {
                             fill: crate::ButtonFill::Outline,

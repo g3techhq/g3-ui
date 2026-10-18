@@ -52,6 +52,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `Page`, the root of a page beside a `NavigationDrawer` or pushing
+  `SideSheet`, like Ionic's `ion-page`: it stacks a `Header` over a `Content`
+  that scrolls in the rest of the height. The drawer and side sheet docs use
+  it for the page element they narrow or move.
+- `toolbar_placement` on `Header`. `ToolbarPlacement::Auto`, the default,
+  moves the toolbar into the title row on a header `64rem` wide, as before;
+  `ToolbarPlacement::Below` keeps it in its own row at every width, for a
+  toolbar too wide for the middle of one row.
+- `wrap` on `Table`, for cells of prose such as descriptions: they wrap and
+  sit at the start and top of the cell instead of one centred line.
 - `color` on `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`,
   `Spinner`, `SegmentGroup`, `FabButton` and `FabMenu`, as Ionic's controls
   have. `Card` and `Header` take `color` to fill with it, and their content
@@ -151,6 +161,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The Material `Searchbar` sits one tonal step above its surface. It had
   the surface's own color with only a shadow for an edge, so in a header on
   a dark theme the field could not be told apart from the bar.
+- A header's start and end columns are at least as wide as what they hold.
+  A wide end slot (search, links, a picker) on a phone overflowed its half
+  of the row and covered the title; the title now moves over and truncates.
+- A `SegmentButton` label too long for its button ends in an ellipsis. The
+  label now sits in its own `g3-segment-btn-label` box; on the flex button
+  `text-overflow` did nothing, and the text was clipped at both ends.
+- A `Grid` or `Stack` in a header toolbar spans the toolbar, as a single
+  segment group does, instead of shrinking to its content in the middle.
 - A `Header` with no title renders no `h1`. Its title column was an empty
   heading, which a screen reader announced as a blank page title; the column
   stays, as a plain element, so the slots keep their places.
@@ -200,6 +218,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Playground
 
+- The playground is built from the library it shows: its shell is
+  `AppWrapper`'s layout with a `Page` and `Content`, the header passes
+  `ToolbarPlacement::Below`, and its menu, links, search, drawer heading,
+  demo controls, theme editor, landing cards and props tables are g3-ui
+  components. About half of its stylesheet, which restyled or rebuilt them,
+  is gone.
 - An overview landing page, searchable getting-started, platform, layout and
   hook guides with compiled examples in interactive device viewers, and
   GitHub source links.
