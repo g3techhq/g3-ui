@@ -45,7 +45,7 @@ browser-test:
     node playground/browser-tests.cjs
 
 doc:
-    $env:RUSTDOCFLAGS = '-D warnings'; cargo doc --no-deps --features transitions
+    cargo doc --no-deps --features transitions --config "build.rustdocflags='-D warnings'"
 
 security:
     cargo deny check
