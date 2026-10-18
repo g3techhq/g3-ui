@@ -3191,8 +3191,10 @@ button.g3-chip:focus-visible {
 }
 
 /* The page beside a drawer: the header over the content, which takes the
-   rest of the height to scroll in. */
+   rest of the height to scroll in. It is a layout scope too, so the
+   responsive rules inside measure the page, not the whole app. */
 .g3-page {
+    container: g3-app-shell / inline-size;
     display: flex;
     flex: 1 1 auto;
     flex-direction: column;
@@ -6927,7 +6929,11 @@ button.g3-chip:focus-visible {
        left the title two letters. */
     .g3-header-with-toolbar > .g3-header-bar {
         display: grid;
-        grid-template-columns: minmax(12rem, 1fr) minmax(16rem, 30rem) minmax(max-content, 1fr);
+        /* The toolbar takes what its content needs (16rem to 30rem), and the
+           sides share the rest equally, so it stays centred. A fixed 30rem
+           track grew before the title's flexible one and cut a title that
+           had room beside a narrow segment group. */
+        grid-template-columns: minmax(12rem, 1fr) minmax(16rem, max-content) minmax(max-content, 1fr);
         grid-template-rows: minmax(4rem, auto);
         align-items: center;
         column-gap: 0.75rem;
@@ -6962,6 +6968,7 @@ button.g3-chip:focus-visible {
         grid-row: 1;
         align-self: center;
         justify-content: center;
+        max-width: 30rem;
         min-height: 0;
         padding: 0.5rem 0;
     }

@@ -55,7 +55,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Page`, the root of a page beside a `NavigationDrawer` or pushing
   `SideSheet`, like Ionic's `ion-page`: it stacks a `Header` over a `Content`
   that scrolls in the rest of the height. The drawer and side sheet docs use
-  it for the page element they narrow or move.
+  it for the page element they narrow or move. A page is a layout scope, so
+  `use_layout_size()` and the responsive rules inside it measure the page,
+  which beside an open drawer is narrower than the app.
 - `Toolbar`, one row of a `Header`'s toolbar, like Ionic's `ion-toolbar`.
   Several in the `toolbar` slot stack as rows, such as a searchbar over a
   segment group; a header with several rows keeps them below the title at
@@ -164,7 +166,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - On a header wide enough for one row, the end slot keeps its controls'
   natural width and the title keeps at least 12rem; when room is short the
   toolbar between them narrows first, down to 16rem. Just over 64rem, the
-  toolbar took its full width and left the title a couple of letters.
+  toolbar took its full width and left the title a couple of letters. The
+  toolbar is only as wide as its content needs (16rem to 30rem), so a long
+  title beside a two-option segment group is no longer cut while the
+  toolbar holds empty space.
 - A header's start and end columns are at least as wide as what they hold.
   A wide end slot (search, links, a picker) on a phone overflowed its half
   of the row and covered the title; the title now moves over and truncates.

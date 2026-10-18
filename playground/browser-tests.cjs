@@ -125,6 +125,47 @@ async function main() {
       await nestedPage.close();
       assert.deepEqual(errors, []);
     } finally { await responsive.close(); }
+    // The header fits the page, not the window: beside an open drawer a wide
+    // window holds a narrow page, which once hid the title entirely at 771px.
+    // Every width, drawer open and closed, shows the title (whole, or cut
+    // only at the header's own 220px title cap) with no control over it or
+    // past the header's edge.
+    for (const width of [375, 600, 771, 900, 1055, 1056, 1315, 1600]) {
+      const context = await browser.newContext({ viewport: { width, height: 800 }, reducedMotion: 'reduce' });
+      try {
+        const page = await context.newPage();
+        await page.goto(`${origin}/docs/platforms`);
+        await singleRoot(page);
+        const header = page.locator('.playground-header');
+        await header.locator('.g3-header-title-text').waitFor();
+        const pageWidth = () => page.locator('.g3-page').evaluate(el => Math.round(el.getBoundingClientRect().width));
+        for (const toggled of [false, true]) {
+          if (toggled) {
+            const before = await pageWidth();
+            await page.getByRole('button', { name: 'Toggle navigation menu', exact: true }).click();
+            // A side sheet overlays the page; a drawer resizes it.
+            for (let i = 0; i < 50 && await pageWidth() === before && await page.locator('.g3-drawer').count(); i++) await page.waitForTimeout(30);
+          }
+          await page.waitForTimeout(300);
+          const fit = await header.evaluate(h => {
+            const box = h.getBoundingClientRect();
+            const title = h.querySelector('.g3-header-title-text');
+            const t = title.getBoundingClientRect();
+            const controls = [...h.querySelectorAll('button, .g3-select, [role="radiogroup"]')].map(el => el.getBoundingClientRect()).filter(b => b.width > 0);
+            return {
+              title: title.clientWidth >= Math.min(title.scrollWidth - 1, 200),
+              overlap: controls.some(b => b.left < t.right - 1 && b.right > t.left + 1 && b.top < t.bottom - 1 && b.bottom > t.top + 1),
+              overflow: [...h.querySelectorAll('*')].some(el => { const b = el.getBoundingClientRect(); return b.width > 0 && (b.right > box.right + 1 || b.left < box.left - 1); }),
+            };
+          });
+          const where = `${width}px window, ${toggled ? 'drawer toggled' : 'default drawer'}`;
+          assert.ok(fit.title, `the header title keeps its room (${where})`);
+          assert.ok(!fit.overlap, `no header control covers the title (${where})`);
+          assert.ok(!fit.overflow, `nothing overflows the header (${where})`);
+        }
+      } finally { await context.close(); }
+    }
+    console.log('PASS header fits its page at every width, drawer open and closed');
     // An app that starts below other content and runs past the window keeps
     // its bottom sheet on screen: the confined layer is clipped to the viewport.
     const offset = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
