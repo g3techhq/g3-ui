@@ -202,7 +202,7 @@ fn Playground() -> Element {
     let theme = use_signal(|| PlaygroundTheme::Blue);
     let custom_theme = use_signal(|| PlaygroundTheme::Blue.to_theme(&G3Theme::default_light()));
     let mut playing = use_signal(|| false);
-    let mut search_open = use_signal(|| false);
+    let search_open = use_signal(|| false);
     let search_value = use_signal(String::new);
     let mut shortcut = use_signal(|| None::<document::Eval>);
     use_effect(move || {
@@ -304,11 +304,6 @@ fn Playground() -> Element {
             playing.set(false);
         });
     };
-    let theme_options = PlaygroundTheme::all()
-        .iter()
-        .copied()
-        .map(|theme| SelectOption::new(theme, theme.label()))
-        .collect::<Vec<_>>();
     provide_context(PlaygroundSettings {
         mode,
         viewport,
@@ -337,101 +332,13 @@ fn Playground() -> Element {
             dismiss_on_select: is_compact,
         }
     };
-    // The preview size and theme pickers, a small gap apart. In the header's
-    // end slot where there is room, in its toolbar row on a phone.
-    let pickers = rsx! {
-        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
-            if showing_preview {
-                Select {
-                    value: viewport,
-                    aria_label: "Viewport",
-                    width: g3_ui::SelectWidth::Fit,
-                    options: vec![
-                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
-                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
-                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
-                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
-                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
-                    ],
-                }
-            }
-            Select {
-                value: theme,
-                aria_label: "Theme",
-                width: g3_ui::SelectWidth::Fit,
-                options: theme_options,
-            }
-        }
-    };
     rsx! {
         AppWrapper {
             theme: theme().to_theme(&custom_theme()),
             mode: active_mode,
             route_transition_overlay: false,
             g3_ui::Page { class: (showing_guide || showing_generator || showing_landing).then(|| "playground-document-page".to_string()),
-                Header {
-                    title: page_title,
-                    mode: active_mode,
-                    class: "playground-header",
-                    start: rsx! {
-                        Button {
-                            fill: ButtonFill::Clear,
-                            aria_label: "Toggle navigation menu",
-                            aria_expanded: selector_open(),
-                            onclick: move |_| selector_open.toggle(),
-                            MenuIcon { size: 22 }
-                        }
-                    },
-                    end: rsx! {
-                        // The pickers, then search at the far end. On a phone
-                        // the pickers move down into the toolbar row.
-                        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Md, align: g3_ui::StackAlign::Center,
-                            if !is_compact {
-                                {pickers.clone()}
-                            }
-                            if is_compact {
-                                Button {
-                                    id: "playground-search-trigger",
-                                    fill: ButtonFill::Clear,
-                                    aria_label: "Search documentation",
-                                    onclick: move |_| search_open.set(true),
-                                    Search { size: 20 }
-                                }
-                            } else {
-                                Button {
-                                    id: "playground-search-trigger",
-                                    fill: ButtonFill::Outline,
-                                    size: ButtonSize::Sm,
-                                    aria_label: "Search documentation",
-                                    start: rsx! { Search { size: 16 } },
-                                    end: rsx! {
-                                        g3_ui::Text { variant: g3_ui::TextVariant::Caption, tone: g3_ui::TextTone::Secondary, "Ctrl K" }
-                                    },
-                                    onclick: move |_| search_open.set(true),
-                                    "Search"
-                                }
-                            }
-                        }
-                    },
-                    toolbar: (showing_preview || is_compact).then(|| {
-                        let platform = rsx! {
-                            SegmentGroup { value: mode, aria_label: "Platform",
-                                SegmentButton { value: ComponentMode::Md, "MD" }
-                                SegmentButton { value: ComponentMode::Ios, "iOS" }
-                            }
-                        };
-                        // On a phone the pickers get a toolbar row of their
-                        // own, over the platform segment.
-                        match (is_compact, showing_preview) {
-                            (true, true) => rsx! {
-                                g3_ui::Toolbar { {pickers.clone()} }
-                                g3_ui::Toolbar { {platform} }
-                            },
-                            (true, false) => pickers.clone(),
-                            (false, _) => platform,
-                        }
-                    }),
-                }
+                PlaygroundHeader { title: page_title, showing_preview, selector_open, search_open }
                 g3_ui::Content { class: "playground-main", footer_space: false,
                 main { g3_ui::Stack { gap: g3_ui::Space::Lg,
                     // Keys only take effect in a list, so this is a list of one.
@@ -512,6 +419,120 @@ fn Playground() -> Element {
                 }
             }
             DocsSearch { open: search_open, value: search_value, selector_open }
+        }
+    }
+}
+
+/// The playground's header: menu, page title, the preview size and theme
+/// pickers, and search, with the platform segment as its toolbar.
+///
+/// Rendered inside the `Page`, so it lays out by the page's own width: beside
+/// an open drawer the page can be compact in a wide window. There the pickers
+/// drop to a toolbar row of their own and search shrinks to its icon, so the
+/// title row keeps room for the title.
+#[component]
+fn PlaygroundHeader(
+    title: String,
+    showing_preview: bool,
+    mut selector_open: Signal<bool>,
+    mut search_open: Signal<bool>,
+) -> Element {
+    let settings = use_context::<PlaygroundSettings>();
+    let (mode, viewport, theme) = (settings.mode, settings.viewport, settings.theme);
+    let compact = g3_ui::use_layout_size() == g3_ui::LayoutSize::Compact;
+    let theme_options = PlaygroundTheme::all()
+        .iter()
+        .copied()
+        .map(|theme| SelectOption::new(theme, theme.label()))
+        .collect::<Vec<_>>();
+    // The preview size and theme pickers, a small gap apart.
+    let pickers = rsx! {
+        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
+            if showing_preview {
+                Select {
+                    value: viewport,
+                    aria_label: "Viewport",
+                    width: g3_ui::SelectWidth::Fit,
+                    options: vec![
+                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
+                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
+                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
+                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
+                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
+                    ],
+                }
+            }
+            Select {
+                value: theme,
+                aria_label: "Theme",
+                width: g3_ui::SelectWidth::Fit,
+                options: theme_options,
+            }
+        }
+    };
+    rsx! {
+        Header {
+            title,
+            mode: mode(),
+            class: "playground-header",
+            start: rsx! {
+                Button {
+                    fill: ButtonFill::Clear,
+                    aria_label: "Toggle navigation menu",
+                    aria_expanded: selector_open(),
+                    onclick: move |_| selector_open.toggle(),
+                    MenuIcon { size: 22 }
+                }
+            },
+            end: rsx! {
+                // The pickers, then search at the far end. On a phone
+                // the pickers move down into the toolbar row.
+                g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Md, align: g3_ui::StackAlign::Center,
+                    if !compact {
+                        {pickers.clone()}
+                    }
+                    if compact {
+                        Button {
+                            id: "playground-search-trigger",
+                            fill: ButtonFill::Clear,
+                            aria_label: "Search documentation",
+                            onclick: move |_| search_open.set(true),
+                            Search { size: 20 }
+                        }
+                    } else {
+                        Button {
+                            id: "playground-search-trigger",
+                            fill: ButtonFill::Outline,
+                            size: ButtonSize::Sm,
+                            aria_label: "Search documentation",
+                            start: rsx! { Search { size: 16 } },
+                            end: rsx! {
+                                g3_ui::Text { variant: g3_ui::TextVariant::Caption, tone: g3_ui::TextTone::Secondary, "Ctrl K" }
+                            },
+                            onclick: move |_| search_open.set(true),
+                            "Search"
+                        }
+                    }
+                }
+            },
+            toolbar: (showing_preview || compact).then(|| {
+                let platform = rsx! {
+                    SegmentGroup { value: mode, aria_label: "Platform",
+                        SegmentButton { value: ComponentMode::Md, "MD" }
+                        SegmentButton { value: ComponentMode::Ios, "iOS" }
+                    }
+                };
+                // On a phone the pickers get a toolbar row of their
+                // own, over the platform segment.
+                match (compact, showing_preview) {
+                    (true, true) => rsx! {
+                        g3_ui::Toolbar { {pickers.clone()} }
+                        g3_ui::Toolbar { {platform} }
+                    },
+                    (true, false) => pickers.clone(),
+                    (false, _) => platform,
+                }
+            }),
         }
     }
 }

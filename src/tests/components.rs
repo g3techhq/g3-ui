@@ -232,6 +232,12 @@ mod shell {
         let html = render(app);
         let page = element_with_class(&html, "g3-page");
         assert!(page.contains("rounds"));
+        // A layout scope: the size script finds it by id, and the stylesheet
+        // makes it the container its responsive rules measure.
+        assert!(page.contains("id=\""));
+        let css = include_str!("../../assets/g3-ui.css");
+        let rule = &css[css.find(".g3-page {").unwrap()..];
+        assert!(rule[..rule.find('}').unwrap()].contains("container: g3-app-shell / inline-size;"));
         let (header, content) = (
             html.find("g3-header").unwrap(),
             html.find("g3-content").unwrap(),
