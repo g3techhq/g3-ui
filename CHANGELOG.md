@@ -169,7 +169,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   toolbar took its full width and left the title a couple of letters. The
   toolbar is only as wide as its content needs (16rem to 30rem), so a long
   title beside a two-option segment group is no longer cut while the
-  toolbar holds empty space.
+  toolbar holds empty space. A Material toolbar `SegmentGroup` lays its
+  buttons out as equal grid columns, as the iOS one does, so its natural
+  width fits its longest label in every button.
 - A header's start and end columns are at least as wide as what they hold.
   A wide end slot (search, links, a picker) on a phone overflowed its half
   of the row and covered the title; the title now moves over and truncates.

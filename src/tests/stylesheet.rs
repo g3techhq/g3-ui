@@ -337,6 +337,21 @@ fn a_header_goes_single_row_by_its_own_width() {
 }
 
 #[test]
+fn a_one_row_header_sizes_its_toolbar_to_equal_segments() {
+    // A fixed 30rem toolbar track grew before the title's and cut a title
+    // that had room; a track sized to the sum of the labels cut the longer
+    // ones in an equal-width strip. The track follows its content, and the
+    // strip's content is its widest label times the count.
+    assert!(STYLESHEET.contains(
+        "grid-template-columns: minmax(12rem, 1fr) minmax(16rem, max-content) minmax(max-content, 1fr);"
+    ));
+    let strip = rule_body(
+        ":is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md:not(.g3-segment-scrollable)",
+    );
+    assert!(strip.contains("display: grid;") && strip.contains("grid-auto-columns: 1fr;"));
+}
+
+#[test]
 fn a_material_searchbar_has_its_own_tone() {
     assert!(rule_body(".g3-searchbar-md .g3-input").contains("background: color-mix("));
 }
