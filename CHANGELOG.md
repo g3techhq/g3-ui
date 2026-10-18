@@ -56,6 +56,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `SideSheet`, like Ionic's `ion-page`: it stacks a `Header` over a `Content`
   that scrolls in the rest of the height. The drawer and side sheet docs use
   it for the page element they narrow or move.
+- `Toolbar`, one row of a `Header`'s toolbar, like Ionic's `ion-toolbar`.
+  Several in the `toolbar` slot stack as rows, such as a searchbar over a
+  segment group; a header with several rows keeps them below the title at
+  every width.
 - `wrap` on `Table`, for cells of prose such as descriptions: they wrap and
   sit at the start and top of the cell instead of one centred line.
 - `color` on `Chip`, `Toggle`, `Checkbox`, `Radio`, `Range`, `Progress`,
@@ -162,7 +166,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of the row and covered the title; the title now moves over and truncates.
 - A `SegmentButton` label too long for its button ends in an ellipsis. The
   label now sits in its own `g3-segment-btn-label` box; on the flex button
-  `text-overflow` did nothing, and the text was clipped at both ends.
+  `text-overflow` did nothing, and the text was clipped at both ends. An iOS
+  segment pill in a toolbar sizes its equal segments to the widest label.
 - A `Header` with no title renders no `h1`. Its title column was an empty
   heading, which a screen reader announced as a blank page title; the column
   stays, as a plain element, so the slots keep their places.
@@ -213,9 +218,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Playground
 
 - The playground is built from the library it shows: its shell is
-  `AppWrapper`'s layout with a `Page` and `Content`, its header lays itself
-  out, with the viewport picker beside the theme, and its menu, links,
-  search, drawer heading,
+  `AppWrapper`'s layout with a `Page` and `Content`; its header holds the
+  viewport and theme pickers, which drop to a `Toolbar` row of their own on
+  a phone; and its menu, links, search, drawer heading,
   demo controls, theme editor, landing cards and props tables are g3-ui
   components. About half of its stylesheet, which restyled or rebuilt them,
   is gone.

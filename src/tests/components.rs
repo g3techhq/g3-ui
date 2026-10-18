@@ -174,6 +174,34 @@ mod shell {
     }
 
     #[test]
+    fn a_header_toolbar_can_stack_rows() {
+        fn app() -> Element {
+            let tab = use_signal(|| 0_u8);
+            let query = use_signal(String::new);
+            rsx! {
+                Header {
+                    title: "Players",
+                    toolbar: rsx! {
+                        Toolbar { Searchbar { value: query, aria_label: "Search players" } }
+                        Toolbar {
+                            SegmentGroup { value: tab, aria_label: "Show",
+                                SegmentButton { value: 0_u8, "All" }
+                                SegmentButton { value: 1_u8, "Friends" }
+                            }
+                        }
+                    },
+                }
+            }
+        }
+        let html = render(app);
+        assert_eq!(html.matches("g3-header-toolbar-row").count(), 2);
+        // A segment group in a row still takes its toolbar layout.
+        assert!(html.contains("g3-segment-toolbar"));
+        let css = include_str!("../../assets/g3-ui.css");
+        assert!(css.contains(".g3-header-toolbar:has(> .g3-header-toolbar-row)"));
+    }
+
+    #[test]
     fn a_header_without_a_title_has_no_empty_heading() {
         fn app() -> Element {
             rsx! {
