@@ -139,6 +139,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A `Header` with a toolbar goes single-row only when the header itself is
+  at least `64rem` wide, rather than the shell. Beside an expanded navigation
+  rail, a `64rem` shell left the header far narrower, and the single row
+  truncated the title and squeezed the end slot (a search box showed a few
+  letters). Headers in narrow sheets keep two rows too. The row and toolbar
+  now sit in a `g3-header-bar` wrapper, which is `display: contents` except
+  in the single-row layout.
+- The Material `Searchbar` sits one tonal step above its surface. It had
+  the surface's own color with only a shadow for an edge, so in a header on
+  a dark theme the field could not be told apart from the bar.
 - Taps on buttons inside swipeable `Tabs` reach the button: the tab swipe is
   recognized in the web view and takes pointer capture only once the touch
   moves sideways. Leaving panels are inert, a replaced selection signal is
