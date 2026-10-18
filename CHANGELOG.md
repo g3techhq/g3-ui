@@ -161,6 +161,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The Material `Searchbar` sits one tonal step above its surface. It had
   the surface's own color with only a shadow for an edge, so in a header on
   a dark theme the field could not be told apart from the bar.
+- On a header wide enough for one row, the end slot keeps its controls'
+  natural width and the title keeps at least 12rem; when room is short the
+  toolbar between them narrows first, down to 16rem. Just over 64rem, the
+  toolbar took its full width and left the title a couple of letters.
 - A header's start and end columns are at least as wide as what they hold.
   A wide end slot (search, links, a picker) on a phone overflowed its half
   of the row and covered the title; the title now moves over and truncates.
