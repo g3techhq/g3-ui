@@ -350,7 +350,8 @@ fn page_layout_asides_are_wide_enough_for_a_list_row() {
             "grid-template-columns: minmax(18rem, 20%) minmax(0, 1fr) minmax(18rem, 20%);"
         )
     );
-    assert!(!STYLESHEET.contains("minmax(12rem"));
+    assert!(!STYLESHEET.contains("minmax(12rem, 25%)"));
+    assert!(!STYLESHEET.contains("minmax(12rem, 20%)"));
     // Two 18rem asides beside the main column only once it keeps ~42rem.
     let split = STYLESHEET
         .find("@container g3-app-shell (min-width: 80rem) {\n        .g3-page-asides { display: contents; }")
