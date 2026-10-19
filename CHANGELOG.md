@@ -6,6 +6,19 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Headers, tab bars, sheets and toasts clear the Android status bar and
+  gesture bar. Every safe-area inset reads `--g3-safe-area-*` before
+  `env(safe-area-inset-*)`, which Android WebViews before Chrome's
+  edge-to-edge support report as 0. g3-native-plugins' `safe-area` feature
+  publishes the variables; without it nothing changes.
+
+- The app shell fills the window edge to edge. The page's `html` and `body`
+  margins are reset under an `AppWrapper` layout, so an app without a CSS reset
+  of its own (no Tailwind preflight) no longer shows an 8px frame around the
+  app.
+
 ## [0.6.0] - 2026-10-18
 
 ### Breaking changes

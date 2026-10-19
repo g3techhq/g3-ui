@@ -316,7 +316,10 @@ pub fn AppWrapper(
 /// Repeats Dioxus's own viewport tag with `viewport-fit=cover` added; the
 /// later tag wins. Without it a WebView reports every
 /// `env(safe-area-inset-*)` as 0, and on Android 15, which draws apps
-/// edge-to-edge, the status bar then covers the header.
+/// edge-to-edge, the status bar then covers the header. Older Android
+/// WebViews report 0 even with it; g3-native-plugins' `safe-area` feature
+/// publishes the real insets as `--g3-safe-area-*`, which the stylesheet
+/// reads first.
 #[component]
 fn ViewportMeta() -> Element {
     rsx! {

@@ -109,6 +109,21 @@ body.g3-overlay-scroll-locked {
     overscroll-behavior: none;
 }
 
+/* Safe areas: every inset below reads `--g3-safe-area-*` first, then
+   `env(safe-area-inset-*)`. Android WebViews before Chrome's edge-to-edge
+   support report `env()` as 0 under an edge-to-edge window, so a native
+   layer publishes the real insets in those variables (g3-native-plugins'
+   `safe-area` feature). Elsewhere they are unset and `env()` answers. */
+
+/* The app shell owns the viewport, so the page around it has no margin.
+   Otherwise the browser's default 8px body margin frames the app on every
+   side: apps with a Tailwind preflight never see it, apps without one do.
+   Zero specificity, so an app's own reset still wins. */
+:where(html, body):has(.g3-app-shell) {
+    margin: 0;
+    padding: 0;
+}
+
 .g3-app-shell::-webkit-scrollbar,
 .g3-app-shell *::-webkit-scrollbar {
     display: none;
@@ -2236,10 +2251,10 @@ button.g3-chip:focus-visible {
 /* Bottom sheets */
 .g3-sheet-bottom {
     --g3-sheet-enter-x: 0;
-    --g3-sheet-enter-y: calc(100% + max(3rem, env(safe-area-inset-bottom)));
+    --g3-sheet-enter-y: calc(100% + max(3rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))));
     inset-inline: 0;
     bottom: 0;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--g3-safe-area-bottom, env(safe-area-inset-bottom));
 }
 
 /* The cap is a custom property so an app can size one sheet from its own
@@ -2259,8 +2274,8 @@ button.g3-chip:focus-visible {
     /* Percentages resolve against the app shell, the sheet's containing
        block, so a detent of 0.9 is 90% of the app rather than of the browser
        window. The ceiling leaves the status bar clear. */
-    height: calc(var(--g3-sheet-detent, 1) * var(--g3-sheet-detent-max, calc(100% - max(env(safe-area-inset-top), 0.75rem))));
-    max-height: calc(100% - max(env(safe-area-inset-top), 0.75rem));
+    height: calc(var(--g3-sheet-detent, 1) * var(--g3-sheet-detent-max, calc(100% - max(var(--g3-safe-area-top, env(safe-area-inset-top)), 0.75rem))));
+    max-height: calc(100% - max(var(--g3-safe-area-top, env(safe-area-inset-top)), 0.75rem));
     transition: transform var(--g3-sheet-duration) var(--g3-sheet-easing),
                 height var(--g3-sheet-duration) var(--g3-sheet-easing),
                 visibility 0s linear var(--g3-sheet-hide-delay, 0s);
@@ -2373,7 +2388,7 @@ button.g3-chip:focus-visible {
 .g3-sheet-side .g3-sheet-content,
 .g3-drawer .g3-sheet-content {
     flex: 1 1 auto;
-    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-top: max(1rem, var(--g3-safe-area-top, env(safe-area-inset-top)));
 }
 
 
@@ -2717,7 +2732,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-fab-vertical-bottom {
-    bottom: max(1rem, env(safe-area-inset-bottom));
+    bottom: max(1rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
 }
 
 .g3-fab-horizontal-start {
@@ -3026,7 +3041,7 @@ button.g3-chip:focus-visible {
    surfaces that do blur (.g3-sheet-ios, .g3-toast-ios, .g3-fab-translucent)
    pair it with a color-mix background and hold no fixed children. */
 .g3-header-ios {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--g3-safe-area-top, env(safe-area-inset-top));
     background: var(--g3-color-card);
     border-bottom: 0.5px solid var(--g3-color-border);
     box-shadow: none;
@@ -3034,7 +3049,7 @@ button.g3-chip:focus-visible {
 .g3-header-md {
     /* Android 15 draws apps edge-to-edge, so the status bar sits over the
        page just as the iOS notch does. */
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--g3-safe-area-top, env(safe-area-inset-top));
     background: var(--g3-color-card);
     box-shadow: 0 2px 8px var(--g3-color-shadow);
 }
@@ -4734,8 +4749,8 @@ button.g3-chip:focus-visible {
 .g3-toast {
     position: fixed;
     z-index: var(--g3-z-toast);
-    left: max(1rem, env(safe-area-inset-left));
-    right: max(1rem, env(safe-area-inset-right));
+    left: max(1rem, var(--g3-safe-area-left, env(safe-area-inset-left)));
+    right: max(1rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
@@ -4781,7 +4796,7 @@ button.g3-chip:focus-visible {
    its own along an edge, such as a mini player, sets `--g3-toast-top` or
    `--g3-toast-bottom` to where its toasts should sit; that wins over both. */
 .g3-toast-top {
-    top: var(--g3-toast-top, max(1rem, env(safe-area-inset-top)));
+    top: var(--g3-toast-top, max(1rem, var(--g3-safe-area-top, env(safe-area-inset-top))));
 }
 
 .g3-toast-middle {
@@ -4794,7 +4809,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-toast-bottom {
-    bottom: var(--g3-toast-bottom, var(--g3-toast-bar-offset, max(1rem, env(safe-area-inset-bottom))));
+    bottom: var(--g3-toast-bottom, var(--g3-toast-bar-offset, max(1rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)))));
 }
 
 /* The bar's height by mode (its border, padding and items), plus a gap.
@@ -4804,11 +4819,11 @@ button.g3-chip:focus-visible {
 }
 
 .g3-app[data-g3-bar][data-g3-mode="ios"] {
-    --g3-bar-clearance: calc(1px + 3.625rem + max(0.375rem, env(safe-area-inset-bottom)) + 0.5rem);
+    --g3-bar-clearance: calc(1px + 3.625rem + max(0.375rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))) + 0.5rem);
 }
 
 .g3-app[data-g3-bar][data-g3-mode="md"] {
-    --g3-bar-clearance: calc(1px + 4.25rem + max(0.125rem, env(safe-area-inset-bottom)) + 0.5rem);
+    --g3-bar-clearance: calc(1px + 4.25rem + max(0.125rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))) + 0.5rem);
 }
 
 .g3-app[data-g3-bar="always"] .g3-toast-bottom {
@@ -5168,7 +5183,7 @@ button.g3-chip:focus-visible {
     grid-auto-flow: column;
     grid-auto-columns: minmax(0, 1fr);
     align-items: stretch;
-    padding: 0.375rem max(0.5rem, env(safe-area-inset-left)) max(0.375rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-right));
+    padding: 0.375rem max(0.5rem, var(--g3-safe-area-left, env(safe-area-inset-left))) max(0.375rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))) max(0.5rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
     border-top: 1px solid var(--g3-color-border);
     background: color-mix(in srgb, var(--g3-color-card) 96%, transparent);
     box-shadow: 0 -8px 22px color-mix(in srgb, var(--g3-color-shadow) 36%, transparent);
@@ -5180,7 +5195,7 @@ button.g3-chip:focus-visible {
 }
 
 .g3-nav-md {
-    padding: 0.25rem max(0.25rem, env(safe-area-inset-left)) max(0.125rem, env(safe-area-inset-bottom)) max(0.25rem, env(safe-area-inset-right));
+    padding: 0.25rem max(0.25rem, var(--g3-safe-area-left, env(safe-area-inset-left))) max(0.125rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))) max(0.25rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
     background: var(--g3-color-card);
     box-shadow: 0 -2px 8px color-mix(in srgb, var(--g3-color-shadow) 18%, transparent);
 }
@@ -5350,7 +5365,7 @@ button.g3-chip:focus-visible {
     align-items: center;
     gap: 0.375rem;
     min-height: 0;
-    padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+    padding: max(0.75rem, var(--g3-safe-area-top, env(safe-area-inset-top))) 0.5rem max(0.75rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
     /* Both axes stay visible: `overflow-y: auto` would turn overflow-x to
        auto too and clip the hover labels. */
     overflow: visible;
@@ -5828,7 +5843,7 @@ button.g3-chip:focus-visible {
     max-width: none;
     min-width: 0;
     max-height: min(60dvh, 26rem);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--g3-safe-area-bottom, env(safe-area-inset-bottom));
     border-width: 0;
     border-radius: 16px 16px 0 0;
     transform-origin: bottom;
@@ -6523,7 +6538,7 @@ button.g3-chip:focus-visible {
         align-items: center;
         gap: 0.375rem;
         min-height: 0;
-        padding: max(0.75rem, env(safe-area-inset-top)) 0.5rem max(0.75rem, env(safe-area-inset-bottom));
+        padding: max(0.75rem, var(--g3-safe-area-top, env(safe-area-inset-top))) 0.5rem max(0.75rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
         /* Both axes stay visible: `overflow-y: auto` would turn overflow-x to
            auto too and clip the hover labels. */
         overflow: visible;
