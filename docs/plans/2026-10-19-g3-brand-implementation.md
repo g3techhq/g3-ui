@@ -98,6 +98,17 @@ Additional committed milestones on main:
   scores/seats/bets and durable Apple grant capture. Independent restore replay
   and broader processor handling remain work.
 
+- Greenside `10f18a3`: public About/catalog and installed-metadata update notices
+  under the host theme, validated public installation cache, foreground refresh
+  and policy-specific snoozes. Help/legal routes remain public. Shared legal
+  receipt/change-notice integration remains work.
+  Private Git access is wired into Docker and mobile/CI with scoped GitHub App
+  tokens; source-bearing CI cache uploads are removed and forks receive no access.
+  Eight Python protocol/cleanup tests, four workflow checks and Dockerfile checks
+  pass. A real BuildKit-secret probe fetched the exact private source pin, refused
+  a missing secret, and left no credential in image metadata/history. Its image
+  was removed. This is not a full cold consumer image/GitHub App installation test.
+
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
 Platform tests now total 32. Live queued-form interaction remains unverified;
@@ -156,7 +167,7 @@ not leave local path dependencies in its portable lockfile.
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: 342 ordinary server and 183 web tests, strict server/web/mobile and
+- Greenside Partee: 347 ordinary server and 188 web tests, strict server/web/mobile and
   WebAssembly checks pass. Account download markup was inspected in both modes,
   light/dark, at phone and wide widths, including keyboard focus and loading.
   Android aarch64 compilation/lint passed after checking the real sharing branch.
@@ -195,7 +206,8 @@ the scoped GitHub App. No organization credentials were created or changed.
    are implemented but require the production checks above. Required store
    notices are advisory UI, not backend authorization. Run the added interactive
    browser tests and actual mobile store-navigation checks. Then integrate other
-   apps after their readiness checks.
+   apps after their readiness checks. Greenside now has the catalog/update host;
+   finish its account-bound legal revisions and independent recovery hooks.
 4. Complete each app's data inventory, secure export, verified deletion/correction,
    consent withdrawal, processor handling, deadlines and idempotent recovery hooks.
    Shared contracts/UI do not implement those app-specific operations.
