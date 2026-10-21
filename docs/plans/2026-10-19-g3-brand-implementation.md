@@ -69,19 +69,33 @@ Additional committed milestones on main:
   quarantine closed for reviewed reconciliation.
 - Media Mancer `2376799`: Docker contexts exclude local catalog indexes,
   environment files and test reports. An actual context image check passed.
+- Media Mancer `2912b0b`, `cf17fdf`: actual Linux application image, encrypted
+  old-snapshot correction/deletion recovery drill, and CI publication gate. The
+  local drill passed with the exact CI crypto helper; no image was pushed and
+  the changed publication workflow has not run on GitHub.
+- Greenside `4f8a513`, `c0a5616`, `551750e`: fixed billing failure log labels,
+  bounded owner-projected account download and transactionally captured Apple
+  grants with durable revocation retries. Completed shared score subjects remain
+  intact. Broader deletion/recovery and processor handling remain work.
+- Greenside `015e6cc`: tracked sessions, transactionally retired identities,
+  durable legacy-payload cleanup and bounded startup backfill. Portable public
+  dependency pins pass 310 server/182 web tests and strict checks, including
+  WebAssembly and Android. Real HTTP tests verify two warmed devices lose access
+  while another account remains signed in. Content write guards and independent
+  restore replay remain work.
 
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
 Platform tests now total 32. Live queued-form interaction remains unverified;
-no dx serve was started. A local Linux image build and encrypted synthetic-backup
-drill are in progress; these do not verify actual B2 retention or production.
+no dx serve was started. The local Linux image and encrypted synthetic-backup
+drill passed; these do not verify actual B2 retention or production.
 
 The deletion milestone passed the 237-test server suite (including all isolated
 DB fixtures), 104 web tests and strict server/web/WebAssembly lint. The subsequent
 two replay tests and strict server lint also pass. Platform tests now total 31.
 Receipt previews were checked in iOS/Material, light/dark, at phone and wide sizes.
 These are static actual-route previews; no dx serve or live interactive/device
-test was started. The actual Linux image, encrypted offsite restore, provider
+test was started. The later local Linux drill passes; encrypted offsite restore, provider
 retention, moderation/evidence procedures and production configuration remain
 unverified. Recovery and legal enforcement are disabled by default.
 Existing unrelated work is preserved. Media Mancer uses an
@@ -95,7 +109,7 @@ not leave local path dependencies in its portable lockfile.
   CI passes for the saved code commit.
 - Catalog UI: phone/wide layouts in iOS/Material and light/dark, including keyboard
   focus; static fixtures do not validate native browser/store navigation.
-- Platform: 28 Python tests pass in Linux, combined Compose configuration and Caddy
+- Platform: 32 Python tests pass, combined Compose configuration and Caddy
   parsing, actual age/SurrealDB export/import/replay drill with synthetic data, and
   Alloy 1.7.5 startup with an empty journal fixture. B2 fixtures cover scoped
   authorization, retention failures, pagination, expired tokens, hidden history,
@@ -117,15 +131,25 @@ not leave local path dependencies in its portable lockfile.
   syntax checks. Static actual-route previews inspected in all four appearances
   at 390×844 and 1440×900. Cold Docker fetching of pinned private/public dependencies
   passes with an ephemeral BuildKit secret; no secret mount or Git credential file
-  remains in the test image. This is not a full application image/mobile bundle or
-  GitHub App installation test. Interactive browser tests are added but not run:
+  remains in the test image. A later full Linux web/server image built successfully:
+  `media-mancer:privacy-local`, image ID
+  `sha256:ca8cba0065b42c4f467efc9fdce44ef99dbbbd2a61f6c718da137021c9571407`.
+  Its actual server CLI passed encrypted backup/import/correction/deletion replay
+  using synthetic data on a temporary internal Docker network, preserving another
+  account. Seven Python helper checks and workflow syntax validation pass. This
+  does not verify offsite storage, a mobile bundle or GitHub App installation.
+  Interactive browser tests are added but not run:
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: web/server/mobile checks, tests and strict lint pass from the
-  foundation verification. Its local mock HTTP tests required execution outside the
-  network sandbox. Windows verification uses AWS-LC's bundled assembler objects
-  where NASM is unavailable.
+- Greenside Partee: 310 server and 182 web tests, strict server/web/mobile and
+  WebAssembly checks pass. Account download markup was inspected in both modes,
+  light/dark, at phone and wide widths, including keyboard focus and loading.
+  Android aarch64 compilation/lint passed after checking the real sharing branch.
+  Actual DB fixtures cover projected downloads, cache headers, shared-scorecard
+  removal and durable Apple cleanup. Live hydrated save/share and Apple provider
+  calls remain unverified. Its local HTTP tests required execution outside the
+  network sandbox. Windows verification uses AWS-LC's bundled assembler objects.
 
 Earlier foundation checks used workspace g3 path patches. The Media Mancer pilot
 was additionally verified from outside that config scope with Rust 1.95.0, its
