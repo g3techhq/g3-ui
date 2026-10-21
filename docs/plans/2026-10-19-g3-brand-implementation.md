@@ -81,8 +81,22 @@ Additional committed milestones on main:
   durable legacy-payload cleanup and bounded startup backfill. Portable public
   dependency pins pass 310 server/182 web tests and strict checks, including
   WebAssembly and Android. Real HTTP tests verify two warmed devices lose access
-  while another account remains signed in. Content write guards and independent
-  restore replay remain work.
+  while another account remains signed in.
+- Greenside `95d5063`, `f200628`, `5d6eca5`, `03064b6`, `78f955b`, `49b184b`
+  and `b06e95e`: retired-profile/reference guards; actor/game transactions for
+  scores, lobby actions, creation and pending cleanup; game revisions serialize
+  player edits with status/seat changes. Completed shared history stays intact.
+- Greenside `6d39167`: deletion confirmation describes shared scores, separate
+  operational/provider copies and App Store subscription cancellation accurately.
+- Greenside `fb7909e`: fresh transactional joins and organizer-only random owner
+  capabilities. Links expire after 24 hours, rotate on replacement and are
+  consumed with handoff; public-ID-derived legacy codes are rejected. Issuance,
+  link pages and sign-in redirects receive cache/referrer protections.
+- Greenside `c81f2d3`: primary account removal preserves bets still used by
+  surviving games and serializes with edits to all affected games. The expanded
+  real database-editor fixture verifies repeated removal, shared completed
+  scores/seats/bets and durable Apple grant capture. Independent restore replay
+  and broader processor handling remain work.
 
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
@@ -142,12 +156,18 @@ not leave local path dependencies in its portable lockfile.
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: 310 server and 182 web tests, strict server/web/mobile and
+- Greenside Partee: 342 ordinary server and 183 web tests, strict server/web/mobile and
   WebAssembly checks pass. Account download markup was inspected in both modes,
   light/dark, at phone and wide widths, including keyboard focus and loading.
   Android aarch64 compilation/lint passed after checking the real sharing branch.
-  Actual DB fixtures cover projected downloads, cache headers, shared-scorecard
-  removal and durable Apple cleanup. Live hydrated save/share and Apple provider
+  Invitation and deletion-confirmation fixtures were also inspected in both
+  modes/themes at phone and wide widths, with keyboard/loading states. Actual DB
+  fixtures cover projected downloads, cache/referrer headers, shared-scorecard
+  removal, atomic joins/ownership claims and durable Apple cleanup. They include
+  paused writer/state/removal races, last-seat/owner claim races and rollback.
+  The expanded isolated database-editor WebSocket drill exercises actual primary
+  removal, repeat removal, preserved shared bets/scores and Apple capture.
+  Live hydrated invitation creation/save/share and Apple provider
   calls remain unverified. Its local HTTP tests required execution outside the
   network sandbox. Windows verification uses AWS-LC's bundled assembler objects.
 
