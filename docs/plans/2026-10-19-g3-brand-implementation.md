@@ -95,19 +95,56 @@ Additional committed milestones on main:
 - Greenside `c81f2d3`: primary account removal preserves bets still used by
   surviving games and serializes with edits to all affected games. The expanded
   real database-editor fixture verifies repeated removal, shared completed
-  scores/seats/bets and durable Apple grant capture. Independent restore replay
-  and broader processor handling remain work.
+  scores/seats/bets and durable Apple grant capture. The later `cbdea58` milestone
+  adds deletion-only primary replay; live ledger/processor handling remains work.
 
 - Greenside `10f18a3`: public About/catalog and installed-metadata update notices
   under the host theme, validated public installation cache, foreground refresh
   and policy-specific snoozes. Help/legal routes remain public. Shared legal
-  receipt/change-notice integration remains work.
+  receipts/change notices followed in `1779b00`.
   Private Git access is wired into Docker and mobile/CI with scoped GitHub App
   tokens; source-bearing CI cache uploads are removed and forks receive no access.
   Eight Python protocol/cleanup tests, four workflow checks and Dockerfile checks
   pass. A real BuildKit-secret probe fetched the exact private source pin, refused
   a missing secret, and left no credential in image metadata/history. Its image
   was removed. This is not a full cold consumer image/GitHub App installation test.
+
+- Greenside `1779b00`: account-bound shared legal status, exact-set immutable
+  receipts, change notices and published policy pages with readable host layouts.
+  Private receipts are included only in bounded owner-projected exports and
+  removed with the primary account. Retired writers cannot recreate them.
+  The DB-editor drill verifies idempotent receipts, current-set changes and late
+  write rejection. No processing-consent purposes or backend terms enforcement
+  are enabled. Static legal fixtures were inspected in both modes/themes at
+  phone/wide sizes; hydrated and actual device interactions remain unverified.
+
+- Media Mancer `8832253` and Greenside `bfe13b7`: downloads, profile/setup drafts,
+  deletion confirmations and legal actions are bound to the account displayed
+  when opened. The server still derives the actor from the session and rejects
+  missing/mismatched bindings before data, ledger or provider work. Older clients
+  must refresh/update. Late responses cannot alter another account; legal
+  actions also reject older generations. Private legal/account responses are
+  no-store. Media Mancer passes 237 ordinary server/105 web tests; Greenside
+  passes 355 ordinary server/192 web tests, with strict checks for all builds.
+  Live account-switch interaction is still unverified.
+
+- Greenside `cbdea58` and g3-platform `f9ab859`: deletion-only primary replay
+  inside restore quarantine. The app command bundles release schemas, indexes
+  legacy sessions, keeps private preparation evidence and checks actual erasure,
+  ownership transfer, preserved completed scorecards and irreversible retirement.
+  Unknown fields, missing identity evidence, restored processor fields and any
+  pending Apple job keep quarantine closed. The wrapper requires a reviewed
+  digest-pinned app image and one verified internal scratch network; it forwards
+  no provider/ledger credentials and never enables traffic. An actual old logical
+  export/import drill proves private profile/session data is removed again while
+  another account and shared scores survive. Interruption, retry, conflicting
+  events and newly appearing provider evidence are tested. Greenside now passes
+  359 ordinary server/192 web tests, strict server/web/mobile checks, its isolated
+  snapshot drill, eight Python consumer checks and 11 Node checks. Platform tests
+  total 37. The live Greenside deletion endpoint still lacks independent ledger
+  recording; processor resolution, corrections/withdrawals and an encrypted
+  offsite/final-image drill remain required work. Retained signup date, handicap
+  and stable seat ID remain linked personal data and need retention review.
 
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
@@ -134,7 +171,7 @@ not leave local path dependencies in its portable lockfile.
   CI passes for the saved code commit.
 - Catalog UI: phone/wide layouts in iOS/Material and light/dark, including keyboard
   focus; static fixtures do not validate native browser/store navigation.
-- Platform: 32 Python tests pass, combined Compose configuration and Caddy
+- Platform: 37 Python tests pass, combined Compose configuration and Caddy
   parsing, actual age/SurrealDB export/import/replay drill with synthetic data, and
   Alloy 1.7.5 startup with an empty journal fixture. B2 fixtures cover scoped
   authorization, retention failures, pagination, expired tokens, hidden history,
@@ -167,7 +204,7 @@ not leave local path dependencies in its portable lockfile.
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: 347 ordinary server and 188 web tests, strict server/web/mobile and
+- Greenside Partee: 359 ordinary server and 192 web tests, strict server/web/mobile and
   WebAssembly checks pass. Account download markup was inspected in both modes,
   light/dark, at phone and wide widths, including keyboard focus and loading.
   Android aarch64 compilation/lint passed after checking the real sharing branch.
@@ -177,7 +214,9 @@ not leave local path dependencies in its portable lockfile.
   removal, atomic joins/ownership claims and durable Apple cleanup. They include
   paused writer/state/removal races, last-seat/owner claim races and rollback.
   The expanded isolated database-editor WebSocket drill exercises actual primary
-  removal, repeat removal, preserved shared bets/scores and Apple capture.
+  removal, repeat removal, preserved shared bets/scores and Apple capture. It now
+  also exports/imports an old logical snapshot and replays the independently held
+  deletion event twice. Full encrypted image/offsite recovery remains unverified.
   Live hydrated invitation creation/save/share and Apple provider
   calls remain unverified. Its local HTTP tests required execution outside the
   network sandbox. Windows verification uses AWS-LC's bundled assembler objects.
@@ -206,8 +245,10 @@ the scoped GitHub App. No organization credentials were created or changed.
    are implemented but require the production checks above. Required store
    notices are advisory UI, not backend authorization. Run the added interactive
    browser tests and actual mobile store-navigation checks. Then integrate other
-   apps after their readiness checks. Greenside now has the catalog/update host;
-   finish its account-bound legal revisions and independent recovery hooks.
+   apps after their readiness checks. Greenside now has the catalog/update host,
+   shared legal revisions and receipts. Finish its live independent recovery
+   recording, processor handling and the remaining recovery hooks. Its first
+   deletion-only primary replay is implemented with conservative quarantine holds.
 4. Complete each app's data inventory, secure export, verified deletion/correction,
    consent withdrawal, processor handling, deadlines and idempotent recovery hooks.
    Shared contracts/UI do not implement those app-specific operations.
