@@ -1,5 +1,5 @@
 //! Tabs that switch between panels.
-use super::gesture::{GestureScript, use_gesture};
+use super::gesture::{GestureScript, use_page_script};
 use super::hscroll::use_horizontal_scroll;
 use super::keyboard::use_roving_selection;
 use crate::state::{provide_live_context, use_element_id};
@@ -134,7 +134,7 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     provide_live_context(context);
     let tab_mode = crate::state::use_synced_signal(mode);
     use_context_provider(|| TabsMode(tab_mode));
-    let start_script = use_gesture(TABS_SCRIPT, id.clone(), |_| {});
+    use_page_script(TABS_SCRIPT);
     let swipe = swipe.unwrap_or(false);
     rsx! {
         div {
@@ -143,7 +143,6 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
             "data-animated": animated.to_string(),
             "data-direction": "forward",
             "data-swipe": swipe.to_string(),
-            onmounted: move |_| start_script.call(()),
             {children}
         }
     }

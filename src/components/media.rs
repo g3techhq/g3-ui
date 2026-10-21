@@ -1,4 +1,5 @@
 //! Images and tooltips.
+use super::gesture::{GestureScript, use_page_script};
 use super::overlay::js_string;
 use crate::state::use_element_id;
 use crate::theme::{classes, merge_classes};
@@ -14,8 +15,18 @@ pub enum ImgFit {
     Contain,
 }
 
+/// Marks each [`Img`] loaded or failed in the webview. See `img.js` for why.
+const IMG_SCRIPT: GestureScript = GestureScript {
+    name: "g3-ui.img",
+    source: include_str!("img.js"),
+};
+
 /// An image that loads lazily, holds its space with a placeholder while it
 /// loads, and shows `fallback` if it fails. Like Ionic's `ion-img`.
+///
+/// The wrapper's `data-state` (`loading`, `loaded` or `error`) is set in the
+/// page rather than by a Rust `onload`, which on native renderers would
+/// block the webview once per image.
 ///
 /// ```
 /// # use dioxus::prelude::*;
@@ -36,41 +47,44 @@ pub fn Img(
     aspect_ratio: Option<String>,
     /// How the image fills its box. Defaults to [`ImgFit::Cover`].
     fit: Option<ImgFit>,
-    /// Shown in place of an image that fails to load.
+    /// Shown in place of an image that fails to load. It is rendered, hidden,
+    /// alongside the image.
     fallback: Option<Element>,
     /// Load immediately rather than when near the viewport.
     eager: Option<bool>,
     /// Extra classes for the wrapper.
     class: Option<String>,
 ) -> Element {
-    let mut result = use_signal(|| None::<(String, bool)>);
-    let state = match result.read().as_ref() {
-        Some((loaded_src, true)) if loaded_src == &src => "loaded",
-        Some((loaded_src, false)) if loaded_src == &src => "error",
-        _ => "loading",
-    };
-    let loaded_src = src.clone();
-    let failed_src = src.clone();
+    use_page_script(IMG_SCRIPT);
     let fit_cls = match fit.unwrap_or_default() {
         ImgFit::Cover => "",
         ImgFit::Contain => "g3-img-contain",
     };
+    let cls = merge_classes(classes(["g3-img", fit_cls]), class.as_deref());
+    let style = aspect_ratio.map(|ratio| format!("aspect-ratio: {ratio};"));
+    let loading = if eager.unwrap_or(false) {
+        "eager"
+    } else {
+        "lazy"
+    };
     rsx! {
-        span {
-            class: merge_classes(classes(["g3-img", fit_cls]), class.as_deref()),
-            "data-state": state,
-            style: aspect_ratio.map(|ratio| format!("aspect-ratio: {ratio};")),
-            if state == "error" && fallback.is_some() {
-                {fallback}
-            } else {
+        // Keyed by `src`, so a new image gets a new wrapper that starts at
+        // "loading". The script owns `data-state` after that; Rust renders it
+        // once and never rewrites it.
+        for src in std::iter::once(src) {
+            span {
+                key: "{src}",
+                class: cls.clone(),
+                "data-state": "loading",
+                style: style.clone(),
                 img {
-                    key: "{src}",
                     src,
-                    alt,
-                    loading: if eager.unwrap_or(false) { "eager" } else { "lazy" },
+                    alt: alt.clone(),
+                    loading,
                     decoding: "async",
-                    onload: move |_| result.set(Some((loaded_src.clone(), true))),
-                    onerror: move |_| result.set(Some((failed_src.clone(), false))),
+                }
+                if let Some(fallback) = fallback.clone() {
+                    span { class: "g3-img-fallback", {fallback} }
                 }
             }
         }
@@ -178,6 +192,16 @@ fn MediaPlaygroundDemo() -> Element {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn img_script_is_a_page_script() {
+        super::super::gesture::assert_gesture_script(super::IMG_SCRIPT);
+        // Rust hears nothing from it: the stylesheet follows `data-state`.
+        assert!(!super::IMG_SCRIPT.source.contains("dioxus.send"));
     }
 }
 

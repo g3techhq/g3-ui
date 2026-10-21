@@ -19,6 +19,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of its own (no Tailwind preflight) no longer shows an 8px frame around the
   app.
 
+- Pages with images or gesture components no longer stall on Android and
+  iOS. On native renderers every Rust event handler is a synchronous request
+  that blocks the web view for 3–12ms, and these components fired one per
+  element during navigation: a list of images could stall a page transition
+  for 50–70ms, and a video page for over 200ms. Now none of them registers a
+  Rust `load`, `error` or `mounted` handler:
+  - `Img` marks itself `loaded` or `error` from one document-level script,
+    and the stylesheet follows its `data-state`. Its `fallback` is rendered,
+    hidden, beside the image and shown once the image fails.
+  - `SwipeItem`, `ReorderList`, `Tabs`, `Rating` and the time picker's clock
+    start their shared gesture script from an effect instead of each
+    element's `onmounted`, and `ReorderItem` no longer asks for its mounted
+    element.
+
 ## [0.6.0] - 2026-10-18
 
 ### Breaking changes

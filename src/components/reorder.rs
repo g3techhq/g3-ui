@@ -50,11 +50,15 @@ const REORDER_SCRIPT: GestureScript = GestureScript {
     source: include_str!("reorder.js"),
 };
 
+/// Identifies one [`ReorderItem`] in [`ReorderContext::rows`], so a row that
+/// unmounts removes only its own entry.
+struct RowToken;
+
 #[derive(Clone, Copy, PartialEq)]
 struct ReorderContext {
-    /// Every item's element, by position, so the keyboard knows how many
+    /// A token for every item, by position, so the keyboard knows how many
     /// places there are.
-    rows: Signal<HashMap<usize, Rc<MountedData>>>,
+    rows: Signal<HashMap<usize, Rc<RowToken>>>,
     announcement: Signal<String>,
     on_reorder: EventHandler<ReorderEvent>,
     disabled: Signal<bool>,
@@ -162,7 +166,7 @@ pub fn ReorderList(
     children: Element,
 ) -> Element {
     let id = use_element_id("reorder", None);
-    let rows = use_signal(HashMap::<usize, Rc<MountedData>>::new);
+    let rows = use_signal(HashMap::<usize, Rc<RowToken>>::new);
     let disabled = crate::state::use_synced_signal(disabled.unwrap_or(false));
     let announcement = use_signal(String::new);
     let layout = crate::state::use_synced_signal(layout.unwrap_or_default());
@@ -177,7 +181,7 @@ pub fn ReorderList(
 
     // The script moves the rows while they are dragged; a drop that changes
     // the order arrives here once.
-    let start_script = use_gesture(REORDER_SCRIPT, id.clone(), move |gesture| {
+    use_gesture(REORDER_SCRIPT, id.clone(), move |gesture| {
         if gesture.kind == "reorder" && !disabled() {
             let (from, to) = (gesture.value(0) as usize, gesture.value(1) as usize);
             if from != to {
@@ -192,7 +196,6 @@ pub fn ReorderList(
             class: merge_classes("g3-reorder", class.as_deref()),
             // Read by the script at each press.
             "data-layout": layout().as_str(),
-            onmounted: move |_| start_script.call(()),
             {children}
             span { class: "g3-sr-only", role: "status", aria_live: "polite", "{announcement}" }
         }
@@ -212,22 +215,24 @@ pub fn ReorderItem(
     let mut rows = context.rows;
     // Rows are keyed, so a reorder moves them without remounting. Their
     // position is a signal, so the handle inside follows it, and each row
-    // re-registers its element under its new position.
+    // re-registers under its new position. Registering from an effect, not
+    // `onmounted`, keeps a blocking event per row off native renderers, and
+    // still only counts rows that rendered on the client.
     let position = crate::state::use_synced_signal(index);
     use_context_provider(|| ReorderPosition(position));
-    let mut mounted = use_signal(|| None::<Rc<MountedData>>);
-    use_effect(move || {
-        let index = position();
-        if let Some(element) = mounted() {
-            rows.write().insert(index, element);
+    let token = use_hook(|| Rc::new(RowToken));
+    use_effect({
+        let token = token.clone();
+        move || {
+            rows.write().insert(position(), token.clone());
         }
     });
     use_drop(move || {
         let index = *position.peek();
-        let ours = match (rows.peek().get(&index), mounted.peek().as_ref()) {
-            (Some(registered), Some(element)) => Rc::ptr_eq(registered, element),
-            _ => false,
-        };
+        let ours = rows
+            .peek()
+            .get(&index)
+            .is_some_and(|registered| Rc::ptr_eq(registered, &token));
         if ours {
             rows.write().remove(&index);
         }
@@ -238,7 +243,6 @@ pub fn ReorderItem(
             // The script orders the rows by this, and waits for it to change
             // before letting go of a dropped row.
             "data-index": "{index}",
-            onmounted: move |event: MountedEvent| mounted.set(Some(event.data())),
             {children}
         }
     }

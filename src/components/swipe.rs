@@ -215,35 +215,34 @@ pub fn SwipeItem(
     // closed actions out of reach; the live offset never leaves the webview.
     let mut rest = use_signal(|| 0.0_f64);
 
-    let start_script =
-        use_gesture(
-            SWIPE_SCRIPT,
-            row_id.clone(),
-            move |gesture| match SwipeEvent::parse(&gesture) {
-                Some(SwipeEvent::Rest(offset)) => rest.set(offset),
-                Some(SwipeEvent::Move(state)) => {
-                    if let Some(on_swipe) = on_swipe {
-                        on_swipe.call(state);
-                    }
+    use_gesture(
+        SWIPE_SCRIPT,
+        row_id.clone(),
+        move |gesture| match SwipeEvent::parse(&gesture) {
+            Some(SwipeEvent::Rest(offset)) => rest.set(offset),
+            Some(SwipeEvent::Move(state)) => {
+                if let Some(on_swipe) = on_swipe {
+                    on_swipe.call(state);
                 }
-                Some(SwipeEvent::Activate(state)) => {
-                    if let Some(on_activate) = on_activate {
-                        on_activate.call(state);
-                    }
+            }
+            Some(SwipeEvent::Activate(state)) => {
+                if let Some(on_activate) = on_activate {
+                    on_activate.call(state);
                 }
-                Some(SwipeEvent::Dismiss(state)) => {
-                    if let Some(on_dismiss) = on_dismiss {
-                        on_dismiss.call(state);
-                    }
+            }
+            Some(SwipeEvent::Dismiss(state)) => {
+                if let Some(on_dismiss) = on_dismiss {
+                    on_dismiss.call(state);
                 }
-                Some(SwipeEvent::LongPress) => {
-                    if let Some(on_long_press) = on_long_press {
-                        on_long_press.call(());
-                    }
+            }
+            Some(SwipeEvent::LongPress) => {
+                if let Some(on_long_press) = on_long_press {
+                    on_long_press.call(());
                 }
-                None => {}
-            },
-        );
+            }
+            None => {}
+        },
+    );
 
     let current = rest();
     let open = current != 0.0;
@@ -258,7 +257,6 @@ pub fn SwipeItem(
             id: row_id,
             class: merge_classes("g3-swipe-item", class.as_deref()),
             role: in_list.then_some("listitem"),
-            onmounted: move |_| start_script.call(()),
             // Read by the script at each press, so a change takes effect on
             // the next gesture.
             "data-start-behavior": start_behavior.as_str(),

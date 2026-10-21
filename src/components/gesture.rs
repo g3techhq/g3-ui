@@ -66,21 +66,38 @@ impl GestureBridge {
                     handler.call(Gesture { kind, values });
                 }
             }
-            // The page went away; the next element to mount starts it again.
+            // The page went away; the next component to render starts it again.
             bridge.running.borrow_mut().remove(script.name);
         });
     }
 }
 
-/// Registers `handler` for reports about the element `id`, for as long as the
-/// calling component lives. Call the returned callback from the element's
-/// `onmounted` to make sure the script is running; it is never started during
-/// server rendering, where nothing mounts.
+/// Makes sure `script` is running in this window, once the calling component
+/// has rendered on the client.
+///
+/// Every script listens on the document, so it serves elements that mount
+/// before or after it starts. Starting it from an effect, rather than from
+/// each element's `onmounted`, costs no event: on native renderers every
+/// Rust event handler, `onmounted` included, is a synchronous request from
+/// the webview that blocks the page. Effects never run during server
+/// rendering, so a script never starts there.
+pub(crate) fn use_page_script(script: GestureScript) {
+    let bridge = use_hook(|| {
+        try_consume_context::<GestureBridge>()
+            .unwrap_or_else(|| provide_root_context(GestureBridge::default()))
+    });
+    use_effect(move || bridge.start(script));
+}
+
+/// Starts `script` (see [`use_page_script`]) and registers `handler` for
+/// reports about the element `id`, for as long as the calling component
+/// lives.
 pub(crate) fn use_gesture(
     script: GestureScript,
     id: String,
     handler: impl FnMut(Gesture) + 'static,
-) -> Callback<()> {
+) {
+    use_page_script(script);
     let bridge = use_hook(|| {
         try_consume_context::<GestureBridge>()
             .unwrap_or_else(|| provide_root_context(GestureBridge::default()))
@@ -98,15 +115,11 @@ pub(crate) fn use_gesture(
             bridge.handlers.borrow_mut().insert(id, handler);
         }
     });
-    use_drop({
-        let bridge = bridge.clone();
-        move || {
-            if let Some(id) = registered.borrow_mut().take() {
-                bridge.handlers.borrow_mut().remove(&id);
-            }
+    use_drop(move || {
+        if let Some(id) = registered.borrow_mut().take() {
+            bridge.handlers.borrow_mut().remove(&id);
         }
     });
-    use_callback(move |()| bridge.start(script))
 }
 
 /// Sends `what` to the element `id` through its script's `command`.

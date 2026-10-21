@@ -6424,6 +6424,19 @@ button.g3-chip:focus-visible {
     visibility: hidden;
 }
 
+/* Rendered with the image, and shown in its place once it fails. */
+.g3-img-fallback {
+    display: none;
+}
+
+.g3-img[data-state="error"] > .g3-img-fallback {
+    display: contents;
+}
+
+.g3-img[data-state="error"]:has(> .g3-img-fallback) > img {
+    display: none;
+}
+
 .g3-tooltip-anchor {
     position: relative;
     display: inline-flex;

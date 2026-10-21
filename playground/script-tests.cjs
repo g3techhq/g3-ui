@@ -168,6 +168,35 @@ test('tab taps never capture and touch drags survive a child capture loss', asyn
   assert.equal(env.document.count(), 0);
 });
 
+test('images mark their wrapper from document-level load and error, and settled images on start', async () => {
+  class Image extends Element { complete = false; currentSrc = ''; naturalWidth = 0; decode() { return this.decoded; } }
+  const wrap = (name = 'g3-img') => { const box = new Element(); box.dataset.state = 'loading'; box.classList = { contains: (c) => c === name }; const img = new Image(); img.parentElement = box; return img; };
+  const cached = wrap(); cached.complete = true; cached.currentSrc = '/a.png'; cached.naturalWidth = 640;
+  const broken = wrap(); broken.complete = true; broken.currentSrc = '/missing.png'; broken.decoded = Promise.reject(new Error('EncodingError'));
+  const lazy = wrap(); lazy.complete = true;
+  const env = environment();
+  env.globals.HTMLImageElement = Image;
+  env.document.querySelectorAll = () => [cached, broken, lazy];
+  env.run(source('img.js'));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(cached.parentElement.dataset.state, 'loaded');
+  assert.equal(broken.parentElement.dataset.state, 'error');
+  // A lazy image that has not started is still loading.
+  assert.equal(lazy.parentElement.dataset.state, 'loading');
+  // Images inserted later are heard on the document, while capturing.
+  const later = wrap(); const failing = wrap(); const other = wrap('g3-avatar');
+  env.document.fire('load', { target: later });
+  env.document.fire('error', { target: failing });
+  env.document.fire('load', { target: other });
+  env.document.fire('load', { target: new Element() });
+  assert.equal(later.parentElement.dataset.state, 'loaded');
+  assert.equal(failing.parentElement.dataset.state, 'error');
+  assert.equal(other.parentElement.dataset.state, 'loading');
+  assert.equal(env.reports.length, 0);
+  env.window[Symbol.for('g3-ui.img')].dispose(); await env.running;
+  assert.equal(env.document.count(), 0);
+});
+
 test('top-layer presentation preserves toast priority and advances reopened overlays', () => {
   const order = [];
   const layer = (id) => Object.assign(new Element(), { id,

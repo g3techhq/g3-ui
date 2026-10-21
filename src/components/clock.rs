@@ -84,19 +84,20 @@ pub(crate) fn ClockDial(
     use_roving_selection(id.clone(), "[role=radio]", false);
     // The script turns the pointer into values; each one it lands on arrives
     // here, and so does the end of the press.
-    let start_script = use_gesture(CLOCK_SCRIPT, face_id.clone(), move |gesture| match gesture
-        .kind
-        .as_str()
-    {
-        "pick" => {
-            let picked = gesture.value(0) as u8;
-            if picked != value {
-                onchange.call(picked);
+    use_gesture(
+        CLOCK_SCRIPT,
+        face_id.clone(),
+        move |gesture| match gesture.kind.as_str() {
+            "pick" => {
+                let picked = gesture.value(0) as u8;
+                if picked != value {
+                    onchange.call(picked);
+                }
             }
-        }
-        "release" => on_release.call(()),
-        _ => {}
-    });
+            "release" => on_release.call(()),
+            _ => {}
+        },
+    );
     let (angle, radius) = position(mode, value);
     // The keyboard stop: the selected mark, or for minutes between the
     // labels, the nearest one.
@@ -112,7 +113,6 @@ pub(crate) fn ClockDial(
             // Read by the script at each press; it marks the face while
             // dragging.
             "data-mode": mode.as_str(),
-            onmounted: move |_| start_script.call(()),
             id: face_id,
             div { class: "g3-clock-center", aria_hidden: "true" }
             div {

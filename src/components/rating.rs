@@ -142,7 +142,7 @@ pub fn Rating(
 
     // The script measures the stars and picks values; each one it lands on
     // arrives here, and the drag's end commits the last.
-    let start_script = use_gesture(RATING_SCRIPT, id.clone(), move |gesture| {
+    use_gesture(RATING_SCRIPT, id.clone(), move |gesture| {
         match gesture.kind.as_str() {
             "input" if interactive => {
                 dragging.set(true);
@@ -226,7 +226,6 @@ pub fn Rating(
                     // Read by the script at each press.
                     "data-interactive": interactive.then_some("true"),
                     "data-half": half.then_some("true"),
-                    onmounted: move |_| start_script.call(()),
                     aria_label: if labelled_by.is_none() { aria_label } else { None },
                     aria_labelledby: labelled_by,
                     aria_describedby: describedby,

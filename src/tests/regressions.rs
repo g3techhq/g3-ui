@@ -343,3 +343,95 @@ fn a_bottom_bar_marks_its_own_app_shell_for_toasts() {
     let html = dioxus_ssr::render(&dom);
     assert!(!element_with_class(&html, "outer").contains("data-g3-bar"));
 }
+
+/// On native renderers every Rust event handler is a synchronous request
+/// that blocks the webview, so per-element `load`, `error` and `mounted`
+/// handlers stall page transitions. Images and gesture components keep
+/// those in the page.
+#[test]
+fn images_and_gesture_components_register_no_blocking_events() {
+    fn app() -> Element {
+        let tab = use_signal(|| 1_i32);
+        let stars = use_signal(|| 3.0);
+        rsx! {
+            Img { src: "/a.png", alt: "A", fallback: rsx! { span { "Missing" } } }
+            Img { src: "/b.png", alt: "B", eager: true }
+            SwipeItem { end_actions: rsx! { SwipeAction { "Delete" } }, Item { label: "Row" } }
+            ReorderList { on_reorder: |_| {},
+                List {
+                    ReorderItem { index: 0, Item { label: "One" } }
+                    ReorderItem { index: 1, Item { label: "Two" } }
+                }
+            }
+            Tabs { value: tab, swipe: true,
+                TabList { Tab { value: 1_i32, "One" } }
+                TabPanel { value: 1_i32, "Panel" }
+            }
+            Rating { label: "Your rating", value: stars }
+        }
+    }
+    let mut dom = VirtualDom::new(app);
+    let mutations = dom.rebuild_to_vec();
+    let listeners: Vec<&str> = mutations
+        .edits
+        .iter()
+        .filter_map(|edit| match edit {
+            Mutation::NewEventListener { name, .. } => Some(name.as_str()),
+            _ => None,
+        })
+        .collect();
+    for blocking in ["load", "error", "mounted"] {
+        assert!(
+            !listeners.contains(&blocking),
+            "a `{blocking}` handler was registered: {listeners:?}"
+        );
+    }
+}
+
+#[test]
+fn an_img_starts_loading_and_carries_its_fallback_hidden() {
+    fn app() -> Element {
+        rsx! {
+            Img { src: "/a.png", alt: "A", aspect_ratio: "4 / 3",
+                fallback: rsx! { span { "Missing" } },
+            }
+            Img { src: "/b.png", alt: "" }
+        }
+    }
+    let html = render(app);
+    let first = element_with_class(&html, "g3-img");
+    assert!(first.contains("data-state=\"loading\""));
+    assert!(first.contains("aspect-ratio: 4 / 3;"));
+    assert!(html.contains("loading=\"lazy\""));
+    // The fallback waits beside the image; the stylesheet shows it on error.
+    assert!(html.contains("<span class=\"g3-img-fallback\"><span>Missing</span></span>"));
+    assert_eq!(html.matches("g3-img-fallback").count(), 1);
+    assert_eq!(html.matches("<img").count(), 2);
+}
+
+#[test]
+fn an_img_with_a_new_src_starts_loading_again() {
+    static SRC: GlobalSignal<&'static str> = Signal::global(|| "/a.png");
+    fn app() -> Element {
+        rsx! { Img { src: SRC(), alt: "A" } }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    dom.runtime()
+        .in_scope(ScopeId::ROOT, || *SRC.write() = "/b.png");
+    dom.mark_dirty(ScopeId::ROOT);
+    let mut edits = Vec::new();
+    for _ in 0..5 {
+        dom.process_events();
+        edits.extend(dom.render_immediate_to_vec().edits);
+    }
+    // The wrapper is replaced rather than patched, so the `data-state` the
+    // page set for the old image does not carry over.
+    assert!(
+        edits
+            .iter()
+            .any(|edit| matches!(edit, Mutation::ReplaceWith { .. })),
+        "{edits:?}"
+    );
+    assert!(dioxus_ssr::render(&dom).contains("src=\"/b.png\""));
+}
