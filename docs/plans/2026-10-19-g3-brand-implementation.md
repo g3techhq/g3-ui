@@ -1,8 +1,8 @@
 # g3-brand implementation handoff
 
 Updated 2026-10-21. The shared foundation, B2 transport, Media Mancer catalog and
-legal review, scoped account download, durable opt-in deletion queue and deletion
-replay are implemented. Corrections, reviewed consent purposes, remaining app
+legal review, scoped account download, durable opt-in deletion/correction queues
+and replay are implemented. Reviewed consent purposes, remaining app
 integrations and production verification remain pending.
 
 ## Saved implementation
@@ -25,7 +25,7 @@ integrations and production verification remain pending.
 | g3-native-plugins | Optional app-info with installed iOS/Android version/build metadata, bridges, tests and testbed card; draft PR 23, unreleased |
 | g3-stack | Database-scoped authentication and private integration guidance; template retains public dependencies |
 | g3-auth | Opt-in account-indexed sessions, legacy session indexing and transactional retirement fences; existing default adapter stays compatible |
-| Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor retries, private status receipts and isolated deletion replay; private-build wiring and portable lockfile |
+| Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
 | Greenside Partee, Swift Circuits | Database-scoped authentication support, preserving existing local root configuration as a compatibility option |
 
 g3-brand is committed and pushed. Native app-info is committed as
@@ -53,6 +53,28 @@ Additional committed milestones on main:
 - Shared API response protections: template `8e37d78`, Greenside `24098f7`,
   Donation Engine `227cd4e` and Swift `02213cc`. Auth user caches are disabled in
   all four consumers so other devices recheck deleted accounts.
+- Request telemetry: template `c85038f`, Media Mancer `0db9297`, Greenside
+  `cce87ee`, Donation Engine `22b6a49` and Swift `d9d2800`. Only the dedicated
+  request target and source-defined route pattern/status/duration are logged;
+  dependency events and ambient spans are excluded regardless of `RUST_LOG`.
+- Account response minimization: Greenside `95df434` and Donation Engine
+  `af28907`. Provider identities stay private; Donation Engine receives a link
+  status hint while protected server operations derive it again from DB rows.
+- Media Mancer `95658fc`: CI creates a fresh synthetic database, runs all isolated
+  recovery fixtures and removes only its captured container ID.
+- Media Mancer `fa169f7`, platform `8ff3d11`: durable normalized/moderated profile
+  corrections, handle reservations, retry leases, deletion coordination and
+  quarantined correction replay. A real old-snapshot import exercises correction
+  and deletion while preserving another account. Historical handle conflicts keep
+  quarantine closed for reviewed reconciliation.
+- Media Mancer `2376799`: Docker contexts exclude local catalog indexes,
+  environment files and test reports. An actual context image check passed.
+
+The correction milestone passed 234 ordinary plus seven isolated server tests,
+104 web tests, strict server/web/WebAssembly checks and a mobile build check.
+Platform tests now total 32. Live queued-form interaction remains unverified;
+no dx serve was started. A local Linux image build and encrypted synthetic-backup
+drill are in progress; these do not verify actual B2 retention or production.
 
 The deletion milestone passed the 237-test server suite (including all isolated
 DB fixtures), 104 web tests and strict server/web/WebAssembly lint. The subsequent
@@ -124,8 +146,8 @@ the scoped GitHub App. No organization credentials were created or changed.
    no processing consent is inferred. Legal integration passed 100 web tests,
    221 server tests plus the isolated receipt test, and strict checks for all
    three builds. Public policy fallback previews were inspected at phone and wide
-   widths; live interaction and device tests remain pending. Finish correction
-   recovery and reviewed consent purposes. Deletion recovery and its restore hook
+   widths; live interaction and device tests remain pending. Finish reviewed
+   consent purposes. Deletion/correction recovery and their restore hook
    are implemented but require the production checks above. Required store
    notices are advisory UI, not backend authorization. Run the added interactive
    browser tests and actual mobile store-navigation checks. Then integrate other
