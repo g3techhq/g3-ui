@@ -1,8 +1,9 @@
 # g3-brand implementation handoff
 
-Updated 2026-10-20. The shared foundation, B2 transport and Media Mancer catalog
-pilot and authenticated legal review are implemented. App-specific privacy
-workflows, remaining app integrations and production rollout remain pending.
+Updated 2026-10-21. The shared foundation, B2 transport, Media Mancer catalog and
+legal review, scoped account download, durable opt-in deletion queue and deletion
+replay are implemented. Corrections, reviewed consent purposes, remaining app
+integrations and production verification remain pending.
 
 ## Saved implementation
 
@@ -23,7 +24,8 @@ workflows, remaining app integrations and production rollout remain pending.
 | g3-platform | Database isolation; encrypted B2 backups with checksum/retention verification; separate recovery writer/reader keys; history-aware ledger replay; encrypted backup retrieval; quarantined restore tools; journal/trace collection; deployment overlays and operator guides |
 | g3-native-plugins | Optional app-info with installed iOS/Android version/build metadata, bridges, tests and testbed card; draft PR 23, unreleased |
 | g3-stack | Database-scoped authentication and private integration guidance; template retains public dependencies |
-| Media Mancer | Database-scoped auth; public About route with inherited theme, persisted catalog and foreground refresh; installed native metadata and store notices; release-specific optional snoozes; private-dependency CI/Docker wiring and portable lockfile |
+| g3-auth | Opt-in account-indexed sessions, legacy session indexing and transactional retirement fences; existing default adapter stays compatible |
+| Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor retries, private status receipts and isolated deletion replay; private-build wiring and portable lockfile |
 | Greenside Partee, Swift Circuits | Database-scoped authentication support, preserving existing local root configuration as a compatibility option |
 
 g3-brand is committed and pushed. Native app-info is committed as
@@ -32,6 +34,34 @@ https://github.com/g3techhq/g3-native-plugins/pull/23. Verified foundation chang
 are committed on main: platform `8095e2c`, template `228ead0`, Greenside `812a910`,
 Swift `8089cde`, Media Mancer catalog `1134eab` and legal review `280d9fc`.
 Platform legal rollout instructions are in `a9f6a89`.
+
+Additional committed milestones on main:
+
+- g3-auth `9f68e70` (pushed): tracked sessions and retirement fences. Media Mancer
+  pins this public Git revision until a maintainer-approved release.
+- Media Mancer `953dec9`, `25f9f1a`, `d3b7d38`, `84f37ef`, `973134f`:
+  private response/log protections, bounded projected exports, session schema
+  checks and transactional write guards against deleted-data resurrection.
+- Media Mancer `605ddf2`: recovery-first deletion queue, leased retries, durable
+  Apple cleanup and minimal read-only status receipts. A queued request does not
+  mean completed cleanup. Copied moderation reports keep the request open.
+- Media Mancer `4fd134d` and g3-platform `09ac046`: deletion replay and its
+  quarantined, digest-pinned host wrapper. An actual old logical snapshot is
+  exported/imported in the isolated DB fixture, then replay removes the restored
+  account and sessions while preserving another account. Missing provider evidence
+  or copied-report decisions prevents successful release verification.
+- Shared API response protections: template `8e37d78`, Greenside `24098f7`,
+  Donation Engine `227cd4e` and Swift `02213cc`. Auth user caches are disabled in
+  all four consumers so other devices recheck deleted accounts.
+
+The deletion milestone passed the 237-test server suite (including all isolated
+DB fixtures), 104 web tests and strict server/web/WebAssembly lint. The subsequent
+two replay tests and strict server lint also pass. Platform tests now total 31.
+Receipt previews were checked in iOS/Material, light/dark, at phone and wide sizes.
+These are static actual-route previews; no dx serve or live interactive/device
+test was started. The actual Linux image, encrypted offsite restore, provider
+retention, moderation/evidence procedures and production configuration remain
+unverified. Recovery and legal enforcement are disabled by default.
 Existing unrelated work is preserved. Media Mancer uses an
 intentional pinned native Git patch until a release is approved; verification did
 not leave local path dependencies in its portable lockfile.
@@ -94,8 +124,9 @@ the scoped GitHub App. No organization credentials were created or changed.
    no processing consent is inferred. Legal integration passed 100 web tests,
    221 server tests plus the isolated receipt test, and strict checks for all
    three builds. Public policy fallback previews were inspected at phone and wide
-   widths; live interaction and device tests remain pending. Finish the
-   app-specific recovery outbox and reviewed consent purposes. Required store
+   widths; live interaction and device tests remain pending. Finish correction
+   recovery and reviewed consent purposes. Deletion recovery and its restore hook
+   are implemented but require the production checks above. Required store
    notices are advisory UI, not backend authorization. Run the added interactive
    browser tests and actual mobile store-navigation checks. Then integrate other
    apps after their readiness checks.
