@@ -1,6 +1,6 @@
 # g3-brand implementation handoff
 
-Updated 2026-10-21. The shared foundation, B2 transport, Media Mancer catalog and
+Updated 2026-10-22. The shared foundation, B2 transport, Media Mancer catalog and
 legal review, scoped account download, durable opt-in deletion/correction queues
 and replay are implemented. Reviewed consent purposes, remaining app
 integrations and production verification remain pending.
@@ -26,6 +26,7 @@ integrations and production verification remain pending.
 | g3-stack | Database-scoped authentication and private integration guidance; template retains public dependencies |
 | g3-auth | Opt-in account-indexed sessions, legacy session indexing and transactional retirement fences; existing default adapter stays compatible |
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
+| Tawny | Public catalog/native update notices; account-bound legal review; bounded account download; live write/session erasure guards; safe server/extractor logging; scoped database authentication with an actual editor wire drill |
 | Greenside Partee, Swift Circuits | Database-scoped authentication support, preserving existing local root configuration as a compatibility option |
 
 g3-brand is committed and pushed. Native app-info is committed as
@@ -269,24 +270,43 @@ the scoped GitHub App. No organization credentials were created or changed.
 ## Tawny rollout (2026-10-22)
 
 - `b7bc05b`: public catalog/About, installation cache, installed native update
-  notices, help access during backend failure, and private CI/Docker/mobile
-  dependency access. Host theme/mode inheritance and offline states were checked
-  at phone/wide sizes. Exact private/native pins remain portable.
-- `a98e319`: account-reviewed registration/deletion, isolated credential drafts,
-  stale-response guards, late registration protection and no-store account HTTP
-  results. Cache cleanup precedes keyed-form removal and root-scoped reload.
-- `f3202b1`: server-resolved current legal sets, account-bound private receipts,
-  public read-only documents during backend failure, and dismissible change
-  notices. Acknowledgment/terms/processing consent stay distinct. Primary erasure
-  includes receipts and conflicts with in-flight legal writes.
-- Latest: 84 web/168 server tests, strict web/server/mobile/desktop host checks;
-  one existing live YouTube test ignored. Earlier actual WASM/Android, credential
-  protocol, workflow, Compose and Dockerfile checks pass. Static legal/catalog
-  fixtures were inspected in both modes/themes at phone/wide dimensions.
-- Hydrated acceptance/update/account-switch flows, real devices, full private
-  image builds, actual database-editor receipt permissions, secure whole-account
-  downloads and independent deletion/offsite restore replay remain work. No
-  policy was published, and no consent purpose or terms enforcement was enabled.
+  notices, help during backend failure, and scoped private build access. Static
+  phone/wide previews cover inherited modes/themes and offline states.
+- `a98e319`: reviewed-owner registration/deletion, isolated drafts and stale
+  completion guards, late registration protection and no-store account responses.
+- `f3202b1`: exact current legal sets, private verified receipts, public read-only
+  fallback and dismissible change notices. No processing consent is inferred.
+- `c322a42`: fixed owner-projected account download, paging, row/byte/time/concurrency
+  bounds and credential/session/future-field exclusion. Web Blob delivery and
+  bounded native sharing are implemented; actual delivery still needs device/UI
+  verification. Desktop directs to web/mobile.
+- `e60b14b`: every private owner/relation write conflicts transactionally with
+  account removal. Old snapshots and delayed saves cannot recreate deleted rows.
+- `4b44906`: reviewed g3-auth pin `9f68e70c`, legacy session indexing, atomic
+  payload retirement, orphan recovery and irreversible private identity fences.
+  Unknown/large legacy payloads hold startup/deletion; untracked writers fail.
+- `4c0a84f`: fixed service diagnostics and route-pattern request telemetry, with
+  no viewing IDs, raw URLs, SDK events, ambient fields or panic payloads. The
+  extractor suppresses raw request/error/address logging; pull-only production
+  disables retained upstream database/provider output. Old log copies still
+  require separate inventory/expiry. Local file rotation is a size bound.
+- `32ee730`: explicit database-scoped credentials with no root retry, plus a
+  disposable real WebSocket/database-editor drill. It verifies startup/backfills,
+  duplicate-subscription repair, receipt/account/session removal, delayed writes,
+  foreign private-data read/write isolation and refusal of root escalation.
+  Binding the pre-sync SELECT before iteration fixes its empty-table wire failure.
+- Latest checks: 187 ordinary server/85 web tests and strict all-four-host checks.
+  Two server checks are excluded from the ordinary suite: live YouTube and the
+  wire drill, which passes separately. Nine Node, ten extractor Python and eight
+  CI Python checks pass; workflow and both Compose layouts validate. Actual
+  WASM/Android checks passed after the session source pin. No new UI changed in
+  the later server-only milestones. Temporary fixture containers/networks are gone.
+- Remaining: durable independent deletion intent/retries, app-specific quarantined
+  replay and encrypted/offsite drill, backend legal enforcement, reviewed consent
+  purposes, deadline/processor procedures, actual hydrated/device flows and private
+  Linux image/GitHub App verification. Tawny is not yet in the shared deployment
+  inventory. No policy publication, provider erasure, B2/DO configuration, release
+  or production deployment was performed.
 
 ## Remaining integration and rollout
 
