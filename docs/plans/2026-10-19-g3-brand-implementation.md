@@ -164,6 +164,27 @@ Additional committed milestones on main:
   all three builds, and the isolated database-editor/snapshot drill. No live
   deployment or final encrypted Linux/offsite image drill was performed.
 
+- Greenside `3f8f88a`: optional live recovery-first deletion intent and leased
+  processing. One stable request/revision is saved from the authenticated actor;
+  exact independent-ledger acknowledgment precedes billing cancellation and
+  primary removal. Atomic primary/checkpoint writes, retry leases, cancellation
+  checkpoints and Apple/session verification prevent false progress after an
+  outage or interruption. Legacy purge refuses queued intent; required mode
+  reports saved/pending rather than overall completion. Default disabled mode
+  preserves the earlier null success response. Unknown payload fields and
+  unresolved Google/Stripe/App Store evidence hold the request for review.
+  The final private state is only `primary_verified`, not expiry of every copy.
+  Owner exports project minimal request state and exclude processor/future fields.
+  Quarantined replay reconciles the exact queued intent in an old snapshot.
+  Checks pass 377 ordinary server/193 web tests, strict checks for all host builds,
+  eight Python/11 Node checks and the isolated old-schema/queued-intent snapshot
+  drill. Actual scoped HTTP ledger transport is covered with synthetic receipts;
+  no real processor, B2 object or deployment setting was changed. Native clients
+  must understand queued outcomes before enabling required mode. Public status
+  proofs, deadline monitoring, broader processors, correction/withdrawal and the
+  encrypted final-image/offsite drill remain work. Pending intent does not freeze
+  every write; existing guards retire writes atomically with primary removal.
+
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
 Platform tests now total 32. Live queued-form interaction remains unverified;
@@ -222,7 +243,7 @@ not leave local path dependencies in its portable lockfile.
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: 365 ordinary server and 192 web tests, strict server/web/mobile and
+- Greenside Partee: 377 ordinary server and 193 web tests, strict server/web/mobile and
   WebAssembly checks pass. Account download markup was inspected in both modes,
   light/dark, at phone and wide widths, including keyboard focus and loading.
   Android aarch64 compilation/lint passed after checking the real sharing branch.
@@ -264,8 +285,9 @@ the scoped GitHub App. No organization credentials were created or changed.
    notices are advisory UI, not backend authorization. Run the added interactive
    browser tests and actual mobile store-navigation checks. Then integrate other
    apps after their readiness checks. Greenside now has the catalog/update host,
-   shared legal revisions and receipts. Finish its live independent recovery
-   recording, processor handling and the remaining recovery hooks. Its first
+   shared legal revisions/receipts and optional live independent recovery
+   recording. Finish processor handling, status/deadline workflows and the
+   remaining correction/withdrawal recovery hooks. Its first
    deletion-only primary replay is implemented with conservative quarantine holds.
    Optional effective-terms enforcement is implemented and remains disabled.
 4. Complete each app's data inventory, secure export, verified deletion/correction,
