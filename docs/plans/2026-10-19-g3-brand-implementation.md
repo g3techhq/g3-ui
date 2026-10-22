@@ -26,7 +26,7 @@ integrations and production verification remain pending.
 | g3-stack | Database-scoped authentication and private integration guidance; template retains public dependencies |
 | g3-auth | Opt-in account-indexed sessions, legacy session indexing and transactional retirement fences; existing default adapter stays compatible |
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
-| Tawny | Public catalog/native update notices; account-bound legal review; bounded account download; live write/session erasure guards; safe server/extractor logging; scoped database authentication with an actual editor wire drill |
+| Tawny | Public catalog/native notices, legal review and scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
 | Greenside Partee, Swift Circuits | Database-scoped authentication support, preserving existing local root configuration as a compatibility option |
 
 g3-brand is committed and pushed. Native app-info is committed as
@@ -270,43 +270,47 @@ the scoped GitHub App. No organization credentials were created or changed.
 ## Tawny rollout (2026-10-22)
 
 - `b7bc05b`: public catalog/About, installation cache, installed native update
-  notices, help during backend failure, and scoped private build access. Static
+  notices, help during backend failure and scoped private build access. Static
   phone/wide previews cover inherited modes/themes and offline states.
 - `a98e319`: reviewed-owner registration/deletion, isolated drafts and stale
-  completion guards, late registration protection and no-store account responses.
-- `f3202b1`: exact current legal sets, private verified receipts, public read-only
-  fallback and dismissible change notices. No processing consent is inferred.
-- `c322a42`: fixed owner-projected account download, paging, row/byte/time/concurrency
-  bounds and credential/session/future-field exclusion. Web Blob delivery and
-  bounded native sharing are implemented; actual delivery still needs device/UI
-  verification. Desktop directs to web/mobile.
-- `e60b14b`: every private owner/relation write conflicts transactionally with
-  account removal. Old snapshots and delayed saves cannot recreate deleted rows.
-- `4b44906`: reviewed g3-auth pin `9f68e70c`, legacy session indexing, atomic
-  payload retirement, orphan recovery and irreversible private identity fences.
-  Unknown/large legacy payloads hold startup/deletion; untracked writers fail.
-- `4c0a84f`: fixed service diagnostics and route-pattern request telemetry, with
-  no viewing IDs, raw URLs, SDK events, ambient fields or panic payloads. The
-  extractor suppresses raw request/error/address logging; pull-only production
-  disables retained upstream database/provider output. Old log copies still
-  require separate inventory/expiry. Local file rotation is a size bound.
-- `32ee730`: explicit database-scoped credentials with no root retry, plus a
-  disposable real WebSocket/database-editor drill. It verifies startup/backfills,
-  duplicate-subscription repair, receipt/account/session removal, delayed writes,
-  foreign private-data read/write isolation and refusal of root escalation.
-  Binding the pre-sync SELECT before iteration fixes its empty-table wire failure.
-- Latest checks: 187 ordinary server/85 web tests and strict all-four-host checks.
-  Two server checks are excluded from the ordinary suite: live YouTube and the
-  wire drill, which passes separately. Nine Node, ten extractor Python and eight
-  CI Python checks pass; workflow and both Compose layouts validate. Actual
-  WASM/Android checks passed after the session source pin. No new UI changed in
-  the later server-only milestones. Temporary fixture containers/networks are gone.
-- Remaining: durable independent deletion intent/retries, app-specific quarantined
-  replay and encrypted/offsite drill, backend legal enforcement, reviewed consent
-  purposes, deadline/processor procedures, actual hydrated/device flows and private
-  Linux image/GitHub App verification. Tawny is not yet in the shared deployment
-  inventory. No policy publication, provider erasure, B2/DO configuration, release
-  or production deployment was performed.
+  response guards. `f3202b1` adds exact-set private legal receipts; `c322a42`
+  adds the bounded actor-projected account download.
+- `e60b14b`: transactional owner/relation write fences. `4b44906` pins the
+  reviewed tracked-session adapter, indexes known legacy payloads and retires
+  stored sessions with primary deletion. Unknown legacy formats hold startup.
+- `4c0a84f`: sanitized server/extractor logging, dependency/panic suppression and
+  disabled retained unreviewed database/provider output in standalone production.
+- `32ee730`: scoped database credentials without root fallback and an actual
+  disposable database-editor WebSocket drill, including empty/legacy startup,
+  private erasure, late-write refusal and foreign-data isolation.
+- `0bd8b09`: optional durable recovery-first deletion. Stable intent/revision,
+  exact ledger acknowledgment, leases/retries and atomic primary checkpoints
+  keep failures pending. Unknown fields and changing identity hold removal.
+  Current clients distinguish saved requests from immediate deletion. Export
+  reveals only the caller's request ID/state/timestamps. Required mode stays off.
+- `503aef8`: deletion-only quarantined replay/verification, using the shared
+  primary erase transaction and source-defined guards. Independent exact events
+  reconcile saved checkpoints without replacing conflicts. Missing identity,
+  unrecognized sessions, unknown schema/evidence or unattributable private
+  orphans keep quarantine. A real pre-request logical export/import passes
+  repeated replay while preserving another account, shared facts and demo rows.
+- Platform `85a2709` adds Tawny's restricted replay wrapper/example hook;
+  `ee0ea25` adds optional scoped deployment, unexposed extraction sidecars,
+  Caddy routing, the remote request-event allowlist and a separate app-data
+  inventory. Unreviewed shared DB/provider output is not retained. The overlay
+  remains opt-in; actual host credentials/images/domains are not configured.
+- Latest checks: 205 ordinary server/87 web tests, strict all-four-host checks,
+  nine Node, ten extractor Python and the separate wire/snapshot drill pass.
+  Actual WASM/Android checks passed at the queue milestone. Saved/pending notices
+  were inspected statically in all modes/themes at phone/wide sizes. Platform
+  tests pass 47 cases; combined Caddy routing adapts and Alloy starts its graph
+  against an empty synthetic journal without network access. Fixtures are removed.
+- Remaining: final Linux image and encrypted/offsite drill, backend legal
+  enforcement, public status proofs, reviewed consent purposes, deadline/processor
+  procedures, correction/withdrawal replay, actual hydrated/native device flows
+  and GitHub App build verification. Private Linux image/drill work is underway.
+  No policy publication, provider erasure, B2/DO configuration, release or
+  production deployment was performed.
 
 ## Remaining integration and rollout
 
