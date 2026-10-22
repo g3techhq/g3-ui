@@ -146,6 +146,24 @@ Additional committed milestones on main:
   offsite/final-image drill remain required work. Retained signup date, handicap
   and stable seat ID remain linked personal data and need retention review.
 
+- Greenside `493f865`: optional effective-terms enforcement is implemented and
+  disabled by default. Protected account activity, including guest accounts and
+  authenticated invite joins, checks exact current receipts after the effective
+  date. Sign-in, legal review, privacy controls and subscription management stay
+  available. Real local sessions/DB receipts prove that another account or an
+  older set cannot authorize activity, and catalog failure closes protected work.
+  No processing consent or production policy/enforcement setting is inferred.
+
+- Greenside `ae80843` and `dc387af`: primary deletion clears appearance choices
+  and replaces original signup dates with a fixed epoch placeholder. The v2
+  retired-user guard permits only that erasure value; schema rollout installs it
+  before removing v1, and startup rejects partial migration. Bounded startup
+  cleanup also handles older deleted rows without changing active profiles or
+  shared scorecard handicaps/IDs. The old-snapshot drill includes guard migration.
+  Current checks pass 365 ordinary server/192 web tests, strict host checks for
+  all three builds, and the isolated database-editor/snapshot drill. No live
+  deployment or final encrypted Linux/offsite image drill was performed.
+
 The correction milestone passed 234 ordinary plus seven isolated server tests,
 104 web tests, strict server/web/WebAssembly checks and a mobile build check.
 Platform tests now total 32. Live queued-form interaction remains unverified;
@@ -204,7 +222,7 @@ not leave local path dependencies in its portable lockfile.
   no application server is listening on 8080, and no dx serve was started.
   Fork formatting was also tested offline with an empty Cargo cache; it does not
   require private dependency access. Temporary preview/recovery servers are stopped.
-- Greenside Partee: 359 ordinary server and 192 web tests, strict server/web/mobile and
+- Greenside Partee: 365 ordinary server and 192 web tests, strict server/web/mobile and
   WebAssembly checks pass. Account download markup was inspected in both modes,
   light/dark, at phone and wide widths, including keyboard focus and loading.
   Android aarch64 compilation/lint passed after checking the real sharing branch.
@@ -215,8 +233,8 @@ not leave local path dependencies in its portable lockfile.
   paused writer/state/removal races, last-seat/owner claim races and rollback.
   The expanded isolated database-editor WebSocket drill exercises actual primary
   removal, repeat removal, preserved shared bets/scores and Apple capture. It now
-  also exports/imports an old logical snapshot and replays the independently held
-  deletion event twice. Full encrypted image/offsite recovery remains unverified.
+  also exports/imports an old logical snapshot, migrates an older retired-user
+  guard and replays the independently held deletion event twice. Full encrypted image/offsite recovery remains unverified.
   Live hydrated invitation creation/save/share and Apple provider
   calls remain unverified. Its local HTTP tests required execution outside the
   network sandbox. Windows verification uses AWS-LC's bundled assembler objects.
@@ -249,6 +267,7 @@ the scoped GitHub App. No organization credentials were created or changed.
    shared legal revisions and receipts. Finish its live independent recovery
    recording, processor handling and the remaining recovery hooks. Its first
    deletion-only primary replay is implemented with conservative quarantine holds.
+   Optional effective-terms enforcement is implemented and remains disabled.
 4. Complete each app's data inventory, secure export, verified deletion/correction,
    consent withdrawal, processor handling, deadlines and idempotent recovery hooks.
    Shared contracts/UI do not implement those app-specific operations.
