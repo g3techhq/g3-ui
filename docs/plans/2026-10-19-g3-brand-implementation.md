@@ -266,6 +266,28 @@ published dependencies and exact Git revisions. Its lockfile contains one native
 plugin instance. Cold consumer GitHub Actions still requires installing/configuring
 the scoped GitHub App. No organization credentials were created or changed.
 
+## Tawny rollout (2026-10-22)
+
+- `b7bc05b`: public catalog/About, installation cache, installed native update
+  notices, help access during backend failure, and private CI/Docker/mobile
+  dependency access. Host theme/mode inheritance and offline states were checked
+  at phone/wide sizes. Exact private/native pins remain portable.
+- `a98e319`: account-reviewed registration/deletion, isolated credential drafts,
+  stale-response guards, late registration protection and no-store account HTTP
+  results. Cache cleanup precedes keyed-form removal and root-scoped reload.
+- `f3202b1`: server-resolved current legal sets, account-bound private receipts,
+  public read-only documents during backend failure, and dismissible change
+  notices. Acknowledgment/terms/processing consent stay distinct. Primary erasure
+  includes receipts and conflicts with in-flight legal writes.
+- Latest: 84 web/168 server tests, strict web/server/mobile/desktop host checks;
+  one existing live YouTube test ignored. Earlier actual WASM/Android, credential
+  protocol, workflow, Compose and Dockerfile checks pass. Static legal/catalog
+  fixtures were inspected in both modes/themes at phone/wide dimensions.
+- Hydrated acceptance/update/account-switch flows, real devices, full private
+  image builds, actual database-editor receipt permissions, secure whole-account
+  downloads and independent deletion/offsite restore replay remain work. No
+  policy was published, and no consent purpose or terms enforcement was enabled.
+
 ## Remaining integration and rollout
 
 1. Install the read-only GitHub App and configure approved consumer repositories
@@ -283,8 +305,8 @@ the scoped GitHub App. No organization credentials were created or changed.
    consent purposes. Deletion/correction recovery and their restore hook
    are implemented but require the production checks above. Required store
    notices are advisory UI, not backend authorization. Run the added interactive
-   browser tests and actual mobile store-navigation checks. Then integrate other
-   apps after their readiness checks. Greenside now has the catalog/update host,
+   browser tests and actual mobile store-navigation checks. Tawny now has the catalog/update and legal-receipt host integrations described
+   above. Continue remaining apps after their readiness checks. Greenside now has the catalog/update host,
    shared legal revisions/receipts and optional live independent recovery
    recording. Finish processor handling, status/deadline workflows and the
    remaining correction/withdrawal recovery hooks. Its first
