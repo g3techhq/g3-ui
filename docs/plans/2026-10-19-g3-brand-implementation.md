@@ -299,18 +299,31 @@ the scoped GitHub App. No organization credentials were created or changed.
   Caddy routing, the remote request-event allowlist and a separate app-data
   inventory. Unreviewed shared DB/provider output is not retained. The overlay
   remains opt-in; actual host credentials/images/domains are not configured.
+- `1aaa8c1`: disables RustyPipe's independent raw request/response file reporter.
+  Extractor cache/report/secret custody is explicitly inventoried; old files are
+  not silently erased or assumed anonymous.
+- `271f2dd`: full private Linux build, encrypted synthetic old-backup replay and
+  packaged scoped-server gate before publishing the same tested candidate.
+  The startup drill found a missing SurrealKit metadata setup file; the runtime
+  now includes it. The local repaired image
+  `sha256:3344bb9ffeba436a9ace99d3546ee961a85ac213d6181d30aaf50d00266809aa`
+  preserves the full build's server hash/config and passes non-root/read-only
+  startup, encrypted import, repeat replay, late-write/conflict refusal and other
+  account preservation. This local ID is not a published registry digest.
+  Platform `109f140` records the evidence. Fixtures are removed; no image pushed.
 - Latest checks: 205 ordinary server/87 web tests, strict all-four-host checks,
-  nine Node, ten extractor Python and the separate wire/snapshot drill pass.
+  nine Node, ten extractor Python, twelve CI helper tests and the separate
+  wire/snapshot drill pass.
   Actual WASM/Android checks passed at the queue milestone. Saved/pending notices
   were inspected statically in all modes/themes at phone/wide sizes. Platform
   tests pass 47 cases; combined Caddy routing adapts and Alloy starts its graph
   against an empty synthetic journal without network access. Fixtures are removed.
-- Remaining: final Linux image and encrypted/offsite drill, backend legal
-  enforcement, public status proofs, reviewed consent purposes, deadline/processor
-  procedures, correction/withdrawal replay, actual hydrated/native device flows
-  and GitHub App build verification. Private Linux image/drill work is underway.
-  No policy publication, provider erasure, B2/DO configuration, release or
-  production deployment was performed.
+- Remaining: actual encrypted offsite/B2 lifecycle recovery, reviewed published
+  image and GitHub App installation/build verification, extractor/provider
+  runtime compatibility, backend legal enforcement, public status proofs,
+  reviewed consent purposes, deadline/processor procedures, correction/withdrawal
+  replay and actual hydrated/native device flows. No policy publication, provider
+  erasure, B2/DO configuration, release or production deployment was performed.
 
 ## Remaining integration and rollout
 
