@@ -5,6 +5,32 @@ legal review, scoped account download, durable opt-in deletion/correction queues
 and replay are implemented. Reviewed consent purposes, remaining app
 integrations and production verification remain pending.
 
+## Continuation evidence, 2026-10-22
+
+This section supersedes older verification gaps below where explicitly noted.
+Greenside's full locked Linux web/server build from `26e276f`, with Dockerfile
+and build-context fixes, passes its encrypted synthetic old-backup drill. Local
+image ID:
+`sha256:5a2e543d9572fa644f2907781a1d7f9312ae0e864f42285688720d0c4ec4ffe2`.
+The drill verifies actual age encryption/decryption and snapshot import, queued
+intent reconciliation and old-guard migration, repeated independent deletion
+replay, other-account/shared-score preservation, late-write refusal and packaged
+non-root/read-only startup using database-scoped credentials. All owned fixture
+containers/networks were removed. The consumer publishing gate tests the same
+candidate it subsequently pushes; no image has been published by these checks.
+Twelve Python helper tests, 11 Node checks, formatting and workflow lint pass.
+Unrelated appearance/styling edits remain outside this milestone.
+Greenside `63c3932` saves the gate, and platform `bc70315` records the evidence.
+
+Tawny's queue (`0bd8b09`), replay (`503aef8`), report-file protection (`1aaa8c1`)
+and packaged recovery gate (`271f2dd`) are also committed. Its encrypted local
+image drill passes, including scoped read-only startup after packaging the
+SurrealKit metadata setup file. Platform `ee0ea25` supplies the optional shared
+host overlay, and `109f140` records the packaged check. The overlay is disabled
+by default. Actual GitHub App setup, offsite B2/version-expiry verification,
+reviewed processor workflows, correction/withdrawal coverage across the fleet,
+and hydrated/native checks remain open. No production settings were changed.
+
 ## Saved implementation
 
 - Private repository: https://github.com/g3techhq/g3-brand
