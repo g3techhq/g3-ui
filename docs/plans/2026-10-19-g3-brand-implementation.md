@@ -139,7 +139,14 @@ gameplay/lesson edits are preserved and excluded from these commits.
   cover restart, failures, bounds, acknowledgment and suspended A-to-B-to-A results.
   Foreground retries are implemented; actual device/key/disk behavior, deadlines,
   deleted-account assistance/refunds and retention remain review boundaries.
-- Latest checks: 89 web-workspace tests, 65 ordinary server tests, four save-library
+- `3e67fd2`: one root-owned live account check, memory-only private reads,
+  synchronous auth/request boundaries and best-effort legacy cache clearing with
+  a bounded wait. Same-origin notifications contain only a random marker and
+  cause an independent server recheck. Dioxus tests prove cleanup survives Account
+  panel removal, old checks are cancelled and stalled cache cannot block account
+  controls. Six browser lifecycle tests cover hidden/disposed pages and blocked
+  storage. Physical cache erasure and actual hydrated cookie races remain open.
+- Latest checks: 92 web-workspace tests, 71 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
@@ -159,7 +166,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
 - Remaining: independent intent/checkpoint/replay, native device/deadline workflows,
-  persisted-cache/session coordination, hydrated/browser/device tests and a full
+  persisted-store failure and hydrated cookie/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
 
