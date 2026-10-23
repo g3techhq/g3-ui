@@ -1,6 +1,6 @@
 # g3-brand implementation handoff
 
-Updated 2026-10-22. The shared foundation, B2 transport, Media Mancer catalog and
+Updated 2026-10-23. The shared foundation, B2 transport, Media Mancer catalog and
 legal review, scoped account download, durable opt-in deletion/correction queues
 and replay are implemented. Reviewed consent purposes, remaining app
 integrations and production verification remain pending.
@@ -38,13 +38,29 @@ catalog test verifies expiry, failure cooldown and recovery without stale
 authorization. Checks pass 210 ordinary server/87 web tests, strict checks for
 all four host builds, actual WebAssembly, Node/extractor/helper suites and both
 Compose configurations. Platform `3c6650c` documents the disabled rollout option.
-A fresh packaged gate/essential-access drill is in progress; earlier packaged
-recovery evidence remains tied to its saved image/source.
+The fresh full Linux image is
+`sha256:7b1370d550871696c8f54c9e24425051dd9d242facacb7bd36bb8298b21e4b5a`.
+Its encrypted old-backup/repeated replay drill passes. The packaged Dioxus routes
+also refuse ordinary activity with required terms and an unavailable catalog,
+while guest/session bootstrap, account lookup, private export and deletion work.
+Non-root/read-only scoped startup and session revocation pass; owned fixtures
+were removed. This is a local image ID, not a published registry digest.
+Tawny `90f940f` saves the packaged endpoint gate; platform `0cb5fd3` records it.
 
 Swift `f52e30d` records the source-verified account/device/provider inventory.
-Tracked sessions, late-write guards, Apple retry capture, independent recovery
-and g3-ui compatibility remain prerequisites for brand/privacy rollout there.
-Existing local gameplay/lesson edits are preserved.
+`2832713` keeps purchase references server-only and pins the reviewed public
+native source. `2a76b6b` migrates to g3-ui 0.6/route transitions 0.5 and tracked
+sessions: startup indexes recognized legacy sessions, holds unknown payloads,
+and account deletion transactionally retires owned sessions and late writers.
+An isolated scoped database drill verifies rollback, repeated migration,
+other-account isolation and old-writer refusal. Checks pass 69 web workspace
+and 80 ordinary server workspace tests, strict host/mobile/WebAssembly checks,
+workflow lint and three fixture cleanup tests. Static shared-auth previews were
+inspected in both modes/themes at phone/wide widths with keyboard focus.
+Hydrated OAuth and native flows remain unverified. Broader private write guards,
+secure export, local-save removal, Apple retry capture and independent recovery
+remain open. Public catalog integration is next. Existing gameplay/lesson edits
+are preserved and excluded from these commits.
 
 ## Saved implementation
 
@@ -69,7 +85,7 @@ Existing local gameplay/lesson edits are preserved.
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
 | Tawny | Public catalog/native notices, legal review and optional backend terms checks; scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
 | Greenside Partee | Public catalog/native notices and legal receipts; optional backend terms checks; scoped export; tracked sessions and transactional write guards; durable opt-in deletion and quarantined replay; packaged encrypted recovery gate |
-| Swift Circuits | Database-scoped authentication and reviewed request telemetry; source-verified privacy integration inventory; shared UI/session/recovery integration remains pending |
+| Swift Circuits | Database-scoped authentication and reviewed request telemetry; source-verified privacy inventory; server-only purchase references; compatible shared UI and tracked transactional session retirement; catalog and broader privacy/recovery integration remain pending |
 
 g3-brand is committed and pushed. Native app-info is committed as
 `1896034867ae692db0503c38136cfbcfc804448a` and local main now includes it, with draft review
@@ -395,7 +411,8 @@ the scoped GitHub App. No organization credentials were created or changed.
    consent withdrawal, processor handling, deadlines and idempotent recovery hooks.
    Shared contracts/UI do not implement those app-specific operations.
 5. Release app-info with maintainer approval and test actual iOS/Android builds.
-   Swift Circuits needs a compatible g3-ui migration before consuming brand UI.
+   Swift Circuits now pins reviewed app-info and has migrated its shared UI;
+   public brand integration and actual device checks remain pending.
 6. B2 is selected and implemented; configure actual private buckets, their region,
    key custody, Object Lock/lifecycle/version expiry, snapshots,
    log/trace destinations and retention, access controls and monitoring. Verify
