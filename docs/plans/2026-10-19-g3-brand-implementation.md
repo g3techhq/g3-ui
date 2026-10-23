@@ -81,10 +81,35 @@ gameplay/lesson edits are preserved and excluded from these commits.
   snapshot fields; new clients refuse foreign/unowned cached copies. Local
   account activation no longer merges another account's gameplay. Real in-memory
   store tests preserve independent profiles and still allow anonymous merges.
-- Latest checks: 77 web-workspace tests, 52 ordinary server tests, strict
+- `e59daf3`: explicit authenticated JSON account downloads, fixed safe projections,
+  validated RON/portable gameplay and row/byte/time/concurrency limits. The real
+  scoped drill excludes foreign-account and secret canaries, refuses malformed or
+  oversized data and deleted/wrong actors, and returns no partial file. Browser
+  Blob delivery treats contents as data and revokes temporary resources; native
+  sharing is bounded separately and awaits actual device checks.
+- `b4db892`: local account retirement after primary acknowledgment, two-slot
+  removal, durable retry queue and permanent delayed-save refusal. Anonymous and
+  other profiles survive. Failure injection covers queue/marker/slot/active/final
+  checkpoint writes, restart and repeated retry. A failed active-marker write
+  preserves anonymous gameplay. Pending retry controls were inspected in the
+  themed account surface at phone/wide widths with keyboard focus. Unavailable
+  storage and responses lost before local recording remain explicit limits.
+- `8879eca`: web checkout requires a reviewed live session actor and returns
+  that owner. Client account/generation checks refuse stale or ownerless redirects
+  and only open the reviewed hosted HTTPS domain. The real scoped authorization
+  drill makes no Stripe call. Existing remote checkout cancellation stays separate.
+- `8db4bc0`: primary deletion atomically captures bounded Apple grant evidence in
+  a private leased retry queue. Failure keeps credentials for retry/assistance;
+  success scrubs raw subject/client/grant. Tests cover final rollback, fixed
+  errors, backoff, competing/expired leases, restart, missing/oversized evidence,
+  other-account preservation and schema holds. The actual grant-persistence
+  helper also fixes a protected SurrealDB parameter name used by Apple sign-in.
+- Latest checks: 81 web-workspace tests, 55 ordinary server tests, four save-library
+  tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
-  workflow lint pass. Two old Android-only unnecessary returns were corrected.
+  workflow lint pass. The three Node checks cover foreground and download
+  resource lifecycles. Two old Android-only unnecessary returns were corrected.
   Whole-repository spelling still flags old short direction-variable identifiers
   in the generator; changed integration files pass. Tests include existing
   uncommitted gameplay edits; those edits remain excluded from these commits.
@@ -93,9 +118,13 @@ gameplay/lesson edits are preserved and excluded from these commits.
   live-owner schema; `0a6e1ba6c37afb75de88a9c3dcdda99eb6fdc629` documents reviewed-owner client migration. Old
   clients omitting the actor are refused, so retain the current web account page
   during native rollout. Catalog/channel configuration belongs to image builds.
-- Remaining: bounded secure export, local account-slot removal, durable Apple
-  cleanup, independent intent/checkpoint/replay, native purchase-launch/callback
-  correlation and reviewed restoration policy, owner-bound web checkout creation,
+- Platform `8fa959e` records the download/device-cleanup rollout and custody
+  boundaries. Shared Compose origin and compiled catalog settings remain separate.
+- The user confirmed native restoration policy: preserve the original app-account
+  ownership and require support review for transfers. Implementations must not
+  infer a new owner from whichever account is signed in at callback delivery.
+- Remaining: independent intent/checkpoint/replay, native purchase-launch/callback
+  correlation and enforcement of the confirmed restoration policy,
   persisted-cache/session coordination, hydrated/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
