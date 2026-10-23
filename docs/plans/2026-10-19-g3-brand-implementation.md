@@ -129,9 +129,17 @@ gameplay/lesson edits are preserved and excluded from these commits.
   needs an older-client assistance/refund plan before deployment.
 - Native `efd9b4a` adds committed encrypted checkpoints for the next pending-proof
   milestone; `2f57a30` records platform evidence. The source is published. Its
-  pre-push and packaged Android checks pass locally; new CI run `40006888391` is
-  in progress. The app's pending-proof integration is still under implementation.
-- Latest checks: 82 web-workspace tests, 58 ordinary server tests, four save-library
+  pre-push and packaged Android checks pass locally; CI run `40006888391` passes
+  quality and both packaged iOS Simulator/Android builds.
+- `0849364`: bounded native encrypted receipt checkpoints before verification,
+  with original-owner metadata committed before finish. Asynchronous finish does
+  not clear evidence: store acknowledgment plus fresh current-account verification
+  must precede committed removal. Unknown schema and full/unreadable checkpoints
+  hold purchases; failed writes keep the inbox for retry. Seven stateful tests
+  cover restart, failures, bounds, acknowledgment and suspended A-to-B-to-A results.
+  Foreground retries are implemented; actual device/key/disk behavior, deadlines,
+  deleted-account assistance/refunds and retention remain review boundaries.
+- Latest checks: 89 web-workspace tests, 65 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
@@ -150,7 +158,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
 - The user confirmed native restoration policy: preserve the original app-account
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
-- Remaining: independent intent/checkpoint/replay, durable pending native proofs,
+- Remaining: independent intent/checkpoint/replay, native device/deadline workflows,
   persisted-cache/session coordination, hydrated/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
