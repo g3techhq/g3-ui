@@ -31,6 +31,21 @@ by default. Actual GitHub App setup, offsite B2/version-expiry verification,
 reviewed processor workflows, correction/withdrawal coverage across the fleet,
 and hydrated/native checks remain open. No production settings were changed.
 
+Tawny `d38f65b` adds disabled-by-default backend effective-terms checks. Real
+sessions/receipts verify exact account/set acceptance, changed-set and outage
+holds, essential account access and retirement after deletion. The bounded
+catalog test verifies expiry, failure cooldown and recovery without stale
+authorization. Checks pass 210 ordinary server/87 web tests, strict checks for
+all four host builds, actual WebAssembly, Node/extractor/helper suites and both
+Compose configurations. Platform `3c6650c` documents the disabled rollout option.
+A fresh packaged gate/essential-access drill is in progress; earlier packaged
+recovery evidence remains tied to its saved image/source.
+
+Swift `f52e30d` records the source-verified account/device/provider inventory.
+Tracked sessions, late-write guards, Apple retry capture, independent recovery
+and g3-ui compatibility remain prerequisites for brand/privacy rollout there.
+Existing local gameplay/lesson edits are preserved.
+
 ## Saved implementation
 
 - Private repository: https://github.com/g3techhq/g3-brand
@@ -52,8 +67,9 @@ and hydrated/native checks remain open. No production settings were changed.
 | g3-stack | Database-scoped authentication and private integration guidance; template retains public dependencies |
 | g3-auth | Opt-in account-indexed sessions, legacy session indexing and transactional retirement fences; existing default adapter stays compatible |
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
-| Tawny | Public catalog/native notices, legal review and scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
-| Greenside Partee, Swift Circuits | Database-scoped authentication support, preserving existing local root configuration as a compatibility option |
+| Tawny | Public catalog/native notices, legal review and optional backend terms checks; scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
+| Greenside Partee | Public catalog/native notices and legal receipts; optional backend terms checks; scoped export; tracked sessions and transactional write guards; durable opt-in deletion and quarantined replay; packaged encrypted recovery gate |
+| Swift Circuits | Database-scoped authentication and reviewed request telemetry; source-verified privacy integration inventory; shared UI/session/recovery integration remains pending |
 
 g3-brand is committed and pushed. Native app-info is committed as
 `1896034867ae692db0503c38136cfbcfc804448a` and local main now includes it, with draft review
