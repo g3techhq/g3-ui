@@ -104,7 +104,34 @@ gameplay/lesson edits are preserved and excluded from these commits.
   errors, backoff, competing/expired leases, restart, missing/oversized evidence,
   other-account preservation and schema holds. The actual grant-persistence
   helper also fixes a protected SurrealDB parameter name used by Apple sign-in.
-- Latest checks: 81 web-workspace tests, 55 ordinary server tests, four save-library
+- `d33a452`: original-account purchase custody survives entitlement replacement
+  and primary deletion. Startup backfills current links and holds conflicting
+  legacy evidence; recorded native/Stripe purchases cannot transfer automatically.
+  The scoped drill covers six original claims, retirement, reassignment refusal,
+  preserved unrelated purchases, repeated migration and export exclusion.
+- Native bridge `983f4b2`: opaque account UUID launch options and attributed
+  callbacks for StoreKit/Play, keeping legacy APIs compatible. Proofs and account
+  metadata are redacted from Debug output. Pre-push, all 49 feature tests, actual
+  Android target and packaged Kotlin testbed pass locally. Source was pushed to
+  main with user approval after the user removed its branch restriction. GitHub
+  quality plus facade and packaged iOS Simulator/Android checks pass in run
+  `40004306324`. Licensed store/device flows remain unverified.
+  No crate or app release was requested or performed.
+- `92ccdfd`: provider-bound native purchase attribution. A reviewed live account
+  gets a stable opaque UUID before launch; verified provider account metadata
+  must match the live actor inside the grant transaction. Apple original IDs and
+  Google purchase tokens retain legacy ownership aliases atomically. Unknown
+  legacy, foreign and retired purchases require support review. A transaction
+  proof cannot authorize finishing a different store transaction. Required
+  account-correlation schema is checked at startup. The scoped drill covers
+  wrong-account first callbacks, stable tokens, immutable correlation, alias
+  migration/conflicts, repeat restores and post-erasure refusal. Native rollout
+  needs an older-client assistance/refund plan before deployment.
+- Native `efd9b4a` adds committed encrypted checkpoints for the next pending-proof
+  milestone; `2f57a30` records platform evidence. The source is published. Its
+  pre-push and packaged Android checks pass locally; new CI run `40006888391` is
+  in progress. The app's pending-proof integration is still under implementation.
+- Latest checks: 82 web-workspace tests, 58 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
@@ -123,8 +150,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
 - The user confirmed native restoration policy: preserve the original app-account
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
-- Remaining: independent intent/checkpoint/replay, native purchase-launch/callback
-  correlation and enforcement of the confirmed restoration policy,
+- Remaining: independent intent/checkpoint/replay, durable pending native proofs,
   persisted-cache/session coordination, hydrated/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
