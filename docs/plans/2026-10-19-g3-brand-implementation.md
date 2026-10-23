@@ -57,10 +57,48 @@ other-account isolation and old-writer refusal. Checks pass 69 web workspace
 and 80 ordinary server workspace tests, strict host/mobile/WebAssembly checks,
 workflow lint and three fixture cleanup tests. Static shared-auth previews were
 inspected in both modes/themes at phone/wide widths with keyboard focus.
-Hydrated OAuth and native flows remain unverified. Broader private write guards,
-secure export, local-save removal, Apple retry capture and independent recovery
-remain open. Public catalog integration is next. Existing gameplay/lesson edits
-are preserved and excluded from these commits.
+Later Swift milestones below supersede the catalog/write-guard gaps. Existing
+gameplay/lesson edits are preserved and excluded from these commits.
+
+### Swift integration, 2026-10-23
+
+- `d6066a9`: public About/catalog, installation-only validated cache, installed
+  native update notices and scoped private-dependency CI/BuildKit access. No
+  private source/target cache uploads; fork PRs format without private access.
+  Saved/offline/busy previews were inspected in both modes and Circuit/Bauhaus
+  themes at phone/wide widths, with keyboard focus and account access. Fixed
+  shared-button foreground overrides and Circuit accent contrast; all ten game
+  themes pass a contrast test. No Dioxus development server was started.
+- `893fe8c`: private progress/identity/entitlement writes touch their live account
+  row and conflict with primary deletion. Ownership changes and retired owners
+  are refused; fulfillment checks even no-op paths. Startup holds missing guards
+  and unexpected private orphans for review. An owned scoped SurrealDB 3.2.4 drill
+  tests real sync/fulfillment helpers, late identity writes, final rollback,
+  repeated removal, overlapping transactions and other-account preservation.
+- `2f2266b`: reviewed-owner checks on sign-out, primary deletion, sync and native
+  proof verification; keyed account scopes and request generations reject stale
+  completions. Entitlement responses add an owner without changing legacy
+  snapshot fields; new clients refuse foreign/unowned cached copies. Local
+  account activation no longer merges another account's gameplay. Real in-memory
+  store tests preserve independent profiles and still allow anonymous merges.
+- Latest checks: 77 web-workspace tests, 52 ordinary server tests, strict
+  server/web/WebAssembly and actual aarch64 Android compilation with the installed
+  NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
+  workflow lint pass. Two old Android-only unnecessary returns were corrected.
+  Whole-repository spelling still flags old short direction-variable identifiers
+  in the generator; changed integration files pass. Tests include existing
+  uncommitted gameplay edits; those edits remain excluded from these commits.
+- Platform `d2a0570` derives Swift's backend origin from its shared Caddy hostname
+  and adds the rollout guide; 48 platform tests pass. `637ec48` records mandatory
+  live-owner schema; `0a6e1ba6c37afb75de88a9c3dcdda99eb6fdc629` documents reviewed-owner client migration. Old
+  clients omitting the actor are refused, so retain the current web account page
+  during native rollout. Catalog/channel configuration belongs to image builds.
+- Remaining: bounded secure export, local account-slot removal, durable Apple
+  cleanup, independent intent/checkpoint/replay, native purchase-launch/callback
+  correlation and reviewed restoration policy, owner-bound web checkout creation,
+  persisted-cache/session coordination, hydrated/browser/device tests and a full
+  private Linux image gate. No provider calls, production settings, releases or
+  app image publication were performed by these continuation milestones.
 
 ## Saved implementation
 
@@ -85,7 +123,7 @@ are preserved and excluded from these commits.
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
 | Tawny | Public catalog/native notices, legal review and optional backend terms checks; scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
 | Greenside Partee | Public catalog/native notices and legal receipts; optional backend terms checks; scoped export; tracked sessions and transactional write guards; durable opt-in deletion and quarantined replay; packaged encrypted recovery gate |
-| Swift Circuits | Database-scoped authentication and reviewed request telemetry; source-verified privacy inventory; server-only purchase references; compatible shared UI and tracked transactional session retirement; catalog and broader privacy/recovery integration remain pending |
+| Swift Circuits | Public catalog/native notices and scoped private builds; server-only purchase references; tracked sessions and live private-write guards; reviewed-owner actions, scoped entitlement responses and independent local profile activation; export/provider/device/recovery work remains pending |
 
 g3-brand is committed and pushed. Native app-info is committed as
 `1896034867ae692db0503c38136cfbcfc804448a` and local main now includes it, with draft review
@@ -412,7 +450,8 @@ the scoped GitHub App. No organization credentials were created or changed.
    Shared contracts/UI do not implement those app-specific operations.
 5. Release app-info with maintainer approval and test actual iOS/Android builds.
    Swift Circuits now pins reviewed app-info and has migrated its shared UI;
-   public brand integration and actual device checks remain pending.
+   public brand integration and actual Android compilation pass; actual device
+   interaction and maintainer-approved releases remain pending.
 6. B2 is selected and implemented; configure actual private buckets, their region,
    key custody, Object Lock/lifecycle/version expiry, snapshots,
    log/trace destinations and retention, access controls and monitoring. Verify
