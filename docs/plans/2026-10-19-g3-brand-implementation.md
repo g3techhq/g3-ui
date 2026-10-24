@@ -176,9 +176,23 @@ gameplay/lesson edits are preserved and excluded from these commits.
   Platform `51b31e1` adds Swift's digest-pinned isolated wrapper and example hook;
   all 53 platform tests pass. The real synthetic old logical export/import drill
   passes repeated removal, other-account preservation and late-write refusal.
-  The publishing workflow now tests a candidate before publishing that same image;
-  full local Linux build/packaged verification is in progress. No workflow was
-  dispatched and no app image was published.
+  The publishing workflow now tests a candidate before publishing that same image.
+- `9fa61cc`: explicitly marks successful/private/signed-out API responses
+  `private, no-store`, beyond the shared cache guard's revalidation default.
+  Actual local HTTP tests cover success, auth refusal, fault redaction and an
+  accidental public cache header. The full locked private Linux web/server build
+  passes with an ephemeral BuildKit secret. Final local image:
+  `sha256:a238a746e5923f9bfb40f8478343ee216e00931bcf1f141a6ea1642ab26fce54`.
+  It passes actual encrypted old-backup import, repeated primary replay,
+  unrelated-account/session preservation and late-write refusal. Both restored
+  required-mode and empty-database direct-mode startup pass with scoped EDITOR
+  credentials, UID/GID 10001 and a read-only root filesystem. Packaged API checks
+  prove minimal signed-out status, wrong-secret refusal, authenticated-only
+  submission and no-store responses. All owned fixtures are removed. The image
+  includes preserved uncommitted gameplay edits, excluded from privacy commits.
+  It is not a reviewed registry digest. No GitHub workflow, image publication or
+  deployment was triggered. Platform `ee8ab83` rejects duplicate/ambiguous JSON at
+  ledger storage and authenticated recovery; all 55 platform tests pass.
 - Latest checks: 96 web-workspace tests, 81 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
@@ -193,6 +207,11 @@ gameplay/lesson edits are preserved and excluded from these commits.
   Whole-repository spelling still flags old short direction-variable identifiers
   in the generator; changed integration files pass. Tests include existing
   uncommitted gameplay edits; those edits remain excluded from these commits.
+  The g3-ui plan update passes full `just pre-push`: 180/181 nextest tests,
+  93 documentation tests (two ignored), 19 playground tests and 16 script tests,
+  plus all build/lint/format/spelling checks. The run uses an owned temporary
+  directory and two documentation-test threads; its log is under ignored
+  `g3-ui/target/privacy-checks/pre-push.log`.
 - Platform `d2a0570` derives Swift's backend origin from its shared Caddy hostname
   and adds the rollout guide; 48 platform tests pass. `637ec48` records mandatory
   live-owner schema; `0a6e1ba6c37afb75de88a9c3dcdda99eb6fdc629` documents reviewed-owner client migration. Old
@@ -204,8 +223,8 @@ gameplay/lesson edits are preserved and excluded from these commits.
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
 - Remaining: actual offsite/custody recovery, native device/deadline workflows,
-  persisted-store failure and hydrated cookie/browser/device tests and a full
-  private Linux image gate. No provider calls, production settings, releases or
+  persisted-store failure and hydrated cookie/browser/device tests, reviewed
+  registry digest and actual GitHub App access. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
 
 ## Saved implementation
