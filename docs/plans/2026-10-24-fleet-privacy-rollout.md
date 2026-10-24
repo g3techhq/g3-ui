@@ -44,3 +44,39 @@ were clean at audit (Ad Sentinel Git inspection needs unsandboxed execution).
 
 No completion is claimed by this initial inventory. Record implementation and
 verification milestones below as each app is handled.
+
+## Native storage checkpoint
+
+Published source commit `62c6d0d5bee5aa4adc981c1402b666494a977471` in
+g3-native-plugins adds `remove_durable`. Android waits for encrypted preferences
+commit, including a reported failure; iOS delegates to the existing synchronous
+Keychain removal. Web/macOS refuse the committed encrypted operation.
+The ordinary asynchronous API remains compatible.
+
+The full native library pre-push checks pass. Its packaged Android test bed
+passed write/read/list/durable removal on a disposable API 35 x86_64 emulator,
+then passed again after force-stop/relaunch while checking the prior probe was
+still absent. Apple packaged CI is pending; no Apple device run is claimed.
+This is source publication only, with no crate release or app deployment.
+
+## Ad Sentinel local milestone
+
+Local main commit `ab0200d` adds bounded allowlisted local export, confirmed
+restartable encrypted removal, pending-write fences, remote generation guards,
+and independent screen-off restoration evidence. Existing TV edits and permission
+controls remain the applicable correction/withdrawal flows. Shared public help,
+read-only legal documents, installed metadata and update notices now appear in
+Settings; there is no invented account backend or authenticated receipt service.
+
+The frozen portable source passes 86 core/device/protocol tests and 12 app tests,
+plus strict desktop clippy and actual Android packaging. A fresh disposable
+emulator verified corrected-name export, cancellation, confirmed removal and
+absence after forced restart. Material/light phone and iOS/dark wide UI were
+inspected; unavailable catalog access did not block local controls. Live catalog
+publication, required-prompt interaction, Apple runtime and real TV restoration
+remain distinct verification limits. Source and custody details are recorded in
+Ad Sentinel's `docs/privacy-data.md`.
+
+Concurrent TV-support edits appeared during this work. They were preserved;
+verification used a frozen privacy source copy, and only that reviewed snapshot
+was committed. No Ad Sentinel app package was published or deployed.
