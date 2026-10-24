@@ -193,7 +193,14 @@ gameplay/lesson edits are preserved and excluded from these commits.
   It is not a reviewed registry digest. No GitHub workflow, image publication or
   deployment was triggered. Platform `ee8ab83` rejects duplicate/ambiguous JSON at
   ledger storage and authenticated recovery; all 55 platform tests pass.
-- Latest checks: 96 web-workspace tests, 81 ordinary server tests, four save-library
+- `71afede`: the packaged browser exercise exposed that retiring a local save
+  could hide a still-active server session. Account identity now follows the live
+  session; sign-out and export remain available while sync is disabled without a
+  local account save. Persisted retirement is checked before profile activation.
+  Account changes replace credential form state through a real keyed fragment,
+  and authentication/sign-out clear fields explicitly. Owner/generation checks
+  still reject delayed account actions. Updated packaged verification is pending.
+- Latest checks: 97 web-workspace tests, 82 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Twelve Python helpers, the JavaScript foreground lifecycle, formatting and
@@ -202,8 +209,10 @@ gameplay/lesson edits are preserved and excluded from these commits.
   wrong-proof/foreign refusal, ledger failure, lease loss, late rollback, missing
   evidence review, restart and verification after primary removal. Rendered
   receipt controls pass both modes/themes and enabled/busy states at 390px/1280px,
-  with keyboard access. Actual hydrated deletion/session and device storage still
-  need checks. Two old Android-only unnecessary returns were corrected.
+  with keyboard access. A disposable hydrated browser exercise checks receipt
+  persistence after navigation/reload, deletion completion while a different
+  account stays signed in and signed-out status lookup. Updated pending-session
+  controls and remaining cookie/storage races still need browser/device checks. Two old Android-only unnecessary returns were corrected.
   Whole-repository spelling still flags old short direction-variable identifiers
   in the generator; changed integration files pass. Tests include existing
   uncommitted gameplay edits; those edits remain excluded from these commits.
