@@ -162,10 +162,27 @@ gameplay/lesson edits are preserved and excluded from these commits.
   claims that providers or old backups have been erased. Required mode stays off.
   Platform `d4e9127` records the migration and disabled example settings; all
   48 platform tests pass. No actual host environment was changed.
-- Latest checks: 96 web-workspace tests, 79 ordinary server tests, four save-library
+- `83fed16`: checkout return notices keep payment/unlock status unconfirmed until
+  server verification; cancellation URLs no longer claim that no charge occurred.
+- `7713ec8`: quarantined deletion replay exits before normal server/provider startup,
+  verifies exact source schema against a temporary definition-only reference,
+  indexes supported legacy sessions and reconciles canonical ledger identity.
+  It reuses leased atomic primary erasure, original purchase retirement and Apple
+  grant capture. Missing identity, unexpected definitions/session bytes and
+  conflicting request/revision/digest evidence preserve quarantine. Pending Apple
+  work fails final verification without a provider call. Successful primary replay
+  cannot reconstruct newer purchase history/grants missing from an older backup;
+  independent custody review remains necessary before manual cutover.
+  Platform `51b31e1` adds Swift's digest-pinned isolated wrapper and example hook;
+  all 53 platform tests pass. The real synthetic old logical export/import drill
+  passes repeated removal, other-account preservation and late-write refusal.
+  The publishing workflow now tests a candidate before publishing that same image;
+  full local Linux build/packaged verification is in progress. No workflow was
+  dispatched and no app image was published.
+- Latest checks: 96 web-workspace tests, 81 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
-  NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
+  NDK. Twelve Python helpers, the JavaScript foreground lifecycle, formatting and
   workflow lint pass. Nine Node tests cover foreground/session/download lifecycles
   and private receipt storage. The scoped database drill covers receipt limits,
   wrong-proof/foreign refusal, ledger failure, lease loss, late rollback, missing
@@ -186,7 +203,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
 - The user confirmed native restoration policy: preserve the original app-account
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
-- Remaining: quarantined independent replay, native device/deadline workflows,
+- Remaining: actual offsite/custody recovery, native device/deadline workflows,
   persisted-store failure and hydrated cookie/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
@@ -214,7 +231,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
 | Media Mancer | Public About/catalog/native store notices; account-bound legal review; scoped account download; tracked session retirement and DB write guards; durable opt-in deletion/processor and profile-correction retries, private status receipts and isolated replay; private-build wiring and portable lockfile |
 | Tawny | Public catalog/native notices, legal review and optional backend terms checks; scoped download; write/session guards; safe diagnostics; scoped DB access; durable opt-in deletion and quarantined replay; optional shared-host deployment |
 | Greenside Partee | Public catalog/native notices and legal receipts; optional backend terms checks; scoped export; tracked sessions and transactional write guards; durable opt-in deletion and quarantined replay; packaged encrypted recovery gate |
-| Swift Circuits | Public catalog/native notices and scoped private builds; server-only purchase references; tracked sessions and live private-write guards; reviewed-owner actions, scoped entitlement responses and independent local profile activation; export/provider/device/recovery work remains pending |
+| Swift Circuits | Public catalog/native notices and scoped private builds; reviewed-owner actions and live session/write guards; bounded export, durable device deletion receipts, retained provider/purchase custody and quarantined primary replay; legal receipts, correction/withdrawal and real device/offsite recovery remain pending |
 
 g3-brand is committed and pushed. Native app-info is committed as
 `1896034867ae692db0503c38136cfbcfc804448a` and local main now includes it, with draft review
