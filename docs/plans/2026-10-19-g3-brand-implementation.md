@@ -146,12 +146,33 @@ gameplay/lesson edits are preserved and excluded from these commits.
   panel removal, old checks are cancelled and stalled cache cannot block account
   controls. Six browser lifecycle tests cover hidden/disposed pages and blocked
   storage. Physical cache erasure and actual hydrated cookie races remain open.
-- Latest checks: 92 web-workspace tests, 71 ordinary server tests, four save-library
+- `a2f60b1`: root-owned saved deletion intent, per-device private receipts and
+  leased server primary checkpoints. Intent is persisted before HTTP and the
+  intended device account is retired even when cloud submission is delayed;
+  another active account is preserved. Native receipt writes use encrypted
+  durable storage, while browser receipts use separate origin-readable keys.
+  The user approved signed-out status reads requiring both a random receipt ID
+  and separate 256-bit secret; only minimal progress/review/provider flags are
+  returned, and submission still requires the reviewed authenticated actor.
+  Required recording mode demands the exact independent ledger digest before
+  the atomic primary checkpoint/removal. It fences pending writes, refuses the
+  old direct removal path and cannot be silently downgraded. Limits, unknown
+  evidence, failures and expired leases retain intent for retry/assistance.
+  Apple grant custody and original purchase retirement remain separate from
+  claims that providers or old backups have been erased. Required mode stays off.
+  Platform `d4e9127` records the migration and disabled example settings; all
+  48 platform tests pass. No actual host environment was changed.
+- Latest checks: 96 web-workspace tests, 79 ordinary server tests, four save-library
   tests, strict
   server/web/WebAssembly and actual aarch64 Android compilation with the installed
   NDK. Eight Python helpers, the JavaScript foreground lifecycle, formatting and
-  workflow lint pass. The three Node checks cover foreground and download
-  resource lifecycles. Two old Android-only unnecessary returns were corrected.
+  workflow lint pass. Nine Node tests cover foreground/session/download lifecycles
+  and private receipt storage. The scoped database drill covers receipt limits,
+  wrong-proof/foreign refusal, ledger failure, lease loss, late rollback, missing
+  evidence review, restart and verification after primary removal. Rendered
+  receipt controls pass both modes/themes and enabled/busy states at 390px/1280px,
+  with keyboard access. Actual hydrated deletion/session and device storage still
+  need checks. Two old Android-only unnecessary returns were corrected.
   Whole-repository spelling still flags old short direction-variable identifiers
   in the generator; changed integration files pass. Tests include existing
   uncommitted gameplay edits; those edits remain excluded from these commits.
@@ -165,7 +186,7 @@ gameplay/lesson edits are preserved and excluded from these commits.
 - The user confirmed native restoration policy: preserve the original app-account
   ownership and require support review for transfers. Implementations must not
   infer a new owner from whichever account is signed in at callback delivery.
-- Remaining: independent intent/checkpoint/replay, native device/deadline workflows,
+- Remaining: quarantined independent replay, native device/deadline workflows,
   persisted-store failure and hydrated cookie/browser/device tests and a full
   private Linux image gate. No provider calls, production settings, releases or
   app image publication were performed by these continuation milestones.
