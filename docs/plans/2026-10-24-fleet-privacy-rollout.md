@@ -118,3 +118,31 @@ The shared platform accepts only this reviewed correction shape; all 56 platform
 tests pass. Recovery stays disabled by default; no app image was published and no
 actual host setting was changed. Swift's existing gameplay/content/copy edits
 remain uncommitted and separate from this milestone.
+
+
+## Greenside profile correction checkpoint
+
+Local main commit `c08195a` adds the approved name/handicap correction queue,
+live private pending status, authentication generations, pending-value export
+and erasure, guarded profile writes and quarantined replay. Completed scorecard
+results remain intact. Recovery stays opt-in; a stored required policy refuses
+silent rollback to disabled, and enabling it refuses unfinished direct jobs.
+
+The milestone passes 384 ordinary server tests, 194 web tests, the separate real
+WebSocket/database-editor drill, all three feature checks and strict clippy,
+actual aarch64 Android compilation, 11 Node checks and 12 CI/helper tests. The
+shared platform commit `890d9e9` admits only normalized names and integer
+handicaps under the existing quarantine boundary; all 58 platform tests pass.
+
+A final source follow-up also requires an exact acknowledgment and verified
+primary removal before a later deletion can supersede an old correction. Its
+43 privacy tests pass; final strict lint is running. Local packaged builds and
+hydrated browser/old-backup checks are still in progress, so this records a source
+checkpoint, not completed rollout verification. Existing Greenside styling and
+appearance edits remain outside these commits and frozen build contexts.
+
+Donation Engine's existing account, export, recovery-email and Every.org paths
+have been audited, but its new privacy foundation has not been implemented yet.
+Media Mancer's remaining account/session/device parity review is still in scope.
+No new optional processing, actual deployment or real provider operation is
+included. Tawny remains excluded from new implementation work.
