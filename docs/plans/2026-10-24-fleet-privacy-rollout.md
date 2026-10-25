@@ -56,7 +56,8 @@ The ordinary asynchronous API remains compatible.
 The full native library pre-push checks pass. Its packaged Android test bed
 passed write/read/list/durable removal on a disposable API 35 x86_64 emulator,
 then passed again after force-stop/relaunch while checking the prior probe was
-still absent. Apple packaged CI is pending; no Apple device run is claimed.
+still absent. Apple and Android packaged CI both passed in run `40133239257`;
+no Apple device run is claimed.
 This is source publication only, with no crate release or app deployment.
 
 ## Ad Sentinel local milestone
@@ -80,3 +81,40 @@ Ad Sentinel's `docs/privacy-data.md`.
 Concurrent TV-support edits appeared during this work. They were preserved;
 verification used a frozen privacy source copy, and only that reviewed snapshot
 was committed. No Ad Sentinel app package was published or deployed.
+
+## Media Mancer export milestone
+
+Local main commit `76ae331` closes two observed parity gaps: current-account
+responses now receive `private, no-store`, and each allowlisted export projection
+is bounded inside the database before transport, including oversized profiles.
+No optional processing purpose was added; the existing correction/replay and
+deletion workers remain in place.
+
+All three feature checks and strict clippy pass, along with 237 ordinary server
+tests, 105 web tests, seven disposable-database integration tests and web lint/
+format checks. The real database fixture covers oversized rows, isolation,
+pending corrections, legal receipts, deletion and recovery. This records this
+backend milestone; remaining session/device parity review stays in scope.
+
+## Swift profile correction milestone
+
+Local main commit `8b6466e` adds normalized display-name correction, a private
+restartable outbox, exact acknowledgment reuse, deletion/correction ordering,
+pending-value export/erasure and quarantined correction replay. The exact fields
+and existing internal ledger were explicitly approved by the maintainer; see
+`2026-10-24-profile-correction-review.md`. No optional processing was added.
+
+Verification passes 99 web-workspace tests, 88 ordinary server tests, both scoped
+database/reimport drills, strict web/server clippy and actual aarch64 Android
+compilation. The local image
+`sha256:41bb48b9a1f40b52cadc4fb05baf0fe0efcc15c62aa401a00237ed8115a45324`
+passes encrypted old-backup correction/deletion replay, fresh/restored startup
+with scoped credentials as UID 10001/read-only, and actual HTTP profile argument,
+rejected-owner and no-store checks. Browser verification at 390x844/1440x900 covers
+pending state, sign-out, B isolated while A completes, A's corrected value on
+return, and keyboard focus. Screenshots remain in Swift's target directory.
+
+The shared platform accepts only this reviewed correction shape; all 56 platform
+tests pass. Recovery stays disabled by default; no app image was published and no
+actual host setting was changed. Swift's existing gameplay/content/copy edits
+remain uncommitted and separate from this milestone.
