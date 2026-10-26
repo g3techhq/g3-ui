@@ -41,6 +41,9 @@ Swift Circuits has existing gameplay/content edits, including four account-page
 copy edits and untracked lesson boards. Greenside has appearance/styling edits.
 Donation Engine has an existing untracked Cargo.lock. Ad Sentinel and Media Mancer
 were clean at audit (Ad Sentinel Git inspection needs unsandboxed execution).
+Further Greenside game-feed/scorecard, private-write and documentation edits
+were present on 2026-10-26. They were preserved; the session/export follow-up
+below made no new Greenside source changes.
 
 No completion is claimed by this initial inventory. Record implementation and
 verification milestones below as each app is handled.
@@ -95,6 +98,26 @@ tests, 105 web tests, seven disposable-database integration tests and web lint/
 format checks. The real database fixture covers oversized rows, isolation,
 pending corrections, legal receipts, deletion and recovery. This records this
 backend milestone; remaining session/device parity review stays in scope.
+
+Local main commit `e5e47a2` adds authentication generations to profile/setup
+responses, preferences, account and ratings downloads, deletion confirmations
+and receipt checks. It rejects old A responses even after A-to-B-to-A sign-in,
+clears mounted drafts/confirmations, and prevents a late initial account answer
+from replacing a newer session. Legal review refetches per authentication
+generation and requires a fresh completed response before acknowledgment.
+Sixteen session-neutral response paths strip cookies on success and refusal,
+while authentication keeps its normal cookie behavior.
+
+The follow-up passes 239 ordinary server tests, 106 web tests, strict clippy on
+all three builds and Rust/web formatting. A real packaged browser held A's
+successful appearance response, switched to guest B, then delivered the old
+response. B's distinct profile and Auto theme survived delivery and full reload.
+Phone/wide screenshots and detailed limits are in Media Mancer's
+`docs/verification/2026-10-26/`; all owned fixtures were removed and no console
+errors/warnings were captured. The seven unchanged database scenarios were not
+repeated in this follow-up. Native device runtime, published-catalog legal
+prompts, competing login requests and unrelated API-cookie parity remain
+separate checks; no deployment or provider operation is claimed.
 
 ## Swift profile correction milestone
 
@@ -189,6 +212,22 @@ a durable report are under Donation's `docs/verification/2026-10-26/`; all owned
 fixtures were removed. Its pre-existing untracked Cargo.lock remains unchanged.
 Durable correction/deletion/legal controls remain outstanding;
 the existing Every.org flow and financial records are unchanged.
-Media Mancer's remaining account/session/device parity review is still in scope.
+
+Donation Engine local main commit `de61ed6` also binds deletion confirmations to
+the reviewed account and authentication generation, rejects anonymous/mismatched
+server calls before provider work, and checks primary account/owned-row removal
+inside its transaction. A synthetic deletion event recreating an owned child
+forces a full rollback; normal erasure preserves the other account's records.
+The 55 server/34 web suites and strict checks on all three builds pass. The
+updated packaged phone dialog was opened and cancelled, with database read-back
+confirming that the account remained. Actual erasure/rollback was exercised in
+the disposable database contract; no browser-confirmed purge or native device
+run is claimed. The durable report and screenshot are in the same verification
+folder. The original untracked lock remains unchanged.
+
+Donation still needs its durable correction/deletion outboxes, shared legal
+controls, session/write retirement fences, provider cleanup evidence, replay and
+platform wrapper. Wider response-cookie and device parity review remains in
+scope for the fleet; these bounded milestones do not complete that audit.
 No new optional processing, actual deployment or real provider operation is
 included. Tawny remains excluded from new implementation work.
