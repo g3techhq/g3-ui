@@ -251,3 +251,35 @@ platform wrapper. Wider response-cookie and device parity review remains in
 scope for the fleet; these bounded milestones do not complete that audit.
 No new optional processing, actual deployment or real provider operation is
 included. Tawny remains excluded from new implementation work.
+
+
+Donation local main commit `8008474` adds an opt-in deletion outbox using the
+existing g3-brand recovery event and transport. A stable event must receive an
+exact digest acknowledgment before primary erasure. Leased workers checkpoint
+primary removal, tracked session retirement and Apple cleanup; failures remain
+pending. Pending deletion freezes personal writes and invalidates older
+sessions. Completed requests clear account references and temporary grants.
+A separate OS-random 256-bit receipt secret permits minimal signed-out status;
+the browser holds it in memory until explicitly saved. Request metadata exports
+exclude credentials, proof hashes and internal worker fields. Current-user,
+delete and status responses join exports in refusing session-cookie changes.
+
+The 59 ordinary server/37 web suites, strict server/web/mobile host checks,
+formatting, three Node and three cleanup-helper tests pass. All three isolated
+database contracts pass with scoped Editor runtime credentials, including
+outages, wrong acknowledgments, stale workers, interrupted primary cleanup,
+provider retry, missing-grant review and immutable recovery identity. The
+packaged debug app passes scoped startup and signed-out receipt checks at phone
+and wide sizes, keyboard submission, wrong-proof refusal, an exact saved-file
+read-back, full-reload clearing and fresh guest navigation. No browser warnings
+were captured. A synthetic status row supplies the browser preview; actual
+purge/retry/session/provider behavior is covered by the database/HTTP fixture.
+No browser-confirmed deletion, automatic receipt handoff, required-mode packaged
+worker startup, current native runtime or release-container run is claimed.
+Durable reports/screenshots are under Donation's verification folder. All owned
+fixtures were removed, and the pre-existing untracked lock remains unchanged.
+
+Recovery remains disabled by default and has not been deployed. Donation still
+needs correction/replay, its platform restore wrapper, shared legal controls and
+an evidence-retention/expiry procedure. The wider fleet cookie/device review
+remains outstanding. No new optional processing or Tawny work is included.
