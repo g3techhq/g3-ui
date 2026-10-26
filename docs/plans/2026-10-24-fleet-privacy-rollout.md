@@ -225,8 +225,28 @@ the disposable database contract; no browser-confirmed purge or native device
 run is claimed. The durable report and screenshot are in the same verification
 folder. The original untracked lock remains unchanged.
 
+Donation local main commit `6db15cc` adds a shared transactional write/retirement
+fence for user and all seven owned tables. Late writes and reused account IDs
+refuse after primary deletion; owned rows cannot move between accounts. The
+retired fence clears its account reference and cannot be reset or deleted by
+ordinary application writes. Startup verifies its function, fields and all nine
+events before serving. Database-scoped runtime authentication is now supported;
+no deployment identity or actual host setting was changed.
+
+The 55 ordinary server/34 web suites, strict checks on all three builds and both
+disposable database contracts pass. Scoped editor tests cover every owned table,
+missing schema, identity reuse and five explicit old transaction snapshots held
+open across another connection's successful deletion. The same writer succeeds
+without deletion. The packaged debug server starts with pre-applied schemas and
+scoped editor credentials; actual HTTP readiness/current-user reads and
+signed-out export refusal pass. Interrupted temporary artifact copies were
+restored from intact matching build output before the final startup check.
+The detailed `write-retirement-verification.json` records limits; owned fixtures
+were removed and the original untracked lock remains unchanged. No current
+native runtime or release-container run is claimed for this follow-up.
+
 Donation still needs its durable correction/deletion outboxes, shared legal
-controls, session/write retirement fences, provider cleanup evidence, replay and
+controls, session-store retirement, provider cleanup evidence, replay and
 platform wrapper. Wider response-cookie and device parity review remains in
 scope for the fleet; these bounded milestones do not complete that audit.
 No new optional processing, actual deployment or real provider operation is
