@@ -112,7 +112,8 @@ passes encrypted old-backup correction/deletion replay, fresh/restored startup
 with scoped credentials as UID 10001/read-only, and actual HTTP profile argument,
 rejected-owner and no-store checks. Browser verification at 390x844/1440x900 covers
 pending state, sign-out, B isolated while A completes, A's corrected value on
-return, and keyboard focus. Screenshots remain in Swift's target directory.
+return, and keyboard focus. The original screenshots were in Swift's build
+directory, which is no longer present; the observed results remain recorded here.
 
 The shared platform accepts only this reviewed correction shape; all 56 platform
 tests pass. Recovery stays disabled by default; no app image was published and no
@@ -124,9 +125,12 @@ remain uncommitted and separate from this milestone.
 
 Local main commit `c08195a` adds the approved name/handicap correction queue,
 live private pending status, authentication generations, pending-value export
-and erasure, guarded profile writes and quarantined replay. Completed scorecard
-results remain intact. Recovery stays opt-in; a stored required policy refuses
-silent rollback to disabled, and enabling it refuses unfinished direct jobs.
+and erasure, guarded profile writes and quarantined replay. Its initial tests
+preserved stored scorecard records. A subsequent calculated-results audit found
+that Lone Wolf still used the current profile handicap; the scoring follow-up
+below addresses that separate result-changing defect. Recovery stays opt-in; a
+stored required policy refuses silent rollback to disabled, and enabling it
+refuses unfinished direct jobs.
 
 The milestone passes 384 ordinary server tests, 194 web tests, the separate real
 WebSocket/database-editor drill, all three feature checks and strict clippy,
@@ -134,15 +138,49 @@ actual aarch64 Android compilation, 11 Node checks and 12 CI/helper tests. The
 shared platform commit `890d9e9` admits only normalized names and integer
 handicaps under the existing quarantine boundary; all 58 platform tests pass.
 
-A final source follow-up also requires an exact acknowledgment and verified
-primary removal before a later deletion can supersede an old correction. Its
-43 privacy tests pass; final strict lint is running. Local packaged builds and
-hydrated browser/old-backup checks are still in progress, so this records a source
-checkpoint, not completed rollout verification. Existing Greenside styling and
-appearance edits remain outside these commits and frozen build contexts.
+Commit `c5fc7d5` also requires an exact acknowledgment and verified primary
+removal before a later deletion supersedes an old correction. Its 43 privacy
+tests and strict server lint pass. The local image
+`sha256:10d8fcb3f20855dd68dbd51824d68569c37bb9da204d9ed3a6c7b1e78bdae95d`
+passed encrypted old-backup replay and scoped read-only startup. Browser checks
+covered normalization, pending state, sign-out, separate A/B corrections,
+refresh/reload and keyboard use at phone/wide sizes. Durable report/screenshots
+are committed under Greenside's `docs/verification/2026-10-25/`.
 
-Donation Engine's existing account, export, recovery-email and Every.org paths
-have been audited, but its new privacy foundation has not been implemented yet.
+Local main commit `1d262ce` records handicaps per started round and uses them in all
+player projections, while displaying the corrected current name. Legacy rounds
+capture the value currently used before the next profile handicap change;
+values already overwritten before this feature cannot be reconstructed. A
+regression compares actual Lone Wolf points/winnings before and after correction
+and proves the unfrozen value would change the result. The updated synthetic
+server suite passes 385 tests, alongside 194 web tests and strict checks on all
+three feature builds. The separate database-editor drill also verifies live
+player notifications. The refreshed local image
+`sha256:0c3df86f85e4690cfc523c29fa0e352191047e7a68834a2b20ecffaf9952f692`
+passes encrypted replay from a backup predating snapshots and scoped read-only
+startup. Actual form correction changed a synthetic profile from handicap 20 to
+17 while its completed round kept 20. Phone/wide checks cover slow/failed review,
+retry, keyboard focus, sign-out during review and a second account staying at its
+own Guest/20 values after delayed responses finish. No browser errors/warnings
+were captured. The durable `scoring-preservation.json` and screenshots record
+these results; all owned fixtures were removed. Profile fields wait for a fresh
+successful review before becoming editable. No current native device runtime or
+new Android target build is claimed for this follow-up.
+Existing Greenside styling and appearance edits remain outside these commits
+and frozen build contexts.
+
+Donation Engine's bounded, account-bound JSON/CSV exports are implemented locally.
+Its 55 server tests, 34 web tests and a disposable database contract pass,
+including oversized rows, other-account isolation and credential canaries. All
+three feature builds pass strict clippy; formatting and Node/fixture-helper
+checks also pass. The server-rendered profile now initializes once and cannot
+restore a signed-out or switched account. A real browser JSON download contains
+only the synthetic owner's record and excludes credential/other-account
+canaries, with a private/no-store response. That check also exposed a pre-existing
+false failure after successful download: the script returned undefined to
+Dioxus. An explicit completion value is implemented and being repackaged for
+verification. Durable correction/deletion/legal controls remain outstanding;
+the existing Every.org flow and financial records are unchanged.
 Media Mancer's remaining account/session/device parity review is still in scope.
 No new optional processing, actual deployment or real provider operation is
 included. Tawny remains excluded from new implementation work.
