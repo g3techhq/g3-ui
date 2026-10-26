@@ -169,17 +169,25 @@ new Android target build is claimed for this follow-up.
 Existing Greenside styling and appearance edits remain outside these commits
 and frozen build contexts.
 
-Donation Engine's bounded, account-bound JSON/CSV exports are implemented locally.
+Donation Engine's bounded, account-bound JSON/CSV exports are committed locally
+as `e066300`.
 Its 55 server tests, 34 web tests and a disposable database contract pass,
 including oversized rows, other-account isolation and credential canaries. All
 three feature builds pass strict clippy; formatting and Node/fixture-helper
 checks also pass. The server-rendered profile now initializes once and cannot
 restore a signed-out or switched account. A real browser JSON download contains
 only the synthetic owner's record and excludes credential/other-account
-canaries, with a private/no-store response. That check also exposed a pre-existing
-false failure after successful download: the script returned undefined to
-Dioxus. An explicit completion value is implemented and being repackaged for
-verification. Durable correction/deletion/legal controls remain outstanding;
+canaries, with a private/no-store response. Packaged CSV checks also pass. The
+script now returns an explicit completion value, avoiding the false failure
+previously shown after a successful download. A controlled delayed response
+exposed a second issue: session cookies on old export replies could overwrite a
+newer login. Both download endpoints now strip those cookies, including on
+refusals; authentication retains its normal cookie changes. The final package
+delivered a held successful A export after guest B signed in: no new export file
+appeared and B's own activity refresh still succeeded. Phone/wide screenshots and
+a durable report are under Donation's `docs/verification/2026-10-26/`; all owned
+fixtures were removed. Its pre-existing untracked Cargo.lock remains unchanged.
+Durable correction/deletion/legal controls remain outstanding;
 the existing Every.org flow and financial records are unchanged.
 Media Mancer's remaining account/session/device parity review is still in scope.
 No new optional processing, actual deployment or real provider operation is
