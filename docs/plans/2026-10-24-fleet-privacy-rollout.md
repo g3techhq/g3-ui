@@ -1,5 +1,11 @@
 # Fleet privacy implementation
 
+Current status: the approved source implementation and local verification are
+complete. See [the final record](2026-10-27-fleet-privacy-completion.md) for the
+current commits, evidence and production rollout boundaries. The dated entries
+below are implementation history; their pending-work statements are superseded
+by that final record.
+
 Scope confirmed by the maintainer on 2026-10-24: Swift Circuits, Ad Sentinel
 (repository `ad-sentinel`), Media Mancer, Greenside Partee and Donation Engine.
 Tawny is excluded from new work; preserve its existing implementation.
