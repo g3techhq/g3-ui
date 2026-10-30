@@ -304,9 +304,9 @@ fn EpisodeContent() -> Element {
 }
 
 #[component]
-fn LibraryScreen(tab: u8) -> Element {
-    let mut selected = use_signal(|| tab);
-    use_effect(use_reactive!(|tab| selected.set(tab)));
+fn LibraryScreen(tab: ReadSignal<u8>) -> Element {
+    let mut selected = use_signal(|| tab.cloned());
+    use_effect(move || selected.set(tab()));
     rsx! {
         TabLayout {
             Header {
@@ -328,12 +328,12 @@ fn LibraryScreen(tab: u8) -> Element {
             Content { footer_space: false,
                 TransitionNote { "Each segment is its own route. They slide by tab order and replace history, so Back leaves the library rather than walking the segments." }
                 List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
-                    for (name, value) in library_rows(tab) {
+                    for (name, value) in library_rows(tab()) {
                         Item { key: "{name}", label: name, metadata: value }
                     }
                 }
             }
-            ShowcaseNav { selected: ShowcaseScreen::Library(tab) }
+            ShowcaseNav { selected: ShowcaseScreen::Library(tab()) }
         }
     }
 }

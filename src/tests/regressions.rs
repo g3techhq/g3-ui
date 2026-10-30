@@ -15,11 +15,18 @@ fn pump(dom: &mut VirtualDom) {
 fn open_picker(dom: &mut VirtualDom) {
     dioxus::html::set_event_converter(Box::new(dioxus::html::SerializedHtmlEventConverter));
     let mutations = dom.rebuild_to_vec();
+    // Edits are a stack machine: a listener carries no id and lands on the
+    // element the last `PushId` put on the stack.
+    let mut pushed = None;
     let id = mutations
         .edits
         .iter()
         .find_map(|edit| match edit {
-            Mutation::NewEventListener { name, id } if name == "click" => Some(*id),
+            Mutation::PushId { id } => {
+                pushed = Some(*id);
+                None
+            }
+            Mutation::NewEventListener { name } if name == "click" => pushed,
             _ => None,
         })
         .expect("picker trigger");
