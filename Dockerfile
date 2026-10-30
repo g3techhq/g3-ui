@@ -1,12 +1,15 @@
 FROM rust:1.95.0-bookworm AS builder
 
-ARG DIOXUS_CLI_VERSION=0.7.9
-
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends clang \
     && rm -rf /var/lib/apt/lists/*
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install dioxus-cli --version "${DIOXUS_CLI_VERSION}" --locked
+# `dx` must come from the same Dioxus fork as the libraries the lockfile pins;
+# a crates.io release cannot build the fork's apps. Docker caches this layer by
+# its text, so the image workflow passes the fork's current `main` commit here
+# to rebuild `dx` when the branch moves.
+ARG DIOXUS_FORK_COMMIT=unknown
+RUN cargo install --git https://github.com/Gateway3B/dioxus --branch main dioxus-cli --locked
 
 WORKDIR /workspace
 COPY . .
