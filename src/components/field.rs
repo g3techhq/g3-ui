@@ -248,6 +248,8 @@ fn use_text_events(
 /// ```
 /// # use dioxus::prelude::*;
 /// # use g3_ui::prelude::*;
+/// // Dioxus's prelude has an `InputType` of its own; name g3-ui's.
+/// use g3_ui::prelude::InputType;
 /// # fn demo() -> Element {
 /// # fn email_error() -> Option<String> { None }
 /// let email = use_signal(String::new);
