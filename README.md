@@ -35,6 +35,7 @@ dioxus = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
 # ...the same for every other Dioxus crate in your graph (manganis, dioxus-signals,
 # dioxus-vdom-template, lazy-js-bundle, ...), plus:
 dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", branch = "main" }
+dioxus-sdk-time = { git = "https://github.com/Gateway3B/sdk", branch = "main" }
 g3-ui = { git = "https://github.com/g3techhq/g3-ui", branch = "main" }
 g3-route-transitions = { git = "https://github.com/g3techhq/g3-route-transitions", branch = "main" }
 ```

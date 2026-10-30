@@ -60,5 +60,8 @@ dioxus-signals = { git = "https://github.com/Gateway3B/dioxus", branch = "main" 
 dioxus-vdom-template = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
 lazy-js-bundle = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
 dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", branch = "main" }
+# dioxus-sdk-time 0.8.0-alpha.3 on crates.io still reaches into
+# `dioxus::dioxus_core`, which the fork no longer has.
+dioxus-sdk-time = { git = "https://github.com/Gateway3B/sdk", branch = "main" }
 # g3 crates are not published until Dioxus 0.8.0:
 g3-route-transitions = { git = "https://github.com/g3techhq/g3-route-transitions", branch = "main" }

@@ -44,5 +44,6 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = [
     "https://github.com/Gateway3B/dioxus",
     "https://github.com/Gateway3B/dioxus-icons",
+    "https://github.com/Gateway3B/sdk",
     "https://github.com/g3techhq/g3-route-transitions",
 ]

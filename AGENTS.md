@@ -16,7 +16,7 @@ tawny, and the g3-stack template.
 | Piece | Version | Reference |
 | --- | --- | --- |
 | Dioxus | 0.8.0-alpha.3, from the [Gateway3B/dioxus](https://github.com/Gateway3B/dioxus) fork | the fork's `G3-PATCHES.md` and `packages/`, and g3-stack's `docs/dioxus/patterns.md` |
-| dioxus-icons, dioxus-sdk-time | 0.2.0-alpha.3, 0.8.0-alpha.3 | dioxus-icons from the [Gateway3B fork](https://github.com/Gateway3B/dioxus-icons) |
+| dioxus-icons, dioxus-sdk-time | 0.2.0-alpha.3, 0.8.0-alpha.3 | from the Gateway3B forks of [dioxus-icons](https://github.com/Gateway3B/dioxus-icons) and [sdk](https://github.com/Gateway3B/sdk) |
 | g3-route-transitions (optional, `transitions`) | 0.5 | [README](https://github.com/g3techhq/g3-route-transitions) |
 | Rust | 1.88+, edition 2024 | `rust-toolchain.toml` |
 
