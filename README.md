@@ -21,11 +21,27 @@ CSS-variable theming, and WAI-ARIA semantics. The Rust crate name is `g3_ui`.
 
 ## Install
 
+`main` builds against a [fork of Dioxus `main`](https://github.com/Gateway3B/dioxus)
+(`0.8.0-alpha.3` plus the g3 patches) until Dioxus 0.8.0 is published, and is not released to
+crates.io meanwhile. Use it from git, with the fork patched in at your workspace root:
+
 ```toml
 [dependencies]
-dioxus = { version = "0.7.9", features = ["router"] }
+dioxus = { version = "=0.8.0-alpha.3", features = ["router"] }
 g3-ui = "0.6"
+
+[patch.crates-io]
+dioxus = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+# ...the same for every other Dioxus crate in your graph (manganis, dioxus-signals,
+# dioxus-vdom-template, lazy-js-bundle, ...), plus:
+dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", branch = "main" }
+g3-ui = { git = "https://github.com/g3techhq/g3-ui", branch = "main" }
+g3-route-transitions = { git = "https://github.com/g3techhq/g3-route-transitions", branch = "main" }
 ```
+
+`Cargo.toml` in this repository has the full list. Build with the fork's `dx`:
+`cargo install --git https://github.com/Gateway3B/dioxus --branch main dioxus-cli --locked`.
+The 0.6 release on crates.io targets Dioxus 0.7.9.
 
 Enable the optional route-transition integration when your app also uses `g3-route-transitions`:
 
@@ -578,11 +594,10 @@ The deployed [`/transitions` showcase](https://g3ui.g3tech.net/transitions) comp
 shell, header, content, navigation, cards, lists, buttons, and segmented controls with
 `g3-route-transitions`, including a routed sheet.
 
-When developing `g3-ui` and `g3-route-transitions` side by side, uncomment the adjacent
-`[patch.crates-io]` block in `.cargo/config.toml`. Cargo then redirects every
-`g3-route-transitions` dependency in the library and playground to the sibling checkout. Comment
-the block again before committing; normal builds and published packages continue using the version
-from crates.io.
+The manifests' `[patch.crates-io]` blocks name the remote forks. To build against sibling
+checkouts of Dioxus, `dioxus-icons` or `g3-route-transitions`, override those entries with
+`path = ...` patches in a `.cargo/config.toml` outside this repository (a config patch wins over
+a manifest patch), and keep the resulting `Cargo.lock` out of commits.
 
 ```powershell
 cd playground

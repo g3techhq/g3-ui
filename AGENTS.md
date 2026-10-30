@@ -15,13 +15,17 @@ tawny, and the g3-stack template.
 
 | Piece | Version | Reference |
 | --- | --- | --- |
-| Dioxus | 0.7.9 | [dioxuslabs.com/learn/0.7](https://dioxuslabs.com/learn/0.7/), and g3-stack's `docs/dioxus/patterns.md` |
-| g3-route-transitions (optional, `transitions`) | 0.4 | [README](https://github.com/g3techhq/g3-route-transitions) |
+| Dioxus | 0.8.0-alpha.3, from the [Gateway3B/dioxus](https://github.com/Gateway3B/dioxus) fork | the fork's `G3-PATCHES.md` and `packages/`, and g3-stack's `docs/dioxus/patterns.md` |
+| dioxus-icons, dioxus-sdk-time | 0.2.0-alpha.3, 0.8.0-alpha.3 | dioxus-icons from the [Gateway3B fork](https://github.com/Gateway3B/dioxus-icons) |
+| g3-route-transitions (optional, `transitions`) | 0.5 | [README](https://github.com/g3techhq/g3-route-transitions) |
 | Rust | 1.88+, edition 2024 | `rust-toolchain.toml` |
 
-**Your training data is probably wrong about Dioxus 0.7** (signals, props,
-assets and `document::eval` all changed). Prefer the patterns already in
-`src/` over what you remember.
+**Your training data is probably wrong about this Dioxus.** It is upstream
+`main` after 0.7 plus our patches: `dioxus-core` is now `dioxus-vdom` (reach
+it as `dioxus::core`), HTML elements are trait-based, placeholders and text
+no longer leave comment nodes in the DOM, and edits are a stack machine.
+Prefer the patterns already in `src/` over what you remember, and read the
+fork's source rather than the 0.7 guide.
 
 ## Map
 
@@ -108,7 +112,8 @@ itself to the rules the apps follow (g3-stack's `docs/dioxus/patterns.md`):
 - **Hooks run unconditionally, in the same order, before any early return.**
   `use_effect` keeps its first closure.
 - **No `use_reactive!`.** A plain prop that a hook must follow goes through
-  `use_synced_signal`, and the effect reads the signal. `use_synced_signal` is
+  `use_synced_signal`, and the effect reads the signal. Outside the public
+  API (the playground), declare the prop `ReadSignal<T>` instead. `use_synced_signal` is
   the one sanctioned signal write during render (see its doc comment); do not
   write a signal in a component body anywhere else.
 - **A context whose value follows props** uses `provide_live_context` /
@@ -164,6 +169,19 @@ itself to the rules the apps follow (g3-stack's `docs/dioxus/patterns.md`):
   Do not run `cargo publish` by hand, and do not release without the
   maintainer's go-ahead.
 - Commits follow Conventional Commits; lefthook checks them.
+
+### Dependencies
+
+- Pin `dioxus*` and `manganis` exactly, `=0.8.0-alpha.3`, and the ecosystem
+  crates to their matching alphas. They resolve to the fork through
+  `[patch.crates-io]` in `Cargo.toml` and `playground/Cargo.toml` (each is its
+  own root, so both carry the block). The `dx` CLI must come from the same
+  fork: `cargo install --git https://github.com/Gateway3B/dioxus --branch main dioxus-cli --locked`.
+- Manifests name remote sources only. Local sibling checkouts come from the
+  shared `Projects/.cargo/config.toml` outside the repository, so
+  `Cargo.lock` is not committed while it points at them.
+- Nothing is published to crates.io while g3-ui depends on the fork: a
+  release that builds only with a `[patch]` is broken for everyone else.
 
 ---
 

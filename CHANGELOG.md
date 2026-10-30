@@ -6,6 +6,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Breaking changes
+
+- g3-ui builds against a fork of Dioxus `main`
+  ([Gateway3B/dioxus](https://github.com/Gateway3B/dioxus), version
+  `0.8.0-alpha.3` plus the g3 patches) instead of Dioxus 0.7.9, until Dioxus
+  0.8.0 is published. Apps depend on `dioxus = "=0.8.0-alpha.3"`, patch the
+  fork in under `[patch.crates-io]` (see the README), and build with the
+  fork's `dx`. `dioxus-icons` moves to `0.2.0-alpha.3` (from the
+  Gateway3B fork) and `dioxus-sdk-time` to `0.8.0-alpha.3`; neither changes
+  the components' API.
+- Empty slots, conditional content and text no longer leave comment nodes in
+  the DOM (Dioxus's markerless placeholders). g3-ui's stylesheet and scripts
+  only select elements, so nothing changes for them; app CSS or scripts that
+  walked `childNodes` past those comments see fewer nodes.
+
 ### Fixed
 
 - Headers, tab bars, sheets and toasts clear the Android status bar and
