@@ -592,7 +592,9 @@ fn controls_take_a_color_role() {
             "{class} carries its color"
         );
     }
-    assert!(html.contains("role=\"radiogroup\" data-color=\"success\""));
+    let segment = element_with_class(&html, "g3-segment-standalone");
+    assert!(segment.contains("role=\"radiogroup\""), "{segment}");
+    assert!(segment.contains("data-color=\"success\""), "{segment}");
 }
 
 #[test]

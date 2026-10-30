@@ -69,8 +69,7 @@ fn select_shows_the_chosen_label_not_the_value() {
         }
     }
     let html = render(app);
-    assert!(html.contains("g3-select-value\">UK</span>"));
-    assert!(!html.contains("g3-select-value\">gb"));
+    assert_eq!(text_of_class(&html, "g3-select-value"), "UK");
     let trigger = element_with_class(&html, "g3-select");
     assert!(trigger.contains("aria-haspopup=\"listbox\""));
     assert!(trigger.contains("aria-expanded=\"false\""));
@@ -288,7 +287,7 @@ fn pickers_are_fields_that_open_a_dialog() {
     assert!(html.contains(">Sep 19, 2026</span>"));
     assert!(html.contains(">2:05 PM</span>"));
     // An empty picker shows its placeholder, not a made-up time.
-    assert!(html.contains("g3-select-placeholder\">Select time"));
+    assert_eq!(text_of_class(&html, "g3-select-placeholder"), "Select time");
     assert!(html.contains("aria-label=\"Round start\""));
 }
 
@@ -473,7 +472,7 @@ fn aria_references_name_elements_in_the_markup() {
             }
             Calendar { reference_date: CalendarDate::new(2026, 10, 16).unwrap() }
             AccordionGroup::<u8> {
-                AccordionItem { value: 1, label: "Rules", "Play it as it lies." }
+                AccordionItem { value: 1_u8, label: "Rules", "Play it as it lies." }
             }
             FabMenu { aria_label: "Create", icon: rsx! { "+" }, open,
                 FabButton { aria_label: "Round", "R" }
@@ -505,7 +504,7 @@ fn form_controls_report_errors_and_requirements() {
             Checkbox { label: "Terms", checked: on, required: true, name: "terms" }
             Checkbox { label: "Off", name: "off" }
             RadioGroup::<u8> { id: "tee", label: "Tee", error: "Choose a tee", required: true,
-                Radio { value: 1, label: "Blue" }
+                Radio { value: 1_u8, label: "Blue" }
             }
             Range { label: "Volume", error: "Too loud" }
             Stepper { label: "Players", error: "At most four" }
@@ -518,8 +517,11 @@ fn form_controls_report_errors_and_requirements() {
     assert!(toggle.contains("aria-required=\"true\""));
     assert!(html.contains(">Pick one</span>"));
     // Checked controls submit their name; an unchecked one submits nothing.
-    assert!(html.contains("type=\"hidden\" name=\"alerts\" value=\"on\""));
-    assert!(html.contains("type=\"hidden\" name=\"terms\" value=\"on\""));
+    for name in ["alerts", "terms"] {
+        let input = element_with_attribute(&html, &format!("name=\"{name}\""));
+        assert!(input.contains("type=\"hidden\""), "{input}");
+        assert!(input.contains("value=\"on\""), "{input}");
+    }
     assert!(!html.contains("name=\"off\""));
     let group = element_with_id(&html, "tee");
     assert!(group.contains("aria-describedby=\"tee-error\""));

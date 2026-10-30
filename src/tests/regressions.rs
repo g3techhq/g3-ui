@@ -15,23 +15,42 @@ fn pump(dom: &mut VirtualDom) {
 fn open_picker(dom: &mut VirtualDom) {
     dioxus::html::set_event_converter(Box::new(dioxus::html::SerializedHtmlEventConverter));
     let mutations = dom.rebuild_to_vec();
-    // Edits are a stack machine: a listener carries no id and lands on the
-    // element the last `PushId` put on the stack.
-    let mut pushed = None;
-    let id = mutations
-        .edits
-        .iter()
-        .find_map(|edit| match edit {
-            Mutation::PushId { id } => {
-                pushed = Some(*id);
-                None
-            }
-            Mutation::NewEventListener { name } if name == "click" => pushed,
-            _ => None,
-        })
-        .expect("picker trigger");
+    let id = listener_target(&mutations.edits, "click").expect("picker trigger");
     click(dom, id);
     pump(dom);
+}
+
+/// The element the first `name` listener is attached to.
+///
+/// Edits are a stack machine: a listener carries no id and lands on the node
+/// on top of the stack, so this replays the stack (as the interpreter's
+/// `core.ts` does), tracking only the id registered to each entry. Taking the
+/// last `PushId` instead would pick the wrong element after a `Child` or
+/// `CreateElement` moved the top.
+fn listener_target(edits: &[Mutation], name: &str) -> Option<ElementId> {
+    fn pop(stack: &mut Vec<Option<ElementId>>, n: usize) {
+        stack.truncate(stack.len().saturating_sub(n));
+    }
+    let mut stack = Vec::new();
+    for edit in edits {
+        match edit {
+            Mutation::PushId { id } => stack.push(Some(*id)),
+            Mutation::SetId { id } => *stack.last_mut()? = Some(*id),
+            Mutation::Child { .. } | Mutation::Clone => *stack.last_mut()? = None,
+            Mutation::CreateElement { .. } | Mutation::CreateText { .. } => stack.push(None),
+            Mutation::Pop | Mutation::Remove => pop(&mut stack, 1),
+            Mutation::AppendChildren { m }
+            | Mutation::InsertAfter { m }
+            | Mutation::InsertBefore { m } => pop(&mut stack, *m),
+            // The replaced target leaves the stack with its replacements.
+            Mutation::ReplaceWith { m } => pop(&mut stack, m + 1),
+            Mutation::NewEventListener { name: listener } if listener == name => {
+                return *stack.last()?;
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn click(dom: &VirtualDom, id: ElementId) {
@@ -433,12 +452,13 @@ fn an_img_with_a_new_src_starts_loading_again() {
         edits.extend(dom.render_immediate_to_vec().edits);
     }
     // The wrapper is replaced rather than patched, so the `data-state` the
-    // page set for the old image does not carry over.
-    assert!(
-        edits
-            .iter()
-            .any(|edit| matches!(edit, Mutation::ReplaceWith { .. })),
-        "{edits:?}"
-    );
+    // page set for the old image does not carry over. The fork's edits write
+    // a replacement as a new node from the template and a `Remove` of the old
+    // one (or `ReplaceWith`); patching would only set `src` on the old one.
+    let rebuilt = edits.iter().any(|edit| matches!(edit, Mutation::Clone));
+    let removed = edits
+        .iter()
+        .any(|edit| matches!(edit, Mutation::Remove | Mutation::ReplaceWith { .. }));
+    assert!(rebuilt && removed, "{edits:?}");
     assert!(dioxus_ssr::render(&dom).contains("src=\"/b.png\""));
 }

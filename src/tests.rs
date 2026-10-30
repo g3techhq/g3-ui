@@ -4,6 +4,9 @@
 //! markup contract: roles, ARIA attributes, ids, and classes. Every render
 //! also checks that each `g3-` class it emits is defined in the stylesheet.
 use crate::prelude::*;
+// Both preludes export an `InputType` (Dioxus's is the `beforeinput` event's);
+// the explicit import picks g3-ui's for every test module.
+use crate::prelude::InputType;
 use dioxus::prelude::*;
 use std::collections::BTreeSet;
 
@@ -67,6 +70,24 @@ pub(crate) fn render(app: fn() -> Element) -> String {
 
 /// The opening tag of the first element with `class` among its classes.
 pub(crate) fn element_with_class<'a>(html: &'a str, class: &str) -> &'a str {
+    let (open, close) = class_tag(html, class);
+    &html[open..=close]
+}
+
+/// The text directly inside the first element with `class`, up to its first
+/// child tag.
+///
+/// Assert on this rather than on `class="..">text`: dioxus-ssr writes an
+/// element's static attributes before its dynamic ones, whatever order the
+/// `rsx!` names them in, so what precedes the `>` is not stable.
+pub(crate) fn text_of_class<'a>(html: &'a str, class: &str) -> &'a str {
+    let (_, close) = class_tag(html, class);
+    let text = &html[close + 1..];
+    &text[..text.find('<').unwrap_or(text.len())]
+}
+
+/// Where the opening tag of the first element with `class` starts and ends.
+fn class_tag(html: &str, class: &str) -> (usize, usize) {
     let mut search = 0;
     while let Some(offset) = html[search..].find("class=\"") {
         let start = search + offset + "class=\"".len();
@@ -74,11 +95,22 @@ pub(crate) fn element_with_class<'a>(html: &'a str, class: &str) -> &'a str {
         if value.split_whitespace().any(|c| c == class) {
             let open = html[..start].rfind('<').expect("tag start");
             let close = start + html[start..].find('>').expect("tag end");
-            return &html[open..=close];
+            return (open, close);
         }
         search = start;
     }
     panic!("no element with class {class} in:\n{html}");
+}
+
+/// The opening tag of the first element carrying `attribute` (a whole
+/// `name="value"` pair), wherever it sits among the element's attributes.
+pub(crate) fn element_with_attribute<'a>(html: &'a str, attribute: &str) -> &'a str {
+    let at = html
+        .find(attribute)
+        .unwrap_or_else(|| panic!("no element with {attribute} in:\n{html}"));
+    let open = html[..at].rfind('<').expect("tag start");
+    let close = at + html[at..].find('>').expect("tag end");
+    &html[open..=close]
 }
 
 /// Every id the markup names, in the order it names them.

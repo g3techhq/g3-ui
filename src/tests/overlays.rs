@@ -202,8 +202,10 @@ fn toasts_keep_an_empty_live_region_while_closed() {
     assert!(html.contains("aria-label=\"Dismiss\""));
 }
 
-#[test]
-fn app_wrapper_hosts_code_opened_overlays() {
+// `render_immediate` runs effects and polls tasks on the fork, so the toast
+// timer starts its Tokio sleep here; time is paused so it never fires.
+#[tokio::test(start_paused = true)]
+async fn app_wrapper_hosts_code_opened_overlays() {
     fn app() -> Element {
         rsx! {
             AppWrapper { Page {} }
@@ -228,8 +230,10 @@ fn app_wrapper_hosts_code_opened_overlays() {
     assert!(html.contains("g3-toast-host"));
 }
 
-#[test]
-fn a_replacing_toast_takes_the_place_of_the_one_showing() {
+// `render_immediate` runs effects and polls tasks on the fork, so the toast
+// timer starts its Tokio sleep here; time is paused so it never fires.
+#[tokio::test(start_paused = true)]
+async fn a_replacing_toast_takes_the_place_of_the_one_showing() {
     fn app() -> Element {
         rsx! {
             AppWrapper { Page {} }
