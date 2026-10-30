@@ -23,17 +23,17 @@ playground = []
 transitions = ["dep:g3-route-transitions"]
 
 [dependencies]
-dioxus = { version = "0.7.9", features = ["router"] }
-dioxus-icons = "0.1.0"
-dioxus-sdk-time = "0.7.0"
+dioxus = { version = "=0.8.0-alpha.3", features = ["router"] }
+dioxus-icons = "=0.2.0-alpha.3"
+dioxus-sdk-time = "=0.8.0-alpha.3"
 cfg-if = "1.0.0"
-manganis = "0.7.9"
+manganis = "=0.8.0-alpha.3"
 serde = { version = "1.0", default-features = false }
 g3-route-transitions = { version = "0.5", optional = true }
 
 [dev-dependencies]
-dioxus-ssr = "0.7.9"
-dioxus-html = { version = "0.7.9", features = ["serialize"] }
+dioxus-ssr = "=0.8.0-alpha.3"
+dioxus-html = { version = "=0.8.0-alpha.3", features = ["serialize"] }
 tokio = { version = "1.48", features = ["rt", "macros", "time", "test-util"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -46,3 +46,19 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 [package.metadata.docs.rs]
 features = ["transitions"]
 rustdoc-args = ["--cfg", "docsrs"]
+
+[patch.crates-io]
+# Dioxus fork (upstream main + g3 commits; see G3-PATCHES.md there). Local
+# builds use the sibling checkouts via Projects/.cargo/config.toml.
+dioxus = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+dioxus-html = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+dioxus-ssr = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+manganis = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+# dioxus-icons asks crates.io for these three; the template crate exists only
+# under its post-rename name, which is not published.
+dioxus-signals = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+dioxus-vdom-template = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+lazy-js-bundle = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
+dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", branch = "main" }
+# g3 crates are not published until Dioxus 0.8.0:
+g3-route-transitions = { git = "https://github.com/g3techhq/g3-route-transitions", branch = "main" }
