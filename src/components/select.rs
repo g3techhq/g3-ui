@@ -201,7 +201,7 @@ pub fn Select<T: Clone + PartialEq + 'static>(
             onclick: move |_| open.toggle(),
             // Arrow keys open the list, as a native select does.
             onkeydown: move |event| {
-                if matches!(event.key(), Key::ArrowDown | Key::ArrowUp) && !open() {
+                if matches!(event.key(), Key::Named(NamedKey::ArrowDown) | Key::Named(NamedKey::ArrowUp)) && !open() {
                     event.prevent_default();
                     open.set(true);
                 }

@@ -305,14 +305,14 @@ pub fn Calendar(
                         let date = focused();
                         let shift = event.modifiers().shift();
                         let next = match event.key() {
-                            Key::ArrowLeft => date.add_days(-1),
-                            Key::ArrowRight => date.add_days(1),
-                            Key::ArrowUp => date.add_days(-7),
-                            Key::ArrowDown => date.add_days(7),
-                            Key::Home => date.add_days(-i64::from((7 + date.weekday() - first_weekday) % 7)),
-                            Key::End => date.add_days(i64::from(6 - (7 + date.weekday() - first_weekday) % 7)),
-                            Key::PageUp => date.add_months(if shift { -12 } else { -1 }),
-                            Key::PageDown => date.add_months(if shift { 12 } else { 1 }),
+                            Key::Named(NamedKey::ArrowLeft) => date.add_days(-1),
+                            Key::Named(NamedKey::ArrowRight) => date.add_days(1),
+                            Key::Named(NamedKey::ArrowUp) => date.add_days(-7),
+                            Key::Named(NamedKey::ArrowDown) => date.add_days(7),
+                            Key::Named(NamedKey::Home) => date.add_days(-i64::from((7 + date.weekday() - first_weekday) % 7)),
+                            Key::Named(NamedKey::End) => date.add_days(i64::from(6 - (7 + date.weekday() - first_weekday) % 7)),
+                            Key::Named(NamedKey::PageUp) => date.add_months(if shift { -12 } else { -1 }),
+                            Key::Named(NamedKey::PageDown) => date.add_months(if shift { 12 } else { 1 }),
                             _ => return,
                         };
                         event.prevent_default();

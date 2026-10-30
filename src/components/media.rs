@@ -152,7 +152,7 @@ pub fn Tooltip(
             class: "g3-tooltip-anchor",
             "data-dismissed": dismissed().then_some("true"),
             onkeydown: move |event| {
-                if event.key() == Key::Escape && !dismissed() {
+                if event.key() == Key::Named(NamedKey::Escape) && !dismissed() {
                     dismissed.set(true);
                 }
             },

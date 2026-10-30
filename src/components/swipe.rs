@@ -273,9 +273,9 @@ pub fn SwipeItem(
                     return;
                 }
                 match event.key() {
-                    Key::ArrowLeft => command.call("left"),
-                    Key::ArrowRight => command.call("right"),
-                    Key::Escape if open => {
+                    Key::Named(NamedKey::ArrowLeft) => command.call("left"),
+                    Key::Named(NamedKey::ArrowRight) => command.call("right"),
+                    Key::Named(NamedKey::Escape) if open => {
                         event.stop_propagation();
                         command.call("close");
                     }

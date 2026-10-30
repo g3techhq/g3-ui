@@ -85,12 +85,12 @@ pub(crate) fn WheelColumn(
             aria_invalid: unavailable.then_some("true"),
             onkeydown: move |event| {
                 let to = match event.key() {
-                    Key::ArrowUp => index.saturating_sub(1),
-                    Key::ArrowDown => index + 1,
-                    Key::PageUp => index.saturating_sub(5),
-                    Key::PageDown => index + 5,
-                    Key::Home => 0,
-                    Key::End => last,
+                    Key::Named(NamedKey::ArrowUp) => index.saturating_sub(1),
+                    Key::Named(NamedKey::ArrowDown) => index + 1,
+                    Key::Named(NamedKey::PageUp) => index.saturating_sub(5),
+                    Key::Named(NamedKey::PageDown) => index + 5,
+                    Key::Named(NamedKey::Home) => 0,
+                    Key::Named(NamedKey::End) => last,
                     _ => return,
                 };
                 event.prevent_default();

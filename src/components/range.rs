@@ -195,15 +195,15 @@ pub fn Stepper(
                 aria_invalid: is_invalid(&error).then_some("true"),
                 onkeydown: move |event| {
                     let delta = match event.key() {
-                        Key::ArrowUp | Key::ArrowRight if can_increase => step,
-                        Key::ArrowDown | Key::ArrowLeft if can_decrease => -step,
-                        Key::PageUp if can_increase => step.saturating_mul(10),
-                        Key::PageDown if can_decrease => -step.saturating_mul(10),
-                        Key::Home if can_decrease => match min {
+                        Key::Named(NamedKey::ArrowUp) | Key::Named(NamedKey::ArrowRight) if can_increase => step,
+                        Key::Named(NamedKey::ArrowDown) | Key::Named(NamedKey::ArrowLeft) if can_decrease => -step,
+                        Key::Named(NamedKey::PageUp) if can_increase => step.saturating_mul(10),
+                        Key::Named(NamedKey::PageDown) if can_decrease => -step.saturating_mul(10),
+                        Key::Named(NamedKey::Home) if can_decrease => match min {
                             Some(min) => min - current,
                             None => return,
                         },
-                        Key::End if can_increase => match max {
+                        Key::Named(NamedKey::End) if can_increase => match max {
                             Some(max) => max - current,
                             None => return,
                         },

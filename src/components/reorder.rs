@@ -285,8 +285,10 @@ pub fn ReorderHandle(
         }
         // In a grid the item moves along the reading order, so left and
         // right move it too.
-        let back = matches!(event.key(), Key::ArrowUp) || (grid && event.key() == Key::ArrowLeft);
-        let on = matches!(event.key(), Key::ArrowDown) || (grid && event.key() == Key::ArrowRight);
+        let back = matches!(event.key(), Key::Named(NamedKey::ArrowUp))
+            || (grid && event.key() == Key::Named(NamedKey::ArrowLeft));
+        let on = matches!(event.key(), Key::Named(NamedKey::ArrowDown))
+            || (grid && event.key() == Key::Named(NamedKey::ArrowRight));
         let to = match (back, on) {
             (true, _) if index > 0 => index - 1,
             (_, true) if index + 1 < count => index + 1,

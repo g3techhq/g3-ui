@@ -67,7 +67,7 @@ pub(crate) fn picker_trigger(
             aria_invalid: invalid.then_some("true"),
             onclick: move |_| open.toggle(),
             onkeydown: move |event| {
-                if matches!(event.key(), Key::ArrowDown | Key::ArrowUp) && !open() {
+                if matches!(event.key(), Key::Named(NamedKey::ArrowDown) | Key::Named(NamedKey::ArrowUp)) && !open() {
                     event.prevent_default();
                     open.set(true);
                 }

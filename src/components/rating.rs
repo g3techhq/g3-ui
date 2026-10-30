@@ -241,10 +241,10 @@ pub fn Rating(
                         }
                         let now = snap(*value.peek(), max, half);
                         let next = match event.key() {
-                            Key::ArrowRight | Key::ArrowUp => now + step,
-                            Key::ArrowLeft | Key::ArrowDown => now - step,
-                            Key::Home => 0.0,
-                            Key::End => f64::from(max),
+                            Key::Named(NamedKey::ArrowRight) | Key::Named(NamedKey::ArrowUp) => now + step,
+                            Key::Named(NamedKey::ArrowLeft) | Key::Named(NamedKey::ArrowDown) => now - step,
+                            Key::Named(NamedKey::Home) => 0.0,
+                            Key::Named(NamedKey::End) => f64::from(max),
                             _ => return,
                         };
                         event.prevent_default();

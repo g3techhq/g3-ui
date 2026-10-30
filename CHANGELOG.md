@@ -14,8 +14,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   0.8.0 is published. Apps depend on `dioxus = "=0.8.0-alpha.3"`, patch the
   fork in under `[patch.crates-io]` (see the README), and build with the
   fork's `dx`. `dioxus-icons` moves to `0.2.0-alpha.3` (from the
-  Gateway3B fork) and `dioxus-sdk-time` to `0.8.0-alpha.3`; neither changes
-  the components' API.
+  Gateway3B fork) and `dioxus-sdk-time` to `0.8.0-alpha.3` (patched in from
+  the [Gateway3B/sdk](https://github.com/Gateway3B/sdk) fork, since the
+  published one does not build on the fork); neither changes the components'
+  API.
+- `dioxus::prelude` now also exports an `InputType` (the `beforeinput`
+  event's), so code that glob-imports both it and `g3_ui::prelude` must name
+  g3-ui's explicitly (`use g3_ui::prelude::InputType;`).
 - Empty slots, conditional content and text no longer leave comment nodes in
   the DOM (Dioxus's markerless placeholders). g3-ui's stylesheet and scripts
   only select elements, so nothing changes for them; app CSS or scripts that
