@@ -207,32 +207,35 @@ g3-route-transitions, g3-brand, then g3-ui.
 6. Definition of done as each repo already defines it, plus a build of its
    testbed or playground with the fork's `dx`.
 
-### The patch block
+### Remote in manifests, local in one config (decided 2026-10-30)
 
-Every crate and app gets the same block, generated once and kept in g3-stack
-as the source of truth. A `[patch]` is only needed for crates that something
-in our graph requests from crates.io; crates the fork depends on internally
-resolve inside the fork automatically. Cargo warns about unused entries;
-that is expected.
+Manifests say where each shared crate lives **remotely**; one config file
+outside every repository says to use the **local** checkout instead.
 
-```toml
-[patch.crates-io]
-# Dioxus fork: upstream main + our commits. See G3-PATCHES.md in the fork.
-dioxus = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-dioxus-fullstack = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-dioxus-ssr = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-dioxus-html = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-dioxus-signals = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-dioxus-cli-config = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-manganis = { git = "https://github.com/Gateway3B/dioxus", rev = "<tag commit>" }
-# dioxus-icons 0.2.0-alpha.3 depends on dioxus-core-template, renamed to
-# dioxus-vdom-template on main. A fork with that one dependency renamed:
-dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", rev = "<commit>" }
-```
+- In every crate's and app's `Cargo.toml`, depend on shared crates by name
+  and crates.io version (`dioxus = "=0.8.0-alpha.3"`, `g3-auth = "0.2"`),
+  never by `git = ...` directly. For anything not published, put its remote
+  under `[patch.crates-io]`: the Dioxus crates and the ecosystem forks at
+  `https://github.com/Gateway3B/<repo>` (`branch = "main"`), and the g3 crates
+  at `https://github.com/g3techhq/<repo>` (`branch = "main"`).
+- `C:/Users/Matthew/Documents/Files/Projects/.cargo/config.toml` has one
+  `[patch.crates-io]` table pointing every g3 crate, every Dioxus crate and
+  each ecosystem fork at its local path. Cargo lets a config patch override a
+  manifest patch for the same crate, and then never fetches the manifest's
+  remote, so manifests can name forks that are not pushed yet (both checked
+  2026-10-30). A `[patch.crates-io]` cannot reach a direct `git = ...`
+  dependency; that is why apps that used those kept needing one-off patches.
+- Commit hooks reject a `Cargo.lock` that resolves g3 crates to local paths,
+  so lockfiles stay out of commits while overrides are active. Before pushing,
+  move the config aside, re-lock against the pushed remotes, and commit the
+  lockfiles.
+- Keep g3 crate versions unchanged until 0.8.0 is published: a patch only
+  applies when its version satisfies the requirement, and nothing is
+  published in between.
 
-`dioxus-sdk-time` and `dioxus-code` need no entry: they depend only on
-`dioxus`. Check with `cargo tree -d -i dioxus`: exactly one `dioxus` must
-appear in every app.
+`dioxus-sdk-time` and `dioxus-code` have `=0.8.0-alpha.3` releases that need no
+fork. Check with `cargo tree -d -i dioxus`: exactly one `dioxus` must appear
+in every app.
 
 ### Per-crate changes
 
