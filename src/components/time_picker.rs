@@ -53,6 +53,7 @@ fn TimeWheels(draft: Signal<TimeOfDay>, cycle: HourCycle, step: u8) -> Element {
             draft.set(next);
         }
     };
+
     rsx! {
         div { class: "g3-wheel",
             WheelColumn {
@@ -332,6 +333,7 @@ pub fn TimePicker(
             typing.set(false);
         }
     });
+
     let mut commit = move |time: TimeOfDay| {
         if disabled.unwrap_or(false) {
             return;
@@ -354,6 +356,7 @@ pub fn TimePicker(
         Some(format) => format.call(time),
         None => format_time(&strings, time, cycle),
     });
+
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
     let title = label.clone().unwrap_or_else(|| strings.choose_time.clone());
@@ -452,6 +455,7 @@ fn TimePickerPlaygroundDemo() -> Element {
     let style = use_signal(|| PickerStyle::Auto);
     let cycle = use_signal(|| HourCycle::H12);
     let step = use_signal(|| 5_usize);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,

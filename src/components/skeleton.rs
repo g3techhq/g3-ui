@@ -34,6 +34,7 @@ pub fn Skeleton(
         SkeletonShape::Avatar => "g3-skeleton-avatar",
         SkeletonShape::Row => "g3-skeleton-row",
     };
+
     rsx! {
         span {
             class: merge_classes(format!("g3-skeleton {shape_cls}"), class.as_deref()),

@@ -32,6 +32,7 @@ pub fn Badge(
         mode.pick("g3-badge-ios", "g3-badge-md"),
         color.as_str()
     );
+
     rsx! {
         span { class: merge_classes(cls, class.as_deref()),
             if let Some(label) = aria_label {

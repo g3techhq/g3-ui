@@ -67,6 +67,7 @@ pub fn ConfirmModal(
     } else {
         Color::Accent
     };
+
     rsx! {
         Modal {
             open,
@@ -87,6 +88,7 @@ pub fn ConfirmModal(
                     onclick: cancel,
                     "{cancel_label}"
                 }
+
                 Button {
                     color: confirm_color,
                     mode,
@@ -112,6 +114,7 @@ fn ConfirmModalPlaygroundDemo() -> Element {
     let title = use_signal(|| "Delete game?".to_string());
     let confirm_label = use_signal(|| "Delete".to_string());
     let destructive = use_signal(|| true);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

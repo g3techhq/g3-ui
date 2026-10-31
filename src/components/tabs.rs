@@ -136,6 +136,7 @@ pub fn Tabs<T: Clone + PartialEq + Hash + 'static>(
     use_context_provider(|| TabsMode(tab_mode));
     use_page_script(TABS_SCRIPT);
     let swipe = swipe.unwrap_or(false);
+
     rsx! {
         div {
             id,
@@ -167,6 +168,7 @@ pub fn TabList(
     use_roving_selection(id.clone(), "[role=tab]", false);
     use_horizontal_scroll(id.clone(), scrollable.unwrap_or(false));
     let in_toolbar = try_consume_context::<super::HeaderToolbarContext>().is_some();
+
     rsx! {
         div {
             id,
@@ -202,6 +204,7 @@ pub fn Tab<T: Clone + PartialEq + Hash + 'static>(
     let (tab_id, panel_id) = context.ids(&value);
     let mut selected_value = context.value;
     let selected = *selected_value.read() == value;
+
     rsx! {
         button {
             id: tab_id,
@@ -268,6 +271,7 @@ pub fn TabPanel<T: Clone + PartialEq + Hash + 'static>(
     } else {
         "hidden"
     };
+
     rsx! {
         div {
             id: panel_id,
@@ -300,6 +304,7 @@ pub fn TabPanel<T: Clone + PartialEq + Hash + 'static>(
 fn TabsPlaygroundDemo() -> Element {
     let tab = use_signal(|| "scores");
     let mut taps = use_signal(|| 0_u32);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             crate::Stack {

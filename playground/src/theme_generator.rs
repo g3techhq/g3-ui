@@ -27,9 +27,11 @@ macro_rules! color_fields {
             get: fn(&G3Theme) -> &str,
             set: fn(&mut G3Theme, String),
         }
+
         impl PartialEq for ColorField {
             fn eq(&self, other: &Self) -> bool { self.key == other.key }
         }
+
         const COLORS: &[ColorField] = &[$(ColorField {
             key: stringify!($field), label: $label,
             get: |theme| &theme.$field,
@@ -55,9 +57,11 @@ macro_rules! look_fields {
             get: fn(&Look) -> &Option<String>,
             set: fn(&mut Look, Option<String>),
         }
+
         impl PartialEq for LookField {
             fn eq(&self, other: &Self) -> bool { self.key == other.key }
         }
+
         const LOOKS: &[LookField] = &[$(LookField {
             key: stringify!($field), label: $label,
             get: |look| &look.$field,
@@ -172,6 +176,7 @@ fn ColorEditor(field: ColorField) -> Element {
     let settings = use_context::<PlaygroundSettings>();
     let value = (field.get)(&(settings.custom_theme)()).to_string();
     let text = use_followed_text(move || (field.get)(&(settings.custom_theme)()).to_string());
+
     rsx! {
         g3_ui::Input { label: field.label, value: text, aria_label: format!("{} CSS color", field.label),
             oninput: move |value| update_color(settings, field, value),
@@ -192,6 +197,7 @@ fn LookEditor(field: LookField) -> Element {
             .clone()
             .unwrap_or_default()
     });
+
     rsx! {
         g3_ui::Input { label: field.label, value: text, placeholder: "Platform default",
             oninput: move |value: String| {
@@ -207,6 +213,7 @@ fn LookEditor(field: LookField) -> Element {
 fn PresetPicker() -> Element {
     let settings = use_context::<PlaygroundSettings>();
     let custom = (settings.custom_theme)();
+
     rsx! {
         section { class: "theme-generator-section", aria_labelledby: "theme-presets-heading",
             h2 { id: "theme-presets-heading", "Presets" }
@@ -247,6 +254,7 @@ fn PresetSwatch(preset: PlaygroundTheme, loaded: bool) -> Element {
             .unwrap_or("var(--g3-color-accent)")
     );
     let label = preset.label();
+
     rsx! {
         button { class: "theme-preset", r#type: "button",
             aria_label: format!("Load the {label} preset"),
@@ -267,6 +275,7 @@ fn PresetSwatch(preset: PlaygroundTheme, loaded: bool) -> Element {
 #[component]
 fn SeedField(label: &'static str, value: Signal<String>) -> Element {
     let mut value = value;
+
     rsx! {
         g3_ui::Input { label, value, aria_label: format!("{label} seed, CSS color"),
             end: rsx! {
@@ -288,6 +297,7 @@ fn SeedGenerator() -> Element {
     let secondary = use_signal(|| picker_color(&(settings.custom_theme).peek().accent_secondary));
     let use_secondary = use_signal(|| false);
     let mut status = use_signal(String::new);
+
     rsx! {
         section { class: "theme-generator-section", aria_labelledby: "theme-seeds-heading",
             h2 { id: "theme-seeds-heading", "Generate from your colors" }
@@ -298,6 +308,7 @@ fn SeedGenerator() -> Element {
             if use_secondary() {
                 SeedField { label: "Second accent", value: secondary }
             }
+
             div { class: "theme-generator-actions",
                 Button { size: ButtonSize::Sm,
                     onclick: move |_| {
@@ -338,15 +349,18 @@ pub fn ThemeGenerator() -> Element {
         let _ = (settings.custom_theme)();
         copy_status.set(String::new());
     });
+
     let color_scheme = use_followed_text(move || (settings.custom_theme)().color_scheme);
     let source = rust_source(&custom);
     let copy_source = source.clone();
+
     rsx! {
         article { class: "theme-generator", "data-view": view().as_str(),
             p { "Start from a preset or generate a theme from two or three colors, then edit any of the 17 colors and the optional surface styles. Changes appear in the live preview immediately. Use your theme throughout the playground to try every component." }
             div { class: "theme-generator-actions",
                 Button { size: ButtonSize::Sm, onclick: move |_| settings.theme.set(PlaygroundTheme::Custom), "Use throughout playground" }
             }
+
             div { class: "theme-generator-view-tabs",
                 SegmentGroup { value: view, aria_label: "Theme generator view",
                     SegmentButton { value: GeneratorView::Colors, "Colors" }
@@ -354,6 +368,7 @@ pub fn ThemeGenerator() -> Element {
                     SegmentButton { value: GeneratorView::Code, "Code" }
                 }
             }
+
             div { class: "theme-generator-layout",
                 g3_ui::Card { class: "theme-generator-editor",
                     PresetPicker {}
@@ -380,6 +395,7 @@ pub fn ThemeGenerator() -> Element {
                         }
                     }
                 }
+
                 div { class: "theme-generator-result",
                     section { class: "theme-generator-live",
                     h2 { "Live preview" }
@@ -391,6 +407,7 @@ pub fn ThemeGenerator() -> Element {
                         }
                     }
                     }
+
                     div { class: "theme-generator-export",
                         h2 { "Use in your app" }
                         Button { fill: ButtonFill::Outline,
@@ -421,6 +438,7 @@ fn ThemePreview() -> Element {
     let segment = use_signal(|| 0_u8);
     let language = use_signal(|| "English".to_string());
     let mut message = use_signal(String::new);
+
     rsx! {
         g3_ui::PlaygroundDemoFrame { app: false,
             AppWrapper { class: "g3-playground-device-app",

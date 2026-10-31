@@ -396,6 +396,7 @@ fn toolbar_segments_keep_one_keyboard_stop_per_group_in_both_modes() {
 #[test]
 fn a_radio_group_follows_a_new_value_signal() {
     static SECOND: GlobalSignal<bool> = Signal::global(|| false);
+
     fn app() -> Element {
         let first = use_signal(|| Some(1));
         let second = use_signal(|| Some(2));

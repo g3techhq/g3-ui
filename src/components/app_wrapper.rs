@@ -5,6 +5,7 @@ use crate::UI_CSS;
 use crate::state::use_element_id;
 use crate::theme::{ComponentMode, Strings, Theme, classes, merge_classes, use_provide_ambient};
 use dioxus::prelude::*;
+
 #[cfg(feature = "transitions")]
 use g3_route_transitions::{ROUTE_TRANSITION_OVERLAY_REGION_CLASS, RouteTransitionStyles};
 
@@ -254,14 +255,17 @@ pub fn AppWrapper(
             let _ = document::eval(&script).await;
         });
     });
+
     let layout = layout.unwrap_or(true);
     let overlay_region = cfg!(feature = "transitions") && route_transition_overlay.unwrap_or(true);
+
     #[cfg(feature = "transitions")]
     let overlay_cls = if overlay_region {
         ROUTE_TRANSITION_OVERLAY_REGION_CLASS
     } else {
         ""
     };
+
     #[cfg(not(feature = "transitions"))]
     let overlay_cls = {
         let _ = overlay_region;
@@ -299,13 +303,16 @@ pub fn AppWrapper(
     if !is_root_shell {
         return shell;
     }
+
     #[cfg(feature = "transitions")]
     return rsx! {
         StylesheetLink {}
         ViewportMeta {}
         RouteTransitionStyles { {shell} }
     };
+
     #[cfg(not(feature = "transitions"))]
+
     rsx! {
         StylesheetLink {}
         ViewportMeta {}
@@ -351,6 +358,7 @@ fn StylesheetLink() -> Element {
 #[component]
 fn AppWrapperPlaygroundDemo() -> Element {
     let mode = crate::use_component_mode(None);
+
     rsx! {
         crate::PlaygroundDemoFrame { app: false,
             AppWrapper { mode, class: "g3-playground-device-app",

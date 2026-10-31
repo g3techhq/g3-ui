@@ -78,6 +78,7 @@ pub fn Spinner(
             div { class: classes(["g3-spinner", "g3-spinner-ring", size_cls]), aria_hidden: "true" }
         },
     };
+
     rsx! {
         if decorative.unwrap_or(false) {
             div {
@@ -109,6 +110,7 @@ fn SpinnerPlaygroundDemo() -> Element {
     } else {
         "g3-playground-spinner-box"
     };
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

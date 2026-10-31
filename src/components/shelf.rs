@@ -62,6 +62,7 @@ pub fn Shelf(
     let labelled_by = title.is_some().then(|| title_id.clone());
     // A visible title names the row; the label only stands in when there is none.
     let aria_label = if title.is_none() { aria_label } else { None };
+
     rsx! {
         div {
             class: merge_classes("g3-shelf", class.as_deref()),
@@ -109,6 +110,7 @@ fn ShelfPlaygroundDemo() -> Element {
         ("Fox Glen", "18 holes · 6,401 yd"),
         ("Stone Bridge", "27 holes · 9,960 yd"),
     ];
+
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
             controls: rsx! {

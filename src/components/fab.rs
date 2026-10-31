@@ -105,6 +105,7 @@ pub fn Fab(
             ""
         },
     ]);
+
     rsx! {
         div { class: merge_classes(cls, class.as_deref()), {children} }
     }
@@ -165,6 +166,7 @@ pub fn FabButton(
     if let Some(label) = aria_label {
         attributes.push(Attribute::new("aria-label", label, None, false));
     }
+
     rsx! {
         Pressable {
             class: merge_classes(cls, class.as_deref()),
@@ -197,6 +199,7 @@ pub fn FabList(
         FabListSide::Start => "g3-fab-list-start",
         FabListSide::End => "g3-fab-list-end",
     };
+
     rsx! {
         div {
             id,
@@ -256,6 +259,7 @@ pub fn FabMenu(
     let list_id = use_element_id("fab-list", None);
     let close_label = use_strings().read().close.clone();
     let is_open = open();
+
     rsx! {
         Fab { vertical, horizontal, class,
             FabButton {
@@ -285,6 +289,7 @@ fn FabPlaygroundDemo() -> Element {
     let horizontal = use_signal(|| FabHorizontal::End);
     let side = use_signal(|| FabListSide::Top);
     let mode = crate::use_component_mode(None);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

@@ -10,6 +10,7 @@ pub(crate) struct HeaderToolbarContext;
 #[component]
 fn ToolbarContextProvider(children: Element) -> Element {
     use_hook(|| provide_context(HeaderToolbarContext));
+
     rsx! {
         {children}
     }
@@ -125,6 +126,7 @@ pub fn Header(
             ""
         },
     ]);
+
     rsx! {
         header {
             class: merge_classes(header_cls, class.as_deref()),
@@ -148,6 +150,7 @@ pub fn Header(
                             div { class: "g3-header-title" }
                         }
                     }
+
                     div { class: "g3-header-slot g3-header-end-slot", {end} }
                 }
                 if let Some(toolbar) = toolbar {
@@ -173,6 +176,7 @@ fn HeaderPlaygroundDemo() -> Element {
     let show_start = use_signal(|| true);
     let show_end = use_signal(|| true);
     let mode = crate::use_component_mode(None);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

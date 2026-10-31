@@ -37,7 +37,10 @@ impl PickerStyle {
 }
 
 /// The button that shows a picker's value and opens it, styled as a field.
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    reason = "Each argument is a separately configurable component property."
+)]
 pub(crate) fn picker_trigger(
     id: &str,
     mut open: Signal<bool>,
@@ -53,6 +56,7 @@ pub(crate) fn picker_trigger(
 ) -> Element {
     let value_id = format!("{id}-value");
     let labelledby = has_label.then(|| format!("{id}-label {value_id}"));
+
     rsx! {
         button {
             id: id.to_string(),
@@ -125,6 +129,7 @@ fn DateWheels(
     let years = (first_year..=last_year)
         .map(|year| year.to_string())
         .collect::<Vec<_>>();
+
     rsx! {
         div { class: "g3-wheel",
             WheelColumn {
@@ -235,11 +240,13 @@ pub fn DatePicker(
                 .set((!is_date_disabled.is_some_and(|check| check.call(start))).then_some(start));
         }
     });
+
     let valid = use_callback(move |date: CalendarDate| {
         min.is_none_or(|min| date >= min)
             && max.is_none_or(|max| date <= max)
             && !is_date_disabled.is_some_and(|check| check.call(date))
     });
+
     let mut commit = move |date: CalendarDate| {
         if disabled.unwrap_or(false) || !valid.call(date) {
             return;
@@ -258,6 +265,7 @@ pub fn DatePicker(
         Some(format) => format.call(date),
         None => short_date(&strings, date),
     });
+
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
     let title = label.clone().unwrap_or_else(|| strings.choose_date.clone());
@@ -369,6 +377,7 @@ fn DatePickerPlaygroundDemo() -> Element {
     let limit = use_signal(|| false);
     let inline = use_signal(|| false);
     let today = use_hook(CalendarDate::today);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,

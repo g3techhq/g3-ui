@@ -91,6 +91,7 @@ pub fn Modal(
             on_dismiss.call(());
         }
     });
+
     use_lock_body_scroll(open.into());
     use_overlay_focus(open.into(), id.clone(), true, dismiss);
     use_overlay_registration(open.into(), id.clone(), dismiss);
@@ -106,6 +107,7 @@ pub fn Modal(
             ever_opened.set(true);
         }
     });
+
     let is_open = open();
     if !is_open && !ever_opened() {
         return rsx! {};
@@ -125,6 +127,7 @@ pub fn Modal(
         ModalRole::Dialog => "dialog",
         ModalRole::AlertDialog => "alertdialog",
     };
+
     rsx! {
       div { id: layer_id, class: "g3-overlay-layer", popover: "manual",
         div {
@@ -146,6 +149,7 @@ pub fn Modal(
                 if let Some(title) = title {
                     h2 { id: title_id, class: "g3-modal-title", "{title}" }
                 }
+
                 div { id: body_id, class: "g3-modal-body", {children} }
                 if let Some(actions) = actions {
                     div { class: "g3-modal-actions", {actions} }

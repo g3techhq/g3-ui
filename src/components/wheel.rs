@@ -53,6 +53,7 @@ pub(crate) fn WheelColumn(
             let _ = eval.send((index, smooth));
         }
     });
+
     let unavailable = disabled_indices.contains(&index);
     let step_disabled = disabled_indices.clone();
     let step = move |to: usize| {
@@ -112,6 +113,7 @@ pub(crate) fn WheelColumn(
                         "{label}"
                     }
                 }
+
                 div { class: "g3-wheel-spacer" }
             }
         }

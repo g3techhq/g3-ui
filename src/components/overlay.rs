@@ -52,6 +52,7 @@ pub(crate) fn use_top_layer_with_priority(
         );
         let _ = document::eval(&script);
     });
+
     use_drop(move || {
         let id = js_string(&config.peek().1);
         document::eval(&format!(
@@ -288,6 +289,7 @@ pub(crate) fn use_overlay_focus_with(
             js_string(if trap { "true" } else { "false" })
         ));
     });
+
     let script = open().then(|| {
         FOCUS_SCRIPT.replace("__ID__", &js_string(&id)).replace(
             "__ROVING__",

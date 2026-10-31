@@ -1,6 +1,7 @@
 //! A page layout with persistent navigation.
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
 use dioxus::prelude::*;
+
 #[cfg(feature = "transitions")]
 use g3_route_transitions::{ROUTE_TRANSITION_BASE_REGION_CLASS, ROUTE_TRANSITION_PAGE_FRAME_CLASS};
 
@@ -57,12 +58,14 @@ pub fn TabLayout(
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+
     #[cfg(feature = "transitions")]
     let base_cls = if route_transition_base.unwrap_or(true) {
         ROUTE_TRANSITION_BASE_REGION_CLASS
     } else {
         ""
     };
+
     #[cfg(not(feature = "transitions"))]
     let base_cls = {
         let _ = route_transition_base;
@@ -74,8 +77,10 @@ pub fn TabLayout(
     // layout holds no page, or a persistent rail: the stylesheet skips those.
     #[cfg(feature = "transitions")]
     let frame_cls = ROUTE_TRANSITION_PAGE_FRAME_CLASS;
+
     #[cfg(not(feature = "transitions"))]
     let frame_cls = "";
+
     rsx! {
         div {
             class: merge_classes(classes(["g3-tab-layout", base_cls, frame_cls]), class.as_deref()),

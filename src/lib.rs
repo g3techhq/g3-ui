@@ -16,15 +16,20 @@ pub static UI_CSS: Asset = asset!(
 );
 
 mod components;
+
 mod descriptor;
+
 mod state;
+
 mod theme;
 
 pub mod palette;
+
 pub mod prelude;
 
 pub use components::*;
 pub use descriptor::{ComponentDescriptor, component_descriptors};
+
 #[cfg(feature = "playground")]
 #[doc(hidden)]
 pub use descriptor::{

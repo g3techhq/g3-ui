@@ -1,6 +1,7 @@
 //! Component metadata for playgrounds and documentation.
 #[cfg(feature = "playground")]
 use dioxus::prelude::*;
+
 /// Name and one-line summary for a component, used by the playground and
 /// by generated documentation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -10,6 +11,7 @@ pub struct ComponentDescriptor {
     /// One sentence describing what the component is for.
     pub description: &'static str,
 }
+
 /// A runnable playground entry: a descriptor plus the demo that renders it
 /// and the source shown alongside.
 #[cfg(feature = "playground")]
@@ -134,21 +136,25 @@ pub fn function_source(file: &'static str, declaration: &str) -> Option<&'static
     }
     None
 }
+
 #[cfg(feature = "playground")]
 impl PartialEq for ComponentPlaygroundDemo {
     fn eq(&self, other: &Self) -> bool {
         self.descriptor == other.descriptor
     }
 }
+
 /// Every component in the library, with its description.
 pub fn component_descriptors() -> Vec<ComponentDescriptor> {
     crate::components::component_descriptors()
 }
+
 /// Every playground demo in the library. Requires the `playground` feature.
 #[cfg(feature = "playground")]
 pub fn component_playground_demos() -> Vec<ComponentPlaygroundDemo> {
     crate::components::component_playground_demos()
 }
+
 /// Frames a playground demo: its controls above a device-sized preview.
 #[cfg(feature = "playground")]
 #[component]
@@ -169,6 +175,7 @@ pub fn PlaygroundDemoFrame(
     } else {
         "g3-playground-body-flow"
     };
+
     rsx! {
         div { class: "g3-playground-demo-stack",
             if let Some(controls) = controls {
@@ -178,6 +185,7 @@ pub fn PlaygroundDemoFrame(
                     crate::Stack { gap: crate::Space::Md, {controls} }
                 }
             }
+
             div { class: preview_cls,
                 if app.unwrap_or(true) {
                     crate::AppWrapper { mode, class: "g3-playground-device-app",
@@ -195,6 +203,7 @@ pub fn PlaygroundDemoFrame(
         }
     }
 }
+
 /// Declare a component's playground entry: its `DESCRIPTOR` constant and the
 /// demo wiring the playground collects.
 ///
@@ -229,6 +238,7 @@ macro_rules! g3_playground {
             name: $name,
             description: $description,
         };
+
         #[cfg(feature = "playground")]
         pub const PLAYGROUND: $crate::ComponentPlaygroundDemo = $crate::ComponentPlaygroundDemo {
             descriptor: DESCRIPTOR,
@@ -238,6 +248,7 @@ macro_rules! g3_playground {
             demo_name: stringify!($demo),
             components: &[$($component),*],
         };
+
         #[cfg(feature = "playground")]
         fn __g3_playground_render() -> dioxus::prelude::Element {
             rsx! { $demo {} }

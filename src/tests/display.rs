@@ -9,6 +9,7 @@ fn a_tappable_card_names_its_action_with_the_title() {
                 end: rsx! { InfoButton {} },
                 "Body"
             }
+
             Card { aria_label: "Untitled", href: "/x", "Body" }
             Card { title: "Static", "Body" }
         }

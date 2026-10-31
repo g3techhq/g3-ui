@@ -14,11 +14,17 @@ use gloo_timers::future::TimeoutFuture;
 use manganis::{AssetOptions, asset};
 
 mod code_block;
+
 mod component_props;
+
 mod docs;
+
 mod landing;
+
 mod theme_generator;
+
 mod themes;
+
 mod transition_showcase;
 use code_block::CodeBlock;
 use docs::Guide;
@@ -29,11 +35,16 @@ use transition_showcase::{
     TransitionAlbum, TransitionEpisode, TransitionLibrary, TransitionListen, TransitionProfile,
     TransitionQueue, TransitionRadio,
 };
-#[allow(dead_code)]
+
+#[allow(
+    dead_code,
+    reason = "Shared definitions are used by selected platform, server or test builds."
+)]
 const PLAYGROUND_CSS: Asset = asset!(
     "/assets/playground.css",
     AssetOptions::css().with_static_head(true)
 );
+
 const FAVICON: Asset = asset!("/assets/favicon.svg");
 
 #[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
@@ -88,6 +99,7 @@ enum Route {
         #[route("/:..segments")]
         NotFound { segments: Vec<String> },
 }
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlaygroundViewport {
     Mobile,
@@ -96,6 +108,7 @@ enum PlaygroundViewport {
     Desktop,
     Resizable,
 }
+
 #[derive(Clone, Copy)]
 struct PlaygroundSettings {
     mode: Signal<ComponentMode>,
@@ -115,9 +128,11 @@ impl PlaygroundViewport {
         }
     }
 }
+
 /// Width at which the playground chrome itself becomes a phone layout. Kept in
 /// sync with the `max-width: 760px` block in `playground.css`.
 const COMPACT_SHELL_QUERY: &str = "(max-width: 760px)";
+
 const COMPACT_SHELL_SCRIPT: &str = r#"
 const query = window.matchMedia("__QUERY__");
 let last = null;
@@ -130,6 +145,7 @@ publish();
 query.addEventListener("change", publish);
 window.addEventListener("resize", publish);
 "#;
+
 /// Answers [`COMPACT_SHELL_QUERY`] during the render that asks, before any
 /// `eval` could round-trip. The drawer's resting state depends on the answer,
 /// and a rail that is part of the wide layout has to be laid out with the first
@@ -143,10 +159,12 @@ fn initial_compact_shell() -> Option<bool> {
         .flatten()
         .map(|query| query.matches())
 }
+
 #[cfg(not(target_arch = "wasm32"))]
 fn initial_compact_shell() -> Option<bool> {
     None
 }
+
 /// Tracks whether the playground page - not the simulated device inside it -
 /// is rendering at phone width. A persistent `NavigationDrawer` has no room to
 /// reserve on a phone, so the component drawer becomes a `SideSheet` there.
@@ -165,10 +183,12 @@ fn use_compact_shell() -> Signal<Option<bool>> {
     });
     compact
 }
+
 fn main() {
     g3_ui::init_auto_mode();
     dioxus::launch(App);
 }
+
 #[component]
 fn App() -> Element {
     use_browser_history_transitions::<Route>();
@@ -177,6 +197,7 @@ fn App() -> Element {
     use_effect(|| {
         document::eval("document.documentElement.lang = 'en';");
     });
+
     rsx! {
         document::Title { "g3-ui playground" }
         document::Meta {
@@ -187,6 +208,7 @@ fn App() -> Element {
         Router::<Route> {}
     }
 }
+
 #[component]
 fn Playground() -> Element {
     let demos = component_playground_demos();
@@ -221,11 +243,13 @@ fn Playground() -> Element {
         );
         shortcut.set(Some(eval));
     });
+
     use_drop(move || {
         if let Some(eval) = *shortcut.peek() {
             let _ = eval.send("dispose");
         }
     });
+
     let current_route: Route = use_route();
     let selected = selected_demo(&demos, &current_route);
     let showing_transitions = current_route.is_transition_showcase();
@@ -310,6 +334,7 @@ fn Playground() -> Element {
         theme,
         custom_theme,
     });
+
     let selector = rsx! {
         List { lines: ListLines::None,
             Item { label: "g3-ui", description: "{count} demos",
@@ -319,6 +344,7 @@ fn Playground() -> Element {
                             path { d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" }
                         } }
                     }
+
                     Button { fill: ButtonFill::Clear, href: "https://docs.rs/g3-ui/latest/g3_ui/", new_tab: true, aria_label: "API reference",
                         Package { size: 20 }
                     }
@@ -332,6 +358,7 @@ fn Playground() -> Element {
             dismiss_on_select: is_compact,
         }
     };
+
     rsx! {
         AppWrapper {
             theme: theme().to_theme(&custom_theme()),
@@ -377,6 +404,7 @@ fn Playground() -> Element {
                             helper: "Drag the slider or use arrow keys to check intermediate widths.",
                         }
                     }
+
                     div {
                         class: "playground-stage",
                         style: "--playground-preview-width: {preview_width()}px;",
@@ -470,6 +498,7 @@ fn PlaygroundHeader(
             }
         }
     };
+
     rsx! {
         Header {
             title,
@@ -548,6 +577,7 @@ fn ScrollToTop() -> Element {
             "document.querySelector('.playground-main .g3-content-scroll')?.scrollTo({ top: 0, left: 0, behavior: 'instant' });",
         );
     });
+
     rsx! {}
 }
 
@@ -637,6 +667,7 @@ fn NotFound(segments: Vec<String>) -> Element {
             slug: "demo-app".to_string(),
         });
     });
+
     rsx! {}
 }
 
@@ -649,6 +680,7 @@ fn ComponentDemo(slug: String) -> Element {
         .find(|demo| demo_slug(demo.descriptor.name) == slug)
         .unwrap_or_else(|| demos[0]);
     let (mode, theme, viewport) = active_playground_settings();
+
     rsx! {
         PlaygroundViewportDemo {
             key: "{demo.descriptor.name}",
@@ -703,6 +735,7 @@ fn PlaygroundViewportDemo(
         PlaygroundViewport::Landscape => "Landscape phone",
         PlaygroundViewport::Resizable => "Resizable",
     };
+
     rsx! {
         section {
             class: "playground-viewport-card playground-viewport-{viewport.as_str()}",
@@ -717,6 +750,7 @@ fn PlaygroundViewportDemo(
         }
     }
 }
+
 /// The source panels under a demo: the demo itself, then each component it
 /// shows, titled so the reader knows which is which.
 fn source_panels(demo: &ComponentPlaygroundDemo) -> Vec<(String, String)> {
@@ -844,6 +878,7 @@ fn DocsSearch(
     let query = value();
     let results = search_entries(&query);
     let no_matches = results.is_empty();
+
     rsx! {
         g3_ui::Modal { open, title: "Search documentation", size: g3_ui::ModalSize::Wide,
             actions: rsx! {
@@ -890,6 +925,7 @@ fn DocNavButton(
     dismiss_on_select: bool,
 ) -> Element {
     let selected = matches!(&current_route, Route::Guide { slug: current } if current == &slug);
+
     rsx! { Item { label: title, selected,
         onclick: move |_| {
             let slug = slug.clone();
@@ -915,6 +951,7 @@ fn PlaygroundNav(
         .filter(|demo| demo.descriptor.name != "DemoApp")
         .collect::<Vec<_>>();
     component_demos.sort_by_key(|demo| demo.descriptor.name.to_ascii_lowercase());
+
     rsx! {
         List { class: "playground-nav", lines: ListLines::None,
             Item {
@@ -971,6 +1008,7 @@ fn PlaygroundNav(
         }
     }
 }
+
 #[component]
 fn RenderSelectedDemo(
     demo: ComponentPlaygroundDemo,
@@ -980,6 +1018,7 @@ fn RenderSelectedDemo(
     let _ = (mode, theme);
     (demo.render)()
 }
+
 #[component]
 fn ComponentNavButton(
     demo: ComponentPlaygroundDemo,
@@ -992,6 +1031,7 @@ fn ComponentNavButton(
         &current_route,
         Route::ComponentDemo { slug: selected_slug } if selected_slug == &slug
     );
+
     rsx! {
         Item {
             selected: is_selected,
@@ -1008,9 +1048,11 @@ fn ComponentNavButton(
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::{PlaygroundViewport, demo_slug, source_panels};
+
     #[test]
     fn preview_controls_only_appear_on_interactive_routes() {
         use super::Route;
@@ -1039,6 +1081,7 @@ mod tests {
         );
         assert!(Route::TransitionListen {}.has_preview_controls());
     }
+
     #[test]
     fn viewport_picker_exposes_mobile_and_desktop_shell_widths() {
         assert_eq!(PlaygroundViewport::Mobile.as_str(), "mobile");
@@ -1047,6 +1090,7 @@ mod tests {
         assert_eq!(PlaygroundViewport::Desktop.as_str(), "desktop");
         assert_eq!(PlaygroundViewport::Resizable.as_str(), "resizable");
     }
+
     #[test]
     fn documentation_and_public_names_share_the_search_index() {
         assert!(
@@ -1077,6 +1121,7 @@ mod tests {
                 .any(|entry| matches!(entry.route, super::Route::ThemeGenerator {}))
         );
     }
+
     #[test]
     fn documentation_slugs_and_source_links_are_valid_and_unique() {
         let mut slugs = std::collections::HashSet::new();
@@ -1089,6 +1134,7 @@ mod tests {
             assert!(demo.source_path.starts_with("src/components/"));
         }
     }
+
     #[test]
     fn every_demo_lists_its_demo_and_component_sources() {
         for demo in g3_ui::component_playground_demos() {
@@ -1112,6 +1158,7 @@ mod tests {
             }
         }
     }
+
     #[test]
     fn a_new_page_scrolls_to_the_top_but_the_transition_showcase_does_not() {
         use super::Route;

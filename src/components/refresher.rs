@@ -83,7 +83,9 @@ pub fn Refresher(
             on_refresh.call(());
         }
     });
+
     let cls = classes(["g3-refresher", mode.pick("", "g3-refresher-md")]);
+
     rsx! {
         div {
             id: root_id,
@@ -99,6 +101,7 @@ pub fn Refresher(
                     "{strings.refreshing}"
                 }
             }
+
             div { class: "g3-refresher-indicator", aria_hidden: "true",
                 span { class: "g3-refresher-spinner" }
                 span { id: label_id, class: "g3-refresher-label",
@@ -109,6 +112,7 @@ pub fn Refresher(
                     }
                 }
             }
+
             div { class: "g3-refresher-content", {children} }
         }
     }
@@ -119,6 +123,7 @@ pub fn Refresher(
 fn RefresherPlaygroundDemo() -> Element {
     let mut refreshing = use_signal(|| false);
     let mut count = use_signal(|| 0);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

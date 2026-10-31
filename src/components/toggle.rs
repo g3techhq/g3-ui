@@ -79,6 +79,7 @@ pub fn Toggle(
     ]);
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
+
     rsx! {
         button {
             id: id.clone(),
@@ -119,6 +120,7 @@ fn TogglePlaygroundDemo() -> Element {
     let checked = use_signal(|| true);
     let small = use_signal(|| false);
     let disabled = use_signal(|| false);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

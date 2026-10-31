@@ -77,6 +77,7 @@ fn ChipPlaygroundDemo() -> Element {
     let color = use_signal(|| crate::Color::Accent);
     let mut nearby = use_signal(|| true);
     let mut friends = use_signal(|| false);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

@@ -133,6 +133,7 @@ pub fn Alert(
             value.set(initial().unwrap_or_default());
         }
     });
+
     let finish = move |button: Option<usize>| {
         let mut open = open;
         open.set(false);
@@ -145,6 +146,7 @@ pub fn Alert(
     };
     let mut ordered: Vec<(usize, AlertButton)> = buttons.into_iter().enumerate().collect();
     ordered.sort_by_key(|(_, button)| button.role != AlertButtonRole::Cancel);
+
     rsx! {
         Modal {
             open,
@@ -198,6 +200,7 @@ fn AlertPlaygroundDemo() -> Element {
     let sheets = crate::use_action_sheet();
     let mut sheet_open = use_signal(|| false);
     let toaster = crate::use_toast();
+
     rsx! {
         crate::PlaygroundDemoFrame {
             crate::Stack {
@@ -251,6 +254,7 @@ fn AlertPlaygroundDemo() -> Element {
                 buttons: vec![AlertButton::cancel("Stay"), AlertButton::destructive("Leave")],
                 on_result: move |result: AlertResult| last.set(format!("Alert: {:?}", result.button)),
             }
+
             Modal {
                 open: modal_open,
                 title: "Round details",

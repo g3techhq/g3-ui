@@ -145,6 +145,7 @@ pub fn SegmentButton<T: Clone + PartialEq + 'static>(
     let mut group_value = context.value;
     let selected = *group_value.read() == value;
     let disabled = disabled.unwrap_or(false);
+
     rsx! {
         button {
             class: merge_classes(
@@ -190,6 +191,7 @@ fn SegmentPlaygroundDemo() -> Element {
         "Weather",
         "Photos",
     ];
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

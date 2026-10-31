@@ -5,6 +5,7 @@ use super::*;
 pub fn Landing() -> Element {
     let settings = use_context::<PlaygroundSettings>();
     let viewport = (settings.viewport)();
+
     rsx! {
         article { class: "playground-landing",
             section { class: "landing-hero", "data-viewport": viewport.as_str(),
@@ -19,6 +20,7 @@ pub fn Landing() -> Element {
                 }
                 LandingPreview {}
             }
+
             section { class: "landing-benefits", aria_label: "Features",
                 g3_ui::Grid { columns: g3_ui::GridColumns::Fit(25.0),
                     g3_ui::Card { title: "Platform modes", heading_level: g3_ui::HeadingLevel::H3,
@@ -38,6 +40,7 @@ pub fn Landing() -> Element {
                     }
                 }
             }
+
             section { class: "landing-next",
                 h2 { "Installation" }
                 p { "Add g3-ui to Cargo.toml and wrap the app in AppWrapper." }
@@ -56,6 +59,7 @@ fn LandingPreview() -> Element {
             .find(|demo| demo.descriptor.name == "DemoApp")
             .expect("the landing page requires the Demo app gallery entry")
     });
+
     rsx! {
         div { class: "landing-device-stage",
             PlaygroundViewportDemo { demo, mode, theme, viewport }

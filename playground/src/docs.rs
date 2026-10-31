@@ -2,10 +2,13 @@
 use super::*;
 
 mod examples;
+
 mod pages;
+
 mod theme_hooks;
 
 const EXAMPLES_SOURCE: &str = include_str!("docs/examples.rs");
+
 const THEME_HOOKS_SOURCE: &str = include_str!("docs/theme_hooks.rs");
 
 /// Only information shared by the menu, search, and header belongs here.
@@ -161,6 +164,7 @@ fn function_code(source: &'static str, functions: &[&str], imports: bool) -> Str
 #[component]
 fn LiveExample(example: Example, label: String) -> Element {
     let (mode, theme, viewport) = active_playground_settings();
+
     rsx! {
         div { class: "playground-doc-preview-stage",
             section {

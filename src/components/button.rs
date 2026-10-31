@@ -147,6 +147,7 @@ pub fn Button(
     } else {
         start
     };
+
     rsx! {
         Pressable {
             class: merge_classes(cls, class.as_deref()),
@@ -179,6 +180,7 @@ fn ButtonPlaygroundDemo() -> Element {
     let loading = use_signal(|| false);
     let expand = use_signal(|| false);
     let label = use_signal(|| "Create".to_string());
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

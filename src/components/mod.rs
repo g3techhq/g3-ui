@@ -1,70 +1,135 @@
 //! Every component, in a flat module tree.
 mod accordion;
+
 mod action_sheet;
+
 mod alert;
+
 mod app_wrapper;
+
 mod avatar;
+
 mod back_button;
+
 mod badge;
+
 mod bottom_sheet;
+
 mod button;
+
 mod calendar;
+
 mod card;
+
 mod checkbox;
+
 mod chip;
+
 mod clock;
+
 pub(crate) mod color;
+
 mod confirm_modal;
+
 mod content;
+
 mod date_picker;
+
 mod datetime;
+
 #[cfg(feature = "playground")]
 mod demo_app;
+
 mod divider;
+
 mod empty_state;
+
 mod fab;
+
 mod field;
+
 mod gesture;
+
 mod header;
+
 mod hscroll;
+
 mod infinite_scroll;
+
 mod info_button;
+
 mod keyboard;
+
 mod layout;
+
 mod list;
+
 mod media;
+
 mod modal;
+
 pub(crate) mod nav;
+
 mod navigation_drawer;
+
 pub(crate) mod overlay;
+
 mod overlay_host;
+
 mod page;
+
 mod popover;
+
 pub(crate) mod pressable;
+
 mod progress;
+
 mod radio;
+
 mod range;
+
 mod rating;
+
 mod refresher;
+
 mod reorder;
+
 mod responsive;
+
 mod script;
+
 mod searchbar;
+
 mod segment;
+
 mod select;
+
 mod sheet;
+
 mod shelf;
+
 mod side_sheet;
+
 mod skeleton;
+
 mod spinner;
+
 mod swipe;
+
 mod tab_layout;
+
 mod table;
+
 mod tabs;
+
 mod text;
+
 mod time_picker;
+
 mod toast;
+
 mod toggle;
+
 mod wheel;
 
 pub use accordion::{AccordionGroup, AccordionItem};
@@ -88,6 +153,7 @@ pub use datetime::{CalendarDate, HourCycle, ParseDateTimeError, TimeOfDay};
 pub use divider::{Divider, DividerOrientation};
 pub use empty_state::EmptyState;
 pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
+
 #[cfg(test)]
 pub(crate) use field::within_typing_limits as field_limits;
 pub use field::{Input, InputType, TextArea};

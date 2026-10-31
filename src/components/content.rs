@@ -2,6 +2,7 @@
 use crate::components::{Refresher, Spinner};
 use crate::theme::{merge_classes, use_strings};
 use dioxus::prelude::*;
+
 #[cfg(feature = "transitions")]
 use g3_route_transitions::ROUTE_TRANSITION_SEGMENT_REGION_CLASS;
 
@@ -88,14 +89,17 @@ pub fn Content(
 ) -> Element {
     let strings = use_strings()();
     let padding = padding.unwrap_or(true);
+
     #[cfg(feature = "transitions")]
     let scroll_cls = merge_classes(
         "g3-content-scroll",
         Some(ROUTE_TRANSITION_SEGMENT_REGION_CLASS),
     );
+
     #[cfg(not(feature = "transitions"))]
     let scroll_cls = "g3-content-scroll";
     let load_error = strings.load_error;
+
     rsx! {
         div { class: merge_classes("g3-content", class.as_deref()),
             div {
@@ -160,6 +164,7 @@ fn ContentPlaygroundDemo() -> Element {
             "Wide: at most 960px, centred. The Desktop viewport is narrower than that, so it matches Full here; on a large monitor it would not."
         }
     };
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

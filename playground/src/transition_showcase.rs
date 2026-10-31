@@ -13,6 +13,7 @@ use g3_ui::{
 use super::{PlaygroundViewport, Route, active_playground_settings};
 
 pub const DESCRIPTION: &str = "Static, a listening app whose screens each demonstrate one route-owned transition: cross-fading tab roots, a pushed page, a rising sheet, sliding segments, and a drill-down.";
+
 pub const SOURCE: &str = r#"#[derive(Clone, Debug, PartialEq, Routable, RouteTransitions)]
 enum Route {
     // Tab roots cross-fade between each other.
@@ -120,6 +121,7 @@ fn TransitionShowcase(screen: ShowcaseScreen) -> Element {
         PlaygroundViewport::Landscape => "Landscape phone",
         PlaygroundViewport::Resizable => "Resizable",
     };
+
     rsx! {
         section {
             class: "playground-viewport-card playground-viewport-{viewport.as_str()} transition-showcase-card",
@@ -177,6 +179,7 @@ fn TransitionScreen(screen: ShowcaseScreen) -> Element {
                                 }
                             }),
                     }
+
                     Content { footer_space: false,
                         match screen {
                             ShowcaseScreen::Listen => rsx! { ListenContent {} },
@@ -218,6 +221,7 @@ fn ListenContent() -> Element {
                     onclick: move |_| async move { go(Route::TransitionAlbum {}).await },
                     "Open album"
                 }
+
                 Button {
                     size: ButtonSize::Sm,
                     fill: ButtonFill::Outline,
@@ -226,6 +230,7 @@ fn ListenContent() -> Element {
                 }
             }
         }
+
         List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
             Item {
                 label: "Paper Moon",
@@ -244,6 +249,7 @@ fn AlbumContent() -> Element {
         Card { title: "Blue Static", end: rsx! { "2024" },
             p { "Afterglow · nine tracks · 38 minutes" }
         }
+
         List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Full,
             Item { label: "Low Tide", metadata: "4:12" }
             Item { label: "Paper Moon", metadata: "3:05" }
@@ -260,6 +266,7 @@ fn ProfileContent() -> Element {
             p { "412 hours listened · 38 albums saved" }
             Badge { color: Color::Accent, "Following 18" }
         }
+
         List { variant: g3_ui::ListVariant::Raised,
             Item { label: "Saved albums", metadata: "38", detail: ItemDetail::Show }
             Item { label: "Listening history", detail: ItemDetail::Show }
@@ -284,6 +291,7 @@ fn RadioContent() -> Element {
                 }
             }
         }
+
         List { variant: g3_ui::ListVariant::Raised,
             Item { label: "Field Recordings", description: "Weekly · 40 min", detail: ItemDetail::Show }
             Item { label: "Night Shift", description: "Daily · 20 min", detail: ItemDetail::Show }
@@ -307,6 +315,7 @@ fn EpisodeContent() -> Element {
 fn LibraryScreen(tab: ReadSignal<u8>) -> Element {
     let mut selected = use_signal(|| tab.cloned());
     use_effect(move || selected.set(tab()));
+
     rsx! {
         TabLayout {
             Header {
@@ -325,6 +334,7 @@ fn LibraryScreen(tab: ReadSignal<u8>) -> Element {
                     }
                 },
             }
+
             Content { footer_space: false,
                 TransitionNote { "Each segment is its own route. They slide by tab order and replace history, so Back leaves the library rather than walking the segments." }
                 List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
@@ -373,15 +383,18 @@ fn QueueScreen() -> Element {
                     }
                 },
             }
+
             Content { footer_space: false,
                 TransitionNote { "A sheet. It rose over Listen, which stayed put and dimmed behind it." }
                 Card { title: "Up next",
                     p { "Three tracks left in this queue." }
                 }
+
                 List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
                     Item { label: "Paper Moon", description: "Afterglow", metadata: "3:05" }
                     Item { label: "Night Ferry", description: "Marine Drive", metadata: "5:22" }
                 }
+
                 Button {
                     expand: ButtonExpand::Block,
                     onclick: move |_| async move { go(Route::TransitionListen {}).await },

@@ -91,6 +91,7 @@ pub fn ActionSheet(
             on_select.call(choice);
         }
     };
+
     rsx! {
         BottomSheet {
             open,
@@ -106,6 +107,7 @@ pub fn ActionSheet(
             if let Some(message) = message {
                 p { class: "g3-action-sheet-message", "{message}" }
             }
+
             div { class: "g3-action-sheet-group", role: "group",
                 for (index, button) in buttons.into_iter().enumerate() {
                     button {

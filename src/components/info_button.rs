@@ -48,6 +48,7 @@ pub fn InfoButton(
         "g3-info-btn",
         mode.pick("g3-info-btn-ios", "g3-info-btn-md"),
     ]);
+
     rsx! {
         button {
             class: merge_classes(cls, class.as_deref()),
@@ -77,6 +78,7 @@ pub fn InfoButton(
 #[component]
 fn InfoButtonPlaygroundDemo() -> Element {
     let description = use_signal(|| "Handicaps adjust player scoring for the match.".to_string());
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

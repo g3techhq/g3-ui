@@ -117,6 +117,7 @@ pub fn List(
             ListVariant::Filled => "g3-list-grouped g3-list-filled",
         },
     ]);
+
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
@@ -204,6 +205,7 @@ pub fn Item(
     let list_item = use_hook(|| {
         try_consume_context::<InList>().is_some() && try_consume_context::<InSwipeRow>().is_none()
     });
+
     let target = Target::from_props(href, to, new_tab.unwrap_or(false));
     let interactive = onclick.is_some() || target.is_link() || checked.is_some();
     let selected = selected.unwrap_or(false);
@@ -271,6 +273,7 @@ pub fn Item(
             span { class: "g3-item-start", {start} }
         }
     });
+
     let trailing = rsx! {
         if let Some(metadata) = metadata {
             span { class: "g3-item-metadata", "{metadata}" }
@@ -305,6 +308,7 @@ pub fn Item(
     if let Some(label) = control_label {
         attributes.push(Attribute::new("aria-label", label, None, false));
     }
+
     rsx! {
         div {
             class: "g3-item-row",
@@ -349,9 +353,11 @@ fn ListPlaygroundDemo() -> Element {
     let start_behavior = use_signal(|| SwipeBehavior::Activate);
     let end_behavior = use_signal(|| SwipeBehavior::Reveal);
     let mut notify = use_signal(|| true);
+
     const ROWS: [&str; 4] = ["Round 12", "Round 11", "Round 10", "Round 9"];
     let mut rows = use_signal(|| ROWS.to_vec());
     let toast = use_toast();
+
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,
@@ -408,6 +414,7 @@ fn ListPlaygroundDemo() -> Element {
                         wrap: true,
                     }
                 }
+
                 List { variant: variant(), lines: lines(),
                     ListHeader { "Rounds — swipe either way" }
                     for row in rows() {

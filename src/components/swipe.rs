@@ -122,6 +122,7 @@ pub fn SwipeAction(
         "g3-swipe-action-{}",
         color.unwrap_or(Color::Neutral).as_str()
     );
+
     rsx! {
         button {
             class: merge_classes(classes(["g3-swipe-action", &color_cls]), class.as_deref()),
@@ -301,6 +302,7 @@ pub fn SwipeItem(
                     {actions}
                 }
             }
+
             div {
                 class: "g3-swipe-content",
                 {children}

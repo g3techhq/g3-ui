@@ -73,6 +73,7 @@ pub fn Divider(
             ""
         },
     ]);
+
     rsx! {
         hr {
             class: merge_classes(cls, class.as_deref()),
@@ -91,6 +92,7 @@ fn DividerPlaygroundDemo() -> Element {
     } else {
         DividerOrientation::Horizontal
     };
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

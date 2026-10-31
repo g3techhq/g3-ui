@@ -74,6 +74,7 @@ pub fn BottomSheet(
     let mut detents = detents.unwrap_or_default();
     detents.retain(|fraction| fraction.is_finite() && *fraction > 0.0);
     detents.sort_by(f64::total_cmp);
+
     rsx! {
         SheetFrame {
             open,
@@ -115,6 +116,7 @@ fn BottomSheetPlaygroundDemo() -> Element {
         .iter()
         .map(|fraction| format!("{:.0}%", fraction * 100.0))
         .collect::<Vec<_>>();
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,
@@ -150,6 +152,7 @@ fn BottomSheetPlaygroundDemo() -> Element {
                         }
                     }
                 }
+
                 BottomSheet {
                     open,
                     title: "Round settings",

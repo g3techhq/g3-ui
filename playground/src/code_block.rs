@@ -8,6 +8,7 @@ pub fn CodeBlock(src: String, #[props(default = Language::Rust)] language: Langu
         Language::Toml => "TOML",
         _ => language.slug(),
     };
+
     rsx! {
         section { class: "playground-code-block", aria_label: "{label} code example",
             div { class: "playground-code-heading", "{label}" }

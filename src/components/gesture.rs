@@ -86,6 +86,7 @@ pub(crate) fn use_page_script(script: GestureScript) {
         try_consume_context::<GestureBridge>()
             .unwrap_or_else(|| provide_root_context(GestureBridge::default()))
     });
+
     use_effect(move || bridge.start(script));
 }
 
@@ -102,6 +103,7 @@ pub(crate) fn use_gesture(
         try_consume_context::<GestureBridge>()
             .unwrap_or_else(|| provide_root_context(GestureBridge::default()))
     });
+
     let handler = use_callback(handler);
     let id = crate::state::use_synced_signal(id);
     let registered = use_hook(|| Rc::new(RefCell::new(None::<String>)));
@@ -115,6 +117,7 @@ pub(crate) fn use_gesture(
             bridge.handlers.borrow_mut().insert(id, handler);
         }
     });
+
     use_drop(move || {
         if let Some(id) = registered.borrow_mut().take() {
             bridge.handlers.borrow_mut().remove(&id);

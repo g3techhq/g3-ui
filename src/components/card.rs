@@ -148,7 +148,9 @@ pub fn Card(
             rsx! { "{title}" }
         }
     });
+
     let untitled_action = interactive && title_node.is_none();
+
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
@@ -172,6 +174,7 @@ pub fn Card(
                     if let Some(start) = start {
                         div { class: "g3-card-start", {start} }
                     }
+
                     div { class: "g3-card-heading",
                         if let Some(title) = title_node {
                             super::text::Heading { level: heading_level.unwrap_or_default(), class: "g3-card-title", {title} }
@@ -185,6 +188,7 @@ pub fn Card(
                     }
                 }
             }
+
             div { class: "g3-card-body", {children} }
         }
     }
@@ -200,6 +204,7 @@ fn CardPlaygroundDemo() -> Element {
     let mut selected = use_signal(|| false);
     let interactive = use_signal(|| true);
     let leading = use_signal(|| true);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,

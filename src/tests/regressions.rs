@@ -66,6 +66,7 @@ fn click(dom: &VirtualDom, id: ElementId) {
 #[test]
 fn tabs_follow_replacement_signals_and_propagate_mode() {
     static SECOND: GlobalSignal<bool> = Signal::global(|| false);
+
     fn app() -> Element {
         let first = use_signal(|| 1_i32);
         let second = use_signal(|| 2_i32);
@@ -130,6 +131,7 @@ fn disabled_date_cannot_be_confirmed_in_calendar_or_wheels() {
     fn dialog() -> Element {
         rsx! { DatePicker { style: PickerStyle::Dialog, reference_date: CalendarDate::new(2026, 9, 19).unwrap(), is_date_disabled: |_| true } }
     }
+
     fn wheels() -> Element {
         rsx! { DatePicker { style: PickerStyle::Wheels, reference_date: CalendarDate::new(2026, 9, 19).unwrap(), is_date_disabled: |_| true } }
     }
@@ -171,6 +173,7 @@ struct Open(Signal<bool>);
 #[test]
 fn reused_alerts_reset_from_current_input_props() {
     static INITIAL: GlobalSignal<String> = Signal::global(|| "First".to_string());
+
     fn app() -> Element {
         let open = use_signal(|| true);
         use_hook(|| dioxus::core::provide_root_context(Open(open)));
@@ -197,6 +200,7 @@ fn reused_alerts_reset_from_current_input_props() {
 #[tokio::test(start_paused = true)]
 async fn toast_duration_updates_cancel_and_start_timers() {
     static DURATION: GlobalSignal<ToastDuration> = Signal::global(|| ToastDuration::Short);
+
     fn app() -> Element {
         let open = use_signal(|| true);
         use_hook(|| dioxus::core::provide_root_context(Open(open)));
@@ -241,6 +245,7 @@ struct StackControls {
 #[test]
 fn back_dismisses_only_the_latest_surface_and_unmount_cleans_the_stack() {
     static PRESENT: GlobalSignal<bool> = Signal::global(|| true);
+
     fn app() -> Element {
         let sheet = use_signal(|| false);
         let modal = use_signal(|| false);
@@ -341,6 +346,7 @@ fn rating_and_date_formats_follow_localized_templates() {
 #[test]
 fn a_bottom_bar_marks_its_own_app_shell_for_toasts() {
     static SHOW_BAR: GlobalSignal<bool> = Signal::global(|| true);
+
     fn app() -> Element {
         rsx! {
             AppWrapper { class: "outer",
@@ -438,6 +444,7 @@ fn an_img_starts_loading_and_carries_its_fallback_hidden() {
 #[test]
 fn an_img_with_a_new_src_starts_loading_again() {
     static SRC: GlobalSignal<&'static str> = Signal::global(|| "/a.png");
+
     fn app() -> Element {
         rsx! { Img { src: SRC(), alt: "A" } }
     }

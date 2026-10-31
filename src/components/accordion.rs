@@ -92,6 +92,7 @@ pub fn AccordionGroup<T: Clone + PartialEq + 'static>(
         disabled,
         onchange,
     });
+
     rsx! {
         div {
             class: merge_classes(
@@ -132,6 +133,7 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
     let expanded = open_values.read().contains(&value);
     let disabled = disabled.unwrap_or(false) || (context.disabled)();
     let state = if expanded { "open" } else { "closed" };
+
     rsx! {
         div {
             class: merge_classes("g3-accordion-item", class.as_deref()),
@@ -169,6 +171,7 @@ pub fn AccordionItem<T: Clone + PartialEq + 'static>(
                     }
                 }
             }
+
             div {
                 id: panel_id,
                 class: "g3-accordion-panel",
@@ -206,6 +209,7 @@ mod tests {
 #[component]
 fn AccordionPlaygroundDemo() -> Element {
     let multiple = use_signal(|| false);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

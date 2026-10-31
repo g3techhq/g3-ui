@@ -9,6 +9,7 @@ pub fn GettingStarted() -> Element {
             p { "Use Rust 1.88 or newer and Dioxus 0.7.9. Add these entries to your app's Cargo.toml:" }
             CodeBlock { language: Language::Toml, src: "[dependencies]\ndioxus = { version = \"0.7.9\", features = [\"web\"] }\ng3-ui = \"0.6\"".to_string() }
         }
+
         section {
             h2 { "2. Add a screen" }
             ul {
@@ -18,11 +19,13 @@ pub fn GettingStarted() -> Element {
             }
             CodeBlock { src: Example::GettingStarted.code() }
         }
+
         section {
             h2 { "3. Launch the app" }
             CodeBlock { src: "fn main() {\n    g3_ui::init_auto_mode();\n    dioxus::launch(GettingStartedExample);\n}".to_string() }
             p { "Run " code { "dx serve" } " from your app's folder. No Tailwind setup or separate JavaScript bundle is required." }
         }
+
         section {
             p { "Use the header controls to try the same screen at different sizes and in iOS or Material mode." }
             LiveExample { example: Example::GettingStarted, label: "Getting started" }
@@ -44,15 +47,18 @@ pub fn ResponsiveLayouts() -> Element {
                 dd { "Mounts one compact, medium, or expanded slot. Use it when the controls or component tree change with width." }
             }
         }
+
         section {
             h2 { "Content width" }
             p { "Wrap the page body in " code { "LayoutScope" } " when a sidebar or padding leaves less room than the full app. Nested layouts then respond to that content width." }
             p { "Compact is below 48rem, Medium is 48rem to below 64rem, and Expanded starts at 64rem. A tablet can still have compact content if navigation takes up enough space." }
         }
+
         section {
             p { "Change the layout size." }
             LiveExample { example: Example::ResponsiveLayouts, label: "Responsive layouts" }
         }
+
         section {
             h2 { "Keep shared state above AdaptiveLayout" }
             p { "Switching slots unmounts the previous slot. Put form values, resources, and playback state in the parent when they must survive a size change. Missing slots fall back to the nearest smaller slot." }
@@ -74,12 +80,14 @@ pub fn Platforms() -> Element {
             CodeBlock { language: Language::Toml, src: "[dependencies]\ng3-ui = \"0.6\"\ndioxus = { version = \"0.7.9\", features = [\"mobile\"] }".to_string() }
             p { "Build with the Dioxus CLI's Android, iOS, or desktop target. Add g3-ui's optional transitions feature when integrating g3-route-transitions." }
         }
+
         section {
             h2 { "App setup" }
             p { "AppWrapper loads the CSS and supplies viewport metadata for safe areas. Set mode explicitly when you want consistent iOS or Material styling across platforms." }
             LiveExample { example: Example::Platforms, label: "Web and native web views" }
             CodeBlock { src: Example::Platforms.code() }
         }
+
         section {
             h2 { "Device testing" }
             ul {
@@ -112,15 +120,18 @@ pub fn LayoutHooks() -> Element {
                 }
             }
         }
+
         section {
             h2 { "A wide app can contain narrow content" }
             p { "In a 1200px app with a 300px sidebar, the app is Wide and the remaining 900px content area is Medium. A LayoutScope around the content measures it separately." }
             p { "A nested LayoutScope around a 500px panel reports Compact to its children. use_shell_size() still reports Wide." }
         }
+
         section {
             p { "At Desktop size, limiting the content to 32rem changes its LayoutSize to Compact. The app's ShellSize stays Wide." }
             LiveExample { example: Example::LayoutHooks, label: "Layout hooks" }
         }
+
         section {
             h2 { "Width ranges" }
             p { "These ranges apply to the area each hook measures. Pixel examples assume the usual 16px root font size." }
@@ -133,6 +144,7 @@ pub fn LayoutHooks() -> Element {
                 }
             }
         }
+
         section {
             h2 { "Usage" }
             ul {
@@ -163,9 +175,11 @@ pub fn OverlayHooks() -> Element {
                 dd { "Count registered overlays or dismiss the top one before navigating back." }
             }
         }
+
         section {
             LiveExample { example: Example::OverlayHooks, label: "Overlay hooks" }
         }
+
         section {
             h2 { "Event handlers" }
             p { "Await alerts and action sheets in a handler or spawned task. Do not hold a signal read or write borrow across await. Call the hooks before any conditional return." }
@@ -187,23 +201,28 @@ pub fn ThemeHooks() -> Element {
             }
             p { "Read a signal with () or read(). Declare it mut to call write() or set() in an event handler. Writes update the provider and its readers. Theme and mode are independent: dark colors can use either platform style." }
         }
+
         section {
             h2 { "Change colors" }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["ThemeColorControls"], true) }
         }
+
         section {
             LiveExample { example: Example::ThemeHooks, label: "Theme and mode hooks" }
         }
+
         section {
             h2 { "Initial values" }
             p { "Provider props are optional starting values. A later prop change replaces that value; unrelated renders preserve hook edits. Child components obtain the signals from the hooks." }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["ThemeHooksExample"], true) }
         }
+
         section {
             h2 { "Change mode and labels" }
             p { "Call use_mode() and use_strings() in the component that changes them." }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["AppearanceControls"], false) }
         }
+
         section {
             h2 { "Read values" }
             h3 { "Colors" }
@@ -213,11 +232,13 @@ pub fn ThemeHooks() -> Element {
             p { "Component labels come from use_strings(). Application copy is translated separately." }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["LocalizedActions"], false) }
         }
+
         section {
             h2 { "Component mode overrides" }
             p { "A reusable component can accept an optional mode prop. None inherits; an explicit value wins. Resolve the hook before choosing a variant." }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["ModeAwareButton"], false) }
         }
+
         section {
             h2 { "Scoped overrides" }
             p { "ThemeProvider owns separate state for each value supplied as a prop. Omitted values share the parent's signal. This card overrides theme and mode, so edits to either stay within the card; strings remain shared with the app." }

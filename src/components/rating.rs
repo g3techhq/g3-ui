@@ -265,6 +265,7 @@ fn RatingPlaygroundDemo() -> Element {
     let max = use_signal(|| 5_u8);
     let saved = use_signal(|| None::<f64>);
     let mut saved_setter = saved;
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

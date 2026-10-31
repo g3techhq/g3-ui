@@ -117,6 +117,7 @@ pub fn Checkbox(
     );
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
+
     rsx! {
         button {
             id: id.clone(),
@@ -180,6 +181,7 @@ fn CheckboxPlaygroundDemo() -> Element {
     let indeterminate = use_signal(|| false);
     let invalid = use_signal(|| false);
     let placement = use_signal(|| ControlLabelPlacement::Start);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

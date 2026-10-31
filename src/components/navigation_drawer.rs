@@ -96,6 +96,7 @@ fn NavigationDrawerPlaygroundDemo() -> Element {
         }
     };
     let at_start = edge() == SheetEdge::Start;
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

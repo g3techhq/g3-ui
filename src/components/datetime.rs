@@ -96,6 +96,7 @@ impl CalendarDate {
                 day: now.get_date() as u8,
             }
         }
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             use chrono::Datelike;
@@ -248,6 +249,7 @@ impl TimeOfDay {
                 minute: now.get_minutes() as u8,
             }
         }
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             use chrono::Timelike;

@@ -7,6 +7,7 @@ use dioxus::prelude::*;
 /// Radii of the dial's rings, in CSS pixels. `clock.js` shares them, with
 /// the dial's size, to turn a pointer into a value.
 const OUTER_RADIUS: f64 = 100.0;
+
 const INNER_RADIUS: f64 = 64.0;
 
 /// What a [`ClockDial`] picks.
@@ -123,6 +124,7 @@ pub(crate) fn ClockDial(
                     span { class: "g3-clock-hand-dot" }
                 }
             }
+
             div {
                 id,
                 class: "g3-clock-marks",

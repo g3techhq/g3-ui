@@ -29,12 +29,14 @@ pub fn ThemeHooksExample() -> Element {
 #[component]
 fn ThemeColorControls() -> Element {
     let mut theme = use_theme();
+
     rsx! {
         Stack { gap: Space::Sm,
             // set() replaces the provider's entire theme value.
             Button { onclick: move |_| theme.set(Theme::default_dark()),
                 "Dark colors"
             }
+
             Button { onclick: move |_| theme.set(Theme::default_light()),
                 "Light colors"
             }
@@ -50,6 +52,7 @@ fn ThemeColorControls() -> Element {
 fn AppearanceControls() -> Element {
     let mut mode = use_mode();
     let mut strings = use_strings();
+
     rsx! {
         Stack { gap: Space::Sm,
             ThemeColorControls {}
@@ -64,6 +67,7 @@ fn AppearanceControls() -> Element {
                 },
                 "Spanish labels"
             }
+
             Button { onclick: move |_| strings.set(Strings::default()),
                 "English labels"
             }
@@ -130,6 +134,7 @@ fn ScopedThemeExample() -> Element {
 #[component]
 fn LocalThemeEditor() -> Element {
     let mut theme = use_theme();
+
     rsx! {
         Button { onclick: move |_| theme.write().accent = "#f97316".into(),
             "Change local accent"

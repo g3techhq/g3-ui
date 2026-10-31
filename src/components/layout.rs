@@ -119,6 +119,7 @@ pub fn Stack(
             ""
         },
     ]);
+
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
@@ -213,6 +214,7 @@ pub fn Grid(
             expanded.template()
         ));
     }
+
     rsx! {
         div {
             class: merge_classes("g3-grid", class.as_deref()),
@@ -244,6 +246,7 @@ fn LayoutPlaygroundDemo() -> Element {
             crate::SelectOption::new(Space::Xl, "Extra large"),
         ]
     };
+
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
             controls: rsx! {

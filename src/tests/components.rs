@@ -315,6 +315,7 @@ mod shell {
                 }
             }
         }
+
         fn collapsed() -> Element {
             rsx! {
                 NavRail { default_expanded: false,
@@ -322,6 +323,7 @@ mod shell {
                 }
             }
         }
+
         fn fixed() -> Element {
             rsx! {
                 NavRail { collapsible: false,
@@ -359,6 +361,7 @@ mod shell {
     #[test]
     fn a_toggled_rail_starts_from_the_remembered_state() {
         use crate::components::nav::REMEMBERED_EXPANDED;
+
         fn remembered() -> Element {
             use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
             rsx! {
@@ -367,6 +370,7 @@ mod shell {
                 }
             }
         }
+
         fn forgetful() -> Element {
             use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
             rsx! {
@@ -375,6 +379,7 @@ mod shell {
                 }
             }
         }
+
         fn owned() -> Element {
             use_hook(|| *REMEMBERED_EXPANDED.write() = Some(false));
             let expanded = use_signal(|| true);
@@ -411,6 +416,7 @@ mod shell {
                 AppWrapper {
                     Card { title: "Inside", "{use_shell_size().is_wide()}" }
                 }
+
                 Card { title: "Outside", "{outside.is_compact()}" }
             }
         }
@@ -467,6 +473,7 @@ fn accessibility_names_and_states_hold() {
             NavBar {
                 NavItem { label: "Inbox", badge: "3", href: "/inbox" }
             }
+
             List {
                 SwipeItem {
                     end_actions: rsx! { SwipeAction { "Delete" } },

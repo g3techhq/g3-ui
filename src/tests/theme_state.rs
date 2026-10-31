@@ -14,6 +14,7 @@ fn ThemeReader(label: String) -> Element {
     let captures = use_context::<CapturedThemes>();
     use_hook(|| captures.0.borrow_mut().push((label.clone(), theme)));
     let accent = theme.read().accent.clone();
+
     rsx! { span { id: label, "{accent}" } }
 }
 
@@ -40,7 +41,9 @@ fn captured(dom: &VirtualDom, name: &str) -> Signal<Theme> {
 #[test]
 fn theme_writes_update_css_survive_renders_and_follow_changed_props() {
     static ACCENT: GlobalSignal<String> = Signal::global(|| "#123456".into());
+
     static TICK: GlobalSignal<u32> = Signal::global(|| 0);
+
     fn app() -> Element {
         use_hook(|| dioxus::core::provide_root_context(CapturedThemes::default()));
         rsx! { AppWrapper { theme: Theme::default_light().with_accent(ACCENT()),
@@ -112,6 +115,7 @@ fn inherited_theme_handles_are_shared_and_explicit_overrides_are_isolated() {
 #[test]
 fn adding_and_removing_an_override_updates_existing_readers() {
     static OVERRIDE: GlobalSignal<bool> = Signal::global(|| true);
+
     fn app() -> Element {
         use_hook(|| dioxus::core::provide_root_context(CapturedThemes::default()));
         rsx! { AppWrapper { theme: Theme::default_light().with_accent("#123456"),
@@ -178,6 +182,7 @@ fn AppearanceReader(label: String) -> Element {
     let captures = use_context::<CapturedAppearance>();
     use_hook(|| captures.0.borrow_mut().push((label.clone(), mode, strings)));
     let cancel = strings.read().cancel.clone();
+
     rsx! {
         span { id: label, "{mode():?}: {cancel}" }
         Button { "Inherited mode" }
@@ -197,8 +202,11 @@ fn appearance(dom: &VirtualDom, name: &str) -> (Signal<ComponentMode>, Signal<St
 #[test]
 fn mode_and_strings_writes_update_readers_survive_renders_and_follow_changed_props() {
     static MODE: GlobalSignal<ComponentMode> = Signal::global(|| ComponentMode::Md);
+
     static CANCEL: GlobalSignal<String> = Signal::global(|| "Cancel".into());
+
     static TICK: GlobalSignal<u32> = Signal::global(|| 0);
+
     fn app() -> Element {
         use_hook(|| dioxus::core::provide_root_context(CapturedAppearance::default()));
         rsx! { AppWrapper { mode: MODE(), strings: Strings { cancel: CANCEL(), ..Strings::default() },
@@ -284,6 +292,7 @@ fn mode_and_strings_inherit_shared_handles_and_isolate_explicit_overrides() {
 #[test]
 fn mode_and_strings_readers_follow_added_and_removed_overrides() {
     static OVERRIDE: GlobalSignal<bool> = Signal::global(|| false);
+
     fn app() -> Element {
         use_hook(|| dioxus::core::provide_root_context(CapturedAppearance::default()));
         rsx! { AppWrapper { mode: ComponentMode::Ios,

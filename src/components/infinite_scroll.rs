@@ -53,6 +53,7 @@ pub fn InfiniteScroll(
             on_load.call(());
         }
     });
+
     rsx! {
         div {
             id,
@@ -72,6 +73,7 @@ pub fn InfiniteScroll(
 fn InfiniteScrollPlaygroundDemo() -> Element {
     let mut count = use_signal(|| 12_usize);
     let mut loading = use_signal(|| false);
+
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
             crate::List { variant: crate::ListVariant::Raised,

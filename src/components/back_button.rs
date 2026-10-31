@@ -65,6 +65,7 @@ pub fn BackButton(
         "g3-back-button",
         mode.pick("g3-back-button-ios", "g3-back-button-md"),
     ]);
+
     rsx! {
         Pressable {
             class: merge_classes(cls, class.as_deref()),

@@ -203,3 +203,8 @@ itself to the rules the apps follow (g3-stack's `docs/dioxus/patterns.md`):
   [g3ui.g3tech.net](https://g3ui.g3tech.net)
 - `CHANGELOG.md` for what changed between versions
 - `docs/history/` for the original design plan and spec
+
+## Readability
+
+Follow [docs/code-style.md](docs/code-style.md) for Rust imports, section spacing
+and RSX layout. Run `python scripts/rust_style.py --staged` before committing.

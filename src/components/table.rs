@@ -93,6 +93,7 @@ pub fn Table(
         Some(_) => (Some(caption_id.clone()), None),
         None => (None, aria_label.clone()),
     };
+
     rsx! {
         div {
             class: merge_classes("g3-table-frame", class.as_deref()),
@@ -104,6 +105,7 @@ pub fn Table(
             if let Some(caption) = caption.as_ref() {
                 div { id: caption_id.clone(), class: "g3-table-caption", "{caption}" }
             }
+
             div {
                 class: "g3-table-scroll",
                 role: "region",
@@ -132,6 +134,7 @@ fn TablePlaygroundDemo() -> Element {
     let raised = use_signal(|| true);
     let pars = [4, 3, 5, 4, 4, 3, 4, 5, 4];
     let scores = [4, 2, 6, 4, 5, 3, 4, 4, 4];
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

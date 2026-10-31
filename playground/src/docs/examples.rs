@@ -4,6 +4,7 @@ use g3_ui::prelude::*;
 #[component]
 pub fn GettingStartedExample() -> Element {
     let mut started = use_signal(|| false);
+
     rsx! {
         AppWrapper {
             Header { title: "My app" }
@@ -22,6 +23,7 @@ pub fn GettingStartedExample() -> Element {
 pub fn ResponsiveLayoutsExample() -> Element {
     let mut filters = use_signal(|| false);
     let draft = use_signal(String::new);
+
     rsx! {
         AppWrapper {
             Header { title: "Responsive layouts" }
@@ -57,6 +59,7 @@ pub fn ResponsiveLayoutsExample() -> Element {
 pub fn PlatformsExample() -> Element {
     let name = use_signal(String::new);
     let mut saved = use_signal(|| false);
+
     rsx! {
         AppWrapper {
             Header { title: "Web view ready" }
@@ -76,6 +79,7 @@ pub fn PlatformsExample() -> Element {
 #[component]
 pub fn LayoutHooksExample() -> Element {
     let mut limit_width = use_signal(|| false);
+
     rsx! {
         AppWrapper {
             Header { title: "Available space" }
@@ -84,6 +88,7 @@ pub fn LayoutHooksExample() -> Element {
                     Button { onclick: move |_| limit_width.toggle(),
                         if limit_width() { "Use all available space" } else { "Limit content to 32rem" }
                     }
+
                     div { style: if limit_width() { "width: 100%; max-width: 32rem;" } else { "width: 100%; max-width: none;" },
                         LayoutScope { LayoutHookValues {} }
                     }
@@ -97,12 +102,14 @@ pub fn LayoutHooksExample() -> Element {
 pub fn LayoutHookValues() -> Element {
     let size = use_layout_size();
     let shell = use_shell_size();
+
     rsx! {
         Stack { gap: Space::Md,
             Card { title: "This content area",
                 p { "use_layout_size(): {size:?}" }
                 p { "Measures the nearest LayoutScope." }
             }
+
             Card { title: "The whole app",
                 p { "use_shell_size(): {shell:?}" }
                 p { "Measures AppWrapper, including space outside this content area." }
@@ -129,6 +136,7 @@ pub fn OverlayHookActions() -> Element {
     let controller = use_overlay_controller();
     let mut sheet_open = use_signal(|| false);
     let mut result = use_signal(|| "No action selected.".to_string());
+
     rsx! {
         Stack { gap: Space::Md,
             Button { onclick: move |_| { toaster.show(ToastOptions::new("Saved")); }, "Show toast" }
@@ -147,6 +155,7 @@ pub fn OverlayHookActions() -> Element {
             p { role: "status", "{result}" }
             p { "Open overlays: {controller.count()}" }
         }
+
         BottomSheet { open: sheet_open, title: "Controlled sheet",
             p { "Android Back can dismiss the top overlay before navigating." }
             Button { onclick: move |_| { controller.dismiss_top(); }, "Simulate Android Back" }

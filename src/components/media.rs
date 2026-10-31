@@ -67,6 +67,7 @@ pub fn Img(
     } else {
         "lazy"
     };
+
     rsx! {
         // Keyed by `src`, so a new image gets a new wrapper that starts at
         // "loading". The script owns `data-state` after that; Rust renders it
@@ -147,6 +148,7 @@ pub fn Tooltip(
         TooltipPlacement::Top => "top",
         TooltipPlacement::Bottom => "bottom",
     };
+
     rsx! {
         span {
             class: "g3-tooltip-anchor",

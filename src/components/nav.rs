@@ -9,6 +9,7 @@ use dioxus_icons::lucide::{ChevronLeft, ChevronRight};
 
 #[cfg(feature = "transitions")]
 use crate::components::use_shell_size;
+
 #[cfg(feature = "transitions")]
 use g3_route_transitions::ROUTE_TRANSITION_PERSISTENT_REGION_CLASS;
 
@@ -92,6 +93,7 @@ fn NavContainer(
         NavKind::Adaptive(AdaptiveNavCompact::Bar) => Some(false),
         _ => None,
     });
+
     let has_rail = !matches!(kind, NavKind::Bar);
     let hover = behavior.unwrap_or_default() == NavRailBehavior::Hover;
     // Only the rail's own toggled state is remembered: a caller that passes
@@ -107,6 +109,7 @@ fn NavContainer(
             fallback
         }
     });
+
     let remembers_signal = use_synced_signal(remembers);
     // The first rail in a visit reads what an earlier visit stored. Later
     // rails start from `REMEMBERED_EXPANDED`, which is already set.
@@ -125,6 +128,7 @@ fn NavContainer(
             }
         });
     });
+
     let mut expanded = expanded.unwrap_or(own);
     let is_expanded = has_rail && !hover && expanded();
     let collapsible = has_rail && !hover && collapsible.unwrap_or(true);
@@ -156,6 +160,7 @@ fn NavContainer(
             ""
         }
     };
+
     #[cfg(not(feature = "transitions"))]
     let persistent_cls = "";
     let cls = classes([
@@ -181,6 +186,7 @@ fn NavContainer(
             rsx! { ChevronRight { size: 16 } },
         )
     };
+
     rsx! {
         nav { class: merge_classes(cls, class.as_deref()), aria_label,
             {children}
@@ -389,6 +395,7 @@ pub fn NavItem(
         Some(badge) => format!("{label}, {badge}"),
         None => label.clone(),
     };
+
     rsx! {
         Pressable {
             class: merge_classes(classes(["g3-nav-item", group_cls]), class.as_deref()),
@@ -444,6 +451,7 @@ fn NavPlaygroundDemo() -> Element {
             onclick: move |_| active.set(2),
         }
     };
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

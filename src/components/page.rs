@@ -51,6 +51,7 @@ pub fn Page(
         Some(SIZE_SCRIPT.replace("__ID__", &super::overlay::js_string(&id))),
         move |report: u8| size.set(LayoutSize::from_report(report)),
     );
+
     rsx! {
         div { id, class: merge_classes("g3-page", class.as_deref()), {children} }
     }
@@ -61,6 +62,7 @@ pub fn Page(
 fn PagePlaygroundDemo() -> Element {
     use dioxus_icons::lucide::Menu;
     let mut open = use_signal(|| true);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

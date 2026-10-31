@@ -86,6 +86,7 @@ pub(crate) fn PopoverFrame(
             on_dismiss.call(());
         }
     });
+
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
     use_overlay_registration(open.into(), id.clone(), dismiss);
     let layer_id = format!("{id}-layer");
@@ -145,6 +146,7 @@ pub(crate) fn PopoverFrame(
             ""
         },
     ]);
+
     rsx! {
         span { id: anchor_id, class: "g3-popover-anchor",
             {trigger}
@@ -295,6 +297,7 @@ pub fn Menu(
     children: Element,
 ) -> Element {
     use_context_provider(|| MenuContext { open });
+
     rsx! {
         PopoverFrame {
             open,
@@ -343,6 +346,7 @@ pub fn MenuItem(
         Some(Color::Accent) => "g3-menu-item-accent",
         _ => "",
     };
+
     rsx! {
         Pressable {
             class: merge_classes(classes(["g3-menu-item", color_cls]), class.as_deref()),
@@ -385,6 +389,7 @@ fn MenuPlaygroundDemo() -> Element {
     let mut menu_open = use_signal(|| false);
     let mut popover_open = use_signal(|| false);
     let mut last = use_signal(|| "Nothing yet".to_string());
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

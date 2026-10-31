@@ -55,6 +55,7 @@ fn DemoAppPlaygroundDemo() -> Element {
                 }
             }
         };
+
     rsx! {
         PlaygroundDemoFrame { app: false,
             AppWrapper { mode, class: "g3-playground-device-app",
@@ -162,6 +163,7 @@ fn TodayScreen(when: Signal<usize>) -> Element {
     let mut refreshing = use_signal(|| false);
     let toaster = use_toast();
     let actions = use_action_sheet();
+
     rsx! {
         Content {
             refreshing: refreshing(),
@@ -306,6 +308,7 @@ const NEARBY: [(&str, f64, u32); 4] = [
 #[component]
 fn CourseCard(course: &'static str, rating: f64, reviews: u32) -> Element {
     let rating = use_signal(|| rating);
+
     rsx! {
         Card { class: "w-44", title: course, subtitle: "{reviews} reviews",
             Rating { aria_label: "Average for {course}", value: rating, readonly: true, size: 16 }
@@ -336,6 +339,7 @@ fn BookScreen(within: Signal<f64>) -> Element {
     let time = use_signal(|| None::<TimeOfDay>);
     let mut weekend = use_signal(|| true);
     let mut twilight = use_signal(|| false);
+
     rsx! {
         Content {
             Stack { gap: Space::Lg,
@@ -352,6 +356,7 @@ fn BookScreen(within: Signal<f64>) -> Element {
                         "Twilight rate"
                     }
                 }
+
                 Card { title: "Tee time",
                     Stack {
                         Select {
@@ -373,6 +378,7 @@ fn BookScreen(within: Signal<f64>) -> Element {
                         Toggle { checked: walking, label: "Walking", helper: "No cart needed" }
                     }
                 }
+
                 Button {
                     expand: ButtonExpand::Block,
                     onclick: move |_| async move {
@@ -394,6 +400,7 @@ fn BookScreen(within: Signal<f64>) -> Element {
         }
     }
 }
+
 /// What a row's two edges do. Between the three rows every
 /// [`SwipeBehavior`] appears on both sides.
 #[derive(Clone, Copy, PartialEq)]
@@ -458,6 +465,7 @@ fn ActivityScreen() -> Element {
             gone.write().push(row);
         }
     };
+
     rsx! {
         // `padding: false` is what lets an edge-to-edge list reach the edges.
         Content { padding: false,
@@ -564,6 +572,7 @@ fn ProfileScreen() -> Element {
     let toaster = use_toast();
     let notifications = use_signal(|| true);
     let mut favorites = use_signal(|| vec!["Pebble Creek", "Oak Hollow", "Mill Ridge"]);
+
     rsx! {
         Content {
             Stack { gap: Space::Lg,
@@ -574,6 +583,7 @@ fn ProfileScreen() -> Element {
                         Text { variant: TextVariant::Caption, tone: TextTone::Secondary, "Handicap 12.4 · 42 rounds" }
                     }
                 }
+
                 List { variant: ListVariant::Raised,
                     Item {
                         label: "Notifications",
@@ -602,6 +612,7 @@ fn ProfileScreen() -> Element {
                         }
                     }
                 }
+
                 List { variant: ListVariant::Raised,
                     // Text the reader needs in full wraps rather than being cut.
                     Item {
@@ -610,6 +621,7 @@ fn ProfileScreen() -> Element {
                         wrap: true,
                     }
                 }
+
                 Button {
                     fill: ButtonFill::Outline,
                     color: Color::Danger,

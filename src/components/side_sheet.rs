@@ -99,6 +99,7 @@ fn SideSheetPlaygroundDemo() -> Element {
         }
     };
     let at_start = edge() == SheetEdge::Start;
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

@@ -409,6 +409,7 @@ pub(crate) fn OverlayHost(queues: OverlayQueues) -> Element {
     let toast = queues.toasts.read().first().cloned();
     let alert = queues.alerts.read().first().cloned();
     let sheet = queues.sheets.read().first().cloned();
+
     rsx! {
         div { class: "g3-toast-host",
             if let Some(entry) = toast {
@@ -471,6 +472,7 @@ fn QueuedToast(
     queue: Signal<Vec<Entry<ToastOptions, ()>>>,
 ) -> Element {
     let open = use_signal(|| true);
+
     rsx! {
         Toast {
             open,
@@ -490,6 +492,7 @@ fn QueuedAlert(
     queue: Signal<Vec<Entry<AlertOptions, AlertResult>>>,
 ) -> Element {
     let open = use_signal(|| true);
+
     rsx! {
         Alert {
             open,
@@ -510,6 +513,7 @@ fn QueuedSheet(
 ) -> Element {
     let open = use_signal(|| true);
     let cancel_label = use_strings().read().cancel.clone();
+
     rsx! {
         ActionSheet {
             open,

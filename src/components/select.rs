@@ -219,6 +219,7 @@ pub fn Select<T: Clone + PartialEq + 'static>(
             ChevronDown { class: "g3-select-icon", size: 16 }
         }
     };
+
     rsx! {
         FieldShell {
             id: id.clone(),
@@ -277,6 +278,7 @@ fn SelectOptionRow<T: Clone + PartialEq + 'static>(
         description,
         disabled,
     } = option;
+
     rsx! {
         button {
             r#type: "button",
@@ -305,6 +307,7 @@ fn SelectPlaygroundDemo() -> Element {
     let club = use_signal(|| "Driver".to_string());
     let disabled = use_signal(|| false);
     let width = use_signal(|| SelectWidth::Fill);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

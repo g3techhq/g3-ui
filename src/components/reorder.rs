@@ -227,6 +227,7 @@ pub fn ReorderItem(
             rows.write().insert(position(), token.clone());
         }
     });
+
     use_drop(move || {
         let index = *position.peek();
         let ours = rows
@@ -237,6 +238,7 @@ pub fn ReorderItem(
             rows.write().remove(&index);
         }
     });
+
     rsx! {
         div {
             class: merge_classes("g3-reorder-item", class.as_deref()),
@@ -332,8 +334,10 @@ fn ReorderPlaygroundDemo() -> Element {
             "Best round",
         ]
     });
+
     let position = use_signal(|| ReorderHandlePosition::End);
     let layout = use_signal(ReorderLayout::default);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             center: false,

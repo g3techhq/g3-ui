@@ -53,6 +53,7 @@ pub fn EmptyState(
     // A failure should be heard when it replaces the content; an empty list
     // is simply part of the page.
     let role = (color == Color::Danger).then_some("alert");
+
     rsx! {
         div {
             class: merge_classes("g3-empty-state", class.as_deref()),
@@ -66,6 +67,7 @@ pub fn EmptyState(
                 class: "g3-empty-state-title",
                 "{title}"
             }
+
             div { class: "g3-empty-state-message", {children} }
             if let Some(action) = action {
                 div { class: "g3-empty-state-action", {action} }
@@ -79,6 +81,7 @@ pub fn EmptyState(
 fn EmptyStatePlaygroundDemo() -> Element {
     use dioxus_icons::lucide::{CircleAlert, Flag, SearchX};
     let kind = use_signal(|| 0_usize);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

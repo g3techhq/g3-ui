@@ -22,6 +22,7 @@ pub(crate) fn FieldShell(
     let helper = helper.filter(|text| !text.is_empty());
     let error = error.filter(|text| !text.is_empty());
     let invalid = error.is_some();
+
     rsx! {
         div {
             class: merge_classes("g3-field", class.as_deref()),
@@ -34,6 +35,7 @@ pub(crate) fn FieldShell(
                     "{label}"
                 }
             }
+
             div { class: "g3-field-control",
                 if let Some(start) = start {
                     span { class: "g3-field-start", {start} }
@@ -182,6 +184,7 @@ fn use_text_events(
         let _ = settings();
         generation += 1;
     });
+
     let input_id = id.clone();
     let handle_input = use_callback(move |event: FormEvent| {
         if disabled || readonly {
@@ -213,6 +216,7 @@ fn use_text_events(
             });
         }
     });
+
     let handle_change = use_callback(move |event: FormEvent| {
         if !disabled
             && !readonly
@@ -222,6 +226,7 @@ fn use_text_events(
             onchange.call(event.value());
         }
     });
+
     let clear = use_callback(move |()| {
         if disabled || readonly {
             return;
@@ -370,6 +375,7 @@ pub fn Input(
         }),
         (None, None) => None,
     };
+
     rsx! {
         FieldShell {
             id: id.clone(),
@@ -470,6 +476,7 @@ pub fn TextArea(
     );
     let describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
+
     rsx! {
         FieldShell {
             id: id.clone(),
@@ -510,6 +517,7 @@ fn InputPlaygroundDemo() -> Element {
     let clearable = use_signal(|| true);
     let input_type = use_signal(|| InputType::Text);
     let notes = use_signal(String::new);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

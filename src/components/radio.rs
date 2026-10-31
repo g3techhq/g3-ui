@@ -100,11 +100,13 @@ pub fn RadioGroup<T: Clone + PartialEq + 'static>(
         placement,
         onchange,
     });
+
     let label_id = format!("{id}-label");
     let group_name = if label.is_none() { aria_label } else { None };
     let labelledby = label.is_some().then(|| label_id.clone());
     let group_describedby = described_by(&id, &helper, &error);
     let invalid = is_invalid(&error);
+
     rsx! {
         div {
             id: id.clone(),
@@ -181,6 +183,7 @@ pub fn Radio<T: Clone + PartialEq + 'static>(
     let pick = value.clone();
     let describedby = described_by(&id, &helper, &None);
     let clear_on_press = selected && allow_empty();
+
     rsx! {
         label {
             class: merge_classes(cls, class.as_deref()),
@@ -226,6 +229,7 @@ fn RadioPlaygroundDemo() -> Element {
     let allow_empty = use_signal(|| false);
     let disabled = use_signal(|| false);
     let placement = use_signal(|| ControlLabelPlacement::Start);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

@@ -66,6 +66,7 @@ pub fn LayoutScope(
         Some(SIZE_SCRIPT.replace("__ID__", &super::overlay::js_string(&id))),
         move |report: u8| size.set(LayoutSize::from_report(report)),
     );
+
     rsx! {
         div { id, class: merge_classes("g3-layout-scope", class.as_deref()), {children} }
     }
@@ -96,6 +97,7 @@ pub fn AdaptiveLayout(
         }
         _ => (LayoutSize::Compact, compact),
     };
+
     rsx! {
         div {
             class: merge_classes("g3-adaptive-layout", class.as_deref()),
@@ -147,6 +149,7 @@ pub fn PageLayout(
         PageLayoutOrder::MainStartEnd => rsx! { {main} {asides} },
         PageLayoutOrder::StartEndMain => rsx! { {asides} {main} },
     };
+
     rsx! {
         LayoutScope {
             div {
@@ -164,6 +167,7 @@ pub fn PageLayout(
 fn ResponsivePlaygroundDemo() -> Element {
     use crate::{Card, Input, Space, Stack};
     let draft = use_signal(String::new);
+
     rsx! {
         crate::PlaygroundDemoFrame { center: false,
         LayoutScope {

@@ -4,13 +4,17 @@ use super::*;
 fn adaptive_switches_remount_variants_but_not_a_reused_fallback() {
     use dioxus::core::NoOpMutations;
     use std::sync::atomic::{AtomicUsize, Ordering};
+
     static SIZE: GlobalSignal<LayoutSize> = Signal::global(LayoutSize::default);
+
     static MOUNTS: AtomicUsize = AtomicUsize::new(0);
+
     #[component]
     fn Counted() -> Element {
         let mount = use_hook(|| MOUNTS.fetch_add(1, Ordering::SeqCst) + 1);
         rsx! { "mounted-{mount}" }
     }
+
     fn app() -> Element {
         let mut size = use_context_provider(|| Signal::new(LayoutSize::Compact));
         use_effect(move || size.set(SIZE()));
@@ -63,6 +67,7 @@ fn adaptive_slots_select_only_one_tree_and_fall_back_downward() {
             assert_eq!(html.contains(other), other == expected);
         }
     }
+
     fn app() -> Element {
         let size = use_signal(|| LayoutSize::Expanded);
         use_context_provider(|| size);

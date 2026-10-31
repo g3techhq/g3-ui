@@ -1105,6 +1105,7 @@ pub fn ThemeProvider(
     // A provider inside an app replaces its look entirely rather than adding
     // to it, as it does the colors.
     let look_css = theme.scoped_look_css(&id, true);
+
     rsx! {
         div {
             id,

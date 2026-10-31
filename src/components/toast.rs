@@ -175,6 +175,7 @@ pub fn Toast(
         &color_cls,
     ]);
     let duration_ms = lifetime.map_or(0, |lifetime| lifetime.as_millis());
+
     rsx! {
       div { id: layer_id, class: "g3-overlay-layer", popover: "manual",
         div {
@@ -212,6 +213,7 @@ pub fn Toast(
                         X { class: "g3-toast-close-icon", size: 18 }
                     }
                 }
+
                 div { class: "g3-toast-timer", aria_hidden: "true" }
             }
         }
@@ -226,6 +228,7 @@ fn ToastPlaygroundDemo() -> Element {
     let color = use_signal(|| Color::Success);
     let position = use_signal(|| ToastPosition::Bottom);
     let toaster = crate::use_toast();
+
     rsx! {
         crate::PlaygroundDemoFrame {
             app: false,

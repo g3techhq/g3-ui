@@ -92,6 +92,7 @@ pub(crate) enum FrameKind {
 }
 
 const DISMISS_DISTANCE: f64 = 96.0;
+
 const BACKDROP_EXIT_DELAY: std::time::Duration = std::time::Duration::from_millis(300);
 
 /// Pointer and keyboard behaviour of a bottom sheet's handle. Messages back to
@@ -333,6 +334,7 @@ pub(crate) fn SheetFrame(
             }
         })
     });
+
     let labelledby = title.as_ref().map(|_| title_id.clone());
 
     let contents = rsx! {
@@ -351,6 +353,7 @@ pub(crate) fn SheetFrame(
                 onclick: move |_| dismiss.call(()),
             }
         }
+
         div {
             id: id.clone(),
             class: merge_classes(surface_cls, class.as_deref()),
@@ -404,6 +407,7 @@ pub(crate) fn SheetFrame(
                     h2 { id: title_id, class: "g3-sheet-title", "{title}" }
                 }
             }
+
             div {
                 class: "g3-sheet-content",
                 "data-padding": padding.unwrap_or(true).to_string(),
@@ -411,6 +415,7 @@ pub(crate) fn SheetFrame(
             }
         }
     };
+
     rsx! {
         if layered() {
             div {

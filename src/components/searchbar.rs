@@ -4,6 +4,7 @@ use crate::state::use_controlled;
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
 use dioxus::prelude::*;
 use dioxus_icons::lucide::Search;
+
 #[cfg(feature = "playground")]
 use dioxus_icons::lucide::SlidersHorizontal;
 
@@ -60,6 +61,7 @@ pub fn Searchbar(
         "g3-searchbar",
         mode.pick("g3-searchbar-ios", "g3-searchbar-md"),
     ]);
+
     rsx! {
         form {
             class: merge_classes(cls, class.as_deref()),
@@ -101,6 +103,7 @@ fn SearchbarPlaygroundDemo() -> Element {
     let mut filters_open = use_signal(|| false);
     let nearby = use_signal(|| true);
     let available = use_signal(|| false);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {

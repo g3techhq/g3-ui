@@ -45,6 +45,7 @@ pub fn Progress(
             ""
         },
     ]);
+
     rsx! {
         div {
             class: merge_classes(cls, class.as_deref()),
@@ -68,6 +69,7 @@ pub fn Progress(
 fn ProgressPlaygroundDemo() -> Element {
     let color = use_signal(|| crate::Color::Accent);
     let value = use_signal(|| 45.0);
+
     rsx! {
         crate::PlaygroundDemoFrame {
             controls: rsx! {
