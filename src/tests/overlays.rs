@@ -256,6 +256,46 @@ async fn a_replacing_toast_takes_the_place_of_the_one_showing() {
     assert!(html.contains("Second"));
 }
 
+// `render_immediate` runs effects and polls tasks on the fork, so the toast
+// timer starts its Tokio sleep here; time is paused so it never fires.
+#[tokio::test(start_paused = true)]
+async fn a_code_opened_toast_can_carry_an_action() {
+    fn app() -> Element {
+        rsx! {
+            AppWrapper { Page {} }
+        }
+    }
+    #[component]
+    fn Page() -> Element {
+        let toaster = use_toast();
+        use_hook(|| {
+            toaster.show(ToastOptions::new("Added to Watch later").action("View", || {}));
+        });
+
+        rsx! { "Page" }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    dom.render_immediate(&mut dioxus::core::NoOpMutations);
+    let html = dioxus_ssr::render(&dom);
+    let action = element_with_class(&html, "g3-toast-action");
+    let inside = &html[html.find(action).unwrap() + action.len()..];
+    assert!(inside.starts_with("<button"));
+    assert!(inside.contains("View"));
+    // An action lengthens the default time so the button can be reached.
+    assert!(html.contains("--g3-toast-duration: 6000ms"));
+}
+
+#[test]
+fn a_toast_action_lengthens_only_the_default_duration() {
+    let short = ToastOptions::new("Saved").action("View", || {});
+    assert_eq!(short.duration, ToastDuration::Long);
+    let persistent = ToastOptions::new("Saved")
+        .duration(ToastDuration::Persistent)
+        .action("View", || {});
+    assert_eq!(persistent.duration, ToastDuration::Persistent);
+}
+
 #[test]
 fn a_low_detent_leaves_the_page_usable() {
     fn app() -> Element {

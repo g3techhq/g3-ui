@@ -26,6 +26,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   only select elements, so nothing changes for them; app CSS or scripts that
   walked `childNodes` past those comments see fewer nodes.
 
+### Added
+
+- Toasts queued with `use_toast()` can carry a button:
+  `ToastOptions::new("Added to Watch later").action("View", move || ..)`.
+  Pressing it runs the closure and closes the toast, and the default time
+  lengthens to `ToastDuration::Long`, as a `Toast` with an `action` does.
+  `ToastOptions` gains a public `action: Option<ToastAction>` field, so code
+  that builds it as a struct literal must add `action: None`.
+
 ### Fixed
 
 - Headers, tab bars, sheets and toasts clear the Android status bar and

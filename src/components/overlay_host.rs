@@ -1,7 +1,7 @@
 //! Overlays opened from code: toasts, alerts, and action sheets.
 use super::{
-    ActionSheet, ActionSheetButton, Alert, AlertButton, AlertInput, AlertResult, Color, Toast,
-    ToastDuration, ToastPosition,
+    ActionSheet, ActionSheetButton, Alert, AlertButton, AlertInput, AlertResult, Button,
+    ButtonFill, ButtonSize, Color, Toast, ToastDuration, ToastPosition,
 };
 use crate::theme::use_strings;
 use dioxus::prelude::*;
@@ -73,6 +73,50 @@ pub struct ToastOptions {
     /// Take the place of the toast showing, and any waiting, rather than
     /// queueing behind them.
     pub replace: bool,
+    /// A button beside the message, such as "Undo" or "View".
+    pub action: Option<ToastAction>,
+}
+
+/// A button on a toast shown with [`Toaster::show`]. Pressing it runs
+/// `on_press` and closes the toast.
+///
+/// `on_press` is a plain closure rather than a `Callback` because the toast
+/// outlives the component that queued it, and a `Callback` is dropped with
+/// its component. The toast renders in [`AppWrapper`](crate::AppWrapper)'s
+/// scope, so the closure cannot find context provided beneath it (a
+/// router's, say) when it runs: capture what it needs when the toast is
+/// queued.
+#[derive(Clone)]
+pub struct ToastAction {
+    /// The button's text.
+    pub label: String,
+    /// What pressing it does.
+    pub on_press: Rc<dyn Fn()>,
+}
+
+impl ToastAction {
+    /// A button labelled `label` that runs `on_press`.
+    pub fn new(label: impl Into<String>, on_press: impl Fn() + 'static) -> Self {
+        Self {
+            label: label.into(),
+            on_press: Rc::new(on_press),
+        }
+    }
+}
+
+impl std::fmt::Debug for ToastAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ToastAction")
+            .field("label", &self.label)
+            .finish_non_exhaustive()
+    }
+}
+
+/// The same button, by identity: a closure has no value to compare.
+impl PartialEq for ToastAction {
+    fn eq(&self, other: &Self) -> bool {
+        self.label == other.label && Rc::ptr_eq(&self.on_press, &other.on_press)
+    }
 }
 
 impl ToastOptions {
@@ -84,6 +128,7 @@ impl ToastOptions {
             position: ToastPosition::default(),
             duration: ToastDuration::default(),
             replace: false,
+            action: None,
         }
     }
 
@@ -111,6 +156,19 @@ impl ToastOptions {
     /// the actions long after they happened.
     pub fn replace(mut self) -> Self {
         self.replace = true;
+        self
+    }
+
+    /// Add a button beside the message that runs `on_press` and then closes
+    /// the toast. A [`ToastDuration::Short`] toast becomes
+    /// [`ToastDuration::Long`], as a [`Toast`] with an `action` does, so there
+    /// is time to reach the button; call [`duration`](Self::duration)
+    /// afterwards to choose otherwise.
+    pub fn action(mut self, label: impl Into<String>, on_press: impl Fn() + 'static) -> Self {
+        self.action = Some(ToastAction::new(label, on_press));
+        if self.duration == ToastDuration::Short {
+            self.duration = ToastDuration::Long;
+        }
         self
     }
 }
@@ -471,7 +529,21 @@ fn QueuedToast(
     options: ToastOptions,
     queue: Signal<Vec<Entry<ToastOptions, ()>>>,
 ) -> Element {
-    let open = use_signal(|| true);
+    let mut open = use_signal(|| true);
+    let action = options.action.map(|action| {
+        let on_press = action.on_press;
+        rsx! {
+            Button {
+                fill: ButtonFill::Clear,
+                size: ButtonSize::Sm,
+                onclick: move |_| {
+                    on_press();
+                    open.set(false);
+                },
+                "{action.label}"
+            }
+        }
+    });
 
     rsx! {
         Toast {
@@ -480,6 +552,7 @@ fn QueuedToast(
             color: options.color,
             position: options.position,
             duration: options.duration,
+            action,
             on_dismiss: move |_| finish(queue, id, ()),
         }
     }

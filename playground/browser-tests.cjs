@@ -241,8 +241,17 @@ async function main() {
         await page.keyboard.press('ArrowLeft');
         await poll(() => scores.getAttribute('aria-selected'), 'true');
         await page.screenshot({ path: path.join(output, `${label}-tabs.png`) });
+
+        await page.goto(`${origin}/components/toast`);
+        await configure(page, mode, wide, dark);
+        await page.getByRole('button', { name: 'Queue a toast with an action', exact: true }).click();
+        const queued = page.getByRole('status').filter({ hasText: 'Added to Watch later' });
+        await queued.waitFor();
+        await page.screenshot({ path: path.join(output, `${label}-toast-action.png`) });
+        await queued.getByRole('button', { name: 'View', exact: true }).click();
+        await poll(() => queued.isVisible(), false);
         assert.deepEqual(errors, []);
-        console.log(`PASS ${label}: nested overlay, focus return, toast, touch tap, keyboard tabs`);
+        console.log(`PASS ${label}: nested overlay, focus return, toast action, touch tap, keyboard tabs`);
       } catch (error) {
         await page.screenshot({ path: path.join(output, `${label}-failure.png`) }).catch(() => {});
         throw error;

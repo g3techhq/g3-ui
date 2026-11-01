@@ -171,8 +171,8 @@ pub use nav::{
 pub use navigation_drawer::NavigationDrawer;
 pub use overlay::{OverlayController, use_overlay_controller};
 pub use overlay_host::{
-    ActionSheetOptions, ActionSheets, AlertOptions, Alerts, ToastId, ToastOptions, Toaster,
-    use_action_sheet, use_alert, use_toast,
+    ActionSheetOptions, ActionSheets, AlertOptions, Alerts, ToastAction, ToastId, ToastOptions,
+    Toaster, use_action_sheet, use_alert, use_toast,
 };
 pub use page::Page;
 pub use popover::{Menu, MenuItem, Popover, PopoverPlacement};

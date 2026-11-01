@@ -281,6 +281,19 @@ fn ToastPlaygroundDemo() -> Element {
                             },
                             "Replace the toast showing"
                         }
+                        crate::Button {
+                            fill: crate::ButtonFill::Outline,
+                            onclick: move |_| {
+                                toaster
+                                    .show(
+                                        crate::ToastOptions::new("Added to Watch later")
+                                            .color(color())
+                                            .position(position())
+                                            .action("View", || {}),
+                                    );
+                            },
+                            "Queue a toast with an action"
+                        }
                     }
                 }
                 Toast {
