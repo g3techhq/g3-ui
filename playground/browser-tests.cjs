@@ -248,7 +248,9 @@ async function main() {
         const queued = page.getByRole('status').filter({ hasText: 'Added to Watch later' });
         await queued.waitFor();
         await page.screenshot({ path: path.join(output, `${label}-toast-action.png`) });
-        await queued.getByRole('button', { name: 'View', exact: true }).click();
+        const toastAction = await queued.getByRole('button', { name: 'View', exact: true }).boundingBox();
+        assert.ok(toastAction);
+        await page.touchscreen.tap(toastAction.x + toastAction.width / 2, toastAction.y + toastAction.height / 2);
         await poll(() => queued.isVisible(), false);
         assert.deepEqual(errors, []);
         console.log(`PASS ${label}: nested overlay, focus return, toast action, touch tap, keyboard tabs`);
