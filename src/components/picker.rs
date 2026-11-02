@@ -113,22 +113,43 @@ pub fn PickerColumn<T: Clone + PartialEq + 'static>(
 #[component]
 fn PickerPlaygroundDemo() -> Element {
     let strokes = use_signal(|| 4_u8);
+    let putts = use_signal(|| 2_u8);
     let par = 4_u8;
 
     rsx! {
         crate::PlaygroundDemoFrame {
             crate::Stack {
-                crate::Text { "Hole 7 · Par {par}" }
+                crate::Text { variant: crate::TextVariant::Heading, "Hole 7 · Par {par}" }
                 Picker { aria_label: "Score",
                     PickerColumn {
                         value: strokes,
                         aria_label: "Strokes",
+                        wide: true,
                         options: (1..=10_u8)
-                            .map(|n| SelectOption::new(n, n.to_string()))
+                            .map(|n| {
+                                let name = match i16::from(n) - i16::from(par) {
+                                    _ if n == 1 => "Ace",
+                                    -2 => "Eagle",
+                                    -1 => "Birdie",
+                                    0 => "Par",
+                                    1 => "Bogey",
+                                    2 => "Double",
+                                    _ => "",
+                                };
+                                let label = if name.is_empty() { n.to_string() } else { format!("{n}: {name}") };
+                                SelectOption::new(n, label)
+                            })
+                            .collect::<Vec<_>>(),
+                    }
+                    PickerColumn {
+                        value: putts,
+                        aria_label: "Putts",
+                        options: (0..=5_u8)
+                            .map(|n| SelectOption::new(n, format!("{n} putts")))
                             .collect::<Vec<_>>(),
                     }
                 }
-                crate::Text { tone: crate::TextTone::Secondary, "Chosen: {strokes}" }
+                crate::Text { tone: crate::TextTone::Secondary, "{strokes} strokes, {putts} putts" }
             }
         }
     }

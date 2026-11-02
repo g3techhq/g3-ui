@@ -90,7 +90,7 @@ Component names are unprefixed. If one collides with a local name, import it und
 | App shell | `AppWrapper`, `Page`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
 | Navigation | `AdaptiveNav`, `NavBar`, `NavRail`, `NavItem`, `NavigationDrawer`, `Tabs`, `TabList`, `Tab`, `TabPanel`, `SegmentGroup`, `SegmentButton` |
 | Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
-| Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar` |
+| Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar`, `Picker`, `PickerColumn` |
 | Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider` |
 | Layout | `Stack`, `Grid`, `LayoutScope`, `AdaptiveLayout`, `PageLayout` |
 | Disclosure | `AccordionGroup`, `AccordionItem` |
@@ -207,7 +207,26 @@ rsx! {
 | `Popover` | a calendar anchored to the field | wheels anchored to the field |
 
 A `Popover` picker becomes a bottom sheet on a phone. `Calendar` is also available on its
-own, for a month grid inside a page.
+own, for a month grid inside a page, and the wheels are `Picker` and `PickerColumn`, like
+Ionic's `ion-picker`, for any value picked in place, such as a score:
+
+```
+# use dioxus::prelude::*;
+# use g3_ui::prelude::*;
+# fn demo() -> Element {
+let strokes = use_signal(|| 4_u8);
+
+rsx! {
+    Picker { aria_label: "Score",
+        PickerColumn {
+            value: strokes,
+            aria_label: "Strokes",
+            options: (1..=10_u8).map(|n| SelectOption::new(n, n.to_string())).collect::<Vec<_>>(),
+        }
+    }
+}
+# }
+```
 
 Wheel time pickers round minutes down to the nearest `minute_step` within the hour, including
 immediate confirmation: 14:59 with a step of five displays and commits 14:55. Dialog typing keeps
