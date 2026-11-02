@@ -37,6 +37,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A Material toolbar strip of five options no longer cuts "Movies" short on
+  a 360px phone: its buttons pad 4px a side there, with tighter tracking.
 - On Android and iOS, `Img` no longer stays hidden at `loading`, and the
   tab indicator, `SwipeItem`, `ReorderList`, `Rating` drag and clock
   gestures work again. Their page scripts run in a root task, and native

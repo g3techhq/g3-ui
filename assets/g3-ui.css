@@ -761,12 +761,14 @@ body.g3-overlay-scroll-locked {
     grid-auto-flow: column;
     grid-auto-columns: 1fr;
 }
-/* On a phone the strip shares a narrow width, so its buttons pad as a
-   standalone group's do. Five options ("Movies", "Books") at 16px a side
-   left about 46px of a 390px row for each label and cut the longer ones. */
+/* On a phone the strip shares a narrow width. Five options get 72px each on
+   a 360px phone, where "MOVIES" at 8px a side and 0.06em tracking needs
+   about 79px and ended in an ellipsis. The labels are centred, so a narrow
+   pad does not show. */
 @container g3-app-shell (max-width: 47.999rem) {
     :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md .g3-segment-btn-md {
-        padding-inline: 8px;
+        padding-inline: 4px;
+        letter-spacing: 0.03em;
     }
 }
 
