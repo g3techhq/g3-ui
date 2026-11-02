@@ -25,6 +25,9 @@ pub(crate) fn WheelColumn(
     /// Text alignment and share of the width: month names need more room.
     #[props(default)]
     wide: bool,
+    /// Extra classes for the column.
+    #[props(default)]
+    class: Option<String>,
 ) -> Element {
     let id = use_element_id("wheel", None);
     let scroll_id = format!("{id}-scroll");
@@ -75,7 +78,10 @@ pub(crate) fn WheelColumn(
 
     rsx! {
         div {
-            class: if wide { "g3-wheel-column g3-wheel-column-wide" } else { "g3-wheel-column" },
+            class: crate::theme::merge_classes(
+                if wide { "g3-wheel-column g3-wheel-column-wide" } else { "g3-wheel-column" },
+                class.as_deref(),
+            ),
             role: "spinbutton",
             tabindex: "0",
             aria_label,

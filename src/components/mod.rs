@@ -78,6 +78,8 @@ mod overlay_host;
 
 mod page;
 
+mod picker;
+
 mod popover;
 
 pub(crate) mod pressable;
@@ -175,6 +177,7 @@ pub use overlay_host::{
     Toaster, use_action_sheet, use_alert, use_toast,
 };
 pub use page::Page;
+pub use picker::{Picker, PickerColumn};
 pub use popover::{Menu, MenuItem, Popover, PopoverPlacement};
 pub use pressable::{ButtonType, Destination};
 pub use progress::Progress;
@@ -241,6 +244,7 @@ gallery![
     searchbar,
     date_picker,
     time_picker,
+    picker,
     card,
     list,
     layout,

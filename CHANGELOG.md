@@ -28,6 +28,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `Picker` and `PickerColumn`, the date and time pickers' spinning wheels
+  shown in place for any value, like Ionic's `ion-picker`:
+  `Picker { PickerColumn { value, options, aria_label: "Strokes" } }`, with
+  `SelectOption`s as the choices.
 - Toasts queued with `use_toast()` can carry a button:
   `ToastOptions::new("Added to Watch later").action("View", move || ..)`.
   Pressing it runs the closure and closes the toast, and the default time

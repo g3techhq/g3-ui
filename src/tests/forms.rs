@@ -557,3 +557,34 @@ fn icon_only_controls_can_be_named_and_links_can_open_new_tabs() {
     assert!(html.contains("id=\"course-search\""));
     assert_eq!(html.matches("target=\"_blank\"").count(), 3);
 }
+
+#[test]
+fn an_inline_picker_is_a_group_of_spin_buttons() {
+    fn app() -> Element {
+        let strokes = use_signal(|| 4_u8);
+        rsx! {
+            Picker { aria_label: "Score",
+                PickerColumn {
+                    value: strokes,
+                    aria_label: "Strokes",
+                    options: (1..=6_u8)
+                        .map(|n| {
+                            let option = SelectOption::new(n, format!("{n} strokes"));
+                            if n == 1 { option.disabled() } else { option }
+                        })
+                        .collect::<Vec<_>>(),
+                }
+            }
+        }
+    }
+    let html = render(app);
+    assert!(html.contains(r#"role="group""#));
+    assert!(html.contains(r#"aria-label="Score""#));
+    assert!(html.contains(r#"role="spinbutton""#));
+    assert!(html.contains(r#"aria-label="Strokes""#));
+    // The chosen value is the fourth option.
+    assert!(html.contains(r#"aria-valuenow="3""#));
+    assert!(html.contains(r#"aria-valuetext="4 strokes""#));
+    assert_eq!(html.matches("g3-wheel-item").count(), 6);
+    assert_eq!(html.matches(r#"data-disabled="true""#).count(), 1);
+}
