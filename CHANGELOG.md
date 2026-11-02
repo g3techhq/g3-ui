@@ -37,6 +37,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- On Android and iOS, `Img` no longer stays hidden at `loading`, and the
+  tab indicator, `SwipeItem`, `ReorderList`, `Rating` drag and clock
+  gestures work again. Their page scripts run in a root task, and native
+  renderers provide the document below the root, so the scripts were
+  evaluated against a no-op document. The document is now resolved in the
+  calling component's scope.
+
 - Headers, tab bars, sheets and toasts clear the Android status bar and
   gesture bar. Every safe-area inset reads `--g3-safe-area-*` before
   `env(safe-area-inset-*)`, which Android WebViews before Chrome's

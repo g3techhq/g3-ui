@@ -469,3 +469,45 @@ fn an_img_with_a_new_src_starts_loading_again() {
     assert!(rebuilt && removed, "{edits:?}");
     assert!(dioxus_ssr::render(&dom).contains("src=\"/b.png\""));
 }
+
+/// Native renderers provide the document below the root, while page scripts
+/// run in a root task. Resolving the document from that task found none and
+/// evaluated nothing, so on Android every `Img` stayed at "loading" (hidden)
+/// and the gesture scripts never started.
+#[test]
+fn page_scripts_reach_a_document_provided_below_the_root() {
+    use dioxus::document::{Document, Eval, NoOpDocument};
+    use std::cell::RefCell;
+
+    #[derive(Default)]
+    struct Recorder(RefCell<Vec<String>>);
+    impl Document for Recorder {
+        fn eval(&self, js: String) -> Eval {
+            self.0.borrow_mut().push(js.clone());
+            NoOpDocument.eval(js)
+        }
+    }
+    thread_local! {
+        static RECORDER: Rc<Recorder> = Rc::new(Recorder::default());
+    }
+
+    fn app() -> Element {
+        rsx! { Window {} }
+    }
+    #[component]
+    fn Window() -> Element {
+        use_context_provider(|| RECORDER.with(|recorder| recorder.clone() as Rc<dyn Document>));
+        rsx! { Img { src: "cover.png", alt: "" } }
+    }
+
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    pump(&mut dom);
+    let evaluated = RECORDER.with(|recorder| recorder.0.borrow().clone());
+    assert!(
+        evaluated
+            .iter()
+            .any(|js| js.contains("Symbol.for(\"g3-ui.img\")")),
+        "the image script never reached the window's document: {evaluated:?}"
+    );
+}

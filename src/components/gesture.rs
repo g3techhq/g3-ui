@@ -58,8 +58,13 @@ impl GestureBridge {
             return;
         }
         let bridge = self.clone();
+        // Resolved here, in the calling component's scope. The task below runs
+        // in the root scope, and native renderers provide the document below
+        // the root, so `document::eval` there would find no document and
+        // quietly evaluate nothing.
+        let document = document::document();
         spawn_forever(async move {
-            let mut eval = document::eval(script.source);
+            let mut eval = document.eval(script.source.to_string());
             while let Ok((id, kind, values)) = eval.recv::<(String, String, Vec<f64>)>().await {
                 let handler = bridge.handlers.borrow().get(&id).copied();
                 if let Some(handler) = handler {
