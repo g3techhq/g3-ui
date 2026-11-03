@@ -2,7 +2,7 @@
 //! entrance, the backdrop, scroll locking, focus handling, and the app-wide
 //! count of open sheets.
 use super::overlay::{
-    use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
+    OverlayBack, use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
 };
 use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode, use_strings};
@@ -17,9 +17,8 @@ static OPEN_SHEETS: GlobalSignal<usize> = Signal::global(|| 0);
 /// How many dismissible sheets are open in the app.
 ///
 /// Reactive: a component that reads it re-renders as sheets open and close.
-/// Navigation drawers are not counted. For Android Back, prefer
-/// [`crate::use_overlay_controller`], which also covers dialogs and popovers
-/// and dismisses the most recently presented surface without DOM selectors.
+/// Navigation drawers are not counted. Sheets already close on system Back
+/// themselves; see [`BottomSheet`](crate::BottomSheet).
 pub fn open_sheet_count() -> usize {
     OPEN_SHEETS()
 }
@@ -205,7 +204,7 @@ pub(crate) fn SheetFrame(
         use_open_count(open);
     }
     let registered = use_memo(move || open_prop()() && !is_drawer);
-    use_overlay_registration(registered.into(), id.clone(), dismiss);
+    use_overlay_registration(registered.into(), id.clone(), OverlayBack::Closes, dismiss);
 
     let (draggable, detent_signal, count) = match &kind {
         FrameKind::Bottom {
@@ -389,8 +388,9 @@ pub(crate) fn SheetFrame(
                     span { class: "g3-sheet-handle-bar" }
                 }
             }
-            // A close control for app-level dismissal such as Android Back.
-            // Hidden, and never in the tab order.
+            // A close control for app code that dismisses by DOM, kept for
+            // apps written before sheets handled Back themselves. Hidden,
+            // and never in the tab order.
             if is_open && !is_drawer {
                 button {
                     r#type: "button",

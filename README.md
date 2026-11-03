@@ -507,8 +507,14 @@ A sheet normally opens over a scrim that closes it when tapped. `backdrop: Sheet
 leaves the page behind visible and interactive, for something like comments beside a video. The
 sheet is then no longer modal, and a bottom sheet closes only when dragged down.
 
-Android Back should dismiss the most recently presented surface before navigating. Obtain
-`use_overlay_controller()` once in your app, and call `dismiss_top()` in your Back callback.
+System Back closes the sheet on top before it navigates, with no setup: browser Back on the web
+(an open sheet adds a history entry at the same URL, removed from Back when the sheet closes), and
+the Back gesture on Android and iOS through g3-native-plugins' `g3nativeback` event. With the
+`transitions` feature, Back is taken even at a root route while a sheet is open. Back over a
+dialog or menu is left to the app, and never closes a sheet beneath it.
+
+For other surfaces, or an app-drawn Back control, obtain `use_overlay_controller()` once in
+your app and call `dismiss_top()`.
 It covers modals, alerts, action sheets, popovers and dismissible sheets, including sheets
 without a scrim. It returns `true` when Back was consumed. A nondismissible modal consumes Back
 without exposing the surface underneath. Toasts and permanent navigation drawers are excluded.

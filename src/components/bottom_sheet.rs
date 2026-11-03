@@ -8,8 +8,14 @@ use dioxus::prelude::*;
 /// modal. On wide shells it floats as a centred card.
 ///
 /// The owner holds the `open` signal. The sheet sets it to `false` when the
-/// user dismisses it (backdrop tap, handle drag, Escape) and then calls
-/// `on_dismiss`.
+/// user dismisses it (backdrop tap, handle drag, Escape, system Back) and
+/// then calls `on_dismiss`.
+///
+/// System Back closes the sheet on top instead of leaving the page: browser
+/// Back on the web, where an open sheet adds a history entry at the same URL,
+/// and the Back gesture on Android and iOS through `g3nativeback`. With the
+/// `transitions` feature it is taken even at a root route, so the app does
+/// not exit with a sheet open. Back over a dialog or menu is left to the app.
 ///
 /// Without `detents` the sheet is as tall as its content, up to
 /// `max_height`. With `detents` it has fixed heights, as fractions of the

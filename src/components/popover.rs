@@ -1,6 +1,8 @@
 //! Floating panels anchored to a trigger: popovers and menus.
 use super::Color;
-use super::overlay::{js_string, use_overlay_focus_with, use_overlay_registration, use_top_layer};
+use super::overlay::{
+    OverlayBack, js_string, use_overlay_focus_with, use_overlay_registration, use_top_layer,
+};
 use super::pressable::Destination;
 use crate::components::pressable::{Pressable, Target};
 use crate::state::use_element_id;
@@ -88,7 +90,7 @@ pub(crate) fn PopoverFrame(
     });
 
     use_overlay_focus_with(open.into(), id.clone(), false, roving, dismiss);
-    use_overlay_registration(open.into(), id.clone(), dismiss);
+    use_overlay_registration(open.into(), id.clone(), OverlayBack::Blocks, dismiss);
     let layer_id = format!("{id}-layer");
     use_top_layer(
         open.into(),

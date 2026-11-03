@@ -41,6 +41,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- System Back closes an open `BottomSheet` or `SideSheet` instead of leaving
+  the page under it. On the web an open sheet pushes a history entry at the
+  same URL and browser Back closes it, out of the router's sight; a sheet
+  closed by its own controls leaves no step for Back to stop on. On Android
+  and iOS the top sheet claims `g3nativeback`, and with the `transitions`
+  feature native Back stays intercepted at a root route while a sheet is
+  open (needs g3-route-transitions' `use_native_back_layer`). A dialog or
+  menu on top keeps Back for the app.
+
 - Holding a `SwipeItem` that has `on_long_press` no longer also taps it when
   the finger lifts, so a held card opens its menu without opening what it
   links to. Android's own long-press menu and text selection no longer start

@@ -100,7 +100,8 @@ struct OverlayEntry {
 }
 
 /// The app's currently open sheets, dialogs and popovers, in presentation order.
-/// Use [`use_overlay_controller`] to obtain it for Android Back handling.
+/// Sheets close on system Back without it; use [`use_overlay_controller`]
+/// for Back over other surfaces, or for an app-drawn Back control.
 #[derive(Clone, Copy)]
 pub struct OverlayController {
     entries: Signal<Vec<OverlayEntry>>,
@@ -139,7 +140,58 @@ pub fn use_overlay_controller() -> OverlayController {
     })
 }
 
-pub(crate) fn use_overlay_registration(open: ReadSignal<bool>, id: String, dismiss: Callback<()>) {
+/// What system Back does to an open overlay.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum OverlayBack {
+    /// Back closes it: browser Back on the web, the native Back gesture on
+    /// Android and iOS. Sheets.
+    Closes,
+    /// Back is left to the app, but cannot reach a sheet beneath this
+    /// surface. Dialogs and menus.
+    Blocks,
+}
+
+const BACK_SCRIPT: &str = include_str!("back.js");
+
+/// The script for one open overlay's system-Back session.
+fn back_script(back: OverlayBack) -> String {
+    let closes = if back == OverlayBack::Closes {
+        "true"
+    } else {
+        "false"
+    };
+    // Only the web has browser Back. A native webview's own history is not
+    // the app's, and its Back arrives as `g3nativeback` instead.
+    let push = if cfg!(target_arch = "wasm32") {
+        "true"
+    } else {
+        "false"
+    };
+    BACK_SCRIPT
+        .replace("__CLOSES_ON_BACK__", closes)
+        .replace("__PUSH_HISTORY__", push)
+}
+
+pub(crate) fn use_overlay_registration(
+    open: ReadSignal<bool>,
+    id: String,
+    back: OverlayBack,
+    dismiss: Callback<()>,
+) {
+    let script = open().then(|| back_script(back));
+    super::script::use_dom_script::<String>(script, move |message| {
+        if message == "dismiss" {
+            dismiss.call(());
+        }
+    });
+    // A sheet at a root route still needs native Back intercepted, or the
+    // press leaves the app before the sheet can claim it.
+    #[cfg(feature = "transitions")]
+    {
+        let holds_back = use_memo(move || open() && back == OverlayBack::Closes);
+        g3_route_transitions::use_native_back_layer(holds_back.into());
+    }
+
     let mut controller = use_overlay_controller();
     let config = use_synced_signal((open, id));
     let held = use_hook(|| std::rc::Rc::new(std::cell::RefCell::new(None::<String>)));
@@ -301,4 +353,74 @@ pub(crate) fn use_overlay_focus_with(
             on_escape.call(());
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_sheets_close_on_back_and_only_the_web_pushes_history() {
+        let sheet = back_script(OverlayBack::Closes);
+        let dialog = back_script(OverlayBack::Blocks);
+        assert!(!sheet.contains("__") && !dialog.contains("__"));
+        let opened = |script: &str| {
+            script
+                .lines()
+                .find(|line| line.contains("back.open(token,"))
+                .unwrap()
+                .trim()
+                .to_string()
+        };
+        let push = cfg!(target_arch = "wasm32");
+        assert_eq!(
+            opened(&sheet),
+            format!("back.open(token, true, {push}, () => dioxus.send(\"dismiss\"));")
+        );
+        assert!(opened(&dialog).starts_with("back.open(token, false,"));
+    }
+
+    /// The router's popstate listeners are on `window` too. Only a capture
+    /// listener runs ahead of them, so only it can keep a sheet's own step
+    /// away from the router.
+    #[test]
+    fn the_sheet_step_is_stopped_before_the_router_hears_it() {
+        assert!(
+            BACK_SCRIPT
+                .contains("window.addEventListener(\"popstate\", onPopState, { capture: true });")
+        );
+        assert!(BACK_SCRIPT.contains("event.stopImmediatePropagation();"));
+        // The same URL, so the router keeps its route.
+        assert!(
+            BACK_SCRIPT.contains("history.pushState({ g3UiSheet: token }, \"\", location.href);")
+        );
+    }
+
+    /// The router integration claims `g3nativeback` in a microtask, so a
+    /// sheet must claim it synchronously, and must not take one already
+    /// claimed by app code.
+    #[test]
+    fn native_back_is_claimed_synchronously_by_a_sheet_on_top() {
+        let native = BACK_SCRIPT
+            .split("window.addEventListener(\"g3nativeback\"")
+            .nth(1)
+            .unwrap();
+        let native = native.split("window[backKey] = {").next().unwrap();
+        assert!(native.contains("if (event.defaultPrevented) return;"));
+        assert!(native.contains("if (!top?.closesOnBack) return;"));
+        assert!(native.contains("event.preventDefault();"));
+        assert!(!native.contains("await") && !native.contains("queueMicrotask"));
+    }
+
+    /// Closing a sheet from its own controls must not go back while a route
+    /// push from the same tap may be in flight; with the Navigation API the
+    /// entry is only marked for traversals to step over.
+    #[test]
+    fn a_sheet_closed_by_its_controls_never_races_a_route_push() {
+        let close = BACK_SCRIPT.split("close(token) {").nth(1).unwrap();
+        let close = close.split("\n        },").next().unwrap();
+        let nav = close.split("} else if").next().unwrap();
+        assert!(nav.contains("spent.add(layer.key);"));
+        assert!(!nav.contains("history.back();"));
+    }
 }

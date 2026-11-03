@@ -1,6 +1,6 @@
 //! Centred dialogs.
 use super::overlay::{
-    use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
+    OverlayBack, use_lock_body_scroll, use_overlay_focus, use_overlay_registration, use_top_layer,
 };
 use crate::state::{use_element_id, use_synced_signal};
 use crate::theme::{ComponentMode, classes, merge_classes, use_component_mode};
@@ -94,7 +94,7 @@ pub fn Modal(
 
     use_lock_body_scroll(open.into());
     use_overlay_focus(open.into(), id.clone(), true, dismiss);
-    use_overlay_registration(open.into(), id.clone(), dismiss);
+    use_overlay_registration(open.into(), id.clone(), OverlayBack::Blocks, dismiss);
     use_top_layer(
         open.into(),
         layer_id.clone(),
