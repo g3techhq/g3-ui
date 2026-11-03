@@ -41,6 +41,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Holding a `SwipeItem` that has `on_long_press` no longer also taps it when
+  the finger lifts, so a held card opens its menu without opening what it
+  links to. Android's own long-press menu and text selection no longer start
+  on such a row; they count as the long press, as does a right click or the
+  menu key.
 - A Material toolbar strip of five options no longer cuts "Movies" short on
   a 360px phone: its buttons pad 4px a side there, with tighter tracking.
 - On Android and iOS, `Img` no longer stays hidden at `loading`, and the

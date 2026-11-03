@@ -4404,6 +4404,14 @@ button.g3-chip:focus-visible {
     transition: max-height 180ms var(--g3-transition-md), margin 180ms var(--g3-transition-md), opacity 140ms ease;
 }
 
+/* A held row answers with its own menu, not a text selection or the image
+   callout, which would otherwise start at the same moment. */
+.g3-swipe-item[data-long-press="true"] {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 /* A row keeps `pan-y` so a vertical scroll can still start on it, which leaves
    the browser free to begin scrolling before the swipe is recognized; by then
    cancelling the touch is too late for a scroll already running on the

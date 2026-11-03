@@ -138,9 +138,18 @@ const onPointerDown = (event) => {
     if (row.dataset.longPress === "true") {
         const gesture = active;
         gesture.timer = setTimeout(() => {
-            if (active === gesture && !gesture.moved) send(row, "long-press", 0, null, false);
+            if (active === gesture && !gesture.moved) longPress(gesture);
         }, LONG_PRESS_MS);
     }
+};
+
+// Once per gesture. Marked so the release that follows does not also tap the row:
+// a held card would open its menu and then whatever it links to.
+const longPress = (gesture) => {
+    if (gesture.longPressed) return;
+    gesture.longPressed = true;
+    clearTimeout(gesture.timer);
+    send(gesture.row, "long-press", 0, null, false);
 };
 
 const onPointerMove = (event) => {
@@ -182,9 +191,11 @@ const release = (event) => {
     active = null;
     clearTimeout(gesture.timer);
     const { row, offset } = gesture;
+    // The click that ends a swipe or a long press must not also activate the row.
+    if (gesture.longPressed || gesture.horizontal) {
+        suppress = { row, until: performance.now() + SUPPRESS_CLICK_MS };
+    }
     if (!gesture.horizontal) return;
-    // The click that ends a swipe must not also activate the row.
-    suppress = { row, until: performance.now() + SUPPRESS_CLICK_MS };
     const edge = edgeFor(row, offset);
     if (!edge) return rest(row, 0);
     const committed = committedAt(edge, offset);
@@ -230,6 +241,21 @@ const onClick = (event) => {
     }
 };
 
+// A row that answers a long press owns it. Android's WebView otherwise opens
+// its own menu or starts a text selection at about the same moment, and can
+// cancel the pointer first, so the menu counts as the long press too. A right
+// click or the menu key, with no press under way, is the same request.
+const onContextMenu = (event) => {
+    const row = event.target instanceof Element && event.target.closest('.g3-swipe-item[data-long-press="true"]');
+    if (!row || row.dataset.disabled === "true") return;
+    event.preventDefault();
+    if (active?.row === row) {
+        if (!active.moved) longPress(active);
+    } else if (idle(row)) {
+        send(row, "long-press", 0, null, false);
+    }
+};
+
 document.addEventListener("pointerdown", onPointerDown);
 document.addEventListener("pointermove", onPointerMove);
 document.addEventListener("pointerup", release);
@@ -237,6 +263,7 @@ document.addEventListener("lostpointercapture", onLostPointerCapture);
 document.addEventListener("pointercancel", onPointerCancel);
 // Capturing, so it runs before the renderer's own click listener.
 document.addEventListener("click", onClick, true);
+document.addEventListener("contextmenu", onContextMenu);
 
 let released;
 const done = new Promise((resolve) => {
@@ -264,6 +291,7 @@ window[key] = {
         document.removeEventListener("lostpointercapture", onLostPointerCapture);
         document.removeEventListener("pointercancel", onPointerCancel);
         document.removeEventListener("click", onClick, true);
+        document.removeEventListener("contextmenu", onContextMenu);
         released();
     },
 };
