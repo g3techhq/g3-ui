@@ -7732,3 +7732,84 @@ td[aria-selected="true"] > .g3-calendar-day {
         }
     }
 }
+
+/* Phones turned sideways: wide enough for the rail layout, but short, with a
+   camera cutout or rounded corner at one side. */
+@layer g3 {
+    /* Under the status bar there is little height left, so the header is as
+       short as its buttons allow: iOS's 32pt landscape bar, and 40px in
+       Material, rather than the 4rem of a wide screen. The slots drop their
+       44px minimum, which would hold the row open. */
+    @media (max-height: 30rem) {
+        .g3-header-md .g3-header-row {
+            min-height: 40px;
+        }
+
+        .g3-header-ios .g3-header-row {
+            min-height: 32px;
+        }
+
+        .g3-header .g3-header-slot {
+            min-height: 0;
+        }
+
+        /* The back button's tap target fills the row, rather than holding it
+           at 44px. */
+        .g3-header-md .g3-back-button {
+            min-height: 40px;
+        }
+
+        .g3-header-ios .g3-back-button {
+            min-height: 32px;
+        }
+    }
+
+    /* Clear of a cutout at either side; where there is none the insets are
+       zero and nothing moves. A page that asked for no padding is full-bleed
+       on purpose and keeps it. */
+    .g3-header-row {
+        padding-left: max(0.5rem, var(--g3-safe-area-left, env(safe-area-inset-left)));
+        padding-right: max(0.5rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
+    }
+
+    .g3-content-scroll:not([data-padding="false"]) {
+        padding-left: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-left, env(safe-area-inset-left)));
+        padding-right: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-right, env(safe-area-inset-right)));
+    }
+
+    .g3-content-scroll:is([data-width="readable"], [data-width="wide"]) {
+        padding-left: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-left, env(safe-area-inset-left)), calc((100% - var(--g3-content-max-width)) / 2));
+        padding-right: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-right, env(safe-area-inset-right)), calc((100% - var(--g3-content-max-width)) / 2));
+    }
+
+    @container g3-app-shell (min-width: 48rem) {
+        .g3-header .g3-header-row {
+            padding-left: max(1rem, var(--g3-safe-area-left, env(safe-area-inset-left)));
+            padding-right: max(1rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
+        }
+
+        /* A left-aligned title needs no balancing: with no start button it
+           starts at the edge, not after an empty button's width. */
+        .g3-header .g3-header-start-slot:empty {
+            display: none;
+        }
+
+        .g3-header .g3-header-lead:has(> .g3-header-start-slot:empty) > .g3-header-title {
+            grid-column: 1 / span 2;
+        }
+
+        /* The rail takes a cutout on the left, so the header and page beside
+           it do not leave room for it again. */
+        .g3-tab-layout:has(> .g3-nav-adaptive) {
+            --g3-nav-rail-width: calc(4rem + var(--g3-safe-area-left, env(safe-area-inset-left)));
+        }
+
+        .g3-nav-adaptive {
+            padding-left: calc(0.5rem + var(--g3-safe-area-left, env(safe-area-inset-left)));
+        }
+
+        .g3-tab-layout:has(> .g3-nav-adaptive) > :is(.g3-header, .g3-content) {
+            --g3-safe-area-left: 0px;
+        }
+    }
+}

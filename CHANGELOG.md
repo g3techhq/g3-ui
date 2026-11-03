@@ -41,6 +41,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A phone turned sideways no longer gets the desktop header. Under 30rem of
+  height, `Header` keeps a phone's compact row (40px in Material, iOS's 32pt
+  landscape bar), where the wide layout made it 4rem. In the wide layout, a
+  title with no start button starts at the edge instead of after an empty
+  button's
+  width. `Header`, `Content` and the `AdaptiveNav` rail keep clear of a
+  camera cutout at the side (`safe-area-inset-left`/`-right`); the rail
+  takes a left one, and the header and page beside it do not add it again.
+  Unchanged where there is no cutout.
 - System Back closes an open `BottomSheet` or `SideSheet` instead of leaving
   the page under it. On the web an open sheet pushes a history entry at the
   same URL and browser Back closes it, out of the router's sight; a sheet
