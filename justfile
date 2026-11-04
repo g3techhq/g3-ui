@@ -55,7 +55,7 @@ pre-push: format-check check lint-strict test script-test spell
 quality: pre-push
 
 package-check:
-    cargo package --allow-dirty
+    cargo package --allow-dirty --list
 
 ci: quality doc security package-check
 
