@@ -10,7 +10,7 @@ Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](ht
 
 <p align="center">
   <img
-    src="docs/media/social-preview.png"
+    src="https://raw.githubusercontent.com/g3techhq/g3-ui/main/docs/media/social-preview.png"
     alt="Four mobile g3-ui screens showing a feed, a booking form, a sheet, and a profile"
     width="1280"
   >
@@ -668,7 +668,7 @@ before changing rendering, blur, or shared theme storage based on performance as
 Run `just pre-push` for Rust, markup, script behavior/disposal, and spelling checks. With the
 playground already running, `npm ci --prefix playground` and `just browser-test` run the real-browser
 regressions (install Playwright browsers first with `npx --prefix playground playwright install chromium`).
-See [the runtime test guide](docs/testing.md) for the matrix and Android checks.
+See [the runtime test guide](https://github.com/g3techhq/g3-ui/blob/main/docs/testing.md) for the matrix and Android checks.
 
 ## License
 

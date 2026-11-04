@@ -36,6 +36,24 @@ jobs:
         with:
           persist-credentials: false
 
+      # A crate that builds only with a [patch] is broken for everyone who
+      # installs it: crates.io drops the patch. While g3-ui patches in the
+      # Dioxus fork, a dry run warns and a real publish stops here.
+      - name: Refuse to publish with [patch] sections
+        shell: bash
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if grep -nE '^[[:space:]]*\[patch[].]' Cargo.toml; then
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              echo "::warning file=Cargo.toml::Cargo.toml has a [patch] section; a real publish would stop here."
+            else
+              echo "::error file=Cargo.toml::Cargo.toml has a [patch] section (above). Remove it, and every dependency that needs it, before publishing."
+              exit 1
+            fi
+          fi
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
 
