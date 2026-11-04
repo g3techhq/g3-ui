@@ -331,3 +331,49 @@ test('responsive scope reports only crossed width classes and disconnects on dis
   await env.close();
   assert.equal(env.observers[0].targets.size, 0);
 });
+
+test('an open bottom sheet rests on an iOS keyboard and keeps the focused field in view', async () => {
+  const properties = {};
+  const layer = new Element();
+  layer.style = { setProperty(name, value) { properties[name] = value; }, removeProperty(name) { delete properties[name]; } };
+  const content = new Element();
+  content.scrollTop = 0;
+  content.getBoundingClientRect = () => ({ top: 300, bottom: 500, left: 0, right: 390, width: 390, height: 200 });
+  const field = new Element();
+  field.getBoundingClientRect = () => ({ top: 520, bottom: 564, left: 16, right: 374, width: 358, height: 44 });
+  field.closest = (selector) => selector === '.g3-sheet-content' ? content : null;
+  const sheet = new Element();
+  sheet.closest = (selector) => selector === '.g3-overlay-layer' ? layer : null;
+  sheet.contains = (node) => node === field || node === content;
+  const env = environment({ sheet });
+  env.window.innerHeight = 844;
+  env.window.visualViewport = Object.assign(new Target(), { offsetTop: 0, height: 844, scale: 1 });
+  env.run(source('sheet_keyboard.js', { SHEET: 'sheet' }));
+  // No keyboard: nothing set.
+  assert.equal(layer.hasAttribute('data-g3-keyboard'), false);
+  // The keyboard covers the bottom 336px.
+  env.globals.document.activeElement = field;
+  env.window.visualViewport.height = 508;
+  env.window.visualViewport.fire('resize');
+  assert.equal(layer.hasAttribute('data-g3-keyboard'), true);
+  assert.deepEqual(properties, { '--g3-keyboard-inset': '336px', '--g3-visible-height': '508px' });
+  assert.equal(content.scrollTop, 76);
+  // iOS pans the page up 100px: the visible bottom is still 336px up.
+  env.window.visualViewport.offsetTop = 100;
+  env.window.visualViewport.height = 408;
+  env.window.visualViewport.fire('scroll');
+  assert.equal(properties['--g3-keyboard-inset'], '336px');
+  // Pinch zoom is not a keyboard.
+  env.window.visualViewport.offsetTop = 0;
+  env.window.visualViewport.scale = 2;
+  env.window.visualViewport.fire('resize');
+  assert.equal(layer.hasAttribute('data-g3-keyboard'), false);
+  assert.deepEqual(properties, {});
+  // Disposal clears it and removes every listener.
+  env.window.visualViewport.scale = 1;
+  env.window.visualViewport.fire('resize');
+  assert.equal(layer.hasAttribute('data-g3-keyboard'), true);
+  await env.close();
+  assert.equal(layer.hasAttribute('data-g3-keyboard'), false);
+  assert.equal(env.window.visualViewport.count() + sheet.count(), 0);
+});

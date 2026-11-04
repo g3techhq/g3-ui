@@ -98,6 +98,10 @@ const BACKDROP_EXIT_DELAY: std::time::Duration = std::time::Duration::from_milli
 /// Rust: `-1` dismiss, `-2` cycle detents, `n >= 0` settle on detent `n`.
 const DRAG_SCRIPT: &str = include_str!("sheet.js");
 
+/// Lifts an open bottom sheet above an on-screen keyboard that covers the
+/// window without resizing it (iOS), and keeps the focused field in view.
+const KEYBOARD_SCRIPT: &str = include_str!("sheet_keyboard.js");
+
 #[component]
 pub(crate) fn SheetFrame(
     open: Signal<bool>,
@@ -234,6 +238,10 @@ pub(crate) fn SheetFrame(
         }
         _ => {}
     });
+
+    let keyboard_script = (is_bottom && is_open)
+        .then(|| KEYBOARD_SCRIPT.replace("__SHEET__", &super::overlay::js_string(&id)));
+    super::script::use_dom_script::<()>(keyboard_script, |_| {});
 
     if !is_open && !ever_opened() {
         return rsx! {};

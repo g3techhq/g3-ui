@@ -41,6 +41,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- An open `BottomSheet` stays above the iOS on-screen keyboard. iOS lays the
+  keyboard over the page without resizing it, so a sheet pinned to the
+  window's bottom sat under it with the field being typed in. The sheet now
+  follows the visual viewport: it rests on the keyboard, fits in what is left
+  visible, and scrolls the focused field into view. Nothing changes where the
+  keyboard resizes the page (Android) or without one.
 - With Reduce Motion on, the page beside a push or reveal `SideSheet`, or
   beside a `NavigationDrawer`, moves at once instead of sliding. The sheet's
   shortened duration never reached it, since the page is not inside the

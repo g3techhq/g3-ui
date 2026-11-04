@@ -2342,6 +2342,18 @@ button.g3-chip,
     transition: none;
 }
 
+/* Over an on-screen keyboard (iOS lays it over the page without resizing
+   it), the sheet rests on the keyboard instead of under it and fits in what
+   is left visible, clear of the status bar. The keyboard covers the home
+   indicator, so that padding goes. `sheet_keyboard.js` measures both on the
+   sheet's layer. */
+.g3-overlay-layer[data-g3-keyboard] > .g3-sheet-bottom {
+    --g3-sheet-detent-max: calc(var(--g3-visible-height, 100%) - max(var(--g3-safe-area-top, env(safe-area-inset-top)), 0.75rem));
+    bottom: var(--g3-keyboard-inset, 0px);
+    max-height: calc(var(--g3-visible-height, 100%) - max(var(--g3-safe-area-top, env(safe-area-inset-top)), 0.75rem));
+    padding-bottom: 0;
+}
+
 .g3-sheet-handle {
     display: flex;
     flex: 0 0 auto;
