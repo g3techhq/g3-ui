@@ -289,6 +289,28 @@ fn motion_respects_reduced_motion() {
 }
 
 #[test]
+fn reduced_motion_reaches_overlay_and_tab_animations() {
+    // The entering, closing and detent rules are more specific than a bare
+    // `.g3-sheet` or `.g3-tab-panel`, so a reduced-motion rule on those alone
+    // never applied. Sheets, dialogs and popovers shorten the duration
+    // tokens those rules read; tab panels match their specificity.
+    let reduced: String = STYLESHEET
+        .split("@media (prefers-reduced-motion: reduce) {")
+        .skip(1)
+        .map(|block| block.split("\n}\n").next().unwrap_or(block))
+        .collect();
+    for rule in [
+        "--g3-sheet-duration: 1ms;",
+        "--g3-backdrop-duration: 1ms;",
+        "--g3-modal-duration: 0s;",
+        ".g3-tabs[data-animated=\"true\"][data-direction] > .g3-tab-panel[data-state] {",
+        ".g3-popover[data-state=\"open\"] {",
+    ] {
+        assert!(reduced.contains(rule), "no reduced-motion `{rule}`");
+    }
+}
+
+#[test]
 fn overlays_enter_on_a_keyframe_rather_than_a_transition() {
     // An overlay is rendered only once its top-layer wrapper opens, and by
     // then it already carries its open state: a transition has nothing left

@@ -41,6 +41,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- With Reduce Motion on, sheets, side sheets and drawers appear and leave
+  without sliding, dialogs close without their zoom-out, tab panels switch
+  without sliding, and menus and compact popover sheets open in place. Their
+  reduced-motion rules were less specific than the rules that animate them,
+  so only some of the motion stopped. Nothing changes with motion allowed.
+
 - A phone turned sideways no longer gets the desktop header. Under 30rem of
   height, `Header` keeps a phone's compact row (40px in Material, iOS's 32pt
   landscape bar), where the wide layout made it 4rem. In the wide layout, a

@@ -1000,7 +1000,9 @@ body.g3-overlay-scroll-locked {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .g3-tabs[data-animated="true"] > .g3-tab-panel {
+    /* As specific as the entering and leaving rules above, or they win. The
+       panel still hears `animationend`, which ends the switch. */
+    .g3-tabs[data-animated="true"][data-direction] > .g3-tab-panel[data-state] {
         animation-duration: 1ms;
     }
 }
@@ -2585,6 +2587,11 @@ button.g3-chip:focus-visible {
     .g3-sheet,
     .g3-drawer,
     .g3-sheet-backdrop {
+        /* The entrance and detent rules above outrank these selectors, so
+           their durations are shortened at the source as well. An entrance
+           still ends, and the sheet still hears its `animationend`. */
+        --g3-sheet-duration: 1ms;
+        --g3-backdrop-duration: 1ms;
         transition-duration: 0s;
         animation: none;
     }
@@ -2994,6 +3001,11 @@ button.g3-chip:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* The closing rules outrank the selectors below; the token reaches them. */
+    .g3-modal-overlay {
+        --g3-modal-duration: 0s;
+    }
+
     .g3-modal-overlay,
     .g3-modal {
         animation-duration: 0s;
@@ -5956,8 +5968,20 @@ button.g3-chip:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .g3-popover,
+    .g3-popover-backdrop {
+        /* For the compact sheet's rise and its backdrop, whose rules outrank
+           these selectors. */
+        --g3-sheet-duration: 1ms;
+        --g3-backdrop-duration: 1ms;
+    }
+
     .g3-popover {
         transition-duration: 0s;
+    }
+
+    .g3-popover[data-state="open"] {
+        animation: none;
     }
 }
 
