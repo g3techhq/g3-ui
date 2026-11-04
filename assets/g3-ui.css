@@ -2393,6 +2393,9 @@ button.g3-chip:focus-visible {
 .g3-drawer .g3-sheet-content {
     flex: 1 1 auto;
     padding-top: max(1rem, var(--g3-safe-area-top, env(safe-area-inset-top)));
+    /* The sheet runs to the bottom of the window: its last item clears the
+       home indicator or gesture bar. */
+    padding-bottom: max(1.5rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
 }
 
 

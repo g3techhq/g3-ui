@@ -46,6 +46,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   without sliding, and menus and compact popover sheets open in place. Their
   reduced-motion rules were less specific than the rules that animate them,
   so only some of the motion stopped. Nothing changes with motion allowed.
+- The last item in a `SideSheet` or `NavigationDrawer` clears the iPhone
+  home indicator and the Android gesture bar, as a `BottomSheet`'s does.
+  Unchanged where the bottom inset is under 1.5rem.
 
 - A phone turned sideways no longer gets the desktop header. Under 30rem of
   height, `Header` keeps a phone's compact row (40px in Material, iOS's 32pt
