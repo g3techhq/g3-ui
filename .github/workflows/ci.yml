@@ -44,6 +44,34 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
+  ios:
+    # `detect_platform_mode` has an iOS-only branch, which the Linux and wasm
+    # builds never compile. Xcode 26, as the apps' store builds use.
+    name: iOS target
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require Xcode 26 or newer
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          major="$(xcodebuild -version | awk 'NR == 1 { split($2, v, "."); print v[1] }')"
+          [[ "$major" -ge 26 ]] || {
+            echo "The iOS job expects Xcode 26 or newer; this runner selects Xcode $major" >&2
+            exit 1
+          }
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: 1.95.0
+          targets: aarch64-apple-ios
+          components: clippy
+      - name: Lint the iOS target
+        # Same as `just lint-ios`.
+        run: cargo clippy --no-deps --target aarch64-apple-ios --features transitions -- -D warnings
+
   quality:
     name: Quality gate
     uses: g3techhq/.github/.github/workflows/rust-quality.yml@da47dc747376edcf6ecc0cc986aec51f5084bf42 # v1.0.0

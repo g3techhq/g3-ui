@@ -35,6 +35,11 @@ test:
     cargo test --doc --features transitions
     cargo test --manifest-path playground/Cargo.toml
 
+# The iOS-only code, which no other build compiles (needs the
+# aarch64-apple-ios target and Xcode).
+lint-ios:
+    cargo clippy --no-deps --target aarch64-apple-ios --features transitions -- -D warnings
+
 spell:
     typos
 
