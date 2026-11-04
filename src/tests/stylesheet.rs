@@ -403,3 +403,35 @@ fn page_layout_asides_are_wide_enough_for_a_list_row() {
         .expect("asides split at 80rem");
     assert!(split > STYLESHEET.find(".g3-page-layout {").expect("page layout"));
 }
+
+#[test]
+fn small_buttons_take_a_44px_tap() {
+    // Each is drawn smaller than Apple's 44pt minimum; an invisible
+    // `::after` takes the tap without changing the drawn size.
+    let start = STYLESHEET
+        .find(":is(.g3-info-btn, .g3-field-clear")
+        .expect("tap-area rule");
+    let selector = &STYLESHEET[start..start + STYLESHEET[start..].find('{').expect("body")];
+    for class in [
+        ".g3-info-btn",
+        ".g3-field-clear",
+        ".g3-toast-close",
+        "button.g3-chip",
+        ".g3-calendar-step",
+        ".g3-calendar-day",
+        ".g3-reorder-handle",
+        ".g3-swipe-toggle",
+        ".g3-segment-btn-ios",
+    ] {
+        assert!(selector.contains(class), "no tap area for `{class}`");
+    }
+    assert!(selector.trim_end().ends_with(")::after"));
+    let body = &STYLESHEET[start..start + STYLESHEET[start..].find("\n}").expect("end")];
+    assert!(body.contains("width: max(100%, 44px);"));
+    assert!(body.contains("height: max(100%, 44px);"));
+    // The iOS pill would clip the taps at its own 36px height.
+    let pill = rule_body(".g3-segment-ios");
+    assert!(pill.contains("overflow: clip visible;"));
+    assert!(!pill.contains("contain: paint;"));
+    assert!(rule_body(".g3-segment-btn-ios").contains("overflow: visible;"));
+}

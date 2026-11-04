@@ -41,6 +41,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Small buttons take a tap at least 44px each way, Apple's minimum, without
+  changing how they look or lay out: the toast close button and a field's
+  clear button (32px), `SwipeItem`'s keyboard actions button (32px tall),
+  `InfoButton` and the calendar's month arrows (36px), calendar days (40px),
+  the `ReorderList` handle (24px wide), button `Chip`s (32px), and iOS
+  `SegmentButton`s (28px). The iOS segment pill now clips only sideways
+  (`overflow: clip visible`, no `contain: paint`) so the taps reach past its
+  top and bottom; a scrollable strip still clips both ways, and its buttons
+  get 36px. The clock dial was already one 256px target.
 - With Reduce Motion on, sheets, side sheets and drawers appear and leave
   without sliding, dialogs close without their zoom-out, tab panels switch
   without sliding, and menus and compact popover sheets open in place. Their

@@ -561,8 +561,11 @@ body.g3-overlay-scroll-locked {
     background: var(--g3-segment-ios-background, color-mix(in srgb, var(--g3-color-text) 7%, transparent));
     border-radius: 9px;
     padding: 2px;
-    overflow: hidden;
-    contain: paint;
+    /* Clipped sideways only, so the buttons' 44px tap areas reach past the
+       pill's top and bottom; the indicator stays inside it on its own. A
+       scrollable strip's `overflow-x: auto` clips both ways again. */
+    overflow: clip visible;
+    isolation: isolate;
 }
 .g3-segment-ios::before {
     content: "";
@@ -603,8 +606,9 @@ body.g3-overlay-scroll-locked {
     transition: color 100ms linear, opacity 100ms linear;
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* The label ends in its own ellipsis; the button leaves its tap area
+       (`::after`) unclipped. */
+    overflow: visible;
 }
 .g3-segment-btn-ios:is([aria-checked="true"], [aria-selected="true"]) {
     color: var(--g3-color-text);
@@ -1559,6 +1563,40 @@ button.g3-chip:focus-visible {
 
 .g3-control-bare:dir(rtl)::after {
     translate: 50% -50%;
+}
+
+/* Small buttons keep their drawn size but take a fingertip-sized tap: an
+   invisible area at least 44px each way (Apple's minimum) centred on each,
+   as for bare controls above. Where neighbours sit closer than that (a
+   calendar's days), the overlap goes to the later one, a pixel or two. */
+.g3-info-btn,
+.g3-field-clear,
+.g3-toast-close,
+button.g3-chip,
+.g3-calendar-step,
+.g3-calendar-day,
+.g3-reorder-handle {
+    position: relative;
+}
+
+:is(.g3-info-btn, .g3-field-clear, .g3-toast-close, button.g3-chip,
+    .g3-calendar-step, .g3-calendar-day, .g3-reorder-handle,
+    .g3-swipe-toggle, .g3-segment-btn-ios)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    translate: -50% -50%;
+}
+
+/* A strip of chips scrolls sideways, which clips its items top and bottom:
+   2px more padding a side makes room for their taps, and the margin keeps
+   the strip where it was. */
+.g3-shelf-track:has(> button.g3-chip) {
+    padding-block: 0.375rem;
+    margin-block: -0.125rem;
 }
 
 .g3-control:focus-visible,
