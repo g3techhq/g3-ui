@@ -7915,4 +7915,52 @@ td[aria-selected="true"] > .g3-calendar-day {
             --g3-safe-area-left: 0px;
         }
     }
+
+    /* Dynamic Type, opted into with AppWrapper's `dynamic_type`. On iOS the
+       root font takes the reader's text size (17px at the default size, iOS's
+       body size), so everything sized in rem follows it, and the iOS parts
+       drawn in px elsewhere (header title and buttons, back button, segment
+       labels) switch to the same sizes in rem. Only the size changes: family,
+       weight and line height fall back to earlier layers. Last in the layer, so
+       it outranks the toolbar segment rules of equal weight.
+       `-webkit-touch-callout` keeps it to iOS, since macOS Safari knows the
+       keyword too, at 13px; Android scales text with its font size setting
+       already. */
+    @supports (font: -apple-system-body) and (-webkit-touch-callout: none) {
+        :root:has(.g3-app[data-g3-dynamic-type="true"]) {
+            font: -apple-system-body;
+            font-family: revert-layer;
+            font-weight: revert-layer;
+            line-height: revert-layer;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-header-ios .g3-header-title {
+            font-size: 1rem;
+            line-height: 1.3;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-header-md .g3-header-title {
+            font-size: 1.1765rem;
+            line-height: 1.2;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-header-ios .g3-header-slot .g3-btn {
+            height: auto;
+            font-size: 1rem;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-back-button-ios {
+            font-size: 1rem;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-segment-ios > .g3-segment-btn-ios {
+            min-height: 1.6471rem;
+            font-size: 0.7647rem;
+            line-height: 1.6471rem;
+        }
+
+        .g3-app[data-g3-dynamic-type="true"] .g3-segment-btn-md {
+            font-size: 0.8235rem;
+        }
+    }
 }

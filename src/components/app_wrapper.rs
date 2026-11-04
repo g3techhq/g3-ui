@@ -199,6 +199,16 @@ pub fn AppWrapper(
     /// outer wrapper that contains the real app's wrapper; a page may have
     /// only one overlay region. Needs the `transitions` feature.
     route_transition_overlay: Option<bool>,
+    /// Follow the reader's text size on iOS (Dynamic Type). Defaults to
+    /// `false`. When on, the document's root font takes iOS's body size, 17px
+    /// at the default setting and larger or smaller with the reader's choice,
+    /// so everything g3-ui sizes in `rem` scales with it, and the iOS header
+    /// title, header buttons, back button and segment labels switch from px to
+    /// the same sizes in `rem`. At the default setting the `rem`-sized parts
+    /// are a sixteenth larger than without it. App styles in `rem` scale too;
+    /// px ones do not. Other platforms are unchanged: Android scales text with
+    /// its own font size setting.
+    dynamic_type: Option<bool>,
     /// Extra classes for the shell element.
     class: Option<String>,
     children: Element,
@@ -289,6 +299,7 @@ pub fn AppWrapper(
             style: theme.style_attr(!is_root_shell),
             "data-g3-mode": mode.as_str(),
             "data-g3-bar": bar_attr,
+            "data-g3-dynamic-type": dynamic_type.unwrap_or(false).then_some("true"),
             if let Some(css) = look_css {
                 style { dangerous_inner_html: css }
             }

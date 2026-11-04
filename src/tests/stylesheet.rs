@@ -468,3 +468,26 @@ fn side_sheets_pad_only_their_screen_edge_for_a_cutout() {
         ":is(.g3-sheet-side.g3-sheet-start, .g3-drawer-start):not(:dir(rtl)) > :is(.g3-sheet-header, .g3-sheet-content),\n:is(.g3-sheet-side.g3-sheet-end, .g3-drawer-end):dir(rtl) > :is(.g3-sheet-header, .g3-sheet-content) {\n    padding-left:"
     ));
 }
+
+#[test]
+fn dynamic_type_is_an_ios_opt_in() {
+    let start = STYLESHEET
+        .find("@supports (font: -apple-system-body) and (-webkit-touch-callout: none) {")
+        .expect("Dynamic Type block");
+    let block = &STYLESHEET[start..];
+    assert!(block.contains(
+        ":root:has(.g3-app[data-g3-dynamic-type=\"true\"]) {\n            font: -apple-system-body;"
+    ));
+    for part in [
+        ".g3-header-ios .g3-header-title",
+        ".g3-back-button-ios",
+        ".g3-segment-ios > .g3-segment-btn-ios",
+    ] {
+        assert!(
+            block.contains(&format!(".g3-app[data-g3-dynamic-type=\"true\"] {part} {{")),
+            "no `{part}`"
+        );
+    }
+    // Nowhere else sets the root font from the system.
+    assert_eq!(STYLESHEET.matches("-apple-system-body").count(), 2);
+}

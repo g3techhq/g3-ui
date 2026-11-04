@@ -28,6 +28,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `AppWrapper { dynamic_type: true }` follows the reader's text size on iOS
+  (Dynamic Type). The document's root font takes iOS's body size, 17px at the
+  default setting, so everything g3-ui sizes in `rem` scales with it, and the
+  iOS header title, header buttons, back button and segment labels move from
+  px to the same sizes in `rem`. Off by default; at the default setting the
+  `rem`-sized parts are a sixteenth larger with it on. Nothing changes on
+  other platforms.
 - `Picker` and `PickerColumn`, the date and time pickers' spinning wheels
   shown in place for any value, like Ionic's `ion-picker`:
   `Picker { PickerColumn { value, options, aria_label: "Strokes" } }`, with

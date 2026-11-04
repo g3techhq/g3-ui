@@ -35,6 +35,25 @@ mod shell {
     }
 
     #[test]
+    fn app_wrapper_marks_dynamic_type_only_when_opted_in() {
+        fn opted_in() -> Element {
+            rsx! {
+                AppWrapper { dynamic_type: true, "Body" }
+            }
+        }
+        fn default() -> Element {
+            rsx! {
+                AppWrapper { "Body" }
+            }
+        }
+        let html = render(opted_in);
+        assert!(
+            element_with_class(&html, "g3-app-shell").contains("data-g3-dynamic-type=\"true\"")
+        );
+        assert!(!render(default).contains("data-g3-dynamic-type"));
+    }
+
+    #[test]
     fn app_wrapper_without_layout_has_no_shell_class() {
         fn app() -> Element {
             rsx! {
