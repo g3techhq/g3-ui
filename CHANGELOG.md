@@ -41,6 +41,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- With Reduce Motion on, the page beside a push or reveal `SideSheet`, or
+  beside a `NavigationDrawer`, moves at once instead of sliding. The sheet's
+  shortened duration never reached it, since the page is not inside the
+  sheet.
 - A `SideSheet` or `NavigationDrawer` against the edge where a sideways
   phone's camera cutout sits keeps its title and content clear of it
   (`safe-area-inset-left`/`-right`), on that side only. Unchanged without a

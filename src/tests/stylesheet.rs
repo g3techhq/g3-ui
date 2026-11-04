@@ -437,6 +437,22 @@ fn small_buttons_take_a_44px_tap() {
 }
 
 #[test]
+fn reduced_motion_stops_the_page_beside_a_side_sheet() {
+    // The page is the sheet's sibling, so the sheet's shortened duration
+    // token never reaches it; it needs its own reduced-motion rule.
+    let block = STYLESHEET
+        .split("@media (prefers-reduced-motion: reduce) {")
+        .find(|block| block.contains("--g3-sheet-duration: 1ms;"))
+        .expect("sheet reduced-motion block");
+    let block = block.split("\n}\n").next().unwrap_or(block);
+    let page =
+        ".g3-app:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))\n        > :not(";
+    let start = block.find(page).expect("page rule");
+    assert!(block[start..].contains(".g3-app:has(> .g3-drawer)"));
+    assert!(block[start..].contains("transition: none;"));
+}
+
+#[test]
 fn side_sheets_pad_only_their_screen_edge_for_a_cutout() {
     let code = code();
     for (edge, inset) in [

@@ -2652,6 +2652,16 @@ button.g3-chip,
         transition-duration: 0s;
         animation: none;
     }
+
+    /* The page beside a push or reveal sheet, or beside a drawer, is not in
+       the sheet and never sees its token: it moves at once by its own rule,
+       as specific as the ones that give it its slide. */
+    .g3-app:has(> .g3-sheet-side:is(.g3-sheet-push, .g3-sheet-reveal))
+        > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)),
+    .g3-app:has(> .g3-drawer)
+        > :not(:where(.g3-sheet, .g3-sheet-backdrop, .g3-drawer, .g3-modal-overlay, .g3-toast-host)) {
+        transition: none;
+    }
 }
 
 /* Wide shells: bottom sheets float as a centred card. */
