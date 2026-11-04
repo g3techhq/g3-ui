@@ -2436,7 +2436,23 @@ button.g3-chip,
     padding-bottom: max(1.5rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
 }
 
+.g3-sheet-side .g3-sheet-content[data-padding="false"],
+.g3-drawer .g3-sheet-content[data-padding="false"] {
+    --g3-sheet-edge-padding: 0px;
+}
 
+/* A phone turned sideways has its camera cutout at one side. A sheet against
+   that edge keeps its title and content clear of it; the inner side faces
+   the page and keeps its usual padding. */
+:is(.g3-sheet-side.g3-sheet-start, .g3-drawer-start):not(:dir(rtl)) > :is(.g3-sheet-header, .g3-sheet-content),
+:is(.g3-sheet-side.g3-sheet-end, .g3-drawer-end):dir(rtl) > :is(.g3-sheet-header, .g3-sheet-content) {
+    padding-left: max(var(--g3-sheet-edge-padding, 1.5rem), var(--g3-safe-area-left, env(safe-area-inset-left)));
+}
+
+:is(.g3-sheet-side.g3-sheet-end, .g3-drawer-end):not(:dir(rtl)) > :is(.g3-sheet-header, .g3-sheet-content),
+:is(.g3-sheet-side.g3-sheet-start, .g3-drawer-start):dir(rtl) > :is(.g3-sheet-header, .g3-sheet-content) {
+    padding-right: max(var(--g3-sheet-edge-padding, 1.5rem), var(--g3-safe-area-right, env(safe-area-inset-right)));
+}
 
 .g3-sheet-side[data-state="closed"],
 .g3-drawer[data-state="closed"] {

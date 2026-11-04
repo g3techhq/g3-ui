@@ -41,6 +41,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A `SideSheet` or `NavigationDrawer` against the edge where a sideways
+  phone's camera cutout sits keeps its title and content clear of it
+  (`safe-area-inset-left`/`-right`), on that side only. Unchanged without a
+  cutout.
 - Small buttons take a tap at least 44px each way, Apple's minimum, without
   changing how they look or lay out: the toast close button and a field's
   clear button (32px), `SwipeItem`'s keyboard actions button (32px tall),

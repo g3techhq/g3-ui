@@ -435,3 +435,20 @@ fn small_buttons_take_a_44px_tap() {
     assert!(!pill.contains("contain: paint;"));
     assert!(rule_body(".g3-segment-btn-ios").contains("overflow: visible;"));
 }
+
+#[test]
+fn side_sheets_pad_only_their_screen_edge_for_a_cutout() {
+    let code = code();
+    for (edge, inset) in [
+        ("left", "safe-area-inset-left"),
+        ("right", "safe-area-inset-right"),
+    ] {
+        let declaration = format!(
+            "padding-{edge}: max(var(--g3-sheet-edge-padding, 1.5rem), var(--g3-safe-area-{edge}, env({inset})));"
+        );
+        assert!(code.contains(&declaration), "no `{declaration}`");
+    }
+    assert!(code.contains(
+        ":is(.g3-sheet-side.g3-sheet-start, .g3-drawer-start):not(:dir(rtl)) > :is(.g3-sheet-header, .g3-sheet-content),\n:is(.g3-sheet-side.g3-sheet-end, .g3-drawer-end):dir(rtl) > :is(.g3-sheet-header, .g3-sheet-content) {\n    padding-left:"
+    ));
+}
