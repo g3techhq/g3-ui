@@ -48,6 +48,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- An iOS `Header` keeps its buttons 16px from the screen's sides, as an iOS
+  navigation bar does: the row padded 0.5rem, so a text or filled button in
+  the `end` slot (an "Add" or "New") sat almost against the right edge. The
+  back button's chevron moves in by the same 8px, where the wide layout
+  already had it. Material headers are unchanged.
 - An open `BottomSheet` stays above the iOS on-screen keyboard. iOS lays the
   keyboard over the page without resizing it, so a sheet pinned to the
   window's bottom sat under it with the field being typed in. The sheet now

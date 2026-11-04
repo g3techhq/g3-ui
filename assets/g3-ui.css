@@ -7875,6 +7875,15 @@ td[aria-selected="true"] > .g3-calendar-day {
         padding-right: max(0.5rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
     }
 
+    /* An iOS navigation bar keeps its buttons 16pt from the screen's sides;
+       at 0.5rem a text or filled button in the end slot sat almost against
+       the edge. Material keeps 0.5rem: its 48px icon buttons centre their
+       icons 16dp in already. */
+    .g3-header-ios .g3-header-row {
+        padding-left: max(1rem, var(--g3-safe-area-left, env(safe-area-inset-left)));
+        padding-right: max(1rem, var(--g3-safe-area-right, env(safe-area-inset-right)));
+    }
+
     .g3-content-scroll:not([data-padding="false"]) {
         padding-left: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-left, env(safe-area-inset-left)));
         padding-right: max(var(--g3-content-padding, 1.5rem), var(--g3-safe-area-right, env(safe-area-inset-right)));

@@ -491,3 +491,20 @@ fn dynamic_type_is_an_ios_opt_in() {
     // Nowhere else sets the root font from the system.
     assert_eq!(STYLESHEET.matches("-apple-system-body").count(), 2);
 }
+
+#[test]
+fn an_ios_header_keeps_its_buttons_16pt_from_the_screen_edge() {
+    let code = code();
+    assert!(code.contains(
+        ".g3-header-ios .g3-header-row {\n        padding-left: max(1rem, var(--g3-safe-area-left, env(safe-area-inset-left)));\n        padding-right: max(1rem, var(--g3-safe-area-right, env(safe-area-inset-right)));"
+    ));
+    // It must come after the shared rule, which has lower weight but would
+    // otherwise be the only side padding a phone header gets.
+    let shared = code
+        .find(".g3-header-row {\n        padding-left: max(0.5rem,")
+        .expect("shared header padding");
+    let ios = code
+        .find(".g3-header-ios .g3-header-row {\n        padding-left: max(1rem,")
+        .expect("iOS header padding");
+    assert!(ios > shared);
+}
