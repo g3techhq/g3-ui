@@ -28,7 +28,7 @@ crates.io meanwhile. Use it from git, with the fork patched in at your workspace
 ```toml
 [dependencies]
 dioxus = { version = "=0.8.0-alpha.3", features = ["router"] }
-g3-ui = "0.6"
+g3-ui = "0.7"
 
 [patch.crates-io]
 dioxus = { git = "https://github.com/Gateway3B/dioxus", branch = "main" }
@@ -48,8 +48,8 @@ Enable the optional route-transition integration when your app also uses `g3-rou
 
 ```toml
 [dependencies]
-g3-ui = { version = "0.6", features = ["transitions"] }
-g3-route-transitions = "0.5"
+g3-ui = { version = "0.7", features = ["transitions"] }
+g3-route-transitions = "0.6"
 ```
 
 The minimum supported Rust version is 1.88.

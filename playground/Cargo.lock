@@ -1291,8 +1291,8 @@ dependencies = [
 
 [[package]]
 name = "g3-route-transitions"
-version = "0.5.0"
-source = "git+https://github.com/g3techhq/g3-route-transitions?branch=main#beaf38eacfb8c27f77d546e9fb79fbd245a6b833"
+version = "0.6.0"
+source = "git+https://github.com/g3techhq/g3-route-transitions?branch=main#465745ead921cdff12a7bf7f4d4b99c60b1a74c4"
 dependencies = [
  "dioxus",
  "g3-route-transitions-macros",
@@ -1302,8 +1302,8 @@ dependencies = [
 
 [[package]]
 name = "g3-route-transitions-macros"
-version = "0.5.0"
-source = "git+https://github.com/g3techhq/g3-route-transitions?branch=main#beaf38eacfb8c27f77d546e9fb79fbd245a6b833"
+version = "0.5.1"
+source = "git+https://github.com/g3techhq/g3-route-transitions?branch=main#465745ead921cdff12a7bf7f4d4b99c60b1a74c4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1312,7 +1312,7 @@ dependencies = [
 
 [[package]]
 name = "g3-ui"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "cfg-if",
  "chrono",

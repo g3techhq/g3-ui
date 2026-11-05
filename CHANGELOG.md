@@ -6,6 +6,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] - not yet released
+
+Built on Dioxus 0.8 (the Gateway3B fork until 0.8.0 is published) and
+g3-route-transitions 0.6. Apps change their requirement to `g3-ui = "0.7"`.
+
 ### Breaking changes
 
 - g3-ui builds against a fork of Dioxus `main`
