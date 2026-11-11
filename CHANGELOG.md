@@ -6,6 +6,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- The check mark in a `Checkbox` and a checked `Item` is smaller and centred, with a margin inside the box. It used to run to the box's edges, and past the border in Material.
+
 ## [0.7.0] - not yet released
 
 Built on Dioxus 0.8 (the Gateway3B fork until 0.8.0 is published) and

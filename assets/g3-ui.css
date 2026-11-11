@@ -1699,15 +1699,25 @@ button.g3-chip,
     border-color: color-mix(in srgb, var(--g3-color-text) 60%, transparent);
 }
 
+/* Sizes exclude the 2px stroke: the rotated check spans about 12px of the
+   18px iOS box (8px of the 14px md one), leaving a margin inside the border.
+   `translate` lifts the turned check so its ink is centred in the box. */
 .g3-checkbox-check {
-    width: 12px;
-    height: 7px;
+    width: 9px;
+    height: 4px;
     border-left: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     opacity: 0;
-    transform: translateY(-1px) rotate(-45deg) scale(0.8);
+    translate: 0 -1.5px;
+    transform: rotate(-45deg) scale(0.8);
     transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
                 transform var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-control-md .g3-checkbox-check {
+    width: 6px;
+    height: 3px;
+    translate: 0 -1px;
 }
 
 .g3-checkbox[aria-checked="true"] .g3-checkbox-box,
@@ -1718,14 +1728,20 @@ button.g3-chip,
 
 .g3-checkbox[aria-checked="true"] .g3-checkbox-check {
     opacity: 1;
-    transform: translateY(-1px) rotate(-45deg) scale(1);
+    transform: rotate(-45deg) scale(1);
 }
 
 .g3-checkbox[aria-checked="mixed"] .g3-checkbox-check {
+    width: 12px;
     height: 2px;
     border-left: 0;
     opacity: 1;
+    translate: none;
     transform: none;
+}
+
+.g3-control-md[aria-checked="mixed"] .g3-checkbox-check {
+    width: 9px;
 }
 
 .g3-checkbox[aria-invalid="true"] .g3-checkbox-box {
@@ -4448,13 +4464,14 @@ button.g3-chip,
                 background var(--g3-transition-normal) var(--g3-transition-md);
 }
 
+/* Sized like `.g3-checkbox-check` in iOS: a margin inside the 18px circle. */
 .g3-item-check-mark {
-    width: 12px;
-    height: 7px;
+    width: 9px;
+    height: 4px;
     border-left: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
     opacity: 0;
-    transform: translateY(-1px) rotate(-45deg) scale(0.8);
+    transform: translateY(-1.5px) rotate(-45deg) scale(0.8);
     transition: opacity var(--g3-transition-fast) var(--g3-transition-md),
                 transform var(--g3-transition-fast) var(--g3-transition-md);
 }
@@ -4466,7 +4483,7 @@ button.g3-chip,
 
 [aria-checked="true"] > .g3-item-check .g3-item-check-mark {
     opacity: 1;
-    transform: translateY(-1px) rotate(-45deg) scale(1);
+    transform: translateY(-1.5px) rotate(-45deg) scale(1);
 }
 
 .g3-list-header {
