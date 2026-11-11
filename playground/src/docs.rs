@@ -1,11 +1,15 @@
 //! Navigation metadata and shared demo/source tools. Each guide owns its layout.
 use super::*;
 
+mod charts;
+
 mod examples;
 
 mod pages;
 
 mod theme_hooks;
+
+const CHARTS_SOURCE: &str = include_str!("docs/charts.rs");
 
 const EXAMPLES_SOURCE: &str = include_str!("docs/examples.rs");
 
@@ -70,6 +74,14 @@ pub const PAGES: &[GuideLink] = &[
         keywords: "use_theme use_mode use_strings use_component_mode reveal_theme ThemeProvider AppWrapper Signal mut set write accent colors theme mode dark light switch reveal circle view transition localization Strings scoped provider",
         render: || rsx! { pages::ThemeHooks {} },
     },
+    GuideLink {
+        slug: "charts",
+        title: "Charts",
+        section: "Companion crates",
+        summary: "Draw donuts, sunbursts, target bars, line charts and sparklines with g3-charts.",
+        keywords: "g3-charts g3_charts chart charts graph Donut pie Sunburst allocation TargetBars bullet grouped drift LineChart line time series Sparkline trend ChartStyles ChartColor ValueFormat Slice Node TargetRow Series Point SVG",
+        render: || rsx! { pages::Charts {} },
+    },
 ];
 
 pub fn page(slug: &str) -> Option<&'static GuideLink> {
@@ -99,23 +111,42 @@ enum Example {
     LayoutHooks,
     OverlayHooks,
     ThemeHooks,
+    Donut,
+    Sunburst,
+    TargetBars,
+    LineChart,
+    Sparkline,
 }
 
 /// Every example, for the test that checks each shows compiled code.
 #[cfg(test)]
-const EXAMPLES: [Example; 6] = [
+const EXAMPLES: [Example; 11] = [
     Example::GettingStarted,
     Example::ResponsiveLayouts,
     Example::Platforms,
     Example::LayoutHooks,
     Example::OverlayHooks,
     Example::ThemeHooks,
+    Example::Donut,
+    Example::Sunburst,
+    Example::TargetBars,
+    Example::LineChart,
+    Example::Sparkline,
 ];
 
 impl Example {
+    /// Drawn with g3-charts, so its code imports that crate too.
+    fn is_chart(self) -> bool {
+        matches!(
+            self,
+            Self::Donut | Self::Sunburst | Self::TargetBars | Self::LineChart | Self::Sparkline
+        )
+    }
+
     fn source(self) -> &'static str {
         match self {
             Self::ThemeHooks => THEME_HOOKS_SOURCE,
+            _ if self.is_chart() => CHARTS_SOURCE,
             _ => EXAMPLES_SOURCE,
         }
     }
@@ -138,6 +169,11 @@ impl Example {
                 "ScopedThemeExample",
                 "LocalThemeEditor",
             ],
+            Self::Donut => &["DonutExample"],
+            Self::Sunburst => &["SunburstExample"],
+            Self::TargetBars => &["TargetBarsExample"],
+            Self::LineChart => &["LineChartExample"],
+            Self::Sparkline => &["SparklineExample"],
         }
     }
 
@@ -149,10 +185,23 @@ impl Example {
             Self::LayoutHooks => rsx! { examples::LayoutHooksExample {} },
             Self::OverlayHooks => rsx! { examples::OverlayHooksExample {} },
             Self::ThemeHooks => rsx! { theme_hooks::ThemeHooksExample {} },
+            Self::Donut => rsx! { charts::DonutExample {} },
+            Self::Sunburst => rsx! { charts::SunburstExample {} },
+            Self::TargetBars => rsx! { charts::TargetBarsExample {} },
+            Self::LineChart => rsx! { charts::LineChartExample {} },
+            Self::Sparkline => rsx! { charts::SparklineExample {} },
         }
     }
 
     fn code(self) -> String {
+        if self.is_chart() {
+            // The shared header imports only g3-ui; chart examples need both.
+            let imports = "use dioxus::prelude::*;
+use g3_charts::prelude::*;
+use g3_ui::prelude::*;
+";
+            return imports.to_string() + &function_code(self.source(), self.functions(), false);
+        }
         function_code(self.source(), self.functions(), true)
     }
 }

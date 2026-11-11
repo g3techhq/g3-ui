@@ -253,3 +253,77 @@ pub fn ThemeHooks() -> Element {
         }
     }
 }
+
+#[component]
+pub fn Charts() -> Element {
+    rsx! {
+        // On the web the chart stylesheet is already in the head; this is the
+        // link desktop and mobile shells need, harmless here.
+        g3_charts::ChartStyles {}
+
+        section {
+            p { "g3-charts is a companion crate: charts drawn as SVG from Rust, with no JavaScript, that render on the server, hydrate on the web and run in Android and iOS web views. It is built on g3-ui, so each chart follows the iOS or Material mode, uses the theme's colors, and sits in the same " code { "g3" } " style layer. Switch the playground's theme and platform to see them follow." }
+        }
+
+        section {
+            h2 { "Add the crate" }
+            p { "Like g3-ui, it is not published until Dioxus 0.8.0, so patch it in from Git beside g3-ui:" }
+            CodeBlock { language: Language::Toml, src: "[dependencies]
+g3-charts = \"0.1\"
+
+[patch.crates-io]
+g3-charts = { git = \"https://github.com/g3techhq/g3-charts\", branch = \"main\" }".to_string() }
+            p { "Then " code { "use g3_charts::prelude::*;" } ". On desktop and mobile, render " code { "ChartStyles {{}}" } " once beside " code { "AppWrapper" } " in the app shell; on the web the stylesheet is already in the page head." }
+        }
+
+        section {
+            h2 { "Colors" }
+            p { "Series use " code { "--g3-color-chart-1" } " to " code { "-8" } ", falling back to a palette checked for colour-blind safety in light and dark. Set those tokens on your theme to restyle every chart. " code { "ChartColor" } " picks a series color, the accent, or a neutral for things like cash, and " code { "ChartColor::css()" } " gives the same color for your own legend swatches." }
+        }
+
+        section {
+            h2 { "Donut" }
+            p { "Parts of a whole, with a label in the hole; " code { "hole: 0.0" } " makes it a pie. The ring is one tab stop moved with the arrow keys, and " code { "selected" } " follows the picked slice." }
+            LiveExample { example: Example::Donut, label: "Donut" }
+            CodeBlock { src: Example::Donut.code() }
+        }
+
+        section {
+            h2 { "Sunburst" }
+            p { "A nested allocation, ring by ring. Give it " code { "actual" } " to draw what is held as thin bands against each target wedge." }
+            LiveExample { example: Example::Sunburst, label: "Sunburst" }
+            CodeBlock { src: Example::Sunburst.code() }
+        }
+
+        section {
+            h2 { "Target bars" }
+            p { "Each row's actual against its target, as a bullet, side by side, or as drift from the target." }
+            LiveExample { example: Example::TargetBars, label: "Target bars" }
+            CodeBlock { src: Example::TargetBars.code() }
+        }
+
+        section {
+            h2 { "Line chart" }
+            p { "Values over time, with a crosshair under the pointer or finger. Thousands of points are fine: they are thinned to what the width can show." }
+            LiveExample { example: Example::LineChart, label: "Line chart" }
+            CodeBlock { src: Example::LineChart.code() }
+        }
+
+        section {
+            h2 { "Sparkline" }
+            p { "A word-sized trend beside a number, such as in an item's end slot." }
+            LiveExample { example: Example::Sparkline, label: "Sparkline" }
+            CodeBlock { src: Example::Sparkline.code() }
+        }
+
+        section {
+            h2 { "Accessibility" }
+            ul {
+                li { "Each chart is named by its " code { "title" } " and " code { "description" } "." }
+                li { "Marks are reachable by keyboard and screen readers; the line chart is a slider." }
+                li { "A visually hidden table holds every value." }
+                li { "Motion runs only when the system allows it." }
+            }
+        }
+    }
+}

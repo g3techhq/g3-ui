@@ -1290,6 +1290,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "g3-charts"
+version = "0.1.0"
+source = "git+https://github.com/g3techhq/g3-charts?branch=main#7e25edaa1de77798a1f2f30916986612a6a4e4e2"
+dependencies = [
+ "dioxus",
+ "g3-ui",
+ "manganis",
+]
+
+[[package]]
 name = "g3-route-transitions"
 version = "0.6.0"
 source = "git+https://github.com/g3techhq/g3-route-transitions?branch=main#465745ead921cdff12a7bf7f4d4b99c60b1a74c4"
@@ -1333,6 +1343,7 @@ dependencies = [
  "dioxus",
  "dioxus-code",
  "dioxus-icons",
+ "g3-charts",
  "g3-route-transitions",
  "g3-ui",
  "getrandom 0.2.17",

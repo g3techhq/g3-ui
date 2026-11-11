@@ -8,6 +8,9 @@ publish = false
 dioxus = { version = "=0.8.0-alpha.3", features = ["web"] }
 dioxus-code = { version = "=0.2.0-alpha.3", features = ["runtime", "lang-toml"] }
 dioxus-icons = "=0.2.0-alpha.3"
+# Shown in the Charts guide. Built on g3-ui, so the patch below points its
+# g3-ui at this checkout.
+g3-charts = "0.1"
 g3-route-transitions = "0.6"
 g3-ui = { path = "..", features = ["playground", "transitions"] }
 gloo-timers = { version = "0.3", features = ["futures"] }
@@ -68,6 +71,10 @@ dioxus-icons = { git = "https://github.com/Gateway3B/dioxus-icons", branch = "ma
 dioxus-sdk-time = { git = "https://github.com/Gateway3B/sdk", branch = "main" }
 # g3 crates are not published until Dioxus 0.8.0:
 g3-route-transitions = { git = "https://github.com/g3techhq/g3-route-transitions", branch = "main" }
+g3-charts = { git = "https://github.com/g3techhq/g3-charts", branch = "main" }
+# g3-charts asks crates.io for g3-ui. Without this it would build a second
+# copy, whose theme and mode contexts the playground's components never set.
+g3-ui = { path = ".." }
 
 [lints.clippy]
 cloned_instead_of_copied = "warn"

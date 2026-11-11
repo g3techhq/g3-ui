@@ -39,6 +39,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Background refreshes no longer reveal the pull-to-refresh indicator or shift the content. The indicator appears only after a pull gesture.
 - Swipe rows measure their edges once per gesture and paint once per frame, avoiding forced style reads during Android drags. Vertical scrolls keep their pointer, interrupted swipes do not activate, and a fresh tap after a swipe is no longer swallowed by its click guard.
 
+### Playground
+
+- A Charts guide, under Companion crates, shows g3-charts: a live Donut,
+  Sunburst, TargetBars, LineChart and Sparkline, each following the
+  playground's theme and platform, with its source and how to add the crate.
+
 ## [0.7.0] - not yet released
 
 Built on Dioxus 0.8 (the Gateway3B fork until 0.8.0 is published) and

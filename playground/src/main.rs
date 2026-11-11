@@ -992,7 +992,7 @@ fn PlaygroundNav(
                     animated_navigate(Route::Landing {}).await;
                 },
             }
-            for section in ["Guides", "Patterns", "Hooks"] {
+            for section in ["Guides", "Patterns", "Hooks", "Companion crates"] {
                 g3_ui::ListHeader { "{section}" }
                 for page in docs::PAGES.iter().filter(|page| page.section == section) {
                     DocNavButton { slug: page.slug.to_string(), title: page.title.to_string(), current_route: current_route.clone(), selector_open, dismiss_on_select }
