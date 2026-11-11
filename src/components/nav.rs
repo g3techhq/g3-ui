@@ -411,6 +411,9 @@ pub fn NavItem(
                 }
             }
             span { class: "g3-nav-item-label", aria_hidden: "true", "{label}" }
+            // A closed rail squeezes the label to nothing so it can slide back
+            // out as the rail opens, and shows this copy as a tooltip instead.
+            span { class: "g3-nav-item-tooltip", aria_hidden: "true", "{label}" }
         }
     }
 }

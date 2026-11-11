@@ -16,6 +16,11 @@ mod shell {
         assert!(shell.contains("data-g3-mode=\"ios\""));
         assert!(shell.contains("--g3-color-bg: #111827;"));
         assert!(shell.contains("color-scheme: dark;"));
+        // The root shell clears what the theme leaves unset too, so a theme
+        // switch never keeps the previous look (Dioxus restores dropped
+        // inline properties).
+        assert!(shell.contains("--g3-card-sheen: initial;"));
+        assert!(shell.contains("--g3-card-backdrop-filter: initial;"));
     }
 
     #[cfg(feature = "transitions")]
@@ -132,7 +137,7 @@ mod shell {
         let unique: BTreeSet<_> = ids.iter().collect();
         assert_eq!(unique.len(), ids.len(), "an id was asked for twice");
         // 43 texts, 12 + 12 month names, 7 + 7 weekday names, first_weekday.
-        assert_eq!(ids.len(), 82);
+        assert_eq!(ids.len(), 84);
         for id in ["cancel", "sheet_handle", "months_1", "months_short_12"] {
             assert!(unique.contains(&id.to_string()), "{id} was not asked for");
         }
@@ -308,6 +313,25 @@ mod shell {
     }
 
     #[test]
+    fn nav_item_tooltip_is_a_hidden_copy_of_the_label() {
+        fn app() -> Element {
+            rsx! {
+                NavRail { default_expanded: false, remember: false,
+                    NavItem { label: "Inbox", badge: "3" }
+                }
+            }
+        }
+        let html = render(app);
+        let item = element_with_class(&html, "g3-nav-item");
+        assert!(item.contains("aria-label=\"Inbox, 3\""));
+        assert!(element_with_class(&html, "g3-nav-item-label").contains("aria-hidden=\"true\""));
+        assert_eq!(text_of_class(&html, "g3-nav-item-label"), "Inbox");
+        let tooltip = element_with_class(&html, "g3-nav-item-tooltip");
+        assert!(tooltip.starts_with("<span") && tooltip.contains("aria-hidden=\"true\""));
+        assert_eq!(text_of_class(&html, "g3-nav-item-tooltip"), "Inbox");
+    }
+
+    #[test]
     fn nav_bar_and_rail_have_fixed_layouts() {
         fn app() -> Element {
             rsx! {
@@ -479,6 +503,28 @@ mod shell {
         assert!(sentinel.contains("data-loading=\"true\""));
         assert!(sentinel.contains("data-complete=\"false\""));
         assert!(sentinel.contains("aria-busy=\"true\""));
+    }
+
+    #[test]
+    fn infinite_scroll_can_be_a_table_row() {
+        fn app() -> Element {
+            rsx! {
+                table {
+                    tbody {
+                        InfiniteScroll {
+                            loading: false,
+                            edge: InfiniteScrollEdge::Top,
+                            table_columns: 9,
+                            on_load: |_| {},
+                        }
+                    }
+                }
+            }
+        }
+        let html = render(app);
+        let sentinel = element_with_class(&html, "g3-infinite-scroll");
+        assert!(sentinel.starts_with("<tr"), "{sentinel}");
+        assert!(html.contains("colspan=\"9\""), "{html}");
     }
 }
 

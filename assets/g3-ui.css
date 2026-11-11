@@ -1224,7 +1224,9 @@ textarea.g3-input {
     transition: transform var(--g3-transition-normal) var(--g3-transition-md);
 }
 
-.g3-select[aria-expanded="true"] .g3-select-icon {
+/* The chevron turns to show the list is open; a date or time picker's
+   calendar or clock icon stays upright. */
+.g3-select[aria-expanded="true"] .g3-select-icon:not(.g3-picker-icon) {
     transform: rotate(180deg);
 }
 
@@ -1275,6 +1277,47 @@ textarea.g3-input {
 .g3-select-option:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+/* A nested option (a sub-account) steps in under its parent. */
+.g3-select-option[data-indent] {
+    padding-inline-start: calc(1rem + var(--g3-select-indent, 0) * 1rem);
+}
+
+/* A searchable list keeps its search field in view while the options
+   scroll under it. */
+/* The list's top padding would leave a strip above the sticky search where
+   options show as they scroll; the search field takes that space instead. */
+.g3-select-list:has(> .g3-select-search) {
+    padding-top: 0;
+}
+
+.g3-select-search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.5rem 0.5rem 0.375rem;
+    background: inherit;
+    background-color: var(--g3-color-surface);
+}
+
+.g3-select-search-input {
+    min-height: 2.25rem;
+    padding-block: 0.375rem;
+}
+
+.g3-select-search-input::-webkit-search-cancel-button {
+    appearance: none;
+}
+
+.g3-select-empty {
+    padding: 0.75rem 1rem;
+    color: var(--g3-color-text-secondary);
+}
+
+.g3-select-typed {
+    color: var(--g3-color-accent);
+    font-weight: 600;
 }
 
 .g3-select-option-description {
@@ -1970,6 +2013,12 @@ button.g3-chip,
     padding: 0;
 }
 
+/* Without padding the body runs edge to edge (a list, a table), but the
+   heading keeps its inset, as Ionic's card header does. */
+.g3-card[data-padding="false"] > .g3-card-header {
+    padding: 1rem 1rem 0.5rem;
+}
+
 .g3-card-ios {
     --g3-card-elevation: var(--g3-card-shadow, var(--g3-shadow-ios-card));
     margin-bottom: 1.5rem;
@@ -2072,8 +2121,10 @@ button.g3-chip,
     user-select: none;
 }
 
+/* The gap under a heading belongs to the heading: an untitled card's body
+   starts at the card's own padding, so its text is evenly inset. */
 .g3-card-body {
-    padding-block: 0.5rem 0;
+    padding-block: 0;
 }
 
 .g3-card-header + .g3-card-body {
@@ -2122,7 +2173,17 @@ button.g3-chip,
     z-index: var(--g3-z-modal);
 }
 
-.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop) {
+/* An overlay in the top layer cannot be clipped, so its page need not rise:
+   risen, it covered the edge of a desktop rail beside it, such as the rail's
+   collapse handle. The lifts above remain for browsers without popovers. */
+@supports selector(:popover-open) {
+    .route-transition-page-region:has(.g3-overlay-layer:popover-open),
+    .route-transition-segment-region:has(.g3-overlay-layer:popover-open) {
+        z-index: auto;
+    }
+}
+
+.g3-table :is(th, td):has(.g3-sheet[data-state="open"], .g3-sheet-backdrop, .g3-popover-sheet[data-state="open"], .g3-popover-backdrop):not(:is(th, td) *) {
     z-index: var(--g3-z-sheet-backdrop);
 }
 
@@ -3234,6 +3295,10 @@ button.g3-chip,
 .g3-header-slot {
     display: flex;
     align-items: center;
+    /* Several actions in one slot stay apart, as Ionic's toolbar buttons do
+       (its 2px margin on each side); Material's wider, often filled buttons
+       get more room below. */
+    gap: 0.25rem;
     /* A touch target's width even when empty, so the title stays centred. */
     min-width: 44px;
     min-height: 44px;
@@ -3291,6 +3356,9 @@ button.g3-chip,
     height: 32px;
     padding-inline: 0.5rem;
     font-size: 17px;
+}
+.g3-header-md .g3-header-slot {
+    gap: 0.5rem;
 }
 
 /* -- App shell and Content -- */
@@ -3603,6 +3671,70 @@ button.g3-chip,
     text-overflow: ellipsis;
 }
 
+/* Filter: a select drawn as a chip. Narrowed, it takes the chip's selected
+   tint and a clear button inside its end, in place of the chevron. */
+.g3-filter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    max-width: 100%;
+}
+
+.g3-filter .g3-input.g3-select {
+    min-height: 2rem;
+    padding: 0 0.625rem 0 0.75rem;
+    border: 1px solid var(--g3-color-border);
+    border-radius: 999px;
+    background: var(--g3-color-control);
+    color: var(--g3-color-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    gap: 0.25rem;
+    box-shadow: none;
+}
+
+.g3-filter .g3-input.g3-select:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-filter[data-active="true"] .g3-input.g3-select {
+    padding-inline-end: 2rem;
+    background: color-mix(in srgb, var(--g3-color-accent) 12%, var(--g3-color-control));
+    border-color: color-mix(in srgb, var(--g3-color-accent) 38%, var(--g3-color-border));
+    color: var(--g3-color-accent);
+}
+
+.g3-filter[data-active="true"] .g3-select-icon {
+    visibility: hidden;
+}
+
+.g3-filter-clear {
+    position: absolute;
+    inset-inline-end: 0.25rem;
+    top: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--g3-color-accent);
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.g3-filter-clear:hover,
+.g3-filter-clear:focus-visible {
+    background: color-mix(in srgb, var(--g3-color-accent) 16%, transparent);
+    outline: none;
+}
+
 .g3-progress {
     display: block;
     width: 100%;
@@ -3901,7 +4033,8 @@ button.g3-chip,
     max-width: 100%;
     overflow: hidden;
     border: 1px solid var(--g3-color-border);
-    border-radius: 12px;
+    /* A theme's `Look` rounds tables as it rounds cards. */
+    border-radius: var(--g3-card-radius, 12px);
     background: var(--g3-table-surface);
 }
 
@@ -3919,9 +4052,10 @@ button.g3-chip,
     display: none;
 }
 
+/* Raised reads the card look, so an app's `Look` restyles tables like cards. */
 .g3-table-frame[data-variant="raised"] {
-    border-color: transparent;
-    box-shadow: var(--g3-shadow-md-elevation-1);
+    border: var(--g3-card-border, 1px solid transparent);
+    box-shadow: var(--g3-card-shadow, var(--g3-shadow-md-elevation-1));
 }
 
 .g3-table-frame[data-fill="true"] {
@@ -3955,7 +4089,7 @@ button.g3-chip,
     text-align: start;
 }
 
-.g3-table :is(th, td) {
+.g3-table :is(th, td):not(:is(th, td) *) {
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--g3-color-border);
     border-inline-end: 1px solid var(--g3-color-border);
@@ -3965,69 +4099,69 @@ button.g3-chip,
 }
 
 /* Prose cells wrap and read from the start and top, like a paragraph. */
-.g3-table[data-wrap="true"] :is(th, td) {
+.g3-table[data-wrap="true"] :is(th, td):not(:is(th, td) *) {
     text-align: start;
     vertical-align: top;
     white-space: normal;
     overflow-wrap: anywhere;
 }
 
-.g3-table tr[data-compact="true"] > :is(th, td) {
+.g3-table tr[data-compact="true"]:not(:is(th, td) *) > :is(th, td) {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
 }
 
-.g3-table th {
+.g3-table th:not(:is(th, td) *) {
     font-weight: 600;
 }
 
-.g3-table th[scope="row"] {
+.g3-table th[scope="row"]:not(:is(th, td) *) {
     text-align: start;
 }
 
-.g3-table :is(th, td):last-child {
+.g3-table :is(th, td):last-child:not(:is(th, td) *) {
     border-inline-end: 0;
 }
 
-.g3-table tr:last-child > :is(th, td) {
+.g3-table tr:last-child:not(:is(th, td) *) > :is(th, td) {
     border-bottom: 0;
 }
 
 /* The header row is set off from the body by a heavier rule. */
-.g3-table thead tr:last-child > :is(th, td) {
+.g3-table thead:not(:is(th, td) *) tr:last-child:not(:is(th, td) *) > :is(th, td) {
     border-bottom: 2px solid var(--g3-color-border);
 }
 
 /* Mark the boundary between table sections without baking scorecard-specific
    row knowledge into the component. */
-.g3-table tr[data-divider="strong"] > :is(th, td) {
+.g3-table tr[data-divider="strong"]:not(:is(th, td) *) > :is(th, td) {
     border-bottom: 3px solid color-mix(in srgb, var(--g3-color-text) 48%, var(--g3-color-border));
 }
 
 /* Tints are mixed into the surface, not laid over it, so a tinted cell
    stays opaque when the sticky column slides over it. */
-.g3-table [data-color="accent"] {
+.g3-table :is(th, td)[data-color="accent"]:not(:is(th, td) *) {
     background: color-mix(in srgb, var(--g3-color-accent) 18%, var(--g3-table-surface));
 }
 
-.g3-table [data-color="success"] {
+.g3-table :is(th, td)[data-color="success"]:not(:is(th, td) *) {
     background: color-mix(in srgb, var(--g3-color-success) 20%, var(--g3-table-surface));
 }
 
-.g3-table [data-color="warning"] {
+.g3-table :is(th, td)[data-color="warning"]:not(:is(th, td) *) {
     background: color-mix(in srgb, var(--g3-color-warning) 24%, var(--g3-table-surface));
 }
 
-.g3-table [data-color="danger"] {
+.g3-table :is(th, td)[data-color="danger"]:not(:is(th, td) *) {
     background: color-mix(in srgb, var(--g3-color-danger) 18%, var(--g3-table-surface));
 }
 
-.g3-table [data-muted="true"] {
+.g3-table :is(th, td)[data-muted="true"]:not(:is(th, td) *) {
     background: color-mix(in srgb, var(--g3-color-text) 6%, var(--g3-table-surface));
     color: var(--g3-color-text-secondary);
 }
 
-.g3-table[data-sticky-first="true"] tr > :first-child {
+.g3-table[data-sticky-first="true"] tr:not(:is(th, td) *) > :first-child {
     position: sticky;
     inset-inline-start: 0;
     z-index: 1;
@@ -4037,7 +4171,7 @@ button.g3-chip,
 /* A fixed sheet nested in a sticky cell needs to participate in the app's
    overlay stack, not the sticky column's local stacking context. */
 .g3-table:has(.g3-sheet-backdrop, .g3-popover-backdrop)[data-sticky-first="true"]
-    tr > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
+    tr:not(:is(th, td) *) > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
     z-index: auto;
 }
 
@@ -4046,8 +4180,215 @@ button.g3-chip,
    the sheet itself. */
 .g3-app-shell:has(.g3-sheet-backdrop, .g3-popover-backdrop)
     .g3-table[data-sticky-first="true"]
-    tr > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
+    tr:not(:is(th, td) *) > :first-child:not(:has(.g3-sheet-backdrop, .g3-popover-backdrop)) {
     z-index: auto;
+}
+
+/* Sticky header: the frame is a column the caller sizes (a flex child with
+   `min-height: 0`, or a height or max-height on its class), and the inner
+   viewport scrolls both ways inside it. Rows pass under the header and are
+   clipped by the frame's rounded corners, so nothing shows above it. */
+.g3-table-frame[data-sticky-header="true"] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+}
+
+.g3-table-frame[data-sticky-header="true"] > .g3-table-caption {
+    flex: none;
+}
+
+.g3-table-frame[data-sticky-header="true"] > .g3-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+/* Header cells are opaque (the surface) and sit above the body; the corner
+   cell of a sticky first column sits above both. The rules stay on the
+   cells (border-collapse: separate), so they travel with them. */
+.g3-table-frame[data-sticky-header="true"] > .g3-table-scroll > .g3-table > thead :is(th, td):not(:is(th, td) *) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.g3-table-frame[data-sticky-header="true"] > .g3-table-scroll > .g3-table[data-sticky-first="true"] > thead tr:not(:is(th, td) *) > :first-child {
+    z-index: 3;
+}
+
+/* Rows only: rules between rows, none between columns, as a ledger reads. */
+.g3-table[data-lines="rows"] :is(th, td):not(:is(th, td) *) {
+    border-inline-end: 0;
+}
+
+.g3-table[data-lines="rows"][data-sticky-first="true"] tr:not(:is(th, td) *) > :first-child {
+    border-inline-end: 1px solid var(--g3-color-border);
+}
+
+.g3-table[data-lines="rows"] thead:not(:is(th, td) *) tr:last-child:not(:is(th, td) *) > :is(th, td) {
+    border-bottom-width: 1px;
+}
+
+/* Start-aligned cells, as a data grid reads. */
+.g3-table[data-align="start"] :is(th, td):not(:is(th, td) *) {
+    text-align: start;
+}
+
+/* A cell's own alignment wins over the table's. End is for figures. */
+.g3-table :is(th, td)[data-align="start"]:not(:is(th, td) *) {
+    text-align: start;
+}
+
+.g3-table :is(th, td)[data-align="center"]:not(:is(th, td) *) {
+    text-align: center;
+}
+
+.g3-table :is(th, td)[data-align="end"]:not(:is(th, td) *) {
+    text-align: end;
+}
+
+/* In a data grid the header row reads as column labels. */
+.g3-table:is([data-align="start"], [data-lines="rows"]) thead:not(:is(th, td) *) th:not(:is(th, td) *) {
+    color: var(--g3-color-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+[data-g3-mode="md"] .g3-table:is([data-align="start"], [data-lines="rows"]) thead:not(:is(th, td) *) th:not(:is(th, td) *) {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+/* A sortable header: the label is a bare button in the header's own type.
+   The column it sorts by reads in full text color with its arrow; the
+   others show a faint two-way arrow on hover or focus. */
+.g3-table-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.g3-table-sortable[data-align="end"] .g3-table-sort {
+    flex-direction: row-reverse;
+}
+
+.g3-table-sort:hover,
+.g3-table-sortable[data-sorted="true"] {
+    color: var(--g3-color-text);
+}
+
+.g3-table-sort:focus-visible {
+    outline: 2px solid var(--g3-color-accent);
+    outline-offset: 2px;
+}
+
+.g3-table-sort-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.g3-table-sort-icon {
+    display: inline-flex;
+    flex: none;
+    opacity: 0;
+    transition: opacity var(--g3-transition-fast) var(--g3-transition-md);
+}
+
+.g3-table-sortable[data-sorted="true"] .g3-table-sort-icon {
+    opacity: 1;
+    color: var(--g3-color-accent);
+}
+
+.g3-table-sort:is(:hover, :focus-visible) .g3-table-sort-icon {
+    opacity: 0.55;
+}
+
+.g3-table-sortable[data-sorted="true"] .g3-table-sort:is(:hover, :focus-visible) .g3-table-sort-icon {
+    opacity: 1;
+}
+
+/* Compact: desktop data-dense screens. A compact row stays tighter still. */
+.g3-table[data-density="compact"] {
+    font-size: 0.8125rem;
+}
+
+.g3-table[data-density="compact"] :is(th, td):not(:is(th, td) *) {
+    padding: 0.3125rem 0.625rem;
+}
+
+.g3-table[data-density="compact"] thead:not(:is(th, td) *) th:not(:is(th, td) *) {
+    font-size: 0.75rem;
+}
+
+.g3-table[data-density="compact"] tr[data-compact="true"]:not(:is(th, td) *) > :is(th, td) {
+    padding: 0.1875rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Interactive and selected rows. The tints are mixed into the surface, as
+   the cell tints are, so sticky cells stay opaque. */
+.g3-table tr[data-interactive="true"]:not(:is(th, td) *) {
+    cursor: pointer;
+}
+
+.g3-table tr[aria-selected="true"]:not(:is(th, td) *) > :is(th, td) {
+    --g3-table-surface: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
+}
+
+@media (hover: hover) {
+    .g3-table tr[data-interactive="true"]:hover:not(:is(th, td) *) > :is(th, td) {
+        --g3-table-surface: color-mix(in srgb, var(--g3-color-text) 5%, var(--g3-color-card));
+    }
+
+    .g3-table tr[data-interactive="true"][aria-selected="true"]:hover:not(:is(th, td) *) > :is(th, td) {
+        --g3-table-surface: color-mix(in srgb, var(--g3-color-accent) 18%, var(--g3-color-card));
+    }
+}
+
+.g3-table tr[data-interactive="true"]:active:not(:is(th, td) *) > :is(th, td) {
+    --g3-table-surface: color-mix(in srgb, var(--g3-color-text) 10%, var(--g3-color-card));
+}
+
+.g3-table tr[data-interactive="true"][aria-selected="true"]:active:not(:is(th, td) *) > :is(th, td) {
+    --g3-table-surface: color-mix(in srgb, var(--g3-color-accent) 24%, var(--g3-color-card));
+}
+
+/* A row cannot draw an outline across its cells in every engine, so the
+   ring is an inset shadow on each cell, with the ends closing it. */
+.g3-table tr:focus-visible:not(:is(th, td) *) {
+    outline: none;
+}
+
+.g3-table tr:focus-visible:not(:is(th, td) *) > :is(th, td) {
+    box-shadow: inset 0 2px 0 var(--g3-color-accent), inset 0 -2px 0 var(--g3-color-accent);
+}
+
+.g3-table tr:focus-visible:not(:is(th, td) *) > :first-child {
+    box-shadow: inset 0 2px 0 var(--g3-color-accent), inset 0 -2px 0 var(--g3-color-accent), inset 2px 0 0 var(--g3-color-accent);
+}
+
+.g3-table tr:focus-visible:not(:is(th, td) *) > :last-child {
+    box-shadow: inset 0 2px 0 var(--g3-color-accent), inset 0 -2px 0 var(--g3-color-accent), inset -2px 0 0 var(--g3-color-accent);
+}
+
+.g3-table tr:focus-visible:not(:is(th, td) *) > :only-child {
+    box-shadow: inset 0 0 0 2px var(--g3-color-accent);
 }
 
 @keyframes g3-progress-indeterminate {
@@ -5462,6 +5803,9 @@ button.g3-chip,
     /* Visible, so the rail's hover labels can extend over the page. The
        content area does its own scrolling. */
     overflow: visible;
+    /* A toggled rail opens and closes by its column, so the page gives way
+       as the rail grows. */
+    transition: grid-template-columns 160ms var(--g3-transition-md);
 }
 
 .g3-tab-layout:has(> .g3-nav-rail) > .g3-header {
@@ -5480,7 +5824,7 @@ button.g3-chip,
     z-index: 20;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 0.375rem;
     min-height: 0;
     padding: max(0.75rem, var(--g3-safe-area-top, env(safe-area-inset-top))) 0.5rem max(0.75rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
@@ -5518,18 +5862,31 @@ button.g3-chip,
     order: 2;
 }
 
+/* Every rail lays its items out as labelled rows, so opening and closing is
+   the rail's width alone and each label slides out of and back into its
+   icon. Closed, a row is a 2.5rem circle centred in the rail, its label
+   squeezed to nothing. Open, the row fills the rail and the icon stays
+   where it was. */
 .g3-nav-rail .g3-nav-item {
     flex: 0 0 auto;
-    width: 2.5rem;
-    min-width: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    min-width: 0;
     min-height: 2.5rem;
-    padding: 0;
-    grid-template-rows: 1fr;
+    /* (4rem rail - 1rem padding - 2.5rem circle) / 2. */
+    margin-inline: 0.25rem;
+    /* (2.5rem circle - 1.25rem icon) / 2. */
+    padding: 0 0.625rem;
     overflow: visible;
-    border-radius: 50%;
+    border-radius: 1.25rem;
     background: var(--g3-color-control);
-    transition: border-radius var(--g3-transition-normal) var(--g3-transition-md),
-                background var(--g3-transition-normal) var(--g3-transition-md),
+    transition: min-height 160ms var(--g3-transition-md),
+                margin 160ms var(--g3-transition-md),
+                padding 160ms var(--g3-transition-md),
+                border-radius 160ms var(--g3-transition-md),
+                background 160ms var(--g3-transition-md),
                 color var(--g3-transition-normal) var(--g3-transition-md);
 }
 
@@ -5563,15 +5920,35 @@ button.g3-chip,
 }
 
 .g3-nav-rail .g3-nav-item-icon {
+    flex: 0 0 auto;
     width: 1.25rem;
     height: 1.25rem;
 }
 
 .g3-nav-rail .g3-nav-item-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
+    overflow: hidden;
+    color: inherit;
+    font-size: 0.875rem;
+    text-align: start;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* The label's copy for a closed toggled rail, where it shows as a tooltip
+   beside the icon. Bars and open or hover rails show the label itself. */
+.g3-nav-item-tooltip {
+    display: none;
+}
+
+.g3-nav-rail:not(.g3-nav-expanded, .g3-nav-hover) .g3-nav-item-tooltip {
     position: absolute;
     top: 50%;
     left: calc(100% + 0.75rem);
     z-index: 30;
+    display: block;
     width: max-content;
     max-width: 12rem;
     padding: 0.375rem 0.625rem;
@@ -5582,8 +5959,10 @@ button.g3-chip,
     box-shadow: 0 6px 18px color-mix(in srgb, var(--g3-color-shadow) 42%, transparent);
     color: var(--g3-color-text);
     font-size: 0.75rem;
+    font-weight: 700;
     line-height: 1rem;
     text-overflow: ellipsis;
+    white-space: nowrap;
     opacity: 0;
     visibility: hidden;
     transform: translate(-0.25rem, -50%);
@@ -5591,26 +5970,18 @@ button.g3-chip,
     pointer-events: none;
 }
 
-.g3-nav-rail .g3-nav-item:hover .g3-nav-item-label,
-.g3-nav-rail .g3-nav-item:focus-visible .g3-nav-item-label {
+.g3-nav-rail:not(.g3-nav-expanded, .g3-nav-hover) .g3-nav-item:is(:hover, :focus-visible) .g3-nav-item-tooltip {
     opacity: 1;
     visibility: visible;
     transform: translate(0, -50%);
 }
 
 /* Expanded: a labelled row per destination, flat rather than round. */
-.g3-nav-rail.g3-nav-expanded {
-    align-items: stretch;
-}
-
 .g3-nav-rail.g3-nav-expanded .g3-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: auto;
-    min-width: 0;
     min-height: 2.75rem;
-    padding: 0 0.75rem;
+    margin-inline: 0;
+    /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
+    padding: 0 0.875rem;
     border-radius: 0.75rem;
     background: transparent;
 }
@@ -5620,30 +5991,27 @@ button.g3-chip,
     background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
 }
 
-.g3-nav-rail.g3-nav-expanded .g3-nav-item-label {
+/* Expanded, the label starts where the icon's corner badge sits, so the
+   badge moves to the row's trailing end, as in a Material navigation
+   drawer. The item is the badge's box rather than the icon. */
+.g3-nav-rail.g3-nav-expanded .g3-nav-item-icon {
     position: static;
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: none;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    color: inherit;
-    font-size: 0.875rem;
-    text-align: start;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    pointer-events: auto;
-    transition: none;
 }
 
-/* The tooltip's hover rule would otherwise still lift an expanded label. */
-.g3-nav-rail.g3-nav-expanded .g3-nav-item:hover .g3-nav-item-label,
-.g3-nav-rail.g3-nav-expanded .g3-nav-item:focus-visible .g3-nav-item-label {
-    transform: none;
+.g3-nav-rail.g3-nav-expanded .g3-nav-item-badge {
+    top: 50%;
+    inset-inline-start: auto;
+    inset-inline-end: 0.75rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.375rem;
+    font-size: 0.6875rem;
+    translate: 0 -50%;
+}
+
+/* Room for the badge, so a long label is cut off before reaching it. */
+.g3-nav-rail.g3-nav-expanded .g3-nav-item:has(.g3-nav-item-badge) {
+    padding-inline-end: 2.75rem;
 }
 
 /* The toggle is a handle on the rail's outer edge, so it takes no row. */
@@ -5685,13 +6053,11 @@ button.g3-chip,
     --g3-nav-rail-width: 15rem;
 }
 
-/* Hover: always laid out as labelled rows, so opening and closing is the
-   rail's width alone and the rows slide out of and back into their icons.
+/* Hover: the rail itself widens over the page, and its column stays put.
    Closed, each row is clipped to an icon centred where a round button would
    sit. A short delay keeps a pointer that only crosses the rail from opening
    it. */
 .g3-nav-rail.g3-nav-hover {
-    align-items: stretch;
     width: var(--g3-nav-rail-width);
     overflow-x: clip;
     transition: width 160ms var(--g3-transition-md),
@@ -5705,13 +6071,8 @@ button.g3-chip,
 }
 
 .g3-nav-rail.g3-nav-hover .g3-nav-item {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.75rem;
-    width: auto;
-    min-width: 0;
     min-height: 2.75rem;
+    margin-inline: 0;
     /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
     padding: 0 0.875rem;
     border-radius: 0.75rem;
@@ -5723,36 +6084,15 @@ button.g3-chip,
     background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
 }
 
-.g3-nav-rail.g3-nav-hover .g3-nav-item-icon {
-    flex: 0 0 auto;
-}
-
-/* Overrides the collapsed rail's tooltip, including its hover rule. */
-.g3-nav-rail.g3-nav-hover .g3-nav-item .g3-nav-item-label {
-    position: static;
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: none;
-    padding: 0;
-    overflow: hidden;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    color: inherit;
-    font-size: 0.875rem;
-    text-align: start;
-    text-overflow: clip;
-    white-space: nowrap;
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    transition: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
+    .g3-tab-layout:has(> .g3-nav-rail),
     .g3-nav-rail.g3-nav-hover {
         transition: none;
+    }
+
+    .g3-nav-rail .g3-nav-item {
+        transition: background var(--g3-transition-normal) var(--g3-transition-md),
+                    color var(--g3-transition-normal) var(--g3-transition-md);
     }
 }
 
@@ -6193,6 +6533,8 @@ button.g3-chip,
     right: auto;
     bottom: auto;
     min-width: max(var(--g3-popover-anchor-width, 0px), 12rem);
+    /* The room beside the trigger, set only when the panel is taller than it. */
+    max-height: min(60dvh, 26rem, var(--g3-popover-room, 100dvh));
 }
 
 /* A confined layer contains its fixed children, so the measured viewport
@@ -6634,6 +6976,62 @@ button.g3-chip,
     padding: 0.75rem;
 }
 
+/* -- Theme reveal --
+   `reveal_theme`: the new look grows over the old in a circle from the
+   click point. The page is one snapshot for it: the script takes other
+   view transition names off while it runs (inline, since this sheet's
+   layer loses to g3-route-transitions' unlayered names). */
+
+:root[data-g3-theme-reveal]::view-transition-group(root) {
+    animation: none;
+}
+
+:root[data-g3-theme-reveal]::view-transition-image-pair(root) {
+    isolation: auto;
+}
+
+:root[data-g3-theme-reveal]::view-transition-old(root),
+:root[data-g3-theme-reveal]::view-transition-new(root) {
+    mix-blend-mode: normal;
+    animation: none;
+}
+
+:root[data-g3-theme-reveal]::view-transition-new(root) {
+    animation: 550ms cubic-bezier(0.4, 0, 0.2, 1) both g3-theme-reveal;
+}
+
+@keyframes g3-theme-reveal {
+    from {
+        clip-path: circle(0 at var(--g3-reveal-x) var(--g3-reveal-y));
+    }
+    to {
+        clip-path: circle(var(--g3-reveal-r) at var(--g3-reveal-x) var(--g3-reveal-y));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root[data-g3-theme-reveal]::view-transition-new(root) {
+        animation: none;
+    }
+}
+
+/* In a table body: a full-width row, no taller than its spinner. */
+tr.g3-infinite-scroll {
+    display: table-row;
+}
+
+.g3-table tr.g3-infinite-scroll > td,
+tr.g3-infinite-scroll > td {
+    height: 1px;
+    padding: 0;
+    border: none;
+}
+
+.g3-infinite-scroll-cell {
+    display: flex;
+    justify-content: center;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .g3-img[data-state="loading"] {
         animation: none;
@@ -6660,6 +7058,9 @@ button.g3-chip,
         /* Visible, so the rail's hover labels can extend over the page. The
            content area does its own scrolling. */
         overflow: visible;
+        /* A toggled rail opens and closes by its column, so the page gives way
+           as the rail grows. */
+        transition: grid-template-columns 160ms var(--g3-transition-md);
     }
 
     .g3-tab-layout:has(> .g3-nav-adaptive) > .g3-header {
@@ -6678,7 +7079,7 @@ button.g3-chip,
         z-index: 20;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         gap: 0.375rem;
         min-height: 0;
         padding: max(0.75rem, var(--g3-safe-area-top, env(safe-area-inset-top))) 0.5rem max(0.75rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom)));
@@ -6716,18 +7117,31 @@ button.g3-chip,
         order: 2;
     }
 
+    /* Every rail lays its items out as labelled rows, so opening and closing is
+       the rail's width alone and each label slides out of and back into its
+       icon. Closed, a row is a 2.5rem circle centred in the rail, its label
+       squeezed to nothing. Open, the row fills the rail and the icon stays
+       where it was. */
     .g3-nav-adaptive .g3-nav-item {
         flex: 0 0 auto;
-        width: 2.5rem;
-        min-width: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        min-width: 0;
         min-height: 2.5rem;
-        padding: 0;
-        grid-template-rows: 1fr;
+        /* (4rem rail - 1rem padding - 2.5rem circle) / 2. */
+        margin-inline: 0.25rem;
+        /* (2.5rem circle - 1.25rem icon) / 2. */
+        padding: 0 0.625rem;
         overflow: visible;
-        border-radius: 50%;
+        border-radius: 1.25rem;
         background: var(--g3-color-control);
-        transition: border-radius var(--g3-transition-normal) var(--g3-transition-md),
-                    background var(--g3-transition-normal) var(--g3-transition-md),
+        transition: min-height 160ms var(--g3-transition-md),
+                    margin 160ms var(--g3-transition-md),
+                    padding 160ms var(--g3-transition-md),
+                    border-radius 160ms var(--g3-transition-md),
+                    background 160ms var(--g3-transition-md),
                     color var(--g3-transition-normal) var(--g3-transition-md);
     }
 
@@ -6761,15 +7175,30 @@ button.g3-chip,
     }
 
     .g3-nav-adaptive .g3-nav-item-icon {
+        flex: 0 0 auto;
         width: 1.25rem;
         height: 1.25rem;
     }
 
     .g3-nav-adaptive .g3-nav-item-label {
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: none;
+        overflow: hidden;
+        color: inherit;
+        font-size: 0.875rem;
+        text-align: start;
+        text-overflow: clip;
+        white-space: nowrap;
+    }
+
+    /* Closed, the label's copy shows as a tooltip beside the icon. */
+    .g3-nav-adaptive:not(.g3-nav-hover) .g3-nav-item-tooltip {
         position: absolute;
         top: 50%;
         left: calc(100% + 0.75rem);
         z-index: 30;
+        display: block;
         width: max-content;
         max-width: 12rem;
         padding: 0.375rem 0.625rem;
@@ -6780,8 +7209,10 @@ button.g3-chip,
         box-shadow: 0 6px 18px color-mix(in srgb, var(--g3-color-shadow) 42%, transparent);
         color: var(--g3-color-text);
         font-size: 0.75rem;
+        font-weight: 700;
         line-height: 1rem;
         text-overflow: ellipsis;
+        white-space: nowrap;
         opacity: 0;
         visibility: hidden;
         transform: translate(-0.25rem, -50%);
@@ -6789,8 +7220,7 @@ button.g3-chip,
         pointer-events: none;
     }
 
-    .g3-nav-adaptive .g3-nav-item:hover .g3-nav-item-label,
-    .g3-nav-adaptive .g3-nav-item:focus-visible .g3-nav-item-label {
+    .g3-nav-adaptive:not(.g3-nav-hover) .g3-nav-item:is(:hover, :focus-visible) .g3-nav-item-tooltip {
         opacity: 1;
         visibility: visible;
         transform: translate(0, -50%);
@@ -6799,19 +7229,17 @@ button.g3-chip,
     /* Expanding costs 11rem of the page, so a narrower shell keeps the icon
        rail and offers no toggle. */
     @container g3-app-shell (min-width: 64rem) {
-        /* Expanded: a labelled row per destination, flat rather than round. */
-        .g3-nav-adaptive.g3-nav-expanded {
-            align-items: stretch;
+        /* Open, the label shows in the row instead. */
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item-tooltip {
+            display: none;
         }
 
+        /* Expanded: a labelled row per destination, flat rather than round. */
         .g3-nav-adaptive.g3-nav-expanded .g3-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: auto;
-            min-width: 0;
             min-height: 2.75rem;
-            padding: 0 0.75rem;
+            margin-inline: 0;
+            /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
+            padding: 0 0.875rem;
             border-radius: 0.75rem;
             background: transparent;
         }
@@ -6821,30 +7249,27 @@ button.g3-chip,
             background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
         }
 
-        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item-label {
+        /* Expanded, the label starts where the icon's corner badge sits, so the
+           badge moves to the row's trailing end, as in a Material navigation
+           drawer. The item is the badge's box rather than the icon. */
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item-icon {
             position: static;
-            flex: 1 1 auto;
-            min-width: 0;
-            max-width: none;
-            padding: 0;
-            border: 0;
-            border-radius: 0;
-            background: none;
-            box-shadow: none;
-            color: inherit;
-            font-size: 0.875rem;
-            text-align: start;
-            opacity: 1;
-            visibility: visible;
-            transform: none;
-            pointer-events: auto;
-            transition: none;
         }
 
-        /* The tooltip's hover rule would otherwise still lift an expanded label. */
-        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item:hover .g3-nav-item-label,
-        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item:focus-visible .g3-nav-item-label {
-            transform: none;
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item-badge {
+            top: 50%;
+            inset-inline-start: auto;
+            inset-inline-end: 0.75rem;
+            min-width: 1.25rem;
+            height: 1.25rem;
+            padding: 0 0.375rem;
+            font-size: 0.6875rem;
+            translate: 0 -50%;
+        }
+
+        /* Room for the badge, so a long label is cut off before reaching it. */
+        .g3-nav-adaptive.g3-nav-expanded .g3-nav-item:has(.g3-nav-item-badge) {
+            padding-inline-end: 2.75rem;
         }
 
         /* The toggle is a handle on the rail's outer edge, so it takes no row. */
@@ -6887,13 +7312,11 @@ button.g3-chip,
         }
     }
 
-    /* Hover: always laid out as labelled rows, so opening and closing is the
-       rail's width alone and the rows slide out of and back into their icons.
+    /* Hover: the rail itself widens over the page, and its column stays put.
        Closed, each row is clipped to an icon centred where a round button would
        sit. A short delay keeps a pointer that only crosses the rail from opening
        it. */
     .g3-nav-adaptive.g3-nav-hover {
-        align-items: stretch;
         width: var(--g3-nav-rail-width);
         overflow-x: clip;
         transition: width 160ms var(--g3-transition-md),
@@ -6907,13 +7330,8 @@ button.g3-chip,
     }
 
     .g3-nav-adaptive.g3-nav-hover .g3-nav-item {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        gap: 0.75rem;
-        width: auto;
-        min-width: 0;
         min-height: 2.75rem;
+        margin-inline: 0;
         /* (4rem rail - 1.25rem icon) / 2, less the rail's 0.5rem padding. */
         padding: 0 0.875rem;
         border-radius: 0.75rem;
@@ -6925,36 +7343,15 @@ button.g3-chip,
         background: color-mix(in srgb, var(--g3-color-accent) 14%, var(--g3-color-card));
     }
 
-    .g3-nav-adaptive.g3-nav-hover .g3-nav-item-icon {
-        flex: 0 0 auto;
-    }
-
-    /* Overrides the collapsed rail's tooltip, including its hover rule. */
-    .g3-nav-adaptive.g3-nav-hover .g3-nav-item .g3-nav-item-label {
-        position: static;
-        flex: 1 1 auto;
-        min-width: 0;
-        max-width: none;
-        padding: 0;
-        overflow: hidden;
-        border: 0;
-        border-radius: 0;
-        background: none;
-        box-shadow: none;
-        color: inherit;
-        font-size: 0.875rem;
-        text-align: start;
-        text-overflow: clip;
-        white-space: nowrap;
-        opacity: 1;
-        visibility: visible;
-        transform: none;
-        transition: none;
-    }
-
     @media (prefers-reduced-motion: reduce) {
+        .g3-tab-layout:has(> .g3-nav-adaptive),
         .g3-nav-adaptive.g3-nav-hover {
             transition: none;
+        }
+
+        .g3-nav-adaptive .g3-nav-item {
+            transition: background var(--g3-transition-normal) var(--g3-transition-md),
+                        color var(--g3-transition-normal) var(--g3-transition-md);
         }
     }
 
@@ -7001,15 +7398,21 @@ button.g3-chip,
         padding: 0 1rem 0.75rem;
     }
 
+    /* A strip is as wide as its labels need, and only narrower when the
+       header has no more room: then the labels end in an ellipsis. A 30rem
+       cap cut "INCOME & EXPENSE" in a header with room to spare. */
     .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-ios {
         width: fit-content;
-        max-width: min(100%, 30rem);
+        max-width: 100%;
         margin-inline: 0;
     }
 
+    /* Equal columns, each the widest label, and never narrower than the
+       30rem a short strip has always had. */
     .g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone).g3-segment-md {
-        width: min(100%, 30rem);
-        max-width: 30rem;
+        width: max-content;
+        min-width: min(100%, 30rem);
+        max-width: 100%;
         margin-inline: 0;
     }
 
@@ -7041,49 +7444,6 @@ button.g3-chip,
 
     .g3-content-scroll[data-padding="false"] {
         --g3-content-padding: 0;
-    }
-
-    /* A thin bar with no arrow buttons. Chromium ignores the
-       ::-webkit-scrollbar rules once scrollbar-width is set, and its thin
-       standard scrollbar keeps its arrows, so the standard properties are for
-       Firefox only. */
-    .g3-app-shell .g3-content-scroll {
-        scrollbar-width: auto;
-    }
-
-    .g3-app-shell .g3-content-scroll::-webkit-scrollbar {
-        display: block;
-        width: 0.625rem;
-        height: 0.625rem;
-        background: transparent;
-    }
-
-    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-button {
-        display: none;
-        width: 0;
-        height: 0;
-    }
-
-    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-thumb {
-        border: 0.1875rem solid transparent;
-        border-radius: 999px;
-        background: var(--g3-color-border);
-        background-clip: padding-box;
-    }
-
-    .g3-app-shell .g3-content-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: var(--g3-color-text-tertiary);
-    }
-
-    @supports not selector(::-webkit-scrollbar) {
-        .g3-app-shell .g3-content-scroll {
-            scrollbar-width: thin;
-            scrollbar-color: var(--g3-color-border) transparent;
-        }
     }
 }
 
@@ -7143,7 +7503,9 @@ button.g3-chip,
         grid-row: 1;
         align-self: center;
         justify-content: center;
-        max-width: 30rem;
+        /* No cap of its own: the track gives it what its segments need, out of
+           what the title's 12rem and the end slot leave. */
+        min-width: 0;
         min-height: 0;
         padding: 0.5rem 0;
     }
@@ -7195,6 +7557,9 @@ button.g3-chip,
 
 .g3-calendar {
     --g3-calendar-cell: 2.5rem;
+    /* Padding (a popover adds some) stays inside the width, or the grid
+       runs past the right edge of whatever holds it. */
+    box-sizing: border-box;
     width: 100%;
     max-width: 22rem;
     margin-inline: auto;

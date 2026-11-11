@@ -2,6 +2,18 @@
 use super::*;
 
 #[test]
+fn a_background_refresh_is_busy_without_revealing_the_pull_indicator() {
+    fn app() -> Element {
+        rsx! { Refresher { refreshing: true, on_refresh: |_| {}, "Feed" } }
+    }
+    let html = render(app);
+    let root = element_with_class(&html, "g3-refresher");
+    assert!(root.contains("data-refreshing=\"true\""));
+    assert!(root.contains("aria-busy=\"true\""));
+    assert!(!root.contains("data-state=\"refreshing\""));
+}
+
+#[test]
 fn a_tappable_card_names_its_action_with_the_title() {
     fn app() -> Element {
         rsx! {
@@ -444,6 +456,79 @@ fn a_table_scrolls_in_a_named_focusable_frame() {
     assert!(!html.contains("data-sticky-first"));
     // Prose cells are marked on the table, where the cell rules read it.
     assert!(element_with_class(&html, "g3-table").contains("data-wrap=\"true\""));
+}
+
+#[test]
+fn a_ledger_table_marks_its_grid_options_and_keeps_the_scorecard_defaults() {
+    fn ledger() -> Element {
+        rsx! {
+            Table { aria_label: "Register", sticky_header: true, lines: TableLines::Rows,
+                align: TableAlign::Start, density: TableDensity::Compact,
+                thead { tr { th { scope: "col", "Payee" } th { scope: "col", "data-align": "end", "Amount" } } }
+                tbody {
+                    tr { "data-interactive": "true", tabindex: "0", aria_selected: "true",
+                        td { "City Water" }
+                        td { "data-align": "end", "42.00" }
+                    }
+                }
+            }
+        }
+    }
+    let html = render(ledger);
+    let frame = element_with_class(&html, "g3-table-frame");
+    let table = element_with_class(&html, "g3-table");
+    // The frame lays out the scrolling viewport; the table carries the cell rules.
+    assert!(frame.contains("data-sticky-header=\"true\""));
+    assert!(table.contains("data-lines=\"rows\""));
+    assert!(table.contains("data-align=\"start\""));
+    assert!(table.contains("data-density=\"compact\""));
+    // Row and cell attributes pass through untouched for the stylesheet.
+    assert!(html.contains("data-interactive=\"true\""));
+    assert!(html.contains("aria-selected=\"true\""));
+    assert!(html.contains("data-align=\"end\""));
+
+    fn scorecard() -> Element {
+        rsx! {
+            Table { caption: "Front nine", tbody { tr { td { "4" } } } }
+        }
+    }
+    let html = render(scorecard);
+    for attribute in [
+        "data-sticky-header",
+        "data-lines",
+        "data-align",
+        "data-density",
+    ] {
+        assert!(!html.contains(attribute), "defaults emit no `{attribute}`");
+    }
+}
+
+#[test]
+fn only_the_sorted_header_says_how_it_is_sorted() {
+    fn app() -> Element {
+        rsx! {
+            Table { aria_label: "Register",
+                thead {
+                    tr {
+                        SortHeader { class: "col-date", onsort: |_| {}, "Date" }
+                        SortHeader { end: true, sorted: SortDirection::Descending, onsort: |_| {}, "Amount" }
+                    }
+                }
+            }
+        }
+    }
+    let html = render(app);
+    let date = element_with_class(&html, "col-date");
+    assert!(date.contains("scope=\"col\""));
+    assert!(!date.contains("aria-sort"));
+    assert!(!date.contains("data-sorted"));
+    let amount = element_with_attribute(&html, "aria-sort");
+    assert!(amount.contains("aria-sort=\"descending\""));
+    assert!(amount.contains("data-sorted=\"true\""));
+    assert!(amount.contains("data-align=\"end\""));
+    // The label is a real button, so it is reached and pressed by keyboard.
+    assert_eq!(html.matches("class=\"g3-table-sort\"").count(), 2);
+    assert!(element_with_class(&html, "g3-table-sort").contains("type=\"button\""));
 }
 
 #[test]

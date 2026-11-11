@@ -47,6 +47,7 @@ mod empty_state;
 mod fab;
 
 mod field;
+mod filter_select;
 
 mod gesture;
 
@@ -155,13 +156,14 @@ pub use datetime::{CalendarDate, HourCycle, ParseDateTimeError, TimeOfDay};
 pub use divider::{Divider, DividerOrientation};
 pub use empty_state::EmptyState;
 pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
+pub use filter_select::FilterSelect;
 
 #[cfg(test)]
 pub(crate) use field::within_typing_limits as field_limits;
 pub use field::{Input, InputType, TextArea};
 pub(crate) use header::HeaderToolbarContext;
 pub use header::{Header, Toolbar};
-pub use infinite_scroll::InfiniteScroll;
+pub use infinite_scroll::{InfiniteScroll, InfiniteScrollEdge};
 pub use info_button::InfoButton;
 pub use layout::{Grid, GridColumns, Space, Stack, StackAlign, StackJustify};
 pub use list::{Item, ItemDetail, List, ListHeader, ListLines, ListVariant};
@@ -201,7 +203,9 @@ pub use skeleton::{Skeleton, SkeletonShape};
 pub use spinner::{Spinner, SpinnerSize};
 pub use swipe::{SwipeAction, SwipeBehavior, SwipeItem, SwipeSide, SwipeState};
 pub use tab_layout::TabLayout;
-pub use table::{Table, TableVariant};
+pub use table::{
+    SortDirection, SortHeader, Table, TableAlign, TableDensity, TableLines, TableVariant,
+};
 pub use tabs::{Tab, TabList, TabPanel, Tabs};
 pub use text::{HeadingLevel, Text, TextTone, TextVariant};
 pub use time_picker::TimePicker;
@@ -237,6 +241,7 @@ gallery![
     popover,
     field,
     select,
+    filter_select,
     checkbox,
     toggle,
     radio,

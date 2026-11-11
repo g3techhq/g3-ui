@@ -468,6 +468,17 @@ fn PlaygroundHeader(
     let settings = use_context::<PlaygroundSettings>();
     let (mode, viewport, theme) = (settings.mode, settings.viewport, settings.theme);
     let compact = g3_ui::use_layout_size() == g3_ui::LayoutSize::Compact;
+    // A theme or platform pick grows over the page in a circle from the
+    // press (`g3_ui::reveal_theme`), as the g3 apps' appearance settings do.
+    let mut reveal_origin = use_signal(|| None::<(f64, f64)>);
+    let record_origin = move |event: PointerEvent| {
+        let point = event.client_coordinates();
+        reveal_origin.set(Some((point.x, point.y)));
+    };
+    // The picker shows its own copy, so the shared theme changes only once
+    // the reveal has captured the old look.
+    let mut picked_theme = use_signal(|| *theme.peek());
+    use_effect(move || picked_theme.set(theme()));
     let theme_options = PlaygroundTheme::all()
         .iter()
         .copied()
@@ -475,26 +486,34 @@ fn PlaygroundHeader(
         .collect::<Vec<_>>();
     // The preview size and theme pickers, a small gap apart.
     let pickers = rsx! {
-        g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
-            if showing_preview {
-                Select {
-                    value: viewport,
-                    aria_label: "Viewport",
-                    width: g3_ui::SelectWidth::Fit,
-                    options: vec![
-                        SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
-                        SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
-                        SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
-                        SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
-                        SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
-                    ],
+        div { style: "display: contents", onpointerdown: record_origin,
+            g3_ui::Stack { horizontal: true, gap: g3_ui::Space::Sm, align: g3_ui::StackAlign::Center,
+                if showing_preview {
+                    Select {
+                        value: viewport,
+                        aria_label: "Viewport",
+                        width: g3_ui::SelectWidth::Fit,
+                        options: vec![
+                            SelectOption::new(PlaygroundViewport::Mobile, "Mobile"),
+                            SelectOption::new(PlaygroundViewport::Tablet, "Tablet"),
+                            SelectOption::new(PlaygroundViewport::Landscape, "Landscape phone"),
+                            SelectOption::new(PlaygroundViewport::Desktop, "Desktop"),
+                            SelectOption::new(PlaygroundViewport::Resizable, "Resize"),
+                        ],
+                    }
                 }
-            }
-            Select {
-                value: theme,
-                aria_label: "Theme",
-                width: g3_ui::SelectWidth::Fit,
-                options: theme_options,
+                Select {
+                    value: picked_theme,
+                    aria_label: "Theme",
+                    width: g3_ui::SelectWidth::Fit,
+                    options: theme_options,
+                    onchange: move |next: PlaygroundTheme| {
+                        spawn(async move {
+                            let mut theme = theme;
+                            g3_ui::reveal_theme(reveal_origin(), move || theme.set(next)).await;
+                        });
+                    },
+                }
             }
         }
     };
@@ -546,9 +565,20 @@ fn PlaygroundHeader(
             },
             toolbar: (showing_preview || compact).then(|| {
                 let platform = rsx! {
-                    SegmentGroup { value: mode, aria_label: "Platform",
-                        SegmentButton { value: ComponentMode::Md, "MD" }
-                        SegmentButton { value: ComponentMode::Ios, "iOS" }
+                    div { style: "display: contents", onpointerdown: record_origin,
+                        SegmentGroup {
+                            value: mode,
+                            aria_label: "Platform",
+                            defer_selection: true,
+                            onchange: move |next: ComponentMode| {
+                                spawn(async move {
+                                    let mut mode = mode;
+                                    g3_ui::reveal_theme(reveal_origin(), move || mode.set(next)).await;
+                                });
+                            },
+                            SegmentButton { value: ComponentMode::Md, "MD" }
+                            SegmentButton { value: ComponentMode::Ios, "iOS" }
+                        }
                     }
                 };
                 // On a phone the pickers get a toolbar row of their

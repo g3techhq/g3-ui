@@ -57,6 +57,7 @@ const COMPONENT_FILES: &[&str] = &[
     include_str!("components/empty_state.rs"),
     include_str!("components/fab.rs"),
     include_str!("components/field.rs"),
+    include_str!("components/filter_select.rs"),
     include_str!("components/header.rs"),
     include_str!("components/infinite_scroll.rs"),
     include_str!("components/info_button.rs"),

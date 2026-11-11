@@ -3,6 +3,8 @@ const label = document.getElementById(__LABEL__);
 if (root) {
     const owner = {};
     root.g3RefreshSession = owner;
+    // Visual state belongs to this gesture, not the app's background fetches.
+    root.setAttribute("data-state", "idle");
     const THRESHOLD = __THRESHOLD__;
     const ELASTIC = __ELASTIC__;
     const TEXT = { pull: __PULL__, release: __RELEASE__, refreshing: __REFRESHING__ };

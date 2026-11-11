@@ -1,5 +1,6 @@
 //! Stylesheet contracts.
 use super::STYLESHEET;
+use crate::theme::LOOK_PROPERTIES;
 use crate::{Look, Theme};
 
 /// The body of the first rule whose selector is exactly `selector`.
@@ -144,13 +145,161 @@ fn a_nested_theme_clears_the_look_it_does_not_set() {
         },
         ..Theme::default_light()
     };
-    let nested = theme.style_attr(true);
+    let nested = theme.shell_style_attr();
     assert!(nested.contains("--g3-card-radius: 18px;"));
     // `initial` is the guaranteed-invalid value, so `var(--x, fallback)` falls back.
     assert!(nested.contains("--g3-page-background: initial;"));
     assert!(nested.contains("--g3-accent-fill: initial;"));
     assert!(!nested.contains("--g3-card-radius: initial;"));
     assert!(!theme.to_style_attr().contains("initial"));
+}
+
+/// A `style` string's declarations, as `(property, value)` pairs.
+fn declarations(style: &str) -> Vec<(String, String)> {
+    style
+        .split(';')
+        .filter_map(|declaration| declaration.split_once(':'))
+        .map(|(name, value)| (name.trim().to_owned(), value.trim().to_owned()))
+        .collect()
+}
+
+/// The inline style Dioxus leaves after `next` replaces `previous`: its
+/// interpreter puts back every old property the new string does not name.
+fn dioxus_style_update(previous: &str, next: &str) -> Vec<(String, String)> {
+    let mut merged = declarations(next);
+    for (name, value) in declarations(previous) {
+        if !merged.iter().any(|(merged_name, _)| *merged_name == name) {
+            merged.push((name, value));
+        }
+    }
+    merged
+}
+
+fn full_look() -> Look {
+    Look {
+        background: Some("linear-gradient(red, blue)".into()),
+        card_radius: Some("18px".into()),
+        accent_fill: Some("linear-gradient(green, teal)".into()),
+        card_border: Some("1px solid red".into()),
+        card_shadow: Some("0 1px 2px rgba(0,0,0,0.2)".into()),
+        card_sheen: Some("linear-gradient(white, transparent)".into()),
+        card_backdrop_filter: Some("blur(20px)".into()),
+    }
+}
+
+#[test]
+fn a_full_look_sets_every_look_property() {
+    let names: Vec<_> = full_look()
+        .tokens()
+        .into_iter()
+        .map(|(name, _)| name)
+        .collect();
+    assert_eq!(names.len(), LOOK_PROPERTIES.len());
+    for name in LOOK_PROPERTIES {
+        assert!(names.contains(&name), "{name} has no Look field");
+    }
+}
+
+#[test]
+fn the_shell_style_names_every_look_property_for_any_theme() {
+    let full = Theme {
+        look: full_look(),
+        ..Theme::default_dark()
+    };
+    let adaptive = Theme::adaptive(
+        Theme {
+            look: full_look(),
+            ..Theme::default_light()
+        },
+        Theme::default_dark(),
+    );
+    assert!(adaptive.look_dark.is_some());
+    for theme in [Theme::default_light(), Theme::system(), full, adaptive] {
+        let style = declarations(&theme.shell_style_attr());
+        for name in LOOK_PROPERTIES {
+            assert!(
+                style.iter().any(|(declared, _)| declared == name),
+                "{name} is missing from {style:?}"
+            );
+        }
+    }
+}
+
+#[test]
+fn switching_to_an_empty_look_clears_the_previous_one() {
+    let full = Theme {
+        look: full_look(),
+        ..Theme::default_dark()
+    };
+    let empty = Theme::default_dark();
+    let after = dioxus_style_update(&full.shell_style_attr(), &empty.shell_style_attr());
+    assert_eq!(after, declarations(&empty.shell_style_attr()));
+    for name in LOOK_PROPERTIES {
+        assert!(
+            after.contains(&(name.to_owned(), "initial".to_owned())),
+            "{name} kept a value after the switch: {after:?}"
+        );
+    }
+
+    // And back: the full look's values replace every `initial`.
+    let back = dioxus_style_update(&empty.shell_style_attr(), &full.shell_style_attr());
+    assert!(!back.iter().any(|(_, value)| value == "initial"));
+}
+
+#[test]
+fn switching_to_an_adaptive_theme_leaves_no_inline_look_behind() {
+    let full = Theme {
+        look: full_look(),
+        ..Theme::default_light()
+    };
+    let adaptive = Theme::adaptive(
+        Theme {
+            look: Look {
+                card_radius: Some("4px".into()),
+                ..Look::default()
+            },
+            ..Theme::default_light()
+        },
+        Theme::default_dark(),
+    );
+    let after = dioxus_style_update(&full.shell_style_attr(), &adaptive.shell_style_attr());
+    // Inline values would beat the scheme rule, so each look property only
+    // points at its scheme name.
+    for name in LOOK_PROPERTIES {
+        let scheme = format!("--g3-scheme-{}", name.trim_start_matches("--g3-"));
+        assert!(after.contains(&(name.to_owned(), format!("var({scheme})"))));
+    }
+    let css = adaptive.shell_look_css("shell").expect("a scheme rule");
+    assert!(css.starts_with("#shell { --g3-scheme-page-background: initial;"));
+    assert!(css.contains("--g3-scheme-card-radius: 4px;"));
+    // Both schemes name every property, so an outer adaptive shell's scheme
+    // values never reach a nested one.
+    for name in LOOK_PROPERTIES {
+        let scheme = format!("--g3-scheme-{}", name.trim_start_matches("--g3-"));
+        assert_eq!(css.matches(&format!("{scheme}:")).count(), 2, "{scheme}");
+    }
+    // The public pair keeps writing the look under its own names.
+    assert!(!adaptive.to_style_attr().contains("--g3-card-radius"));
+    assert!(
+        adaptive
+            .look_css("shell")
+            .expect("a scheme rule")
+            .contains("#shell { --g3-card-radius: 4px; }")
+    );
+}
+
+#[test]
+fn every_look_property_read_has_a_fallback() {
+    // A shell clears an unset look property to `initial`, which only shows
+    // the stylesheet's default where the read names one.
+    for name in LOOK_PROPERTIES {
+        let bare = format!("var({name})");
+        assert!(!STYLESHEET.contains(&bare), "{bare} has no fallback");
+        assert!(
+            STYLESHEET.contains(&format!("var({name},")),
+            "{name} is unused"
+        );
+    }
 }
 
 #[test]
@@ -371,6 +520,30 @@ fn a_one_row_header_sizes_its_toolbar_to_equal_segments() {
         ":is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md:not(.g3-segment-scrollable)",
     );
     assert!(strip.contains("display: grid;") && strip.contains("grid-auto-columns: 1fr;"));
+}
+
+#[test]
+fn a_toolbar_strip_grows_to_its_labels() {
+    // A 30rem cap split three tabs into 160px columns and cut "INCOME &
+    // EXPENSE" in a header with room to spare. Labels end in an ellipsis
+    // only when the header has run out of room. These rules sit inside a
+    // query, indented one level.
+    let nested = |selector: &str| {
+        let needle = format!("\n    {selector} {{");
+        let start = STYLESHEET
+            .find(&needle)
+            .unwrap_or_else(|| panic!("no `{selector}` rule"))
+            + needle.len();
+        let end = start + STYLESHEET[start..].find("\n    }").expect("rule end");
+        &STYLESHEET[start..end]
+    };
+    let strip = ".g3-header-toolbar :is(.g3-segment-toolbar, .g3-segment-standalone)";
+    let md = nested(&format!("{strip}.g3-segment-md"));
+    assert!(md.contains("width: max-content;") && md.contains("max-width: 100%;"));
+    let ios = nested(&format!("{strip}.g3-segment-ios"));
+    assert!(ios.contains("max-width: 100%;") && !ios.contains("30rem"));
+    let cell = nested(".g3-header-with-toolbar > :where(.g3-header-bar) > .g3-header-toolbar");
+    assert!(!cell.contains("max-width"));
 }
 
 #[test]

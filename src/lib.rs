@@ -23,6 +23,8 @@ mod state;
 
 mod theme;
 
+mod theme_reveal;
+
 pub mod palette;
 
 pub mod prelude;
@@ -41,6 +43,7 @@ pub use theme::{
     ComponentMode, Look, Strings, Theme, ThemeProvider, detect_platform_mode, get_mode,
     init_auto_mode, merge_classes, set_mode, use_component_mode, use_mode, use_strings, use_theme,
 };
+pub use theme_reveal::reveal_theme;
 
 #[cfg(test)]
 mod tests;

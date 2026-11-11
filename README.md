@@ -89,13 +89,20 @@ Component names are unprefixed. If one collides with a local name, import it und
 | --- | --- |
 | App shell | `AppWrapper`, `Page`, `Header`, `BackButton`, `Content`, `TabLayout`, `ThemeProvider` |
 | Navigation | `AdaptiveNav`, `NavBar`, `NavRail`, `NavItem`, `NavigationDrawer`, `Tabs`, `TabList`, `Tab`, `TabPanel`, `SegmentGroup`, `SegmentButton` |
-| Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem` |
+| Actions | `Button`, `Fab`, `FabButton`, `FabList`, `FabMenu`, `InfoButton`, `Popover`, `Menu`, `MenuItem`, `Toolbar` |
 | Forms | `Input`, `TextArea`, `Select`, `Checkbox`, `Toggle`, `RadioGroup`, `Radio`, `Range`, `Stepper`, `Searchbar`, `DatePicker`, `TimePicker`, `Calendar`, `Picker`, `PickerColumn` |
-| Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider` |
+| Content | `Card`, `List`, `ListHeader`, `Item`, `SwipeItem`, `SwipeAction`, `ReorderList`, `ReorderItem`, `ReorderHandle`, `Table`, `Shelf`, `Text`, `Img`, `Tooltip`, `Avatar`, `Badge`, `Chip`, `Divider`, `Rating` |
 | Layout | `Stack`, `Grid`, `LayoutScope`, `AdaptiveLayout`, `PageLayout` |
 | Disclosure | `AccordionGroup`, `AccordionItem` |
 | Overlays | `BottomSheet`, `SideSheet`, `Modal`, `Alert`, `ConfirmModal`, `ActionSheet`, `Toast` |
-| Feedback | `Progress`, `Skeleton`, `Spinner`, `Refresher`, `InfiniteScroll` |
+| Feedback | `Progress`, `Skeleton`, `Spinner`, `EmptyState`, `Refresher`, `InfiniteScroll` |
+
+`Table` also serves ledgers and data grids: `sticky_header` keeps the header row in view while the
+body scrolls in the table's own frame, `lines: TableLines::Rows`, `align: TableAlign::Start` and
+`density: TableDensity::Compact` give a register's look, and a row's `data-interactive="true"` and
+`aria-selected="true"` make it clickable and selected. A `searchable` `Select` narrows a long list
+as you type. `InfiniteScroll` loads at the top with `edge: InfiniteScrollEdge::Top`, and inside a
+table body with `table_columns`.
 
 [docs.rs/g3-ui](https://docs.rs/g3-ui) has the full prop reference. The [playground](#playground)
 shows every component live.
@@ -327,7 +334,9 @@ match the markup the server sent, and hydration keeps the server's.
 
 Colors are CSS custom properties (`--g3-color-*`) generated from a `Theme`. The presets are
 `Theme::default_light()`, `Theme::default_dark()`, and `Theme::system()`, which follows the
-operating system through CSS `light-dark()`. Every field is public:
+operating system through CSS `light-dark()`. To switch theme or mode with the new look growing
+over the old in a circle from where the user pressed, instead of flashing, make the change inside
+`g3_ui::reveal_theme(origin, || theme.set(next)).await`. Every field is public:
 
 ```
 # use dioxus::prelude::*;

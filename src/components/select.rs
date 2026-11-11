@@ -42,6 +42,11 @@ pub struct SelectOption<T> {
     pub description: Option<String>,
     /// Whether it can be chosen.
     pub disabled: bool,
+    /// Nesting depth, for a tree such as a chart of accounts. Each level
+    /// indents the row. Flattened while a search is typed.
+    pub indent: u8,
+    /// More text a search matches, never shown: a parent's name, a code.
+    pub keywords: Option<String>,
 }
 
 impl<T> SelectOption<T> {
@@ -53,7 +58,40 @@ impl<T> SelectOption<T> {
             trigger_label: None,
             description: None,
             disabled: false,
+            indent: 0,
+            keywords: None,
         }
+    }
+
+    /// Indent the row `level` steps, under its parent.
+    pub fn indent(mut self, level: u8) -> Self {
+        self.indent = level;
+        self
+    }
+
+    /// Text a search also matches, such as a parent's name or a code.
+    pub fn keywords(mut self, keywords: impl Into<String>) -> Self {
+        self.keywords = Some(keywords.into());
+        self
+    }
+
+    /// Whether every word of `query` appears in the label, the trigger
+    /// label, the description or the keywords, ignoring case.
+    pub fn matches(&self, query: &str) -> bool {
+        let haystack = [
+            Some(self.label.as_str()),
+            self.trigger_label.as_deref(),
+            self.description.as_deref(),
+            self.keywords.as_deref(),
+        ]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase();
+        query
+            .split_whitespace()
+            .all(|word| haystack.contains(&word.to_lowercase()))
     }
 
     /// Add secondary text.
@@ -149,6 +187,14 @@ pub fn Select<T: Clone + PartialEq + 'static>(
     id: Option<String>,
     /// How wide the field is. Defaults to [`SelectWidth::Fill`].
     width: Option<SelectWidth>,
+    /// Put a search field at the top of the list that narrows it as you
+    /// type, for long lists. Typing on the closed field opens the list with
+    /// the search started. Enter picks the first match. Defaults to `false`.
+    searchable: Option<bool>,
+    /// With `searchable`, offer what was typed as a choice of its own when it
+    /// is not exactly an option, for lists that also take new entries (a new
+    /// payee). Called with the text; the app decides what it becomes.
+    on_typed: Option<EventHandler<String>>,
     /// Platform look. Defaults to the ambient mode.
     mode: Option<ComponentMode>,
     /// Extra classes for the field wrapper.
@@ -169,6 +215,56 @@ pub fn Select<T: Clone + PartialEq + 'static>(
     let initial = default_value.or_else(|| options.first().map(|option| option.value.clone()));
     let local = use_signal(|| initial);
     let mut open = use_signal(|| false);
+    let searchable = searchable.unwrap_or(false);
+    let mut query = use_signal(String::new);
+    // Each opening starts a fresh search.
+    use_effect(move || {
+        if !open() {
+            query.set(String::new());
+        }
+    });
+    let pick = use_callback(move |picked: T| {
+        match value {
+            Some(mut value) => value.set(picked.clone()),
+            None => {
+                let mut local = local;
+                local.set(Some(picked.clone()));
+            }
+        }
+        open.set(false);
+        if let Some(onchange) = onchange {
+            onchange.call(picked);
+        }
+    });
+    let pick_typed = use_callback(move |text: String| {
+        open.set(false);
+        if let Some(on_typed) = on_typed {
+            on_typed.call(text);
+        }
+    });
+    let typed = query();
+    let typed = typed.trim().to_string();
+    let shown: Vec<SelectOption<T>> = if searchable && !typed.is_empty() {
+        options
+            .iter()
+            .filter(|option| option.matches(&typed))
+            .cloned()
+            .map(|option| option.indent(0))
+            .collect()
+    } else {
+        options.clone()
+    };
+    let offer_typed = searchable
+        && on_typed.is_some()
+        && !typed.is_empty()
+        && !options
+            .iter()
+            .any(|option| option.label.trim().eq_ignore_ascii_case(&typed));
+    let first_match = shown
+        .iter()
+        .find(|option| !option.disabled)
+        .map(|option| option.value.clone());
+    let typed_label = strings.use_typed.replace("{text}", &typed);
     let current: Option<T> = match value {
         Some(value) => Some(value()),
         None => local(),
@@ -199,11 +295,36 @@ pub fn Select<T: Clone + PartialEq + 'static>(
             aria_describedby: describedby,
             aria_invalid: invalid.then_some("true"),
             onclick: move |_| open.toggle(),
-            // Arrow keys open the list, as a native select does.
+            // Arrow keys open the list, as a native select does. Typing on
+            // a searchable select opens it with the search begun.
             onkeydown: move |event| {
-                if matches!(event.key(), Key::Named(NamedKey::ArrowDown) | Key::Named(NamedKey::ArrowUp)) && !open() {
-                    event.prevent_default();
-                    open.set(true);
+                // Letters typed before focus reaches the search field still
+                // land in the search.
+                if open() {
+                    if let Key::Character(text) = event.key()
+                        && searchable
+                        && !event.modifiers().intersects(Modifiers::CONTROL | Modifiers::META | Modifiers::ALT)
+                    {
+                        event.prevent_default();
+                        query.write().push_str(&text);
+                    }
+                    return;
+                }
+                match event.key() {
+                    Key::Named(NamedKey::ArrowDown) | Key::Named(NamedKey::ArrowUp) => {
+                        event.prevent_default();
+                        open.set(true);
+                    }
+                    Key::Character(text)
+                        if searchable
+                            && !text.trim().is_empty()
+                            && !event.modifiers().intersects(Modifiers::CONTROL | Modifiers::META | Modifiers::ALT) =>
+                    {
+                        event.prevent_default();
+                        query.set(text);
+                        open.set(true);
+                    }
+                    _ => {}
                 }
             },
             match chosen {
@@ -236,28 +357,65 @@ pub fn Select<T: Clone + PartialEq + 'static>(
                     sheet_on_compact: true,
                     role: "listbox",
                     roving: Some("[role=option]"),
-                    id: list_id,
+                    id: list_id.clone(),
                     aria_label: list_label,
                     mode,
                     class: "g3-select-list",
-                    for option in options {
+                    if searchable {
+                        div { class: "g3-select-search",
+                            input {
+                                r#type: "search",
+                                class: classes(["g3-input", "g3-select-search-input", mode.pick("g3-input-ios", "g3-input-md")]),
+                                // The list's focus goes here first, on every
+                                // opening (`autofocus` acts only on insertion).
+                                "data-g3-autofocus": "true",
+                                autocomplete: "off",
+                                spellcheck: "false",
+                                aria_label: strings.search.clone(),
+                                aria_controls: list_id.clone(),
+                                placeholder: strings.search.clone(),
+                                value: "{query}",
+                                oninput: move |event| query.set(event.value()),
+                                onkeydown: {
+                                    let first_match = first_match.clone();
+                                    let typed = typed.clone();
+                                    move |event: KeyboardEvent| {
+                                        if event.key() != Key::Named(NamedKey::Enter) {
+                                            return;
+                                        }
+                                        event.prevent_default();
+                                        if let Some(first) = first_match.clone() {
+                                            pick.call(first);
+                                        } else if offer_typed {
+                                            pick_typed.call(typed.clone());
+                                        }
+                                    }
+                                },
+                            }
+                        }
+                    }
+                    for option in shown.iter().cloned() {
                         SelectOptionRow {
                             option: option.clone(),
                             selected: Some(&option.value) == current.as_ref(),
-                            onpick: move |picked: T| {
-                                match value {
-                                    Some(mut value) => value.set(picked.clone()),
-                                    None => {
-                                        let mut local = local;
-                                        local.set(Some(picked.clone()));
-                                    }
-                                }
-                                open.set(false);
-                                if let Some(onchange) = onchange {
-                                    onchange.call(picked);
-                                }
-                            },
+                            onpick: move |picked: T| pick.call(picked),
                         }
+                    }
+                    if offer_typed {
+                        button {
+                            r#type: "button",
+                            class: "g3-select-option g3-select-typed",
+                            role: "option",
+                            tabindex: "-1",
+                            aria_selected: "false",
+                            onclick: {
+                                let typed = typed.clone();
+                                move |_| pick_typed.call(typed.clone())
+                            },
+                            span { "{typed_label}" }
+                        }
+                    } else if searchable && shown.is_empty() {
+                        div { class: "g3-select-empty", role: "status", "{strings.no_matches}" }
                     }
                 }
             }
@@ -277,6 +435,8 @@ fn SelectOptionRow<T: Clone + PartialEq + 'static>(
         trigger_label: _,
         description,
         disabled,
+        indent,
+        keywords: _,
     } = option;
 
     rsx! {
@@ -287,6 +447,8 @@ fn SelectOptionRow<T: Clone + PartialEq + 'static>(
             tabindex: "-1",
             aria_selected: selected.to_string(),
             disabled,
+            "data-indent": (indent > 0).then(|| indent.to_string()),
+            style: (indent > 0).then(|| format!("--g3-select-indent: {indent}")),
             onclick: move |_| onpick.call(value.clone()),
             span { "{label}" }
             if selected {
@@ -335,6 +497,20 @@ fn SelectPlaygroundDemo() -> Element {
                     SelectOption::from("Iron").description("3 through 9"),
                     SelectOption::from("Wedge"),
                     SelectOption::from("Putter").disabled(),
+                ],
+            }
+            Select::<String> {
+                label: "Course",
+                width: width(),
+                searchable: true,
+                placeholder: "Type to find a course",
+                on_typed: move |_text: String| {},
+                options: vec![
+                    SelectOption::from("Pebble Creek"),
+                    SelectOption::from("Front nine").indent(1).keywords("Pebble Creek"),
+                    SelectOption::from("Back nine").indent(1).keywords("Pebble Creek"),
+                    SelectOption::from("Riverbend"),
+                    SelectOption::from("Oak Hollow").description("Par 3"),
                 ],
             }
             Select::<u8> {

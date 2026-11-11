@@ -291,12 +291,12 @@ pub fn AppWrapper(
         },
         overlay_cls,
     ]);
-    let look_css = theme.scoped_look_css(&shell_id, !is_root_shell);
+    let look_css = theme.shell_look_css(&shell_id);
     let shell = rsx! {
         div {
             id: shell_id,
             class: merge_classes(shell_cls, class.as_deref()),
-            style: theme.style_attr(!is_root_shell),
+            style: theme.shell_style_attr(),
             "data-g3-mode": mode.as_str(),
             "data-g3-bar": bar_attr,
             "data-g3-dynamic-type": dynamic_type.unwrap_or(false).then_some("true"),

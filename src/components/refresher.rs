@@ -14,8 +14,9 @@ const DRAG_SCRIPT: &str = include_str!("refresher.js");
 /// Pull-to-refresh around scrollable content. Like Ionic's `ion-refresher`.
 ///
 /// Pulling past the threshold at the top of the scroll area calls
-/// `on_refresh`. Set `refreshing` while the refresh runs; the indicator stays
-/// until it is `false` again.
+/// `on_refresh`. Set `refreshing` while the refresh runs; a pulled indicator
+/// stays until it is `false` again. Background refreshes do not reveal it or
+/// move the content.
 ///
 /// Usually you set [`Content`](crate::Content)'s `on_refresh` and
 /// `refreshing` instead, which wraps the whole page in a refresher. Use this
@@ -47,7 +48,8 @@ const DRAG_SCRIPT: &str = include_str!("refresher.js");
 /// ```
 #[component]
 pub fn Refresher(
-    /// Whether a refresh is running.
+    /// Whether a refresh is running. Blocks another pull without revealing
+    /// the indicator unless the user pulled to start this refresh.
     refreshing: bool,
     /// Called when the user completes a pull.
     on_refresh: EventHandler<()>,
@@ -90,7 +92,6 @@ pub fn Refresher(
         div {
             id: root_id,
             class: merge_classes(cls, class.as_deref()),
-            "data-state": if refreshing { "refreshing" } else { "idle" },
             "data-refreshing": refreshing.to_string(),
             "data-disabled": disabled.unwrap_or(false).to_string(),
             aria_busy: refreshing.then_some("true"),

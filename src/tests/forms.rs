@@ -93,6 +93,43 @@ fn select_shows_a_placeholder_for_an_unknown_value() {
 }
 
 #[test]
+fn a_filter_names_itself_until_it_narrows() {
+    fn open() -> Element {
+        let status = use_signal(|| 0_u8);
+        rsx! {
+            FilterSelect {
+                label: "Status",
+                value: status,
+                options: vec![SelectOption::new(0, "All"), SelectOption::new(1, "Not cleared")],
+            }
+        }
+    }
+    let html = render(open);
+    assert_eq!(text_of_class(&html, "g3-select-value"), "Status");
+    assert!(!element_with_class(&html, "g3-filter").contains("data-active"));
+    assert!(!html.contains("g3-filter-clear"));
+
+    fn narrowed() -> Element {
+        let status = use_signal(|| 1_u8);
+        rsx! {
+            FilterSelect {
+                label: "Status",
+                value: status,
+                options: vec![SelectOption::new(0, "All"), SelectOption::new(1, "Not cleared")],
+            }
+        }
+    }
+    let html = render(narrowed);
+    assert_eq!(
+        text_of_class(&html, "g3-select-value"),
+        "Status: Not cleared"
+    );
+    assert!(element_with_class(&html, "g3-filter").contains("data-active=\"true\""));
+    assert!(element_with_class(&html, "g3-select").contains("aria-label=\"Status: Not cleared\""));
+    assert!(element_with_class(&html, "g3-filter-clear").contains("aria-label=\"Clear Status\""));
+}
+
+#[test]
 fn checkbox_reports_mixed_and_bare_states() {
     fn app() -> Element {
         rsx! {
@@ -587,4 +624,34 @@ fn an_inline_picker_is_a_group_of_spin_buttons() {
     assert!(html.contains(r#"aria-valuetext="4 strokes""#));
     assert_eq!(html.matches("g3-wheel-item").count(), 6);
     assert_eq!(html.matches(r#"data-disabled="true""#).count(), 1);
+}
+
+#[test]
+fn a_select_search_matches_every_word_anywhere_in_an_option() {
+    let electric = SelectOption::new(1, "Electric")
+        .description("Utilities")
+        .keywords("Utilities:Electric 6110")
+        .indent(1);
+    assert!(electric.matches("elec"));
+    assert!(electric.matches("UTIL elec"));
+    assert!(electric.matches("6110"));
+    assert!(electric.matches("  "));
+    assert!(!electric.matches("util gas"));
+    assert_eq!(electric.indent, 1);
+    assert!(!SelectOption::new(2, "Rent").matches("electric"));
+}
+
+#[test]
+fn a_select_search_has_translatable_text() {
+    let strings = Strings::from_lookup(|id| match id {
+        "no_matches" => Some("Sin resultados".into()),
+        "use_typed" => Some("Usar «{text}»".into()),
+        _ => None,
+    });
+    assert_eq!(strings.no_matches, "Sin resultados");
+    assert_eq!(strings.use_typed.replace("{text}", "Acme"), "Usar «Acme»");
+    assert_eq!(
+        Strings::default().use_typed.replace("{text}", "Acme"),
+        "Use \u{201c}Acme\u{201d}"
+    );
 }

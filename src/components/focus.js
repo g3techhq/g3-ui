@@ -2,7 +2,14 @@ const el = document.getElementById(__ID__);
 if (el) {
     const stackKey = Symbol.for('g3-ui.focus');
     const stack = window[stackKey] ||= [];
-    const previous = document.activeElement;
+    // Where focus was before the surface opened. An `autofocus` field inside
+    // it can take focus before this runs, so remember what focus last left.
+    const leftKey = Symbol.for('g3-ui.focus-left');
+    if (!window[leftKey]) {
+        window[leftKey] = { el: null };
+        document.addEventListener('focusout', (event) => { window[leftKey].el = event.target; }, true);
+    }
+    const previous = el.contains(document.activeElement) ? window[leftKey].el : document.activeElement;
     const session = { el };
     stack.push(session);
     const top = () => stack.at(-1) === session;
@@ -18,7 +25,14 @@ if (el) {
     const onKey = (event) => {
         if (!top() || (!el.contains(event.target) && !toast(event.target))) return;
         if (event.key === 'Escape') { event.stopPropagation(); event.preventDefault(); dioxus.send('escape'); return; }
+        // In a text field (a searchable select's search) keys type and Home
+        // and End move the caret; the arrows still step into the list.
+        const typing = event.target instanceof Element && event.target.matches('input, textarea');
+        if (typing && event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
         if (roving && event.key.length === 1 && event.key.trim() && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            // A list with its own search field takes the letter there.
+            const search = el.querySelector('[data-g3-autofocus="true"]');
+            if (search && visible(search)) { search.focus(); return; }
             const all = items();
             const current = all.indexOf(document.activeElement);
             const match = all.slice(current + 1).concat(all.slice(0, current + 1)).find((node) => node.textContent.trim().toLowerCase().startsWith(event.key.toLowerCase()));
@@ -54,7 +68,7 @@ if (el) {
         if (el.contains(document.activeElement)) return;
         const all = focusables();
         const selected = roving && items().find((node) => node.getAttribute('aria-selected') === 'true' || node.getAttribute('aria-checked') === 'true');
-        (all.find((node) => node.hasAttribute('autofocus')) || selected || all[0] || el).focus({ preventScroll: true });
+        (all.find((node) => node.hasAttribute('autofocus') || node.dataset.g3Autofocus === 'true') || selected || all[0] || el).focus({ preventScroll: true });
     };
     const frame = requestAnimationFrame(initialize);
     const timer = setTimeout(initialize, 50); // Hidden pages may never run a frame.

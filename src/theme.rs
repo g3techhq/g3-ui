@@ -91,7 +91,7 @@ pub struct Look {
 }
 
 /// Every custom property a [`Look`] can set.
-const LOOK_PROPERTIES: [&str; 7] = [
+pub(crate) const LOOK_PROPERTIES: [&str; 7] = [
     "--g3-page-background",
     "--g3-accent-fill",
     "--g3-card-radius",
@@ -150,6 +150,30 @@ impl Look {
         }
         all.join(" ")
     }
+
+    /// Every look property under its scheme name (see [`scheme_property`]),
+    /// for an adaptive theme's scheme rule. Unset ones are `initial`, so an
+    /// outer adaptive shell's values never leak in.
+    fn scheme_declarations(&self) -> String {
+        let set = self.tokens();
+        LOOK_PROPERTIES
+            .iter()
+            .map(|name| {
+                let value = set
+                    .iter()
+                    .find(|(set_name, _)| set_name == name)
+                    .map_or("initial", |(_, value)| value.as_str());
+                format!("{}: {value};", scheme_property(name))
+            })
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+}
+
+/// The private name an adaptive shell's scheme rule writes a look property
+/// under: `--g3-card-radius` becomes `--g3-scheme-card-radius`.
+fn scheme_property(name: &str) -> String {
+    format!("--g3-scheme-{}", name.trim_start_matches("--g3-"))
 }
 
 /// Color tokens for g3-ui components.
@@ -396,12 +420,39 @@ impl Theme {
 
     /// Every token as CSS declarations for an inline `style` attribute.
     pub fn to_style_attr(&self) -> String {
-        self.style_attr(false)
+        // A look that differs by scheme is written by `look_css` instead:
+        // inline declarations would beat its `prefers-color-scheme` rule.
+        let look = self
+            .look_dark
+            .is_none()
+            .then(|| self.look.declarations(false));
+        self.style_with_look(look.as_deref())
     }
 
-    /// `to_style_attr`, optionally clearing the look properties this theme
-    /// leaves unset (see `Look::declarations`). Nested wrappers use it.
-    pub(crate) fn style_attr(&self, reset_look: bool) -> String {
+    /// The inline style of an [`AppWrapper`](crate::AppWrapper) shell or a
+    /// [`ThemeProvider`]. It names every look property, whatever the theme
+    /// sets.
+    ///
+    /// Dioxus puts back any inline property a new `style` string leaves out,
+    /// so a property dropped on a theme switch would keep the old theme's
+    /// value. Unset ones are written as `initial`, which makes the
+    /// stylesheet's fallback apply (and makes a nested shell drop the outer
+    /// look rather than inherit it). An adaptive theme points each one at
+    /// its scheme name, which `shell_look_css` sets per scheme.
+    pub(crate) fn shell_style_attr(&self) -> String {
+        let look = if self.look_dark.is_some() {
+            LOOK_PROPERTIES
+                .iter()
+                .map(|name| format!("{name}: var({});", scheme_property(name)))
+                .collect::<Vec<_>>()
+                .join(" ")
+        } else {
+            self.look.declarations(true)
+        };
+        self.style_with_look(Some(&look))
+    }
+
+    fn style_with_look(&self, look: Option<&str>) -> String {
         let mut style = String::new();
         for (name, value) in self.tokens() {
             style.push_str(name);
@@ -412,12 +463,9 @@ impl Theme {
         style.push_str("color-scheme: ");
         style.push_str(&self.color_scheme);
         style.push(';');
-        // A look that differs by scheme is written by `look_css` instead:
-        // inline declarations would beat its `prefers-color-scheme` rule.
-        let look = self.look.declarations(reset_look);
-        if self.look_dark.is_none() && !look.is_empty() {
+        if let Some(look) = look.filter(|look| !look.is_empty()) {
             style.push(' ');
-            style.push_str(&look);
+            style.push_str(look);
         }
         style
     }
@@ -426,19 +474,32 @@ impl Theme {
     /// light and dark ([`Theme::adaptive`]); `None` when `to_style_attr`
     /// already carries the whole look.
     pub fn look_css(&self, id: &str) -> Option<String> {
-        self.scoped_look_css(id, false)
+        let dark = self.look_dark.as_ref()?;
+        Some(scheme_rule(
+            id,
+            &self.look.declarations(false),
+            &dark.declarations(false),
+        ))
     }
 
-    pub(crate) fn scoped_look_css(&self, id: &str, reset_look: bool) -> Option<String> {
+    /// The scheme rule for a shell styled by `shell_style_attr`: every look
+    /// property under its scheme name, in both schemes.
+    pub(crate) fn shell_look_css(&self, id: &str) -> Option<String> {
         let dark = self.look_dark.as_ref()?;
-        let css = format!(
-            "#{id} {{ {light} }} @media (prefers-color-scheme: dark) {{ #{id} {{ {dark} }} }}",
-            light = self.look.declarations(reset_look),
-            dark = dark.declarations(reset_look),
-        );
-        // Written as raw markup, so a value cannot close the element early.
-        Some(css.replace("</", "<\\/"))
+        Some(scheme_rule(
+            id,
+            &self.look.scheme_declarations(),
+            &dark.scheme_declarations(),
+        ))
     }
+}
+
+/// `light` on the element with `id`, and `dark` under a dark color scheme.
+fn scheme_rule(id: &str, light: &str, dark: &str) -> String {
+    let css =
+        format!("#{id} {{ {light} }} @media (prefers-color-scheme: dark) {{ #{id} {{ {dark} }} }}");
+    // Written as raw markup, so a value cannot close the element early.
+    css.replace("</", "<\\/")
 }
 
 /// Text that components render on their own: accessible names, button labels,
@@ -497,6 +558,11 @@ pub struct Strings {
     pub back: String,
     /// `Searchbar` placeholder.
     pub search: String,
+    /// Shown in a searchable `Select` when nothing matches what was typed.
+    pub no_matches: String,
+    /// A searchable `Select`'s choice that takes the typed text as the value,
+    /// with a `{text}` placeholder.
+    pub use_typed: String,
     /// Accessible name of a swipe row's keyboard "show actions" control.
     pub show_actions: String,
     /// Accessible name of a reorder handle that was not given one.
@@ -578,6 +644,8 @@ impl Default for Strings {
             clear: "Clear".into(),
             back: "Back".into(),
             search: "Search".into(),
+            no_matches: "No matches".into(),
+            use_typed: "Use \u{201c}{text}\u{201d}".into(),
             show_actions: "Show actions".into(),
             reorder: "Reorder".into(),
             opens_in_new_tab: "(opens in a new tab)".into(),
@@ -713,6 +781,8 @@ impl Strings {
             clear,
             back,
             search,
+            no_matches,
+            use_typed,
             show_actions,
             reorder,
             opens_in_new_tab,
@@ -772,6 +842,8 @@ impl Strings {
             clear,
             back,
             search,
+            no_matches,
+            use_typed,
             show_actions,
             reorder,
             opens_in_new_tab,
@@ -1104,13 +1176,13 @@ pub fn ThemeProvider(
     let id = crate::state::use_element_id("theme", None);
     // A provider inside an app replaces its look entirely rather than adding
     // to it, as it does the colors.
-    let look_css = theme.scoped_look_css(&id, true);
+    let look_css = theme.shell_look_css(&id);
 
     rsx! {
         div {
             id,
             class: "g3-theme-provider",
-            style: theme.style_attr(true),
+            style: theme.shell_style_attr(),
             "data-g3-mode": mode.as_str(),
             if let Some(css) = look_css {
                 style { dangerous_inner_html: css }

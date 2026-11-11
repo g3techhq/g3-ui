@@ -31,18 +31,20 @@ const SUPPRESS_CLICK_MS = 300;
 const rests = new WeakMap();
 let active = null;
 let suppress = null;
+const touchListeners = new AbortController();
+const touchRows = new WeakSet();
 
 const direction = (row) => getComputedStyle(row).direction === "rtl" ? -1 : 1;
 
-const send = (row, kind, offset, edge, committed) => {
+const send = (row, kind, offset, edge, committed, dir = direction(row)) => {
     // Reports use logical displacement: positive exposes Start in either direction.
-    offset *= direction(row);
+    offset *= dir;
     dioxus.send([row.id, kind, [offset, edge ? offset / edge.width : 0, committed ? 1 : 0]]);
 };
 
 // The edge a drag of `raw` pixels moves toward, if it has actions.
-const edgeFor = (row, raw) => {
-    const logical = raw * direction(row);
+const edgeFor = (row, raw, dir = direction(row)) => {
+    const logical = raw * dir;
     const side = logical > 0 ? "start" : logical < 0 ? "end" : null;
     if (!side || row.dataset[side === "start" ? "hasStart" : "hasEnd"] !== "true") return null;
     const behavior = row.dataset[side === "start" ? "startBehavior" : "endBehavior"];
@@ -76,8 +78,17 @@ const committedAt = (edge, offset) => edge.behavior === "activate"
     ? Math.abs(offset) >= edge.width * ACTIVATE_RATIO
     : Math.abs(offset) >= edge.width + FULL_SWIPE_MARGIN;
 
-const paint = (row, offset, dragging) => {
-    const edge = edgeFor(row, offset);
+// Measure both edges before any writes. A move must never read computed style
+// after painting the previous move: that forces style/layout on Android.
+const geometryFor = (row) => {
+    const dir = direction(row);
+    return { dir, start: edgeFor(row, dir, dir), end: edgeFor(row, -dir, dir) };
+};
+const gestureEdge = (geometry, offset) => offset * geometry.dir > 0
+    ? geometry.start : offset * geometry.dir < 0 ? geometry.end : null;
+
+const paint = (row, offset, dragging, geometry = geometryFor(row)) => {
+    const edge = gestureEdge(geometry, offset);
     const width = edge?.width ?? REVEAL_WIDTH;
     row.style.setProperty("--g3-swipe-offset", `${offset}px`);
     row.style.setProperty("--g3-swipe-progress", String(Math.min(Math.abs(offset / width), 1.4)));
@@ -88,19 +99,19 @@ const paint = (row, offset, dragging) => {
     // Rust hears only where a row comes to rest, so its `aria-hidden` still
     // says closed for the whole drag - and for all of an activate swipe, which
     // always rests shut. The edge being uncovered is shown from here instead.
-    if (offset * direction(row) > 0) row.dataset.exposed = "start";
-    else if (offset * direction(row) < 0) row.dataset.exposed = "end";
+    if (offset * geometry.dir > 0) row.dataset.exposed = "start";
+    else if (offset * geometry.dir < 0) row.dataset.exposed = "end";
     else delete row.dataset.exposed;
     if (edge && edge.behavior !== "reveal" && committedAt(edge, offset)) row.dataset.committed = "true";
     else delete row.dataset.committed;
 };
 
 // Settle a row at rest and tell Rust, which keeps the hidden actions inert.
-const rest = (row, offset) => {
-    paint(row, offset, false);
+const rest = (row, offset, geometry = geometryFor(row)) => {
+    paint(row, offset, false, geometry);
     if ((rests.get(row) ?? 0) !== offset) {
         rests.set(row, offset);
-        send(row, "rest", offset, edgeFor(row, offset), false);
+        send(row, "rest", offset, gestureEdge(geometry, offset), false, geometry.dir);
     }
 };
 
@@ -114,22 +125,35 @@ const onTouchMove = (event) => {
 };
 
 const onPointerDown = (event) => {
+    // Only the compatibility click from the old gesture is suppressed. A new
+    // press, even on the same card before its settle finishes, is a fresh tap.
+    suppress = null;
     // A reorder handle or a rating star in the row claimed this press first.
-    if (event.defaultPrevented) return;
+    if (event.defaultPrevented || event.isPrimary === false) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     const row = event.target instanceof Element && event.target.closest(".g3-swipe-item");
     if (!row || active || row.dataset.disabled === "true" || !idle(row)) return;
     if (row.dataset.mouseSwipe === "false" && event.pointerType === "mouse") return;
-    if (!row.g3SwipeTouch) {
-        row.g3SwipeTouch = true;
-        row.addEventListener("touchmove", onTouchMove, { passive: false });
+    if (!touchRows.has(row)) {
+        touchRows.add(row);
+        row.addEventListener("touchmove", onTouchMove, { passive: false, signal: touchListeners.signal });
     }
-    const base = rests.get(row) ?? 0;
+    const resting = rests.get(row) ?? 0;
+    // A new drag can catch a row halfway through its settle. Resume from the
+    // visible transform rather than jumping to the eventual resting offset.
+    const content = row.querySelector(":scope > .g3-swipe-content");
+    const transform = content && getComputedStyle(content).transform;
+    const matrix = transform?.match(/^matrix(3d)?\((.+)\)$/);
+    const base = matrix ? Number(matrix[2].split(",")[matrix[1] ? 12 : 4]) : resting;
     active = {
         row,
         pointerId: event.pointerId,
         x: event.clientX,
         y: event.clientY,
         base,
+        resting,
+        geometry: geometryFor(row),
+        frame: 0,
         offset: base,
         horizontal: false,
         moved: false,
@@ -159,30 +183,35 @@ const onPointerMove = (event) => {
     const dy = event.clientY - gesture.y;
     if (!gesture.moved && Math.hypot(moveX, dy) > LONG_PRESS_SLOP) {
         gesture.moved = true;
-        // Capture once the pointer moves, not at the press. A captured
-        // pointer's release targets the row, so the click that ends a tap
-        // would land on the row instead of the button under the finger, and
-        // a tappable row would never open. Nor can capture wait for
-        // horizontal intent: touch browsers can dispatch a leave as soon as
-        // the finger crosses the original hit-test box, which would end the
-        // gesture and snap the row back. The slop is well inside any row.
-        try { gesture.row.setPointerCapture(event.pointerId); } catch (error) {}
+        clearTimeout(gesture.timer);
     }
     if (!gesture.horizontal) {
+        if (Math.abs(dy) > HORIZONTAL_SLOP && Math.abs(dy) >= Math.abs(moveX)) {
+            active = null;
+            return;
+        }
         if (Math.abs(moveX) > HORIZONTAL_SLOP && Math.abs(moveX) > Math.abs(dy)) {
             gesture.horizontal = true;
+            // Capture only a swipe; ordinary taps retain their button target.
+            try { gesture.row.setPointerCapture(event.pointerId); } catch (error) {}
         } else {
             return;
         }
     }
     // Resume from where an open row rests.
     const raw = gesture.base + moveX;
-    const edge = edgeFor(gesture.row, raw);
+    const edge = gestureEdge(gesture.geometry, raw);
     gesture.offset = edge ? offsetFor(edge, raw) : 0;
-    paint(gesture.row, gesture.offset, true);
-    if (edge && gesture.row.dataset.reportSwipe === "true") {
-        send(gesture.row, "move", gesture.offset, edge, committedAt(edge, gesture.offset));
-    }
+    if (gesture.frame) return;
+    gesture.frame = requestAnimationFrame(() => {
+        gesture.frame = 0;
+        if (active !== gesture) return;
+        paint(gesture.row, gesture.offset, true, gesture.geometry);
+        const edge = gestureEdge(gesture.geometry, gesture.offset);
+        if (edge && gesture.row.dataset.reportSwipe === "true") {
+            send(gesture.row, "move", gesture.offset, edge, committedAt(edge, gesture.offset), gesture.geometry.dir);
+        }
+    });
 };
 
 const release = (event) => {
@@ -190,26 +219,27 @@ const release = (event) => {
     if (!gesture || event.pointerId !== gesture.pointerId) return;
     active = null;
     clearTimeout(gesture.timer);
-    const { row, offset } = gesture;
+    cancelAnimationFrame(gesture.frame);
+    const { row, offset, geometry } = gesture;
     // The click that ends a swipe or a long press must not also activate the row.
     if (gesture.longPressed || gesture.horizontal) {
         suppress = { row, until: performance.now() + SUPPRESS_CLICK_MS };
     }
     if (!gesture.horizontal) return;
-    const edge = edgeFor(row, offset);
-    if (!edge) return rest(row, 0);
+    const edge = gestureEdge(geometry, offset);
+    if (!edge) return rest(row, 0, geometry);
     const committed = committedAt(edge, offset);
     if (edge.behavior === "reveal") {
-        return rest(row, Math.abs(offset) > edge.width / 2 ? Math.sign(offset) * edge.width : 0);
+        return rest(row, Math.abs(offset) > edge.width / 2 ? Math.sign(offset) * edge.width : 0, geometry);
     }
     if (edge.behavior === "activate") {
-        if (committed) send(row, "activate", offset, edge, true);
-        return rest(row, 0);
+        if (committed) send(row, "activate", offset, edge, true, geometry.dir);
+        return rest(row, 0, geometry);
     }
-    if (!committed) return rest(row, 0);
+    if (!committed) return rest(row, 0, geometry);
     // Collapse from the row's own height, whatever it holds.
     row.style.setProperty("--g3-swipe-row-height", `${row.getBoundingClientRect().height}px`);
-    paint(row, DISMISS_OFFSET * Math.sign(offset), false);
+    paint(row, DISMISS_OFFSET * Math.sign(offset), false, geometry);
     row.dataset.state = "exiting";
     setTimeout(() => {
         row.dataset.state = "collapsing";
@@ -222,7 +252,7 @@ const release = (event) => {
 // from it fires a loss on that element, which bubbles here mid-swipe. Taken
 // for a release, it snapped every touch swipe back after its first frame.
 const onLostPointerCapture = (event) => {
-    if (event.target === active?.row) release(event);
+    if (event.target === active?.row) onPointerCancel(event);
 };
 
 const onPointerCancel = (event) => {
@@ -230,14 +260,17 @@ const onPointerCancel = (event) => {
     if (!gesture || event.pointerId !== gesture.pointerId) return;
     active = null;
     clearTimeout(gesture.timer);
-    if (idle(gesture.row)) rest(gesture.row, 0);
+    cancelAnimationFrame(gesture.frame);
+    if (idle(gesture.row)) rest(gesture.row, gesture.resting, gesture.geometry);
 };
 
 const onClick = (event) => {
+    if (event.detail === 0) return;
     if (!suppress || performance.now() > suppress.until) return;
     if (event.target instanceof Node && suppress.row.contains(event.target)) {
         event.preventDefault();
         event.stopPropagation();
+        suppress = null;
     }
 };
 
@@ -285,6 +318,9 @@ window[key] = {
         rest(row, (to === "start" ? width : -width) * direction(row));
     },
     dispose() {
+        touchListeners.abort();
+        if (active) onPointerCancel({ pointerId: active.pointerId });
+        suppress = null;
         document.removeEventListener("pointerdown", onPointerDown);
         document.removeEventListener("pointermove", onPointerMove);
         document.removeEventListener("pointerup", release);

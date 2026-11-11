@@ -67,7 +67,7 @@ pub const PAGES: &[GuideLink] = &[
         title: "Theme and mode hooks",
         section: "Hooks",
         summary: "Read and change shared colors, platform mode, and component labels.",
-        keywords: "use_theme use_mode use_strings use_component_mode ThemeProvider AppWrapper Signal mut set write accent colors theme mode localization Strings scoped provider",
+        keywords: "use_theme use_mode use_strings use_component_mode reveal_theme ThemeProvider AppWrapper Signal mut set write accent colors theme mode dark light switch reveal circle view transition localization Strings scoped provider",
         render: || rsx! { pages::ThemeHooks {} },
     },
 ];
@@ -101,6 +101,17 @@ enum Example {
     ThemeHooks,
 }
 
+/// Every example, for the test that checks each shows compiled code.
+#[cfg(test)]
+const EXAMPLES: [Example; 6] = [
+    Example::GettingStarted,
+    Example::ResponsiveLayouts,
+    Example::Platforms,
+    Example::LayoutHooks,
+    Example::OverlayHooks,
+    Example::ThemeHooks,
+];
+
 impl Example {
     fn source(self) -> &'static str {
         match self {
@@ -120,6 +131,7 @@ impl Example {
                 "ThemeHooksExample",
                 "ThemeColorControls",
                 "AppearanceControls",
+                "RevealedThemeSwitch",
                 "ThemedAccent",
                 "LocalizedActions",
                 "ModeAwareButton",
@@ -186,14 +198,7 @@ mod tests {
 
     #[test]
     fn every_displayed_example_uses_its_compiled_functions() {
-        for example in [
-            Example::GettingStarted,
-            Example::ResponsiveLayouts,
-            Example::Platforms,
-            Example::LayoutHooks,
-            Example::OverlayHooks,
-            Example::ThemeHooks,
-        ] {
+        for example in EXAMPLES {
             for name in example.functions() {
                 let source = g3_ui::function_source(example.source(), &format!("fn {name}"))
                     .unwrap_or_else(|| panic!("missing compiled function: {name}"));

@@ -46,6 +46,9 @@ spell:
 script-test:
     node --test playground/script-tests.cjs
 
+swipe-browser-test:
+    node playground/swipe-browser-tests.cjs
+
 browser-test:
     node playground/browser-tests.cjs
 

@@ -82,6 +82,31 @@ test('cancelled refreshes do not commit and disposal clears timers/listeners', a
   assert.equal(env.timers.size, 0);
 });
 
+test('background refreshes stay idle; a completed pull owns its visible refresh until completion', async () => {
+  const root = new Element(); const label = new Element();
+  root.dataset.refreshing = 'true';
+  const env = environment({ root, label }).run(source('refresher.js', { ROOT: 'root', LABEL: 'label', THRESHOLD: 48, ELASTIC: 0.42, PULL: 'pull', RELEASE: 'release', REFRESHING: 'refreshing' }));
+  const pull = () => {
+    root.fire('touchstart', { touches: [{ clientX: 0, clientY: 0 }] });
+    root.fire('touchmove', { touches: [{ clientX: 0, clientY: 120 }], cancelable: true });
+    root.fire('touchend', { touches: [] });
+  };
+  assert.equal(root.getAttribute('data-state'), 'idle');
+  pull();
+  assert.equal(env.reports.length, 0, 'background fetch blocks another pull without moving content');
+  root.dataset.refreshing = 'false';
+  pull();
+  assert.equal(root.getAttribute('data-state'), 'refreshing');
+  assert.deepEqual(env.reports, [true]);
+  root.dataset.refreshing = 'true';
+  let [id, settle] = [...env.timers][0]; env.timers.delete(id); settle();
+  assert.equal(root.getAttribute('data-state'), 'refreshing');
+  root.dataset.refreshing = 'false';
+  [id, settle] = [...env.timers][0]; env.timers.delete(id); settle();
+  assert.equal(root.getAttribute('data-state'), 'idle');
+  await env.close();
+});
+
 test('a scrollable segment strip places its indicator under the selected button', async () => {
   const properties = {};
   const selected = Object.assign(new Element(), { offsetLeft: 120, offsetWidth: 80 });
@@ -112,7 +137,7 @@ for (const rtl of [false, true]) test(`horizontal strip disposal removes all glo
 
 test('infinite-scroll reconfiguration disposes only its own observers', async () => {
   const sentinel = new Element(); sentinel.parentElement = new Element();
-  const env = environment({ sentinel }).run(source('infinite_scroll.js', { ID: 'sentinel', MARGIN: 200 }));
+  const env = environment({ sentinel }).run(source('infinite_scroll.js', { ID: 'sentinel', MARGIN: 200, TOP: false }));
   assert.equal(env.observers.length, 3);
   await env.close();
   assert.ok(env.observers.every((observer) => observer.targets.size === 0));
@@ -293,7 +318,8 @@ test('overlay focus initializes without frames and follows live modality', async
   assert.equal(env.document.activeElement, child);
   await env.close();
   assert.equal(env.document.activeElement, outside);
-  assert.equal(root.count() + env.document.count(), 0);
+  // Only the shared focusout tracker, installed once per window, stays.
+  assert.equal(root.count() + env.document.count(), 1);
 });
 
 for (const rtl of [false, true]) test(`swipe edges and commands use logical sides (${rtl ? 'RTL' : 'LTR'})`, async () => {
@@ -313,6 +339,86 @@ for (const rtl of [false, true]) test(`swipe edges and commands use logical side
   assert.equal(root.dataset.exposed, 'start');
   assert.ok(env.reports.at(-1)[2][0] > 0);
   api.dispose(); await env.running;
+});
+
+function swipeEnvironment() {
+  const properties = {};
+  let captures = 0;
+  let reads = 0;
+  const row = Object.assign(new Element(), { id: 'row' });
+  Object.assign(row.dataset, { hasStart: 'true', hasEnd: 'true', startBehavior: 'activate', endBehavior: 'reveal', longPress: 'true' });
+  row.closest = () => row;
+  row.contains = (node) => node === row;
+  row.setPointerCapture = () => { captures++; };
+  row.style.setProperty = (name, value) => { properties[name] = value; };
+  const env = environment({ row });
+  const frames = new Map(); let frameId = 0;
+  env.globals.getComputedStyle = () => { reads++; return { direction: 'ltr' }; };
+  env.globals.requestAnimationFrame = (callback) => { frames.set(++frameId, callback); return frameId; };
+  env.globals.cancelAnimationFrame = (id) => frames.delete(id);
+  env.run(source('swipe.js'));
+  const fire = (type, x = 100, y = 10) => env.document.fire(type, { target: row, pointerId: 1, pointerType: 'touch', clientX: x, clientY: y });
+  return { env, row, properties, frames, fire, reads: () => reads, captures: () => captures,
+    paint() { const pending = [...frames.values()]; frames.clear(); pending.forEach((callback) => callback()); },
+    async close() { env.window[Symbol.for('g3-ui.swipe')].dispose(); await env.running; },
+  };
+}
+
+test('swipe moves batch one paint per frame without style reads and release uses the latest move', async () => {
+  const swipe = swipeEnvironment();
+  swipe.fire('pointerdown');
+  const reads = swipe.reads();
+  for (let x = 112; x <= 200; x++) swipe.fire('pointermove', x);
+  assert.equal(swipe.frames.size, 1);
+  assert.equal(swipe.properties['--g3-swipe-offset'], undefined);
+  swipe.paint();
+  assert.equal(swipe.reads(), reads);
+  assert.ok(parseFloat(swipe.properties['--g3-swipe-offset']) > 90);
+  swipe.fire('pointermove', 220);
+  swipe.fire('pointerup');
+  assert.equal(swipe.frames.size, 0, 'a queued paint cannot revive a released drag');
+  assert.equal(swipe.env.reports.filter(([, kind]) => kind === 'activate').length, 1);
+  assert.equal(swipe.properties['--g3-swipe-offset'], '0px');
+  await swipe.close();
+});
+
+test('a fresh tap after a swipe reaches its button while the compatibility click is blocked', async () => {
+  const swipe = swipeEnvironment();
+  swipe.fire('pointerdown'); swipe.fire('pointermove', 200); swipe.fire('pointerup');
+  const click = () => swipe.env.document.fire('click', { target: swipe.row, detail: 1 });
+  assert.equal(click().defaultPrevented, true);
+  swipe.fire('pointerdown'); swipe.fire('pointermove', 200); swipe.fire('pointerup');
+  swipe.fire('pointerdown'); swipe.fire('pointerup');
+  assert.equal(click().defaultPrevented, undefined);
+  await swipe.close();
+});
+
+test('a drag catches the visible position of a settling row', async () => {
+  const swipe = swipeEnvironment();
+  swipe.row.querySelector = (selector) => selector === ':scope > .g3-swipe-content' ? new Element() : null;
+  swipe.env.globals.getComputedStyle = () => ({ direction: 'ltr', transform: 'matrix(1, 0, 0, 1, 60, 0)' });
+  swipe.fire('pointerdown'); swipe.fire('pointermove', 120); swipe.paint();
+  assert.equal(swipe.properties['--g3-swipe-offset'], '80px');
+  swipe.fire('pointercancel');
+  assert.equal(swipe.properties['--g3-swipe-offset'], '0px');
+  await swipe.close();
+});
+
+test('vertical intent and taps never capture; losing an acquired capture cancels without activation', async () => {
+  const swipe = swipeEnvironment();
+  swipe.fire('pointerdown'); swipe.fire('pointerup');
+  swipe.fire('pointerdown'); swipe.fire('pointermove', 102, 40); swipe.fire('pointermove', 200, 42);
+  assert.equal(swipe.captures(), 0);
+  assert.equal(swipe.env.timers.size, 0);
+  swipe.fire('pointerdown'); swipe.fire('pointermove', 200); swipe.paint();
+  assert.equal(swipe.captures(), 1);
+  swipe.env.document.fire('lostpointercapture', { target: new Element(), pointerId: 1 });
+  assert.equal(swipe.row.dataset.dragging, 'true', 'a child losing implicit capture is not a cancellation');
+  swipe.env.document.fire('lostpointercapture', { target: swipe.row, pointerId: 1 });
+  assert.equal(swipe.properties['--g3-swipe-offset'], '0px');
+  assert.equal(swipe.env.reports.length, 0);
+  await swipe.close();
+  assert.equal(swipe.row.count() + swipe.env.document.count(), 0);
 });
 
 test('responsive scope reports only crossed width classes and disconnects on disposal', async () => {

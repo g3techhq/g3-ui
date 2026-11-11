@@ -6,9 +6,38 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `Select` can be `searchable`: a search field tops the list and narrows it as you type (every word, anywhere in the label, description or `keywords`), typing on the closed field opens it with the search begun, and Enter picks the first match. With `on_typed`, what was typed is offered as a choice of its own when no option has that label, for lists that also take new entries. `SelectOption::indent` nests an option under its parent and `SelectOption::keywords` adds text a search matches. New `Strings`: `no_matches`, `use_typed`.
+- `Table` handles ledgers and data grids. `sticky_header` keeps the header row in view while the body scrolls inside the table's own rounded frame (with a thin scrollbar), which stays within the height it is given; it layers with `sticky_first_column`. `lines: TableLines::Rows` draws rules between rows only, `align: TableAlign::Start` start-aligns cells and styles the header as column labels, and `density: TableDensity::Compact` tightens padding and type. A cell's `data-align="start" | "center" | "end"` overrides the table's alignment. A row's `data-interactive="true"` gives it a pointer, a hover and pressed tint and a focus ring, and `aria-selected="true"` tints it as selected. The defaults are unchanged.
+- `SortHeader` is a `Table` column header that sorts. Its label is a button; an arrow shows the direction (`SortDirection`) and `aria-sort` says it while the table is sorted by that column, and a faint two-way arrow shows on hover while it is not. `end` sets it over a column of amounts. The page sorts its own data in `onsort`.
+- `FilterSelect` is a `Select` drawn as a chip, for a row of filters above a table. It reads "Status" while it lets everything through and "Status: Not cleared" once it narrows, tinted, with a button that resets it to `default_value`.
+
+- `reveal_theme(origin, apply)` switches the theme or mode with the new look growing over the old in a circle from a click point, inside a view transition, instead of flashing. Without View Transitions, with reduced motion or with no origin it applies the change at once.
+- `InfiniteScroll` loads at either end: `edge: InfiniteScrollEdge::Top` sits before the first item, for a list whose newest items are at the bottom such as a ledger or a chat, and keeps the rows in view where they are on screen while earlier ones arrive. With `table_columns` it renders as a table row spanning that many columns, for a table body. It now watches the nearest element that scrolls, so it works inside a `Table` that scrolls in its own frame. Its spinner is centred in the row whatever the table's alignment.
+
+### Changed
+
+- No scrollbars anywhere by default: wide shells no longer draw the thin content scrollbar (added in 0.4.0), and a sticky-header `Table` scrolls without one. The content still scrolls with the wheel, touch and keyboard.
+- An expanded navigation rail shows an item's badge at the trailing end of its row, as a Material navigation drawer does, instead of on the icon's corner where it covered the label.
+- A `NavRail` or `AdaptiveNav` opened or closed with its toggle animates like a hover rail: the rail widens and narrows, the page beside it gives way, and the labels slide out of and back into their icons, instead of jumping between layouts. An expanded row's icon now sits where the closed rail's icon does (2px further in), and a long label is cut off rather than ending in an ellipsis. `NavItem` renders a hidden copy of its label (`g3-nav-item-tooltip`) for the closed rail's tooltip.
+- A raised `Table` reads the card look (`--g3-card-radius`, `--g3-card-border`, `--g3-card-shadow`), so a theme's `Look` restyles tables as it does cards; every table's corners follow `--g3-card-radius`. Without a `Look` nothing changes.
+- Several actions in a `Header` slot are spaced apart (4px in iOS, 8px in Material) instead of touching.
+
 ### Fixed
 
+- A popover or wide-shell `Select` list no longer jumps on the first scroll after it opens. It was placed while its opening animation still had it at 96% size, so the first scroll re-placed it at full size: it could flip sides, move, or stop being cut off at the bottom.
+- A popover or wide-shell `Select` list too tall for the room above or below its trigger no longer covers the trigger. It opens on the side with more room and scrolls within it, down to a height of 10rem.
+- Switching `AppWrapper`'s theme at runtime no longer keeps the previous theme's `Look`. Dioxus puts back any inline style property a new `style` string leaves out, so a property the new theme left unset (a frosted card's `card_backdrop_filter` or `card_sheen`, say) kept the old value. The shell now names every look property: unset ones as `initial`, so the stylesheet's default applies, and on an adaptive theme as a reference to its per-scheme rule. `Theme::to_style_attr` and `Theme::look_css` are unchanged.
 - The check mark in a `Checkbox` and a checked `Item` is smaller and centred, with a margin inside the box. It used to run to the box's edges, and past the border in Material.
+- An open popover, select or sheet no longer lifts its page over a desktop rail beside it, which hid the rail's collapse handle. The lift stays for browsers without the Popover API.
+- Closing a modal, sheet or popover returns focus to what was focused before it opened, even when a field inside it had `autofocus` and took focus first; focus used to fall to the page.
+- An open `DatePicker` or `TimePicker` keeps its calendar or clock icon upright; only a `Select`'s chevron turns.
+- A `DatePicker` popover's calendar fits its popover: the popover's side padding no longer pushes the grid past the right edge, leaving a margin on the left only.
+- `Table` styles only its own rows and cells. A table nested in a cell, such as the calendar of a `DatePicker` opened from a table row, no longer takes the table's padding, rules and backgrounds, and `data-color` and `data-muted` tint cells only, not colored controls inside them.
+- `Card`: with `padding: false` the header keeps its inset, so an edge-to-edge list or table under a title no longer pushes the title against the card's edge. A card with no title no longer adds space above its body.
+- Background refreshes no longer reveal the pull-to-refresh indicator or shift the content. The indicator appears only after a pull gesture.
+- Swipe rows measure their edges once per gesture and paint once per frame, avoiding forced style reads during Android drags. Vertical scrolls keep their pointer, interrupted swipes do not activate, and a fresh tap after a swipe is no longer swallowed by its click guard.
 
 ## [0.7.0] - not yet released
 

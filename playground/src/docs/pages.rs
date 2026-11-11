@@ -6,8 +6,8 @@ pub fn GettingStarted() -> Element {
     rsx! {
         section {
             h2 { "1. Add the dependencies" }
-            p { "Use Rust 1.88 or newer and Dioxus 0.7.9. Add these entries to your app's Cargo.toml:" }
-            CodeBlock { language: Language::Toml, src: "[dependencies]\ndioxus = { version = \"0.7.9\", features = [\"web\"] }\ng3-ui = \"0.6\"".to_string() }
+            p { "Use Rust 1.88 or newer. g3-ui 0.7 builds on a fork of Dioxus main (0.8.0-alpha.3 plus the g3 patches) until Dioxus 0.8.0 is published, so patch the fork in at your workspace root as the README shows, and build with the fork's dx. Add these entries to your app's Cargo.toml:" }
+            CodeBlock { language: Language::Toml, src: "[dependencies]\ndioxus = { version = \"=0.8.0-alpha.3\", features = [\"web\"] }\ng3-ui = \"0.7\"\n\n[patch.crates-io]\ndioxus = { git = \"https://github.com/Gateway3B/dioxus\", branch = \"main\" }\n# ...and every other Dioxus crate in your graph (see the README)\ng3-ui = { git = \"https://github.com/g3techhq/g3-ui\", branch = \"main\" }".to_string() }
         }
 
         section {
@@ -77,7 +77,7 @@ pub fn Platforms() -> Element {
             p { "Enable Dioxus's web feature, as shown in Getting started." }
             h3 { "Android, iOS, or desktop" }
             p { "Enable Dioxus's mobile feature for Android and iOS, or desktop for desktop web views. The g3-ui dependency stays the same." }
-            CodeBlock { language: Language::Toml, src: "[dependencies]\ng3-ui = \"0.6\"\ndioxus = { version = \"0.7.9\", features = [\"mobile\"] }".to_string() }
+            CodeBlock { language: Language::Toml, src: "[dependencies]\ng3-ui = \"0.7\"\ndioxus = { version = \"=0.8.0-alpha.3\", features = [\"mobile\"] }".to_string() }
             p { "Build with the Dioxus CLI's Android, iOS, or desktop target. Add g3-ui's optional transitions feature when integrating g3-route-transitions." }
         }
 
@@ -205,6 +205,12 @@ pub fn ThemeHooks() -> Element {
         section {
             h2 { "Change colors" }
             CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["ThemeColorControls"], true) }
+        }
+
+        section {
+            h2 { "Reveal a change" }
+            p { code { "reveal_theme(origin, apply)" } " makes a theme or mode change inside a view transition: the new look grows over the old in a circle from " code { "origin" } ", such as where the user pressed, instead of flashing. " code { "apply" } " makes the change and runs once either way. Without View Transitions, with reduced motion, or with no origin, it runs at once. The playground's own theme and platform pickers use it." }
+            CodeBlock { src: function_code(THEME_HOOKS_SOURCE, &["RevealedThemeSwitch"], false) }
         }
 
         section {

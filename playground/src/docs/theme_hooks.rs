@@ -10,6 +10,7 @@ pub fn ThemeHooksExample() -> Element {
             Content { footer_space: false,
                 Stack { gap: Space::Md,
                     AppearanceControls {}
+                    RevealedThemeSwitch {}
                     ThemedAccent {}
                     LocalizedActions {
                         oncancel: move |_| status.set("Cancelled".into()),
@@ -43,6 +44,32 @@ fn ThemeColorControls() -> Element {
             // write() changes a field while preserving the other colors.
             Button { onclick: move |_| theme.write().accent = "#16a34a".into(),
                 "Green accent"
+            }
+        }
+    }
+}
+
+#[component]
+fn RevealedThemeSwitch() -> Element {
+    let theme = use_theme();
+    let mut origin = use_signal(|| None::<(f64, f64)>);
+    // The new colors grow over the page in a circle from the press.
+    let reveal = move |next: Theme| {
+        spawn(async move {
+            let mut theme = theme;
+            g3_ui::reveal_theme(origin(), move || theme.set(next)).await;
+        });
+    };
+
+    rsx! {
+        div {
+            onpointerdown: move |event| {
+                let point = event.client_coordinates();
+                origin.set(Some((point.x, point.y)));
+            },
+            Stack { horizontal: true, wrap: true, gap: Space::Sm,
+                Button { onclick: move |_| reveal(Theme::default_dark()), "Reveal dark" }
+                Button { onclick: move |_| reveal(Theme::default_light()), "Reveal light" }
             }
         }
     }

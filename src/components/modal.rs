@@ -33,6 +33,14 @@ pub enum ModalSize {
 /// `dismissible` is false), and returns focus to where it was when it
 /// closes. The title names the dialog and the content describes it.
 ///
+/// Keep the `Modal` mounted and close it by setting `open` to `false`: its
+/// exit animation runs while it is still in the tree. A modal removed from
+/// the tree in `on_dismiss` instead (rendered inside
+/// `if let Some(x) = editing() { .. }`, with `on_dismiss` clearing `editing`)
+/// vanishes at once, without its closing animation. Render it
+/// unconditionally and keep the content's data until the next open replaces
+/// it.
+///
 /// ```
 /// # use dioxus::prelude::*;
 /// # use g3_ui::prelude::*;
