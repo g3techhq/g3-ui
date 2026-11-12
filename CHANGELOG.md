@@ -27,6 +27,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- An iOS segment pill in a toolbar no longer cuts its longest label on a phone ("Movi..." among five options on a 375pt iPhone). Once the pill reached the row's width its equal columns all shrank, so the widest label lost out first; on a compact shell its segments now pad 6px a side instead of 13px.
+- An expanded `AdaptiveNav` rail opens to 15rem on a wide shell again, its labels showing. The rule that adds the left safe area to the rail's width came after the expanded width and was as specific, so the rail stayed 4rem wide while it reported itself expanded. The expanded width now adds the safe area too.
 - Frosted surfaces blur in Chromium and Android web views again: the iOS bottom bar, the translucent `Fab` and the floating bar. dx's CSS minifier keeps only the last of a prefixed and an unprefixed `backdrop-filter`, and the stylesheet put `-webkit-backdrop-filter` last, so only WebKit blurred. The unprefixed one now comes last.
 - A popover or wide-shell `Select` list no longer jumps on the first scroll after it opens. It was placed while its opening animation still had it at 96% size, so the first scroll re-placed it at full size: it could flip sides, move, or stop being cut off at the bottom.
 - A popover or wide-shell `Select` list too tall for the room above or below its trigger no longer covers the trigger. It opens on the side with more room and scrolls within it, down to a height of 10rem.

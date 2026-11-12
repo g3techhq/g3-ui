@@ -774,6 +774,14 @@ body.g3-overlay-scroll-locked {
         padding-inline: 4px;
         letter-spacing: 0.03em;
     }
+
+    /* The iOS pill caps at the row's width, and then its equal columns all
+       shrink, so the widest label is cut first: "Movi..." beside a roomy
+       "TV" on a 375pt iPhone, where SF Pro runs wider than other fonts. At
+       13px a side the five need about 360px. */
+    :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-ios .g3-segment-btn-ios {
+        padding-inline: 6px;
+    }
 }
 
 /* The sliding indicator reads its position and width from the buttons
@@ -8403,6 +8411,12 @@ td[aria-selected="true"] > .g3-calendar-day {
            it do not leave room for it again. */
         .g3-tab-layout:has(> .g3-nav-adaptive) {
             --g3-nav-rail-width: calc(4rem + var(--g3-safe-area-left, env(safe-area-inset-left)));
+        }
+
+        /* Restated after the collapsed width, which is as specific and
+           would otherwise hold an expanded rail at 4rem. */
+        .g3-tab-layout:has(> .g3-nav-adaptive.g3-nav-expanded) {
+            --g3-nav-rail-width: calc(15rem + var(--g3-safe-area-left, env(safe-area-inset-left)));
         }
 
         .g3-nav-adaptive {

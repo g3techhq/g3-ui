@@ -583,6 +583,18 @@ fn a_material_toolbar_strip_pads_tighter_on_a_phone() {
 }
 
 #[test]
+fn an_ios_toolbar_pill_pads_tighter_on_a_phone() {
+    // At 13px a side, five options cut "Movies" on a 375pt iPhone: the pill
+    // capped at the row's width and shrank every column alike.
+    let compact = "@container g3-app-shell (max-width: 47.999rem) {\n    :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-md .g3-segment-btn-md {";
+    let start = STYLESHEET.find(compact).expect("compact toolbar query");
+    let query = &STYLESHEET[start..start + STYLESHEET[start..].find("\n}").expect("query end")];
+    assert!(query.contains(
+        "    :is(.g3-segment-toolbar, .g3-header-toolbar .g3-segment-standalone).g3-segment-ios .g3-segment-btn-ios {\n        padding-inline: 6px;"
+    ));
+}
+
+#[test]
 fn a_material_searchbar_has_its_own_tone() {
     assert!(rule_body(".g3-searchbar-md .g3-input").contains("background: color-mix("));
 }
@@ -708,4 +720,34 @@ fn an_ios_header_keeps_its_buttons_16pt_from_the_screen_edge() {
         .find(".g3-header-ios .g3-header-row {\n        padding-left: max(1rem,")
         .expect("iOS header padding");
     assert!(ios > shared);
+}
+
+#[test]
+fn an_expanded_rail_outranks_every_collapsed_width() {
+    // The collapsed and expanded widths are equally specific and every one
+    // of them applies to a wide shell, so the last expanded rule must come
+    // after the last collapsed one, or the rail never opens.
+    let code = code();
+    for nav in [".g3-nav-adaptive", ".g3-nav-rail"] {
+        let collapsed = code
+            .match_indices(&format!(".g3-tab-layout:has(> {nav}) {{"))
+            .filter(|(at, _)| {
+                let body = &code[*at..];
+                body[..body.find('}').expect("rule end")].contains("--g3-nav-rail-width:")
+            })
+            .map(|(at, _)| at)
+            .max()
+            .unwrap_or_else(|| panic!("no collapsed width for `{nav}`"));
+        let expanded = code
+            .rfind(&format!(".g3-tab-layout:has(> {nav}.g3-nav-expanded) {{"))
+            .unwrap_or_else(|| panic!("no expanded width for `{nav}`"));
+        assert!(
+            expanded > collapsed,
+            "a collapsed `{nav}` width comes after the expanded one"
+        );
+    }
+    // Beside a cutout, the expanded rail keeps the safe area it pads by.
+    assert!(code.contains(
+        ".g3-tab-layout:has(> .g3-nav-adaptive.g3-nav-expanded) {\n            --g3-nav-rail-width: calc(15rem + var(--g3-safe-area-left, env(safe-area-inset-left)));"
+    ));
 }
