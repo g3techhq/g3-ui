@@ -75,6 +75,9 @@ If you could not do one of these, say which and why.
 - **Match the equivalent Ionic component** in look and behaviour, in both
   `ios` and `md` modes. A component uses its `mode` prop, then the nearest
   provider, then the global default.
+- **Where Ionic lags the platform, follow the platform**, as an opt-in that
+  leaves the Ionic look the default (`NavBarStyle::Floating`, after iOS 26's
+  tab bar). Say in its docs that it is a g3 extension.
 - **Names are plain Ionic-style names** (`Button`, `BottomSheet`, `TabLayout`),
   unprefixed, with no aliases.
 - **Every prop is typed**: enums for variants, sizes and positions, no magic
