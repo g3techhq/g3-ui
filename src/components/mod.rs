@@ -170,7 +170,8 @@ pub use list::{Item, ItemDetail, List, ListHeader, ListLines, ListVariant};
 pub use media::{Img, ImgFit, Tooltip, TooltipPlacement};
 pub use modal::{Modal, ModalRole, ModalSize};
 pub use nav::{
-    AdaptiveNav, AdaptiveNavCompact, NavBar, NavItem, NavItemGroup, NavRail, NavRailBehavior,
+    AdaptiveNav, AdaptiveNavCompact, NavBar, NavBarStyle, NavItem, NavItemGroup, NavRail,
+    NavRailBehavior,
 };
 pub use navigation_drawer::NavigationDrawer;
 pub use overlay::{OverlayController, use_overlay_controller};

@@ -350,6 +350,34 @@ mod shell {
     }
 
     #[test]
+    fn a_bottom_bar_floats_only_when_asked() {
+        fn app() -> Element {
+            rsx! {
+                NavBar { class: "docked",
+                    NavItem { label: "A" }
+                }
+                NavBar { class: "bar", bar_style: NavBarStyle::Floating,
+                    NavItem { label: "B" }
+                }
+                AdaptiveNav { class: "adaptive", bar_style: NavBarStyle::Floating,
+                    NavItem { label: "C" }
+                }
+            }
+        }
+        let html = render(app);
+        assert!(!element_with_class(&html, "docked").contains("g3-nav-floating"));
+        assert!(element_with_class(&html, "bar").contains("g3-nav-floating"));
+        // An adaptive nav carries it at every width; the stylesheet turns it
+        // into a plain rail on a wide shell.
+        let adaptive = element_with_class(&html, "adaptive");
+        assert!(adaptive.contains("g3-nav-floating") && adaptive.contains("g3-nav-adaptive"));
+        // Still a navigation landmark with its items.
+        assert!(
+            adaptive.starts_with("<nav") && adaptive.contains("aria-label=\"Primary navigation\"")
+        );
+    }
+
+    #[test]
     fn nav_rail_starts_expanded_and_can_start_collapsed() {
         fn expanded() -> Element {
             rsx! {

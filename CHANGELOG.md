@@ -15,6 +15,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `reveal_theme(origin, apply)` switches the theme or mode with the new look growing over the old in a circle from a click point, inside a view transition, instead of flashing. Without View Transitions, with reduced motion or with no origin it applies the change at once.
 - `InfiniteScroll` loads at either end: `edge: InfiniteScrollEdge::Top` sits before the first item, for a list whose newest items are at the bottom such as a ledger or a chat, and keeps the rows in view where they are on screen while earlier ones arrive. With `table_columns` it renders as a table row spanning that many columns, for a table body. It now watches the nearest element that scrolls, so it works inside a `Table` that scrolls in its own frame. Its spinner is centred in the row whatever the table's alignment.
+- `NavBar` and `AdaptiveNav` take `bar_style: NavBarStyle::Floating` for a frosted, translucent pill floating above the bottom edge, as in iOS 26's tab bar, in both modes. The page scrolls under it, and the page's last child, a bottom `Fab` and the app's bottom toasts clear it. It is opaque under `prefers-reduced-transparency`, and an `AdaptiveNav`'s rail on a wide shell is unchanged. `NavBarStyle::Docked`, the full-width bar, stays the default. Ionic has no equivalent; this follows the platform.
 
 ### Changed
 
@@ -26,6 +27,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Frosted surfaces blur in Chromium and Android web views again: the iOS bottom bar, the translucent `Fab` and the floating bar. dx's CSS minifier keeps only the last of a prefixed and an unprefixed `backdrop-filter`, and the stylesheet put `-webkit-backdrop-filter` last, so only WebKit blurred. The unprefixed one now comes last.
 - A popover or wide-shell `Select` list no longer jumps on the first scroll after it opens. It was placed while its opening animation still had it at 96% size, so the first scroll re-placed it at full size: it could flip sides, move, or stop being cut off at the bottom.
 - A popover or wide-shell `Select` list too tall for the room above or below its trigger no longer covers the trigger. It opens on the side with more room and scrolls within it, down to a height of 10rem.
 - Switching `AppWrapper`'s theme at runtime no longer keeps the previous theme's `Look`. Dioxus puts back any inline style property a new `style` string leaves out, so a property the new theme left unset (a frosted card's `card_backdrop_filter` or `card_sheen`, say) kept the old value. The shell now names every look property: unset ones as `initial`, so the stylesheet's default applies, and on an adaptive theme as a reference to its per-scheme rule. `Theme::to_style_attr` and `Theme::look_css` are unchanged.

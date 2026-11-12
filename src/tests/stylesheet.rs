@@ -118,6 +118,34 @@ fn adaptive_themes_keep_both_looks_in_a_scheme_rule_not_inline() {
     assert!(same.to_style_attr().contains("--g3-card-radius: 4px;"));
 }
 
+/// dx minifies the stylesheet with lightningcss, which merges a prefixed and
+/// an unprefixed `backdrop-filter` into whichever comes last. With the
+/// `-webkit-` one last, Chromium (and so Android web views) got no blur.
+#[test]
+fn every_blur_ends_on_the_unprefixed_backdrop_filter() {
+    let css = code();
+    let lines: Vec<&str> = css.lines().map(str::trim).collect();
+    for pair in lines.windows(2) {
+        assert!(
+            !(pair[0].starts_with("backdrop-filter:")
+                && pair[1].starts_with("-webkit-backdrop-filter:")),
+            "put `{}` before `{}`",
+            pair[1],
+            pair[0],
+        );
+    }
+    for (i, line) in lines.iter().enumerate() {
+        if line.starts_with("-webkit-backdrop-filter:") {
+            assert!(
+                lines
+                    .get(i + 1)
+                    .is_some_and(|next| next.starts_with("backdrop-filter:")),
+                "`{line}` needs an unprefixed `backdrop-filter` right after it",
+            );
+        }
+    }
+}
+
 #[test]
 fn cards_and_page_layers_read_the_look_tokens() {
     let css = code();

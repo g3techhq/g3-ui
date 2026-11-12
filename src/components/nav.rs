@@ -25,6 +25,22 @@ pub enum AdaptiveNavCompact {
     Hidden,
 }
 
+/// How a bottom bar sits on the screen: a [`NavBar`], or an [`AdaptiveNav`]
+/// on a compact shell. A rail is unaffected.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+pub enum NavBarStyle {
+    /// Full width along the bottom edge, as in Ionic's `ion-tab-bar`. The
+    /// page ends above it.
+    #[default]
+    Docked,
+    /// A frosted, translucent pill floating above the bottom edge, as in
+    /// iOS 26's tab bar. The page scrolls under it, and its last child, a
+    /// bottom [`Fab`](crate::Fab) and the app's bottom toasts clear it. A g3
+    /// extension: Ionic has no equivalent. Opaque when the reader asks for
+    /// reduced transparency.
+    Floating,
+}
+
 /// Where a [`NavItem`] sits in a rail. Bottom bars keep declaration order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum NavItemGroup {
@@ -84,15 +100,21 @@ fn NavContainer(
     collapsible: Option<bool>,
     behavior: Option<NavRailBehavior>,
     remember: Option<bool>,
+    bar_style: Option<NavBarStyle>,
     children: Element,
 ) -> Element {
     let mode = use_component_mode(mode);
+    // A rail has no bar to float.
+    let floating = bar_style.unwrap_or_default() == NavBarStyle::Floating && kind != NavKind::Rail;
     // A bar along the bottom lifts the app's bottom toasts above it.
-    super::app_wrapper::use_bottom_bar(match kind {
-        NavKind::Bar => Some(true),
-        NavKind::Adaptive(AdaptiveNavCompact::Bar) => Some(false),
-        _ => None,
-    });
+    super::app_wrapper::use_bottom_bar(
+        match kind {
+            NavKind::Bar => Some(true),
+            NavKind::Adaptive(AdaptiveNavCompact::Bar) => Some(false),
+            _ => None,
+        },
+        floating,
+    );
 
     let has_rail = !matches!(kind, NavKind::Bar);
     let hover = behavior.unwrap_or_default() == NavRailBehavior::Hover;
@@ -168,6 +190,8 @@ fn NavContainer(
         mode.pick("g3-nav-ios", "g3-nav-md"),
         kind_cls,
         if is_expanded { "g3-nav-expanded" } else { "" },
+        // On a wide shell an adaptive nav's rail rules override these.
+        if floating { "g3-nav-floating" } else { "" },
         if has_rail && hover {
             "g3-nav-hover"
         } else {
@@ -259,6 +283,9 @@ pub fn AdaptiveNav(
     /// its state; one given `expanded` leaves it to the signal's owner. The
     /// key is `g3-ui.nav-expanded`, shared by every rail on the origin.
     remember: Option<bool>,
+    /// How the bar sits on a compact shell. Defaults to
+    /// [`NavBarStyle::Docked`]. The rail on a wide shell is unaffected.
+    bar_style: Option<NavBarStyle>,
     children: Element,
 ) -> Element {
     rsx! {
@@ -272,6 +299,7 @@ pub fn AdaptiveNav(
             collapsible,
             behavior,
             remember,
+            bar_style,
             {children}
         }
     }
@@ -288,10 +316,19 @@ pub fn NavBar(
     mode: Option<ComponentMode>,
     /// Extra classes for the `nav` element.
     class: Option<String>,
+    /// How the bar sits on the screen. Defaults to [`NavBarStyle::Docked`].
+    bar_style: Option<NavBarStyle>,
     children: Element,
 ) -> Element {
     rsx! {
-        NavContainer { kind: NavKind::Bar, aria_label, mode, class, {children} }
+        NavContainer {
+            kind: NavKind::Bar,
+            aria_label,
+            mode,
+            class,
+            bar_style,
+            {children}
+        }
     }
 }
 
@@ -421,11 +458,12 @@ pub fn NavItem(
 #[cfg(feature = "playground")]
 #[component]
 fn NavPlaygroundDemo() -> Element {
-    use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Trophy};
+    use dioxus_icons::lucide::{CalendarDays, CircleUserRound, Plus, Trophy};
     let mode = crate::use_component_mode(None);
     let mut active = use_signal(|| 0_usize);
     let layout = use_signal(|| 0_usize);
     let behavior = use_signal(|| NavRailBehavior::Toggle);
+    let bar_style = use_signal(|| NavBarStyle::Docked);
     let items = rsx! {
         NavItem {
             label: "Games",
@@ -470,22 +508,43 @@ fn NavPlaygroundDemo() -> Element {
                         crate::SegmentButton { value: NavRailBehavior::Hover, "Hover" }
                     }
                 }
+                if layout() != 2 {
+                    crate::SegmentGroup { value: bar_style, label: "Bar style",
+                        crate::SegmentButton { value: NavBarStyle::Docked, "Docked" }
+                        crate::SegmentButton { value: NavBarStyle::Floating, "Floating" }
+                    }
+                }
             },
             crate::AppWrapper { mode, class: "g3-playground-device-app",
                 crate::TabLayout {
                     crate::Header { title: "Navigation" }
-                    crate::Content { footer_space: false,
-                        crate::Card { title: "Content", "Page content beside persistent navigation." }
+                    crate::Content {
+                        fab: rsx! {
+                            crate::Fab {
+                                crate::FabButton { aria_label: "New game", Plus {} }
+                            }
+                        },
+                        for (round , course) in ["Pebble Creek", "Cedar Ridge", "Harbour Links", "Old Mill", "Fox Hollow", "Lakeside"]
+                            .into_iter()
+                            .enumerate()
+                        {
+                            crate::Card {
+                                key: "{course}",
+                                title: "Round {round + 1}",
+                                subtitle: course,
+                                "The page scrolls under a floating bar, and its last card clears it."
+                            }
+                        }
                     }
                     match layout() {
                         1 => rsx! {
-                            NavBar { {items} }
+                            NavBar { bar_style: bar_style(), {items} }
                         },
                         2 => rsx! {
                             NavRail { behavior: behavior(), {items} }
                         },
                         _ => rsx! {
-                            AdaptiveNav { behavior: behavior(), {items} }
+                            AdaptiveNav { behavior: behavior(), bar_style: bar_style(), {items} }
                         },
                     }
                 }
@@ -496,7 +555,7 @@ fn NavPlaygroundDemo() -> Element {
 
 crate::g3_playground! {
     name: "Navigation",
-    description: "Bottom bars and side rails, adaptive to the shell width.",
+    description: "Bottom bars, docked or floating, and side rails, adaptive to the shell width.",
     components: ["TabLayout", "AdaptiveNav", "NavBar", "NavRail", "NavItem"],
     demo: NavPlaygroundDemo,
     source: "src/components/nav.rs",

@@ -99,6 +99,8 @@ root.style.setProperty("color-scheme", __SCHEME__);
 pub(crate) struct BottomBars {
     always: Signal<u32>,
     compact: Signal<u32>,
+    /// The bars of either kind that float as a pill, which stands taller.
+    floating: Signal<u32>,
 }
 
 impl BottomBars {
@@ -109,33 +111,44 @@ impl BottomBars {
 
 /// Counts the calling nav in its app shell while it is a bottom bar:
 /// `Some(true)` at every width, `Some(false)` on compact shells, `None` never.
-pub(crate) fn use_bottom_bar(bar: Option<bool>) {
+/// A `floating` bar is counted among the floating bars too.
+pub(crate) fn use_bottom_bar(bar: Option<bool>, floating: bool) {
     let bars = use_hook(try_consume_context::<BottomBars>);
-    let bar = crate::state::use_synced_signal(bar);
-    let held = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(None::<bool>)));
+    let bar = crate::state::use_synced_signal(bar.map(|always| (always, floating)));
+    let held = use_hook(|| std::rc::Rc::new(std::cell::Cell::new(None::<(bool, bool)>)));
     {
         let held = held.clone();
         use_effect(move || {
             let next = bar();
-            let Some(bars) = bars else { return };
+            let Some(mut bars) = bars else { return };
             let previous = held.replace(next);
             if previous == next {
                 return;
             }
-            if let Some(always) = previous {
+            if let Some((always, floating)) = previous {
                 bars.count(always).with_mut(|n| *n = n.saturating_sub(1));
+                if floating {
+                    bars.floating.with_mut(|n| *n = n.saturating_sub(1));
+                }
             }
-            if let Some(always) = next {
+            if let Some((always, floating)) = next {
                 bars.count(always).with_mut(|n| *n += 1);
+                if floating {
+                    bars.floating.with_mut(|n| *n += 1);
+                }
             }
         });
     }
     use_drop(move || {
         // The shell may be going away with this nav; its counts then no
         // longer matter.
-        if let (Some(bars), Some(always)) = (bars, held.take())
-            && let Ok(mut n) = bars.count(always).try_write()
-        {
+        let (Some(mut bars), Some((always, floating))) = (bars, held.take()) else {
+            return;
+        };
+        if let Ok(mut n) = bars.count(always).try_write() {
+            *n = n.saturating_sub(1);
+        }
+        if floating && let Ok(mut n) = bars.floating.try_write() {
             *n = n.saturating_sub(1);
         }
     });
@@ -218,6 +231,7 @@ pub fn AppWrapper(
     let bars = use_context_provider(|| BottomBars {
         always: Signal::new(0),
         compact: Signal::new(0),
+        floating: Signal::new(0),
     });
     // Read by the stylesheet, which lifts bottom toasts above the bar.
     let bar_attr = if (bars.always)() > 0 {
@@ -227,6 +241,8 @@ pub fn AppWrapper(
     } else {
         None
     };
+    // A floating bar stands taller, so the toasts rise further.
+    let bar_style_attr = ((bars.floating)() > 0).then_some("floating");
     let shell_id = use_element_id("app", None);
     let mut shell_size = use_signal(ShellSize::default);
     use_context_provider(|| shell_size);
@@ -299,6 +315,7 @@ pub fn AppWrapper(
             style: theme.shell_style_attr(),
             "data-g3-mode": mode.as_str(),
             "data-g3-bar": bar_attr,
+            "data-g3-bar-style": bar_style_attr,
             "data-g3-dynamic-type": dynamic_type.unwrap_or(false).then_some("true"),
             if let Some(css) = look_css {
                 style { dangerous_inner_html: css }

@@ -376,6 +376,30 @@ fn a_bottom_bar_marks_its_own_app_shell_for_toasts() {
     assert!(!element_with_class(&html, "outer").contains("data-g3-bar"));
 }
 
+#[test]
+fn a_floating_bar_marks_its_app_shell_so_toasts_rise_further() {
+    fn app() -> Element {
+        rsx! {
+            AppWrapper { class: "docked",
+                NavBar { NavItem { label: "Rounds", onclick: |_| {} } }
+            }
+            AppWrapper { class: "floating",
+                AdaptiveNav { bar_style: NavBarStyle::Floating,
+                    NavItem { label: "Book", onclick: |_| {} }
+                }
+            }
+        }
+    }
+    let mut dom = VirtualDom::new(app);
+    dom.rebuild_in_place();
+    pump(&mut dom);
+    let html = dioxus_ssr::render(&dom);
+    assert!(!element_with_class(&html, "docked").contains("data-g3-bar-style"));
+    let floating = element_with_class(&html, "floating");
+    assert!(floating.contains("data-g3-bar=\"compact\""));
+    assert!(floating.contains("data-g3-bar-style=\"floating\""));
+}
+
 /// On native renderers every Rust event handler is a synchronous request
 /// that blocks the webview, so per-element `load`, `error` and `mounted`
 /// handlers stall page transitions. Images and gesture components keep

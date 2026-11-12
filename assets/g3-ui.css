@@ -2665,8 +2665,8 @@ button.g3-chip,
 
 .g3-sheet-ios.g3-sheet-side {
     background: var(--g3-color-card);
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
 .g3-sheet-ios.g3-sheet-start:not(.g3-sheet-reveal) {
@@ -2986,8 +2986,8 @@ button.g3-chip,
 /* Translucent FAB for iOS with backdrop-filter */
 .g3-fab-translucent {
     background: color-mix(in srgb, var(--g3-color-card) 85%, transparent);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     color: var(--g3-color-accent);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -5285,6 +5285,15 @@ button.g3-chip,
     --g3-bar-clearance: calc(1px + 4.25rem + max(0.125rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))) + 0.5rem);
 }
 
+/* A floating bar: its pill (border, padding and items) and the gap below it. */
+.g3-app[data-g3-bar][data-g3-bar-style="floating"][data-g3-mode="ios"] {
+    --g3-bar-clearance: calc(2px + 3.75rem + max(0.75rem, calc(var(--g3-safe-area-bottom, env(safe-area-inset-bottom)) - 0.75rem)) + 0.5rem);
+}
+
+.g3-app[data-g3-bar][data-g3-bar-style="floating"][data-g3-mode="md"] {
+    --g3-bar-clearance: calc(2px + 4rem + max(0.75rem, calc(var(--g3-safe-area-bottom, env(safe-area-inset-bottom)) - 0.75rem)) + 0.5rem);
+}
+
 .g3-app[data-g3-bar="always"] .g3-toast-bottom {
     --g3-toast-bar-offset: var(--g3-bar-clearance);
 }
@@ -5649,8 +5658,8 @@ button.g3-chip,
 }
 
 .g3-nav-ios {
-    backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
 }
 
 .g3-nav-md {
@@ -5793,6 +5802,89 @@ button.g3-chip,
     white-space: nowrap;
 }
 
+/* NavBarStyle::Floating: a frosted pill over the page, which scrolls under
+   it. The selectors stay at one class (`:where()` for the mode), so an
+   AdaptiveNav's rail rules, later in the sheet, win on a wide shell. */
+.g3-tab-layout:has(> .g3-nav-floating) {
+    position: relative;
+}
+
+/* How far the page's last child and a bottom Fab stay from the bottom. */
+.g3-tab-layout:has(> .g3-nav-floating.g3-nav-ios) {
+    --g3-nav-floating-clearance: calc(2px + 3.75rem + max(0.75rem, calc(var(--g3-safe-area-bottom, env(safe-area-inset-bottom)) - 0.75rem)) + 0.5rem);
+}
+
+.g3-tab-layout:has(> .g3-nav-floating.g3-nav-md) {
+    --g3-nav-floating-clearance: calc(2px + 4rem + max(0.75rem, calc(var(--g3-safe-area-bottom, env(safe-area-inset-bottom)) - 0.75rem)) + 0.5rem);
+}
+
+.g3-tab-layout:has(> .g3-nav-floating) .g3-content-footer-spacer {
+    min-height: max(1.5rem, calc(var(--g3-nav-floating-clearance, 0px) - var(--g3-content-padding, 1.5rem)));
+}
+
+.g3-tab-layout:has(> .g3-nav-floating) .g3-content > .g3-fab-container.g3-fab-vertical-bottom:not(.g3-fab-container-edge) {
+    bottom: var(--g3-nav-floating-clearance, max(1rem, var(--g3-safe-area-bottom, env(safe-area-inset-bottom))));
+}
+
+.g3-nav-floating {
+    position: absolute;
+    right: 0;
+    bottom: max(0.75rem, calc(var(--g3-safe-area-bottom, env(safe-area-inset-bottom)) - 0.75rem));
+    left: 0;
+    z-index: 2;
+    width: fit-content;
+    max-width: calc(100% - max(1rem, var(--g3-safe-area-left, env(safe-area-inset-left))) - max(1rem, var(--g3-safe-area-right, env(safe-area-inset-right))));
+    margin-inline: auto;
+    /* Items keep a comfortable width and share it out on a narrow phone. */
+    grid-auto-columns: minmax(0, 6rem);
+    padding: 0.25rem;
+    border: 1px solid color-mix(in srgb, var(--g3-color-text) 10%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--g3-color-card) 68%, transparent);
+    /* A lit top edge over a soft, diffuse shadow. */
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--g3-color-card) 70%, transparent),
+                0 8px 30px color-mix(in srgb, var(--g3-color-shadow) 90%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+}
+
+.g3-nav-floating:where(.g3-nav-md) {
+    background: color-mix(in srgb, var(--g3-color-card) 82%, transparent);
+    box-shadow: var(--g3-shadow-md-elevation-2);
+}
+
+.g3-nav-floating .g3-nav-item {
+    border-radius: 999px;
+}
+
+.g3-nav-floating .g3-nav-item::before {
+    inset: 0;
+    border-radius: 999px;
+}
+
+.g3-nav-floating:where(.g3-nav-md) .g3-nav-item {
+    min-height: 3.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+/* Material marks the current item with a filled pill rather than a line. */
+.g3-nav-floating:where(.g3-nav-md) .g3-nav-item[aria-current="page"] {
+    background: color-mix(in srgb, var(--g3-color-accent) 14%, transparent);
+}
+
+.g3-nav-floating:where(.g3-nav-md) .g3-nav-item[aria-current="page"]::after {
+    content: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .g3-nav-floating {
+        background: var(--g3-color-card);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
 /* NavRail is a rail at every width. */
 .g3-tab-layout:has(> .g3-nav-rail) {
     --g3-nav-rail-width: 4rem;
@@ -5835,8 +5927,8 @@ button.g3-chip,
     border-inline-end: 1px solid var(--g3-color-border);
     background: var(--g3-color-card);
     box-shadow: 8px 0 22px color-mix(in srgb, var(--g3-color-shadow) 24%, transparent);
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
 }
 
 .g3-tab-layout > .g3-nav-rail {
@@ -7090,8 +7182,22 @@ tr.g3-infinite-scroll > td {
         border-inline-end: 1px solid var(--g3-color-border);
         background: var(--g3-color-card);
         box-shadow: 8px 0 22px color-mix(in srgb, var(--g3-color-shadow) 24%, transparent);
-        backdrop-filter: none;
         -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .g3-nav-adaptive.g3-nav-floating {
+        inset: auto;
+        width: auto;
+        max-width: none;
+        margin-inline: 0;
+        border-block-end: 0;
+        border-inline-start: 0;
+        border-radius: 0;
+    }
+
+    .g3-tab-layout:has(> .g3-nav-adaptive.g3-nav-floating) {
+        --g3-nav-floating-clearance: initial;
     }
 
     .g3-tab-layout > .g3-nav-adaptive {
@@ -8098,7 +8204,8 @@ td[aria-selected="true"] > .g3-calendar-day {
     .g3-toast,
     .g3-card,
     .g3-list-grouped,
-    .g3-tooltip {
+    .g3-tooltip,
+    .g3-nav-floating {
         border: 1px solid CanvasText;
     }
 
