@@ -588,6 +588,29 @@ See the `g3-route-transitions` README for the route metadata that decides which 
 Without the feature, `g3-ui` does not depend on `g3-route-transitions` and does not emit
 route-transition marker classes.
 
+## Desktop and Mobile First Paint
+
+A desktop or mobile WebView paints its first page before the app's first render reaches it, and
+only a web build puts the stylesheets in that page's head. Pass a `NativeHead` to the launch
+config so the first paint is already styled and in the theme's colors:
+
+```rust,ignore
+const APP_CSS: Asset = asset!("/assets/app.css");
+
+fn main() {
+    let head = g3_ui::NativeHead::new()
+        .theme(&app_theme())   // the theme the app renders first
+        .stylesheet(APP_CSS)   // after g3-ui's own and the route-transition stylesheet
+        .to_string();
+    dioxus::LaunchBuilder::new()
+        .with_cfg(dioxus::mobile::Config::new().with_custom_head(head))
+        .launch(App);
+}
+```
+
+Keep linking the app's stylesheets at runtime as well (`document::Link`): desktop and mobile
+bundles only collect assets that something links at runtime.
+
 ## Styling
 
 All rules live in the `g3` cascade layer, so any unlayered rule in your stylesheet overrides them

@@ -25,6 +25,8 @@ mod theme;
 
 mod theme_reveal;
 
+mod native_head;
+
 pub mod palette;
 
 pub mod prelude;
@@ -38,6 +40,7 @@ pub use descriptor::{
     ComponentPlaygroundDemo, PlaygroundDemoFrame, component_playground_demos, component_source,
     function_source,
 };
+pub use native_head::NativeHead;
 pub use palette::ThemeSeeds;
 pub use theme::{
     ComponentMode, Look, Strings, Theme, ThemeProvider, detect_platform_mode, get_mode,
