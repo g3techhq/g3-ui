@@ -52,6 +52,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A Charts guide, under Companion crates, shows g3-charts: a live Donut,
   Sunburst, TargetBars, LineChart and Sparkline, each following the
   playground's theme and platform, with its source and how to add the crate.
+- The theme picker lists Glass, Ember and Aurora right after Light and Dark.
+- On a phone the simulated phone takes the page's width again. Fitting the
+  whole frame under the header squeezed it to about 235px, narrower than
+  any real phone; the page now scrolls to the frame's bottom instead.
+- The transition tour's library segments slide their body again, and its
+  pushes stay inside the device. The playground's own body, a `Content`,
+  also named itself the route-transition segment: two segments aborted the
+  library's slide, and on a push the whole page slid sideways. On a
+  scrolled page the header now stays above the moving screens.
 
 ## [0.7.0] - not yet released
 

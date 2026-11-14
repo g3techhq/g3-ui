@@ -148,6 +148,27 @@ html[data-route-transition]::view-transition-group(playground-device-frame) {
   z-index: 10000;
 }
 
+/* Every named snapshot paints above the root one, which held the header, so
+   on a scrolled page the intro, the device and its moving screens drew over
+   the header. The header is captured on its own, above all of them. */
+html[data-route-transition] .playground-header {
+  view-transition-name: playground-header;
+}
+
+html[data-route-transition]::view-transition-group(playground-header) {
+  z-index: 10001;
+}
+
+/* The playground's own body is a g3 `Content`, which marks itself as the
+   route-transition segment region. Only the device's screen transitions, so
+   the body opts out: as a second `segment` it aborted the library's segment
+   slide (two elements may not share a name), and on a push it slid the whole
+   page sideways as a filmstrip, out past the device. */
+html[data-route-transition] .playground-main > .route-transition-segment-region {
+  view-transition-name: none;
+  contain: none;
+}
+
 html[data-route-transition]::view-transition-group(playground-device-frame),
 html[data-route-transition]::view-transition-image-pair(playground-device-frame) {
   overflow: hidden;
@@ -399,6 +420,12 @@ html:has(.playground-stage[data-playground-viewport="desktop"])[data-route-trans
 .playground-main { container: playground-main / size; }
 .playground-viewport-mobile .g3-playground-preview {
   width: min(390px, 100%, (100cqh - 6rem) * 390 / 844);
+}
+/* On a phone the room under the header is so short that fitting it left a
+   frame narrower than any real phone, its content squeezed into a column.
+   There the frame takes the width and the page scrolls to its bottom. */
+@container playground-main (width < 40rem) {
+  .playground-viewport-mobile .g3-playground-preview { width: min(390px, 100%); }
 }
 .playground-stage { overflow-x: auto; }
 .playground-document-page .playground-intro { display: none; }

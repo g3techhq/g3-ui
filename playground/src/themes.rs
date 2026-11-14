@@ -10,6 +10,9 @@ const GRADIENT: &str =
 pub enum PlaygroundTheme {
     Light,
     Dark,
+    Glass,
+    Ember,
+    Aurora,
     Blue,
     Green,
     Sand,
@@ -17,9 +20,6 @@ pub enum PlaygroundTheme {
     Night,
     Forest,
     Graphite,
-    Glass,
-    Ember,
-    Aurora,
     Custom,
 }
 
@@ -46,6 +46,9 @@ impl PlaygroundTheme {
         [
             Self::Light,
             Self::Dark,
+            Self::Glass,
+            Self::Ember,
+            Self::Aurora,
             Self::Blue,
             Self::Green,
             Self::Sand,
@@ -53,9 +56,6 @@ impl PlaygroundTheme {
             Self::Night,
             Self::Forest,
             Self::Graphite,
-            Self::Glass,
-            Self::Ember,
-            Self::Aurora,
             Self::Custom,
         ]
     }
