@@ -130,6 +130,47 @@ fn a_filter_names_itself_until_it_narrows() {
 }
 
 #[test]
+fn a_checklist_filter_names_its_choices_in_list_order() {
+    fn options() -> Vec<SelectOption<u8>> {
+        vec![
+            SelectOption::new(1, "Dining"),
+            SelectOption::new(2, "Fuel").trigger_label("Gas"),
+            SelectOption::new(3, "Groceries"),
+        ]
+    }
+    fn open() -> Element {
+        let chosen = use_signal(Vec::<u8>::new);
+        rsx! { FilterChecklist { label: "Category", value: chosen, options: options() } }
+    }
+    let html = render(open);
+    assert_eq!(text_of_class(&html, "g3-select-value"), "Category");
+    assert!(!element_with_class(&html, "g3-filter").contains("data-active"));
+    assert!(!html.contains("g3-filter-clear"));
+    assert!(element_with_class(&html, "g3-select").contains("aria-haspopup=\"listbox\""));
+
+    fn one() -> Element {
+        let chosen = use_signal(|| vec![2_u8]);
+        rsx! { FilterChecklist { label: "Category", value: chosen, options: options() } }
+    }
+    let html = render(one);
+    assert_eq!(text_of_class(&html, "g3-select-value"), "Category: Gas");
+    assert!(element_with_class(&html, "g3-filter").contains("data-active=\"true\""));
+
+    // Picked Groceries before Dining; the pill still names Dining first.
+    fn several() -> Element {
+        let chosen = use_signal(|| vec![3_u8, 1, 2]);
+        rsx! { FilterChecklist { label: "Category", value: chosen, options: options() } }
+    }
+    let html = render(several);
+    assert_eq!(
+        text_of_class(&html, "g3-select-value"),
+        "Category: Dining +2"
+    );
+    assert!(element_with_class(&html, "g3-select").contains("aria-label=\"Category: Dining +2\""));
+    assert!(element_with_class(&html, "g3-filter-clear").contains("aria-label=\"Clear Category\""));
+}
+
+#[test]
 fn checkbox_reports_mixed_and_bare_states() {
     fn app() -> Element {
         rsx! {

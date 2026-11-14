@@ -47,6 +47,7 @@ mod empty_state;
 mod fab;
 
 mod field;
+mod filter_checklist;
 mod filter_select;
 
 mod gesture;
@@ -156,6 +157,7 @@ pub use datetime::{CalendarDate, HourCycle, ParseDateTimeError, TimeOfDay};
 pub use divider::{Divider, DividerOrientation};
 pub use empty_state::EmptyState;
 pub use fab::{Fab, FabButton, FabHorizontal, FabList, FabListSide, FabMenu, FabSize, FabVertical};
+pub use filter_checklist::FilterChecklist;
 pub use filter_select::FilterSelect;
 
 #[cfg(test)]
@@ -243,6 +245,7 @@ gallery![
     field,
     select,
     filter_select,
+    filter_checklist,
     checkbox,
     toggle,
     radio,

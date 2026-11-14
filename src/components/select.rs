@@ -424,7 +424,7 @@ pub fn Select<T: Clone + PartialEq + 'static>(
 }
 
 #[component]
-fn SelectOptionRow<T: Clone + PartialEq + 'static>(
+pub(super) fn SelectOptionRow<T: Clone + PartialEq + 'static>(
     option: SelectOption<T>,
     selected: bool,
     onpick: EventHandler<T>,
