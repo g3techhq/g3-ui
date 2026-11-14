@@ -1296,7 +1296,10 @@ textarea.g3-input {
    scroll under it. */
 /* The list's top padding would leave a strip above the sticky search where
    options show as they scroll; the search field takes that space instead. */
-.g3-select-list:has(> .g3-select-search) {
+/* A sticky search sits flush with the list's top edge: top padding on the
+   scroller would leave a strip above it where scrolled options show
+   through. Also when a `Popover` wraps the search in its content box. */
+.g3-select-list:has(.g3-select-search) {
     padding-top: 0;
 }
 
