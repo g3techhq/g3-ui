@@ -115,6 +115,10 @@ pub fn Table(
     caption: Option<String>,
     /// Accessible name when there is no caption.
     aria_label: Option<String>,
+    /// Controls for the rows, such as a search box, filters and a count, in
+    /// a bar along the table's top edge, inside its frame. With
+    /// `sticky_header` the bar stays in place while the rows scroll.
+    toolbar: Option<Element>,
     /// Keep the first cell of each row in place while the rest scroll.
     sticky_first_column: Option<bool>,
     /// Stretch to the full width available. By default the table is as wide
@@ -169,6 +173,9 @@ pub fn Table(
             },
             if let Some(caption) = caption.as_ref() {
                 div { id: caption_id.clone(), class: "g3-table-caption", "{caption}" }
+            }
+            if let Some(toolbar) = toolbar {
+                div { class: "g3-table-toolbar", {toolbar} }
             }
 
             div {
