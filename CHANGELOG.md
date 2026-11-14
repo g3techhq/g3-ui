@@ -29,6 +29,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A checked md `Checkbox` shows a full checkmark again, not a smudge. The tick was a 6px CSS border shape in the 18px box; it is now Ionic's own SVG mark in both modes, which spans the md box with a heavier stroke and draws itself in, and sits inside the iOS circle. The indeterminate dash follows Ionic too.
 - An iOS segment pill in a toolbar no longer cuts its longest label on a phone ("Movi..." among five options on a 375pt iPhone). Once the pill reached the row's width its equal columns all shrank, so the widest label lost out first; on a compact shell its segments now pad 6px a side instead of 13px.
 - An expanded `AdaptiveNav` rail opens to 15rem on a wide shell again, its labels showing. The rule that adds the left safe area to the rail's width came after the expanded width and was as specific, so the rail stayed 4rem wide while it reported itself expanded. The expanded width now adds the safe area too.
 - Frosted surfaces blur in Chromium and Android web views again: the iOS bottom bar, the translucent `Fab` and the floating bar. dx's CSS minifier keeps only the last of a prefixed and an unprefixed `backdrop-filter`, and the stylesheet put `-webkit-backdrop-filter` last, so only WebKit blurred. The unprefixed one now comes last.

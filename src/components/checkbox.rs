@@ -140,7 +140,9 @@ pub fn Checkbox(
             },
             span { class: "g3-control-mark", aria_hidden: "true",
                 span { class: "g3-checkbox-box",
-                    span { class: "g3-checkbox-check" }
+                    svg { class: "g3-checkbox-check", view_box: "0 0 24 24",
+                        path { d: check_path(mode, aria_checked == "mixed") }
+                    }
                 }
             }
             ControlText { id: id.clone(), label, helper, error }
@@ -148,6 +150,17 @@ pub fn Checkbox(
         if let Some(name) = name.filter(|_| checked()) {
             input { r#type: "hidden", name, value: "on" }
         }
+    }
+}
+
+/// Ionic's checkmark and dash for each mode, in a 24-unit box: the md mark
+/// spans nearly the whole box, the iOS one sits inside the circle.
+fn check_path(mode: ComponentMode, mixed: bool) -> &'static str {
+    match (mode, mixed) {
+        (ComponentMode::Md, false) => "M1.73,12.91 8.1,19.28 22.79,4.59",
+        (ComponentMode::Md, true) => "M2 12H22",
+        (ComponentMode::Ios, false) => "M5.9,12.5l3.8,3.8l8.8-8.8",
+        (ComponentMode::Ios, true) => "M6 12L18 12",
     }
 }
 

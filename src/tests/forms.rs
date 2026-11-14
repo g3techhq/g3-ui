@@ -186,6 +186,26 @@ fn checkbox_reports_mixed_and_bare_states() {
 }
 
 #[test]
+fn checkbox_draws_ionics_mark_for_each_mode() {
+    fn app() -> Element {
+        rsx! {
+            Checkbox { aria_label: "Md", mode: ComponentMode::Md }
+            Checkbox { aria_label: "Md mixed", mode: ComponentMode::Md, indeterminate: true }
+            Checkbox { aria_label: "Ios", mode: ComponentMode::Ios }
+            Checkbox { aria_label: "Ios mixed", mode: ComponentMode::Ios, indeterminate: true }
+        }
+    }
+    let html = render(app);
+    // The md tick spans the box; a fixed-size CSS shape read as a smudge.
+    assert!(html.contains("viewBox=\"0 0 24 24\""));
+    assert!(html.contains("d=\"M1.73,12.91 8.1,19.28 22.79,4.59\""));
+    assert!(html.contains("d=\"M2 12H22\""));
+    assert!(html.contains("d=\"M5.9,12.5l3.8,3.8l8.8-8.8\""));
+    assert!(html.contains("d=\"M6 12L18 12\""));
+    assert!(element_with_class(&html, "g3-checkbox-check").starts_with("<svg"));
+}
+
+#[test]
 fn toggle_is_a_labelled_switch() {
     fn app() -> Element {
         let on = use_signal(|| true);

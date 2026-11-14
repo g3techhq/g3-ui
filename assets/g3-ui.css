@@ -1780,22 +1780,9 @@ button.g3-chip,
     background: var(--g3-tint);
 }
 
-.g3-checkbox[aria-checked="true"] .g3-checkbox-check {
+.g3-checkbox:is([aria-checked="true"], [aria-checked="mixed"]) .g3-checkbox-check {
     opacity: 1;
-    transform: rotate(-45deg) scale(1);
-}
-
-.g3-checkbox[aria-checked="mixed"] .g3-checkbox-check {
-    width: 12px;
-    height: 2px;
-    border-left: 0;
-    opacity: 1;
-    translate: none;
-    transform: none;
-}
-
-.g3-control-md[aria-checked="mixed"] .g3-checkbox-check {
-    width: 9px;
+    stroke-dashoffset: 0;
 }
 
 .g3-checkbox[aria-invalid="true"] .g3-checkbox-box {
@@ -4089,6 +4076,17 @@ button.g3-chip,
 
 .g3-table-frame[data-fill="true"] .g3-table {
     width: 100%;
+}
+
+/* A table's own controls: search, filters, a count. They wrap, and the
+   last of them can push to the end with `margin-inline-start: auto`. */
+.g3-table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--g3-color-border);
 }
 
 .g3-table-caption {
