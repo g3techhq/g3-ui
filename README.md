@@ -19,6 +19,15 @@ Mobile-first [Dioxus](https://dioxuslabs.com/) components inspired by [Ionic](ht
 `g3-ui` is a component library for Dioxus web and desktop/android/ios using web view. It may be expanded to work with Dioxus Native (blitz) in the future. Components try to be compatible with desktop and mobile sizing as much as possible. Every component has iOS and Material Design (MD) styling,
 CSS-variable theming, and WAI-ARIA semantics. The Rust crate name is `g3_ui`.
 
+## Product reel
+
+[The G3 Stack](showreel/README.md) is a regeneratable 68-second showcase:
+one floating device morphing through phone, landscape phone, tablet and desktop,
+with live playground and Media Mancer screens,
+route transitions, themes, charts, and an original synthesized soundtrack.
+The current cut has no captions and plays at 60 fps.
+Run `just showreel --capture` to refresh the footage and render it.
+
 ## Install
 
 `main` builds against a [fork of Dioxus `main`](https://github.com/Gateway3B/dioxus)

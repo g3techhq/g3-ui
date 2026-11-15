@@ -3,6 +3,10 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 default:
     @just --list
 
+# Regenerate The G3 Stack product film; --capture refreshes live app screens.
+showreel *args:
+    python showreel/render.py {{args}}
+
 setup:
     lefthook install
 

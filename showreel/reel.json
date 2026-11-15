@@ -1,0 +1,65 @@
+{
+  "title": "The G3 Stack",
+  "fps": 60,
+  "duration": 68,
+  "bpm": 120,
+  "morph_seconds": 1.4,
+  "playground": "http://127.0.0.1:8080",
+  "media_mancer": "http://127.0.0.1:8081",
+  "charts": "http://127.0.0.1:8095",
+  "shots": [
+    {
+      "id": "phone",
+      "source": "transitions",
+      "start": 0,
+      "end": 18,
+      "viewport": [
+        390,
+        844
+      ],
+      "pixel_ratio": 2,
+      "screen_width": 3.0,
+      "camera_width": 13.6,
+      "theme": "Light"
+    },
+    {
+      "id": "phone_landscape",
+      "source": "playground",
+      "start": 18,
+      "end": 32,
+      "viewport": [
+        844,
+        390
+      ],
+      "pixel_ratio": 2,
+      "screen_width": 6.4923076923,
+      "camera_width": 8.25
+    },
+    {
+      "id": "tablet",
+      "source": "media_mancer",
+      "start": 32,
+      "end": 46,
+      "viewport": [
+        1024,
+        768
+      ],
+      "pixel_ratio": 1.5,
+      "screen_width": 8.0,
+      "camera_width": 12.9
+    },
+    {
+      "id": "desktop",
+      "source": "charts",
+      "start": 46,
+      "end": 68,
+      "viewport": [
+        1600,
+        900
+      ],
+      "pixel_ratio": 1.2,
+      "screen_width": 12.0,
+      "camera_width": 13.6
+    }
+  ]
+}

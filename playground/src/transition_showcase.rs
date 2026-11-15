@@ -6,8 +6,8 @@ use g3_route_transitions::{RouteTransitionPageRegion, animated_navigate};
 use g3_ui::{
     AdaptiveNav, AdaptiveNavCompact, AppWrapper, Badge, Button, ButtonExpand, ButtonFill,
     ButtonSize, Card, Color, Content, Header, Item, ItemDetail, List, ListLines, NavItem,
-    NavItemGroup, PlaygroundDemoFrame, SegmentButton, SegmentGroup, TabLayout, Text, TextTone,
-    TextVariant, ThemeProvider,
+    NavItemGroup, PlaygroundDemoFrame, SegmentButton, SegmentGroup, Space, Stack, TabLayout, Text,
+    TextTone, TextVariant, ThemeProvider,
 };
 
 use super::{PlaygroundViewport, Route, active_playground_settings};
@@ -385,20 +385,22 @@ fn QueueScreen() -> Element {
             }
 
             Content { footer_space: false,
-                TransitionNote { "A sheet. It rose over Listen, which stayed put and dimmed behind it." }
-                Card { title: "Up next",
-                    p { "Three tracks left in this queue." }
-                }
+                Stack { gap: Space::Lg,
+                    TransitionNote { "A sheet. It rose over Listen, which stayed put and dimmed behind it." }
+                    Card { title: "Up next",
+                        p { "Three tracks left in this queue." }
+                    }
 
-                List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
-                    Item { label: "Paper Moon", description: "Afterglow", metadata: "3:05" }
-                    Item { label: "Night Ferry", description: "Marine Drive", metadata: "5:22" }
-                }
+                    List { variant: g3_ui::ListVariant::Raised, lines: ListLines::Inset,
+                        Item { label: "Paper Moon", description: "Afterglow", metadata: "3:05" }
+                        Item { label: "Night Ferry", description: "Marine Drive", metadata: "5:22" }
+                    }
 
-                Button {
-                    expand: ButtonExpand::Block,
-                    onclick: move |_| async move { go(Route::TransitionListen {}).await },
-                    "Done"
+                    Button {
+                        expand: ButtonExpand::Block,
+                        onclick: move |_| async move { go(Route::TransitionListen {}).await },
+                        "Done"
+                    }
                 }
             }
             // The sheet covers the bottom tabs on a phone, but a desktop rail
